@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand, CommandError
-from myapi.services import ETL_DatasetService
+from api.services import ETL_DatasetService
 
 class Command(BaseCommand):
     help = 'List all the Dataset IDs along with their respective human-readable (human defined) names.'
