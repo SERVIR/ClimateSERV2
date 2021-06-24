@@ -11,5 +11,5 @@ class Config_SettingSerializer(serializers.HyperlinkedModelSerializer):
             'setting_name',
             'setting_value',
             'setting_data_type',
-            'created_at'
+            'created_at',
         )

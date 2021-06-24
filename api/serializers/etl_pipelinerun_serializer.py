@@ -6,4 +6,10 @@ class ETL_PipelineRunSerializer(serializers.HyperlinkedModelSerializer):
 
     class Meta:
         model = ETL_PipelineRun
-        fields = ('created_at', 'created_by')
+        fields = (
+            'uuid',
+            'additional_json',
+            'created_at',
+            'created_by',
+            'is_test_object',
+        )
