@@ -2,8 +2,6 @@ from django.db import models
 import uuid
 
 class ETL_Log(models.Model):
-    class_name_string = "ETL_Log"
-    #
     uuid = models.CharField(default=uuid.uuid4, editable=False, max_length=40, primary_key=True)    # The Table's Unique ID (Globally Unique String)
     # Additional Columns Here
     activity_event_type = models.CharField('Standardized Activity Event Type', max_length=90, blank=False, default="Unknown ETL Activity Event Type", help_text="What is the standardized type for this ETL Activity Event?")
@@ -21,3 +19,10 @@ class ETL_Log(models.Model):
     created_at = models.DateTimeField('created_at', auto_now_add=True, blank=True)
     created_by = models.CharField('Created By User or Process Name or ID', max_length=90, blank=False, default="Table_Default_Process", help_text="Who or What Process created this record? 90 chars max")
     is_test_object = models.BooleanField(  default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
+
+    def __str__(self):
+        return self.uuid
+
+    class Meta:
+        verbose_name = 'ETL Log'
+        verbose_name_plural = 'ETL Logs'
