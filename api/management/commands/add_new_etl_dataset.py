@@ -1,4 +1,4 @@
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from api.services import ETL_DatasetService
 
 class Command(BaseCommand):
@@ -6,20 +6,13 @@ class Command(BaseCommand):
 
     # Parsing params
     def add_arguments(self, parser):
-        parser.add_argument('etl_dataset_name', type=str)
+        parser.add_argument('etl_dataset_name', required=True, type=str)
 
     # Function Handler
     def handle(self, *args, **options):
-        # Get the input param
-        etl_dataset_name = ""
-        try:
-            etl_dataset_name = options['etl_dataset_name']
-        except:
-            self.stdout.write(self.style.ERROR('add_new_etl_dataset.handle(): Could not read required input param: <etl_dataset_name>'))
-            return
 
-        # Filter down to a forced string that is not empty.
-        etl_dataset_name = str(etl_dataset_name).strip()
+        # Get the dataset uuid input params
+        etl_dataset_name = options.get('etl_dataset_name', '').strip()
 
         # Check and see if dataset name is already taken
         is_dataset_name_available = ETL_DatasetService.is_datasetname_avalaible(input__datasetname=etl_dataset_name)
