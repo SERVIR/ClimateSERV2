@@ -1,0 +1,200 @@
+html {
+  overflow-y: hidden;
+  overflow-x: hidden;
+  overflow: hidden;
+}
+
+html,
+body,
+#map,
+.map {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  padding: 0;
+  margin: 0;
+}
+
+#dialog {
+  background: #ffffff;
+  min-width: 99%;
+}
+
+.ui-dialog {
+  z-index: 9999 !important;
+  padding: 0;
+}
+
+.ui-dialog .ui-dialog-content {
+  padding: 5px 18px;
+}
+
+.ui-widget-header {
+  border: 0;
+  background: #002a53;
+  color: #ffffff;
+  font-weight: bold;
+  font-size: 1rem;
+  padding: 5px 8px;
+  border-radius: 5px 5px 0 0;
+  cursor: move;
+}
+
+.ui-dialog-content{
+    font-size:12px;
+}
+
+    .ui-dialog-content input, .ui-dialog-content select {
+        height: unset;
+    }
+
+.ui-dialog .ui-dialog-titlebar-close {
+    background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAYAAADhAJiYAAAAm0lEQVR4Ae3VAQaAQBBA0dCBukcIHWSPsgfpiOGHMKKg+QrmAyzr2WVmuKmqqgqYrDsMTOOsJe7owA6sWczMtfYKE+2plwJGYHuJCkzU49RH+RgfZWMElIcRUB5GQOkYAeVjJJSJSQy9qP2PsVECpmcmuo4x1oyIiTyUgFFRAkZACZjPUcDyhEmgJuuFujDRtW9bhDUz3xxVVVUdlCLox3GudKQAAAAASUVORK5CYII=);
+    border: 1px solid #ffffff;
+    float: right;
+    /* margin-top: 5px; */
+    background-size: contain;
+    background-color: unset;
+}
+
+.ui-dialog .ui-dialog-titlebar-close:hover {
+  border: 2px solid #ffffff;
+}
+
+.ui-dialog .ui-resizable-se {
+  right: 0 !important;
+  bottom: 0 !important;
+  background-position: -64px -224px !important;
+  width: 17px;
+  height: 17px;
+  z-index: 1000 !important;
+}
+
+.ui-dialog .ui-dialog-title {
+  font-weight: 400;
+  font-size: 14.4pt;
+}
+
+.legend-btn, .settings-btn {
+  cursor: pointer;
+}
+
+    .legend-btn:hover, .settings-btn:hover {
+        color: #7eaddb;
+    }
+
+.leaflet-control-layers.leaflet-control {
+  display: none;
+}
+
+.leaflet-bar-timecontrol {
+  color: #ffffff;
+}
+.leaflet-bar a {
+  background-color: rgba(0, 60, 136, 0.5);
+  border-bottom: 1px solid #ccc;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+  display: block;
+  text-align: center;
+  text-decoration: none;
+  color: white;
+}
+
+.leaflet-bar a:hover {
+  background-color: rgba(0, 60, 136, 0.7);
+  color: white;
+}
+
+.fullscreen-icon {
+  background-image: url(images/icon-fullscreen.png);
+}
+
+.leaflet-bar-timecontrol {
+  background-color: unset; /*:rgba(0,60,136,.5) ;*/
+}
+
+.leaflet-bar-timecontrol .leaflet-control-timecontrol {
+  background-color: rgba(0, 60, 136, 0.5);
+}
+
+.leaflet-control-zoom.leaflet-bar.leaflet-control,
+leaflet-bar leaflet-bar-horizontal leaflet-bar-timecontrol leaflet-control {
+  background-color: rgba(255, 255, 255, 0.4);
+}
+
+body.dragging,
+body.dragging * {
+  cursor: move !important;
+}
+
+.dragged {
+  position: absolute;
+  opacity: 0.5;
+  z-index: 2000;
+}
+
+ol.layers li.placeholder {
+  position: relative;
+  /** More li styles **/
+}
+
+ol.layers li.placeholder:before {
+  position: absolute;
+  /** Define arrowhead **/
+}
+
+ol {
+  list-style-type: none;
+}
+
+.rst__rowWrapper {
+  padding: 10px 10px 10px 0;
+  height: 100%;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+.rst__row {
+  height: 100%;
+  white-space: nowrap;
+  display: -ms-flexbox;
+  display: flex;
+}
+
+.rst__moveHandle,
+.rst__loadingHandle {
+  height: auto;
+  width: 44px;
+  background: #7eaddb
+    url(data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MiIgaGVpZ2h0PSI0MiI+PGcgc3Ryb2tlPSIjRkZGIiBzdHJva2Utd2lkdGg9IjIuOSI+PHBhdGggZD0iTTE0IDE1LjdoMTQuNE0xNCAyMS40aDE0LjRNMTQgMjcuMWgxNC40Ii8+PC9nPjwvc3ZnPg==)
+    no-repeat 50%;
+  border: solid #aaa 1px;
+  box-shadow: 0 2px 2px -2px;
+  cursor: move;
+  border-radius: 1px;
+  z-index: 1;
+}
+
+.rst__rowContents {
+  position: relative;
+  height: 100%;
+  border: 1px solid #bbb;
+  border-left: none;
+  -webkit-box-shadow: 0 2px 2px -2px;
+  box-shadow: 0 2px 2px -2px;
+  padding: 0 5px 0 10px;
+  border-radius: 2px;
+  -ms-flex: 1 0 auto;
+  flex: 1 0 auto;
+  display: -ms-flexbox;
+  display: flex;
+  -ms-flex-align: center;
+  align-items: center;
+  -ms-flex-pack: justify;
+  justify-content: space-between;
+  background-color: #fff;
+}

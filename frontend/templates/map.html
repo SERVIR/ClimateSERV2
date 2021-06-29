@@ -1,0 +1,392 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - Map{% endblock %}
+{% block script %}
+    <link href="{% static 'frontend/css/jquery-ui.min.css' %}" rel="stylesheet"
+          rel="stylesheet"
+    />
+<link
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+        rel="stylesheet"
+/>
+<link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css"
+/>
+<link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
+/>
+<link rel="stylesheet" href="{% static 'frontend/css/leaflet.draw.css' %}" />
+
+<link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
+/>
+<link rel="stylesheet" href="{% static 'frontend/css/leaflet.timedimension.control.min.css' %}" />
+<link href="{% static 'frontend/css/leaflet-sidebar.css' %}" rel="stylesheet" />
+<link href="{% static 'frontend/css/ol3-sidebar.css' %}" rel="stylesheet" />
+<link href="{% static 'frontend/css/bulma.min.css' %}" rel="stylesheet" />
+<link href="{% static 'frontend/css/map.css' %}" rel="stylesheet" />
+
+{% endblock %}
+
+{% block content %}
+    <script>
+        const static_url = "{% static '' %}";
+    </script>
+    <div id="root">
+        <div>
+            <div id="sidebar" class="sidebar collapsed">
+                <!-- Nav tabs -->
+                <div class="sidebar-tabs">
+                    <ul role="tablist">
+                        <li>
+                            <a href="#layers" role="tab">
+                                <i class="fas fa-layer-group"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#chart" role="tab">
+                                <i class="fas fa-chart-line"></i>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#basemap" role="tab"><i class="fas fa-map"></i></a>
+                        </li>
+                        <li>
+                            <a
+                                    href="https://github.com/Turbo87/sidebar-v2"
+                                    role="tab"
+                                    target="_blank"
+                            >
+                                <i class="fa fa-github"></i>
+                            </a>
+                        </li>
+                    </ul>
+
+                    <ul role="tablist">
+                        <li>
+                            <a href="#settings" role="tab"><i class="fa fa-gear"></i></a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Tab panes -->
+                <div class="sidebar-content">
+                    <div class="sidebar-pane" id="layers">
+                        <h1 class="sidebar-header">
+                            Layers
+                            <span class="sidebar-close">
+                  <i class="fas fa-caret-left"></i>
+                </span>
+                        </h1>
+
+                        <ol class="layers vertical" id="layer-list"></ol>
+                    </div>
+
+                    <div class="sidebar-pane" id="chart">
+                        <h1 class="sidebar-header">
+                            Statistical Query<span class="sidebar-close">
+                  <i class="fas fa-caret-left"></i>
+                </span>
+                        </h1>
+                        <div class="btn-group d-flex">
+                            <button class="w-100 bread-crumb active" disabled="">
+                                Set AOI
+                            </button>
+                            <button class="w-100 bread-crumb" disabled="">Set Data</button>
+                            <button class="w-100 bread-crumb" disabled="">Review</button>
+                        </div>
+
+                        <div id="step1">
+                            <h2 class="step-marker">Set AOI</h2>
+                            <p>
+                                Choose how you would like to define your area of interest
+                                (AOI)
+                            </p>
+                            <ul class="step-list">
+                                <li>
+                                    <span class="bold">Draw:</span> Enables drawing on the map.
+                                    You must make a closed polygon to define your AOI.
+                                </li>
+                                <li>
+                                    <span class="bold">Upload:</span> Enables either drag and
+                                    drop or click to upload a json file with your defined AOI
+                                </li>
+                                <li>
+                                    <span class="bold">Select:</span> Adds administrative
+                                    boundaries at different levels for you to choose your AOI.
+                                </li>
+                            </ul>
+                            <div class="btn-group d-flex">
+                                <button class="tablinks w-100" onclick="selectAOI('draw')">
+                                    Draw
+                                </button>
+                                <button class="tablinks w-100" onclick="selectAOI('upload')">
+                                    Upload
+                                </button>
+                                <button class="tablinks w-100" onclick="selectAOI('select')">
+                                    Select
+                                </button>
+                            </div>
+                            <div
+                                    class="tab-content selectAOI"
+                                    id="drawAOI"
+                                    style="display: none"
+                            >
+                                <span class="draw-info">Enabled</span>
+                                <span class="draw-info bottom"
+                                >Follow this example to draw</span
+                                >
+                                <img
+                                        src="{% static 'frontend/img/draw_demo.gif'  %}"
+                                        alt="Draw on map"
+                                        style="max-height: 100%; max-width: 100%"
+                                />
+                            </div>
+
+                            <div
+                                    class="tab-content selectAOI"
+                                    id="uploadAOI"
+                                    style="display: none"
+                            >
+                                <div class="acontainer">
+                                    <div class="drop-container" id="drop-container">
+                                        <div class="drop-message">
+                                            <div class="upload-icon"></div>
+                                            Drag &amp; Drop json, geojson, or zipped shapefile here
+                                            or click to select file
+                                        </div>
+                                        <input class="file-input" type="file" multiple="" />
+                                    </div>
+                                    <div class="file-display-container"></div>
+                                </div>
+                                <div class="modal">
+                                    <div class="overlay"></div>
+                                    <span class="close">X</span>
+                                    <div class="modal-image"></div>
+                                </div>
+                                <div class="upload-modal" style="display: none">
+                                    <div class="overlay"></div>
+                                    <div class="close">X</div>
+                                    <div class="progress-container">
+                                        <span></span>
+                                        <div class="progress">
+                                            <div class="progress-bar"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="selectAOI" id="selectAOI" style="display: none">
+                                <p style="font-weight: 900; padding: 20px 0px 10px">
+                                    Select features by:
+                                </p>
+                                <div class="btn-group d-flex">
+                                    <button
+                                            class="tablinks w-100"
+                                            onclick="enableAdminFeature('country')"
+                                    >
+                                        Country
+                                    </button>
+                                    <button
+                                            class="tablinks w-100"
+                                            onclick="enableAdminFeature('admin_1_earth')"
+                                    >
+                                        Admin #1
+                                    </button>
+                                    <button
+                                            class="tablinks w-100"
+                                            onclick="enableAdminFeature('admin_2_af')"
+                                    >
+                                        Admin #2
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div
+                                    style="
+                    width: calc(100% - 10px);
+                    position: relative;
+                    margin-top: 20px;
+                  "
+                            >
+                                <button disabled="" style="position: absolute; right: 0px">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-pane" id="basemap">
+                        <h1 class="sidebar-header">
+                            Basemaps<span class="sidebar-close">
+                  <i class="fas fa-caret-left"></i>
+                </span>
+                        </h1>
+                    </div>
+
+                    <div class="sidebar-pane" id="settings">
+                        <h1 class="sidebar-header">
+                            Settings<span class="sidebar-close">
+                  <i class="fas fa-caret-left"></i>
+                </span>
+                        </h1>
+                    </div>
+                </div>
+            </div>
+
+            <div id="servirmap" class="sidebar-map"></div>
+        </div>
+
+        <div id="dialog" style="display: none" class="ui-widget-content">
+            <p>
+                This is the default dialog which is useful for displaying information.
+                The dialog window can be moved, resized and closed with the
+                &apos;x&apos; icon.
+            </p>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.3/proj4.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="{% static 'frontend/js/xml2json.js' %}"></script>
+    <script src="{% static 'frontend/js/jquery-sortable.js' %}"></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"
+    ></script>
+    <script type="text/javascript" src="{% static 'frontend/js/leaflet.draw.js' %}"></script>
+     <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet.nontiledlayer@1.0.7/dist/NonTiledLayer.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
+    ></script>
+    <script src="{% static 'frontend/js/map-layers.js' %}"></script>
+    <script src="{% static 'frontend/js/base-layers.js' %}"></script>
+    <script
+            type="text/javascript"
+            src="{% static 'frontend/js/leaflet.timedimension.min.js' %}"
+    ></script>
+    <script src="{% static 'frontend/js/leaflet-sidebar.js' %}"></script>
+
+    <script src="{% static 'frontend/js/jszip.js' %}"></script>
+    <script src="{% static 'frontend/js/jszip-utils.js' %}"></script>
+    <!--[if IE]>
+    <script type="text/javascript" src="{% static 'frontend/js/jszip-utils-ie.js' %}"></script>
+    <![endif]-->
+
+    <script src="{% static 'frontend/js/preprocess.js' %}"></script>
+    <script src="{% static 'frontend/js/preview.js' %}"></script>
+
+    <script src="{% static 'frontend/js/map.js' %}"></script>
+    <script>
+        $(function () {
+            jQuery.fn.center = function () {
+                this.css("position", "absolute");
+                this.css(
+                    "top",
+                    Math.max(
+                        0,
+                        ($(window).height() - $(this).outerHeight()) / 2 +
+                        $(window).scrollTop()
+                    ) + "px"
+                );
+                this.css(
+                    "left",
+                    Math.max(
+                        0,
+                        ($(window).width() - $(this).outerWidth()) / 2 +
+                        $(window).scrollLeft()
+                    ) + "px"
+                );
+                return this;
+            };
+        });
+    </script>
+    <script src="{% static 'frontend/js/navloader.js' %}"></script>
+    <script>
+        $(document).ready(function () {
+            setActive("mnmap");
+        });
+    </script>
+    <script id="layersTemplate" type="text/template">
+        <li id="{id}_node">
+            <div class="rst__nodeContent" style="left: 44px">
+                <div style="height: 100%">
+                    <div class="rst__rowWrapper">
+                        <div class="rst__row" style="opacity: 1">
+                            <div class="rst__moveHandle" draggable="true" ondrop="reorderLayers(event, something)"></div>
+                            <div class="rst__rowContents">
+                                <div class="rst__rowLabel">
+                                  <span class="rst__rowTitle">
+                                      <input type="checkbox"
+                                             id="{id}"
+                                             name="{id}"
+                                             onchange="toggleLayer('{layername}')" />
+                                      <label for="{id}" title="{title}">{title}</label>
+                                      <br />
+                                  </span>
+                                    <div>
+                                        <i class="fas fa-list legend-btn"
+                                           onclick="openLegend('{layername}')"
+                                           style="float: left; margin: 0 0 15px 15px;">
+                                            Legend
+                                        </i>
+                                        <i class="fas fa-cog settings-btn"
+                                           onclick="openSettings('{layername}')"
+                                           style="float: right; margin: 0 15px 15px 0;">
+                                            Settings
+                                        </i>
+                                    </div>
+                                </div>
+                                <div class="rst__rowToolbar"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </li>
+    </script>
+    <script id="proposedChange" style="display: none" type="text/template">
+        <div>
+            <i class="fas fa-list" onclick="console.log('open legend')" style="
+                float: left;
+                margin: 0 0 15px 15px;
+            "> Legend</i><i class="fas fa-cog" style="
+                float: right;
+                margin: 0 15px 15px 0;
+            "> Settings</i>
+        </div>
+    </script>
+    <script id="styletemplate" style="display: none" type="text/template">
+        <div style="padding-bottom:15px;">
+            <br>
+            <label for="range-min" style="font-weight: 100">Min</label>
+            <input type="text" class="form-control" id="range-min" name="range-min" style="width: 100%">
+            <br> <label for="range-max" style="font-weight: 100">Max</label>
+            <input type="text" class="form-control" id="range-max" name="range-max" style="width: 100%">
+            <br><label>
+            Select Color Scheme
+        </label>
+            <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
+            </select><br><button id="applyStylebtn" style="
+              float: right;
+          ">
+            Apply
+        </button>
+            <br><br>
+            <label for="opacityctrl" style="font-weight: 100">Opacity</label>
+            <input id="opacityctrl" type="range" class="layer-opacity form-control" min="0" max="1" step=".01" value="1" style="width:100%">
+        </div>
+    </script>
+
+{% endblock %}

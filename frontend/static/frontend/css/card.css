@@ -1,0 +1,79 @@
+﻿.card {
+  box-shadow: 0 2px 3px rgb(10 10 10 / 10%), 0 0 0 1px rgb(10 10 10 / 10%);
+  color: #4a4a4a;
+  max-width: 100%;
+  position: relative;
+}
+
+.carousel-control-prev-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2373ac58' stroke='%233b6e22' stroke-width='.5' viewBox='0 0 8 8'%3E%3Cpath d='M5.25 0l-4 4 4 4 1.5-1.5-2.5-2.5 2.5-2.5-1.5-1.5z'/%3E%3C/svg%3E") !important;
+}
+
+.carousel-control-next-icon {
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='%2373ac58' stroke='%233b6e22' stroke-width='.5' viewBox='0 0 8 8'%3E%3Cpath d='M2.75 0l-1.5 1.5 2.5 2.5-2.5 2.5 1.5 1.5 4-4-4-4z'/%3E%3C/svg%3E") !important;
+}
+
+@media (max-width: 768px) {
+  #dataCarousel .carousel-inner .carousel-item > div {
+    display: none;
+  }
+
+  #dataCarousel .carousel-inner .carousel-item > div:first-child {
+    display: block;
+    flex: auto;
+    max-width: unset;
+  }
+}
+
+.carousel-inner .carousel-item.active,
+.carousel-inner .carousel-item-next,
+.carousel-inner .carousel-item-prev {
+  display: flex;
+}
+
+/* display 2 */
+@media (min-width: 768px) {
+  #dataCarousel .carousel-inner .carousel-item-right.active,
+  #dataCarousel .carousel-inner .carousel-item-next {
+    transform: translateX(50%);
+  }
+
+  #dataCarousel .carousel-inner .carousel-item-left.active,
+  #dataCarousel .carousel-inner .carousel-item-prev {
+    transform: translateX(-50%);
+  }
+}
+
+/* display 3 */
+@media (min-width: 992px) {
+  #dataCarousel .carousel-inner .carousel-item-right.active,
+  #dataCarousel .carousel-inner .carousel-item-next {
+    transform: translateX(33.333%);
+  }
+
+  #dataCarousel .carousel-inner .carousel-item-left.active,
+  #dataCarousel .carousel-inner .carousel-item-prev {
+    transform: translateX(-33.333%);
+  }
+}
+
+@media (max-width: 768px) {
+  #dataCarousel .carousel-inner .carousel-item-right.active,
+  #dataCarousel .carousel-inner .carousel-item-next {
+    transform: translateX(100%);
+  }
+
+  #dataCarousel .carousel-inner .carousel-item-left.active,
+  #dataCarousel .carousel-inner .carousel-item-prev {
+    transform: translateX(-100%);
+  }
+}
+
+#dataCarousel .carousel-inner .carousel-item-right,
+#dataCarousel .carousel-inner .carousel-item-left {
+  transform: translateX(0);
+}
+
+.card-text img {
+  width: 100%;
+}

@@ -1,0 +1,306 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - Home{% endblock %}
+
+{%  block script %}
+<script src="{% static 'frontend/js/data-items.js' %}"></script>
+<script src="{% static 'frontend/js/index.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <script>
+        const static_url = "{% static '' %}";
+    </script>
+    <div>
+        <div class="container-fluid" style="padding-right: 0; padding-left: 0">
+            <div id="main-carousel" class="carousel slide" data-ride="carousel">
+                <div class="carousel-inner">
+                    <div class="carousel-item1">
+                        <img
+                                class="d-block w-100"
+                                src="{% static 'frontend/img/imerg.jpg' %}"
+                                alt="IMERG Data"
+                                style="width: 100% !important"
+                        />
+                        <div class="carousel-caption d-none d-md-block">
+                            <h3>ClimateSERV - Where climate data lives</h3>
+                            <p>
+                                Climate data and tools to enhance study, analysis and decision
+                                making
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div style="background-color: #f6f6f6; padding: 50px 5px 0 5px">
+        <div class="row mx-auto my-auto">
+            <h2
+                    style="
+            border-bottom: 1px solid rgb(189, 209, 47);
+            font-size: 100%;
+            font-weight: 400;
+            width: 100%;
+          "
+            >
+                Background
+            </h2>
+            <p style="padding: 15px 15px 0 15px">
+                ClimateSERV allows development practitioners, scientists/researchers,
+                and government decision-makers to visualize and download historical
+                rainfall data, vegetation condition data, and 180-day forecasts of
+                rainfall and temperature to improve understanding of, and make
+                improved decisions for, issues related to agriculture and water
+                availability.
+            </p>
+        </div>
+    </div>
+    <div class="carousel-holder">
+        <div class="row mx-auto my-auto">
+            <div
+                    id="dataCarousel"
+                    class="carousel slide w-100"
+                    data-ride="carousel"
+            >
+                <div
+                        class="carousel-inner w-100"
+                        role="listbox"
+                        id="dataCarouselItems"
+                ></div>
+                <a
+                        class="carousel-control-prev"
+                        href="#dataCarousel"
+                        role="button"
+                        data-slide="prev"
+                >
+                    <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a
+                        class="carousel-control-next"
+                        href="#dataCarousel"
+                        role="button"
+                        data-slide="next"
+                >
+                    <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="carousel-holder">
+        <div class="row mx-auto my-auto">
+            <h2
+                    style="
+            border-bottom: 1px solid rgb(189, 209, 47);
+            font-size: 100%;
+            font-weight: 400;
+            width: 100%;
+          "
+            >
+                What you can do with ClimateSERV
+            </h2>
+            <div
+                    id="usageCarousel"
+                    class="carousel slide w-100"
+                    data-interval="false"
+                    data-ride="carousel"
+                    style="padding: 0 15px"
+            >
+                <div class="carousel-inner w-100" role="listbox">
+                    <div class="carousel-item active h-100">
+                        <div class="row">
+                            <div class="col">
+                                <img
+                                        src="{% static 'frontend/img/chart_data.jpg' %}"
+                                        alt="Chart Data"
+                                        class="img-fluid do-with-img"
+                                />
+                                <p>
+                    <span style="font-weight: 600; color: #3b6e22"
+                    >As a student</span
+                    >
+                                    you can use ClimateSERV data to help in your thesis. For
+                                    example you could use Integrated Multi-satellitE Retrievals
+                                    for GPM (IMERG) dataset which provides near-realtime global
+                                    observations of rainfall at 10km resolution, to estimate
+                                    total rainfall accumulation from storm systems and quantify
+                                    the intensity of rainfall and flood impacts from tropical
+                                    cyclones and other storm systems in your specific area of
+                                    study.
+                                </p>
+                                <p>
+                                    Because ClimateSERV has historical data you can also drill
+                                    down through the data to get statistical information about
+                                    the study area over time in order to compare, contrast, and
+                                    model different scenarios. Using this data you can download
+                                    and print charts to help support your thesis.
+                                </p>
+                                <p>
+                    <span class="right carousel-control site-link" disabled>
+                      As a Student
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span
+                                            class="right carousel-control site-link"
+                                            onclick="setYouCanDoSlide(1)"
+                                    >
+                      As a Researcher
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span
+                                            class="right carousel-control site-link"
+                                            onclick="setYouCanDoSlide(2)"
+                                    >
+                      As a Decision Maker
+                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item h-100">
+                        <div class="row">
+                            <div class="col">
+                                <img
+                                        src="{% static 'frontend/img/agriculture.jpg' %}"
+                                        alt="Agriculture"
+                                        class="img-fluid do-with-img"
+                                />
+                                <p>
+                    <span style="font-weight: 600; color: #3b6e22"
+                    >As a researcher</span
+                    >
+                                    you could use NDVI and rainfall data from ClimateSERV to
+                                    identify the effects of interventions by selecting two areas
+                                    of interest, one control with no intervention and another
+                                    that has experienced intervention. Each of these areas you
+                                    would perform an on-demand comparative analysis which would
+                                    result in a chart for each. Those charts could help you
+                                    highlight the differences of the two areas in terms of
+                                    vegetation health, derived growing season lengths and
+                                    rainfall. You can also download the summary data table as
+                                    well as the full dataset for the period specified.
+                                </p>
+                                <p>
+                                    With the result of this analysis, you could help showcase
+                                    the utility of the intervention programs and to provide an
+                                    objective rationale for expansion of those intervention
+                                    programs.
+                                </p>
+                                <p> 
+                    <span
+                            class="right carousel-control site-link"
+                            onclick="setYouCanDoSlide(0)"
+                    >
+                      As a Student
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span class="right carousel-control site-link" disabled>
+                      As a Researcher
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span
+                                            class="right carousel-control site-link"
+                                            onclick="setYouCanDoSlide(2)"
+                                    >
+                      As a Decision Maker
+                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="carousel-item h-100">
+                        <div class="row">
+                            <div class="col">
+                                <img
+                                        src="{% static 'frontend/img/drought.jpg' %}"
+                                        alt="Drought"
+                                        class="img-fluid do-with-img"
+                                />
+                                <p>
+                    <span style="font-weight: 600; color: #3b6e22">
+                      As a decision maker
+                    </span>
+                                    you could use the rainfall data from ClimateSERV to help
+                                    predict droughts, estimate crop yields, and much more.
+                                    ClimateSERV provides data that you could use to accurately
+                                    assess how severe a drought will be, how it compares to past
+                                    droughts, and its potential effect on crop yields. This fact
+                                    is due to the long historical archive of data offered
+                                    through the system. It is important to place an evolving
+                                    dryer-than-normal season into historical context in order to
+                                    analyze the severity of rainfall deficits.
+                                </p>
+                                <p>
+                                    Being able to instantly narrow your statistical calculations
+                                    to your specific area of interest and time period gives you
+                                    fresh, as well as historical data at a moments notice.
+                                </p>
+                                <p>
+                    <span
+                            class="right carousel-control site-link"
+                            onclick="setYouCanDoSlide(0)"
+                    >
+                      As a Student
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span
+                                            class="right carousel-control site-link"
+                                            onclick="setYouCanDoSlide(1)"
+                                    >
+                      As a Researcher
+                    </span>
+                                    <span> &nbsp;|&nbsp; </span>
+                                    <span class="right carousel-control site-link" disabled>
+                      As a Decision Maker
+                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block item-template %}
+    <script id="dataCarouselItemsTemplate" type="text/template">
+        <div class="carousel-item h-100">
+            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                <div class="card bg-servir ">
+                    <div class="card-body">
+                        <h5 class="card-title">{title}</h5>
+                        <p class="card-text">
+                            {description}
+                        </p>
+                    </div>
+                    <p class="card-text">
+                        <img src="{imagesrc}"
+                             alt="{imagealt}"
+                             class="product-card-img">
+                    </p>
+                    <div class="row">
+                        <div class="col-6">
+                            <button class="card-button"
+                                    onclick="window.location = '/help?metaid={metaid}'"
+                                    title="Help Center">
+                                Help Center
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <button class="card-button"
+                                    onclick="window.location = {buttonlocation}"
+                                    title="{buttontext}">
+                                {buttontext}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </script>
+{% endblock %}
