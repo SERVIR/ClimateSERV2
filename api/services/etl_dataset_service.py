@@ -7,7 +7,7 @@ class ETL_DatasetService():
     def is_datasetname_avalaible(input__datasetname):
         retBool = True
         try:
-            existing_auth_user = ETL_Dataset.objects.filter(dataset_name=str(input__datasetname).strip())[0]
+            existing_etl_dataset = ETL_Dataset.objects.filter(dataset_name=str(input__datasetname).strip())[0]
             retBool = False
         except:
             retBool = True
