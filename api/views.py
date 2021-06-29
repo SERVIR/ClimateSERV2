@@ -31,5 +31,5 @@ class ETL_PipelineRunViewSet(ModelViewSet):
 class ETL_SubtypesView(APIView):
 
     def get(self, request, format=None):
-        results = ETL_DatasetService.get_all_subtypes_as_string_array()
-        return JsonResponse(results)
+        subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
+        return JsonResponse({"subtypes": subtypes})

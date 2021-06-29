@@ -14,6 +14,16 @@ class ETL_DatasetService():
         return retBool
 
     @staticmethod
+    def does_etl_dataset_exist__by_uuid(input__uuid):
+        ret_DoesExist = False
+        try:
+            existing_etl_dataset = ETL_Dataset.objects.filter(uuid=str(input__uuid).strip())[0]
+            ret_DoesExist = True
+        except:
+            ret_DoesExist = False
+        return ret_DoesExist
+
+    @staticmethod
     def create_etl_dataset_from_datasetname_only(input__datasetname, created_by="create_dataset_from_datasetname_only"):
         ret_did_create_dataset = False
         ret_Dataset_UUID = ""
@@ -41,5 +51,17 @@ class ETL_DatasetService():
         return ret_List
 
     @staticmethod
+    def is_a_valid_subtype_string(input__string):
+        retBool = False
+        try:
+            input__string = str(input__string).strip()
+            valid_subtypes_string_list = ETL_DatasetService.get_all_subtypes_as_string_array()
+            if (input__string in valid_subtypes_string_list):
+                retBool = True
+        except:
+            retBool = False
+        return retBool
+
+    @staticmethod
     def get_all_subtypes_as_string_array():
-        return {"subtypes": list(ETL_Dataset.objects.all().values_list('dataset_subtype'))}
+        return list(ETL_Dataset.objects.order_by('dataset_subtype').values_list('dataset_subtype', flat=True).distinct())
