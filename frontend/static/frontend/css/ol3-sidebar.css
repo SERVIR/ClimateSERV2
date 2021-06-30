@@ -21,6 +21,12 @@
   .sidebar {
     width: 305px;
   }
+  span.rst__rowTitle {
+    font-size: .8em;
+  }
+  .legend-btn, .settings-btn {
+    font-size: .75em;
+  }
 }
 @media (min-width: 992px) and (max-width: 1199px) {
   .sidebar {

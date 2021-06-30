@@ -55,7 +55,7 @@ body {
   background-size: cover;
 }
 
-.navbar-collapse.collapse {
+.navbar-collapse {
   text-align: center;
   width: 100%;
 }
@@ -419,20 +419,6 @@ button.w-100.bread-crumb.active {
   min-height: 200px;
   position: relative;
   width: calc(100% - 10px);
-}
-
-.basemapbtn {
-  max-width: calc(50% - 12px);
-  border-radius: 0.317rem;
-  margin: 5px;
-  box-shadow: 2px 2px 2px #002a53a1;
-}
-
-.basemapbtn:hover {
-  max-width: calc(50% - 12px);
-  border-radius: 0.317rem;
-  margin: 5px;
-  box-shadow: 2px 2px 2px #002953;
 }
 
 .ol-attribution {

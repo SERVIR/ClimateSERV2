@@ -77,6 +77,10 @@ body {
   font-size: 14.4pt;
 }
 
+.ui-icon-closethick {
+  background-position: unset;
+}
+
 .legend-btn, .settings-btn {
   cursor: pointer;
 }
@@ -197,4 +201,19 @@ ol {
   -ms-flex-pack: justify;
   justify-content: space-between;
   background-color: #fff;
+}
+
+.basemapbtn {
+  max-width: calc(50% - 12px);
+  border-radius: 0.317rem;
+  margin: 5px;
+  box-shadow: 2px 2px 2px #002a53a1;
+  cursor: pointer;
+}
+
+.basemapbtn:hover {
+  max-width: calc(50% - 12px);
+  border-radius: 0.317rem;
+  margin: 5px;
+  box-shadow: 2px 2px 2px #002953;
 }
