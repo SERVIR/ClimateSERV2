@@ -1,10 +1,17 @@
 from django.shortcuts import render
 
 
-# Create your views here.
 def index(request):
     return render(request, 'index.html', context={'nonya': 'business'})
 
-# Create your views here.
-def map(request):
+
+def map_app(request):
     return render(request, 'map.html', context={'nonya': 'business'})
+
+
+def about(request):
+    return render(request, 'about.html', context={'nonya': 'business'})
+
+
+def help_center(request):
+    return render(request, 'help.html', context={'nonya': 'business'})

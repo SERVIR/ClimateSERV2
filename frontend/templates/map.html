@@ -2,32 +2,37 @@
 {% load static %}
 {% block title %}ClimateSERV - Map{% endblock %}
 {% block script %}
-    <link href="{% static 'frontend/css/jquery-ui.min.css' %}" rel="stylesheet"
-          rel="stylesheet"
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/jquery-ui.min.css' %}"
     />
-<link
-        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
-        rel="stylesheet"
-/>
-<link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css"
-/>
-<link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
-/>
-<link rel="stylesheet" href="{% static 'frontend/css/leaflet.draw.css' %}" />
-
-<link
-        rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
-/>
-<link rel="stylesheet" href="{% static 'frontend/css/leaflet.timedimension.control.min.css' %}" />
-<link href="{% static 'frontend/css/leaflet-sidebar.css' %}" rel="stylesheet" />
-<link href="{% static 'frontend/css/ol3-sidebar.css' %}" rel="stylesheet" />
-<link href="{% static 'frontend/css/bulma.min.css' %}" rel="stylesheet" />
-<link href="{% static 'frontend/css/map.css' %}" rel="stylesheet" />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.2/css/all.min.css"
+    />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/default.min.css"
+    />
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/leaflet.draw.css' %}"
+    />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/leaflet.timedimension.control.min.css' %}"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/leaflet-sidebar.css' %}"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/ol3-sidebar.css' %}"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/map.css' %}"
+    />
 
 {% endblock %}
 
@@ -55,7 +60,6 @@
                             <a href="#basemap" role="tab"><i class="fas fa-map"></i></a>
                         </li>
                     </ul>
-
                     <ul role="tablist">
                         <li>
                             <a href="#settings" role="tab"><i class="fas fa-cog"></i></a>
@@ -69,8 +73,8 @@
                         <h1 class="sidebar-header">
                             Layers
                             <span class="sidebar-close">
-                  <i class="fas fa-caret-left"></i>
-                </span>
+                              <i class="fas fa-caret-left"></i>
+                            </span>
                         </h1>
 
                         <ol class="layers vertical" id="layer-list"></ol>
@@ -78,16 +82,21 @@
 
                     <div class="sidebar-pane" id="chart">
                         <h1 class="sidebar-header">
-                            Statistical Query<span class="sidebar-close">
-                  <i class="fas fa-caret-left"></i>
-                </span>
+                            Statistical Query
+                            <span class="sidebar-close">
+                              <i class="fas fa-caret-left"></i>
+                            </span>
                         </h1>
                         <div class="btn-group d-flex">
                             <button class="w-100 bread-crumb active" disabled="">
                                 Set AOI
                             </button>
-                            <button class="w-100 bread-crumb" disabled="">Set Data</button>
-                            <button class="w-100 bread-crumb" disabled="">Review</button>
+                            <button class="w-100 bread-crumb" disabled="">
+                                Set Data
+                            </button>
+                            <button class="w-100 bread-crumb" disabled="">
+                                Review
+                            </button>
                         </div>
 
                         <div id="step1">
@@ -121,26 +130,25 @@
                                     Select
                                 </button>
                             </div>
-                            <div
-                                    class="tab-content selectAOI"
-                                    id="drawAOI"
-                                    style="display: none"
+                            <div class="tab-content selectAOI"
+                                 id="drawAOI"
+                                 style="display: none"
                             >
-                                <span class="draw-info">Enabled</span>
-                                <span class="draw-info bottom"
-                                >Follow this example to draw</span
-                                >
-                                <img
-                                        src="{% static 'frontend/img/draw_demo.gif'  %}"
-                                        alt="Draw on map"
-                                        style="max-height: 100%; max-width: 100%"
+                                <span class="draw-info">
+                                    Enabled
+                                </span>
+                                <span class="draw-info bottom">
+                                    Follow this example to draw
+                                </span>
+                                <img src="{% static 'frontend/img/draw_demo.gif' %}"
+                                     alt="Draw on map"
+                                     style="max-height: 100%; max-width: 100%"
                                 />
                             </div>
 
-                            <div
-                                    class="tab-content selectAOI"
-                                    id="uploadAOI"
-                                    style="display: none"
+                            <div class="tab-content selectAOI"
+                                 id="uploadAOI"
+                                 style="display: none"
                             >
                                 <div class="acontainer">
                                     <div class="drop-container" id="drop-container">
@@ -149,7 +157,7 @@
                                             Drag &amp; Drop json, geojson, or zipped shapefile here
                                             or click to select file
                                         </div>
-                                        <input class="file-input" type="file" multiple="" />
+                                        <input class="file-input" type="file" multiple=""/>
                                     </div>
                                     <div class="file-display-container"></div>
                                 </div>
@@ -171,7 +179,7 @@
                             </div>
 
                             <div class="selectAOI" id="selectAOI" style="display: none">
-                                <p style="font-weight: 900; padding: 20px 0px 10px">
+                                <p style="font-weight: 900; padding: 20px 0 10px">
                                     Select features by:
                                 </p>
                                 <div class="btn-group d-flex">
@@ -200,7 +208,7 @@
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                <button disabled="" style="position: absolute; right: 0px">
+                                <button disabled="" style="position: absolute; right: 0">
                                     Next
                                 </button>
                             </div>
@@ -250,7 +258,7 @@
             src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"
     ></script>
     <script type="text/javascript" src="{% static 'frontend/js/leaflet.draw.js' %}"></script>
-     <script
+    <script
             type="text/javascript"
             src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"
     ></script>
@@ -316,16 +324,16 @@
                 <div style="height: 100%">
                     <div class="rst__rowWrapper">
                         <div class="rst__row" style="opacity: 1">
-                            <div class="rst__moveHandle" draggable="true" ondrop="reorderLayers(event, something)"></div>
+                            <div class="rst__moveHandle" draggable="true"></div>
                             <div class="rst__rowContents">
                                 <div class="rst__rowLabel">
                                   <span class="rst__rowTitle">
                                       <input type="checkbox"
                                              id="{id}"
                                              name="{id}"
-                                             onchange="toggleLayer('{layername}')" />
+                                             onchange="toggleLayer('{layername}')"/>
                                       <label for="{id}" title="{title}">{title}</label>
-                                      <br />
+                                      <br/>
                                   </span>
                                     <div>
                                         <i class="fas fa-list legend-btn"
@@ -370,14 +378,16 @@
             Select Color Scheme
         </label>
             <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
-            </select><br><button id="applyStylebtn" style="
+            </select><br>
+            <button id="applyStylebtn" style="
               float: right;
           ">
-            Apply
-        </button>
+                Apply
+            </button>
             <br><br>
             <label for="opacityctrl" style="font-weight: 100">Opacity</label>
-            <input id="opacityctrl" type="range" class="layer-opacity form-control" min="0" max="1" step=".01" value="1" style="width:100%">
+            <input id="opacityctrl" type="range" class="layer-opacity form-control" min="0" max="1" step=".01" value="1"
+                   style="width:100%">
         </div>
     </script>
 

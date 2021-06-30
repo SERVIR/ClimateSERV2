@@ -82,8 +82,18 @@ function buildStyles() {
   $.get(globalLayerArray[0].url + "&request=GetCapabilities", function (xml) {
     var jsonObj = $.xml2json(xml);
     var styles =
-      jsonObj["#document"].WMS_Capabilities.Capability.Layer.Layer.Layer.Style;
-
+      jsonObj["#document"]
+          .WMS_Capabilities
+          .Capability
+          .Layer
+          .Layer
+          .Layer
+          .Style
+          .sort(function(a, b){
+            var x = a.Name;
+            var y = b.Name;
+            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+          });
     for (i = 0; i < styles.length; i++) {
       styleOptions.push({
         val: styles[i].Name,
@@ -239,6 +249,9 @@ function mapSetup() {
     });
     img.appendTo("#basemap");
     }
+  map.on('layeradd',(e)=>{
+    adjustLayerIndex();
+  });
 }
 
 /**
@@ -264,7 +277,6 @@ function toggleLayer(which) {
   } else {
     map.addLayer(overlayMaps[which]);
   }
-  adjustLayerIndex();
 }
 
 /**
