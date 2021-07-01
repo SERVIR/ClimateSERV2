@@ -38,7 +38,7 @@
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     <script>
         $(document).ready(function () {
-            setActive("mnhome");
+            setActive("{{ page }}");
         });
     </script>
 </head>
@@ -62,17 +62,17 @@
     <div class="navbar-collapse collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
                 <li>
-            <a aria-current="page" id="mnhome" class="nav-link" href="{% url 'home' %}">Home</a>
+            <a aria-current="page" id="menu-home" class="nav-link" href="{% url 'ClimateSERV_UI:home' %}">Home</a>
                 </li>
                 <li>
-            <a class="nav-link" id="mnmap" href="{% url 'map' %}">Map</a>
+            <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">Map</a>
                 </li>
                 <li>
-            <a class="nav-link" id="mnabout" href="{% url 'about' %}">About</a>
+            <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">About</a>
                 </li>
             </ul>
         <div class="navbar-nav">
-            <a class="nav-link" id="mnhelp" href="{% url 'help' %}">Help Center</a>
+            <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">Help Center</a>
         </div>
     </div>
 </nav>
