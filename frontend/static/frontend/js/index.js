@@ -62,19 +62,19 @@ function initIndex() {
   $("#usageCarousel").carousel({
     interval: false,
   });
-  $.each(dataItems, function (index, item) {
-    var active = index === 0;
-    if (index === 0) {
-      $("#dataCarouselItems").append(
-        getItemHtml(item).replace(
-          "carousel-item h-100",
-          "carousel-item active h-100"
-        )
-      );
-    } else {
-      $("#dataCarouselItems").append(getItemHtml(item));
-    }
-  });
+  // $.each(dataItems, function (index, item) {
+  //   var active = index === 0;
+  //   if (index === 0) {
+  //     $("#dataCarouselItems").append(
+  //       getItemHtml(item).replace(
+  //         "carousel-item h-100",
+  //         "carousel-item active h-100"
+  //       )
+  //     );
+  //   } else {
+  //     $("#dataCarouselItems").append(getItemHtml(item));
+  //   }
+  // });
 
   $("#dataCarousel").carousel({
     interval: 2000,

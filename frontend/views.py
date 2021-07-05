@@ -1,8 +1,12 @@
 from django.shortcuts import render
+from .models import *
 
 
 def index(request):
-    return render(request, 'index.html', context={'page': 'menu-home'})
+    return render(request, 'index.html', context={
+        'page': 'menu-home',
+        'datasets': DataSet.objects.all(),
+    })
 
 
 def map_app(request):

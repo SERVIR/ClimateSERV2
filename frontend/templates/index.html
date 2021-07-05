@@ -67,7 +67,46 @@
                         class="carousel-inner w-100"
                         role="listbox"
                         id="dataCarouselItems"
-                ></div>
+                >
+                    {% for dataset in datasets %}
+                        <div class="carousel-item {% if forloop.counter == 1 %}
+       active h-100
+       {% else %} w-100 {% endif %}">
+                            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
+                                <div class="card bg-servir ">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ dataset.heading }}</h5>
+                                        <p class="card-text">
+                                            {{ dataset.summary }}
+                                        </p>
+                                    </div>
+                                    <p class="card-text">
+                                        <img src="{% static 'frontend/' %}{{ dataset.image_src }}"
+                                             alt="{{ dataset.image_alt }}"
+                                             class="product-card-img">
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <button class="card-button"
+                                                    onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
+                                                    title="Help Center">
+                                                Help Center
+                                            </button>
+                                        </div>
+                                        <div class="col-6">
+                                            <button class="card-button"
+                                                    onclick="window.location = 'map?data={{ dataset.button_variable }}'"
+                                                    title="{{ dataset.button_text }}">
+                                                {{ dataset.button_text }}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                </div>
                 <a
                         class="carousel-control-prev"
                         href="#dataCarousel"
