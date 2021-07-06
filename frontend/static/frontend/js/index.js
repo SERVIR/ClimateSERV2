@@ -1,23 +1,4 @@
 /**
- * Clones the carousel item template and replaces the fields with
- * item attributes then returns the html.
- * @param {object} item - Data item object (data-item.js)
- * @returns html
- */
-function getItemHtml(item) {
-  var replica = $("#dataCarouselItemsTemplate:first").clone();
-  return replica
-    .html()
-    .replace("{title}", item.title)
-    .replace("{description}", item.text)
-    .replace("{imagesrc}", static_url + 'frontend/' + item.image.src )
-    .replace("{imagealt}", "'" + item.image.alt + "'")
-    .replaceAll("{buttontext}", item.button.text)
-    .replace("{metaid}", item.metedata)
-    .replace("{buttonlocation}", "'" + item.button.location + "'");
-}
-
-/**
  * Sets the active “you can do” slide
  * @param {int} which - index of the slide to activate
  */
@@ -62,19 +43,6 @@ function initIndex() {
   $("#usageCarousel").carousel({
     interval: false,
   });
-  // $.each(dataItems, function (index, item) {
-  //   var active = index === 0;
-  //   if (index === 0) {
-  //     $("#dataCarouselItems").append(
-  //       getItemHtml(item).replace(
-  //         "carousel-item h-100",
-  //         "carousel-item active h-100"
-  //       )
-  //     );
-  //   } else {
-  //     $("#dataCarouselItems").append(getItemHtml(item));
-  //   }
-  // });
 
   $("#dataCarousel").carousel({
     interval: 2000,

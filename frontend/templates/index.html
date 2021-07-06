@@ -36,14 +36,7 @@
     </div>
     <div style="background-color: #f6f6f6; padding: 50px 5px 0 5px">
         <div class="row mx-auto my-auto">
-            <h2
-                    style="
-            border-bottom: 1px solid rgb(189, 209, 47);
-            font-size: 100%;
-            font-weight: 400;
-            width: 100%;
-          "
-            >
+            <h2 class="underline-header" >
                 Background
             </h2>
             <p style="padding: 15px 15px 0 15px">
@@ -69,9 +62,7 @@
                         id="dataCarouselItems"
                 >
                     {% for dataset in datasets %}
-                        <div class="carousel-item {% if forloop.counter == 1 %}
-       active h-100
-       {% else %} w-100 {% endif %}">
+                        <div class="carousel-item {% if forloop.counter == 1 %} active h-100 {% else %} w-100 {% endif %}">
                             <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
                                 <div class="card bg-servir ">
                                     <div class="card-body">
@@ -131,14 +122,7 @@
 
     <div class="carousel-holder">
         <div class="row mx-auto my-auto">
-            <h2
-                    style="
-            border-bottom: 1px solid rgb(189, 209, 47);
-            font-size: 100%;
-            font-weight: 400;
-            width: 100%;
-          "
-            >
+            <h2 class="underline-header">
                 What you can do with ClimateSERV
             </h2>
             <div
@@ -158,9 +142,7 @@
                                         class="img-fluid do-with-img"
                                 />
                                 <p>
-                    <span style="font-weight: 600; color: #3b6e22"
-                    >As a student</span
-                    >
+                    <span class="active-title">As a student</span>
                                     you can use ClimateSERV data to help in your thesis. For
                                     example you could use Integrated Multi-satellitE Retrievals
                                     for GPM (IMERG) dataset which provides near-realtime global
@@ -208,9 +190,7 @@
                                         class="img-fluid do-with-img"
                                 />
                                 <p>
-                    <span style="font-weight: 600; color: #3b6e22"
-                    >As a researcher</span
-                    >
+                    <span class="active-title" >As a researcher</span>
                                     you could use NDVI and rainfall data from ClimateSERV to
                                     identify the effects of interventions by selecting two areas
                                     of interest, one control with no intervention and another
@@ -259,7 +239,7 @@
                                         class="img-fluid do-with-img"
                                 />
                                 <p>
-                    <span style="font-weight: 600; color: #3b6e22">
+                    <span sclass="active-title">
                       As a decision maker
                     </span>
                                     you could use the rainfall data from ClimateSERV to help
@@ -304,42 +284,4 @@
         </div>
     </div>
 
-{% endblock %}
-
-{% block item-template %}
-    <script id="dataCarouselItemsTemplate" type="text/template">
-        <div class="carousel-item h-100">
-            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
-                <div class="card bg-servir ">
-                    <div class="card-body">
-                        <h5 class="card-title">{title}</h5>
-                        <p class="card-text">
-                            {description}
-                        </p>
-                    </div>
-                    <p class="card-text">
-                        <img src="{imagesrc}"
-                             alt="{imagealt}"
-                             class="product-card-img">
-                    </p>
-                    <div class="row">
-                        <div class="col-6">
-                            <button class="card-button"
-                                    onclick="window.location = '/help?metaid={metaid}'"
-                                    title="Help Center">
-                                Help Center
-                            </button>
-                        </div>
-                        <div class="col-6">
-                            <button class="card-button"
-                                    onclick="window.location = {buttonlocation}"
-                                    title="{buttontext}">
-                                {buttontext}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </script>
 {% endblock %}

@@ -110,6 +110,17 @@ body {
   max-width: calc(100vw - 100px);
 }
 
+.underline-header {
+  border-bottom: 1px solid rgb(189, 209, 47);
+  font-size: 100%;
+  font-weight: 400;
+  width: 100%;
+}
+
+.active-title {
+  font-weight: 600; color: #3b6e22
+}
+
 .do-with-img {
   float: right;
   margin: 10px;
