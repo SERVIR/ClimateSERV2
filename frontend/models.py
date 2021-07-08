@@ -14,7 +14,7 @@ class DataSet(models.Model):
     short_name = models.CharField(max_length=200, help_text='Enter a short name to identify the dataset', default="Enter-Name")
     heading = models.CharField(max_length=200, help_text='Enter heading to display on home page when featured')
     summary = models.TextField(help_text="Enter summary to display on home page when featured")
-    dataset_image = models.ImageField(upload_to='images/', default=None)
+    #dataset_image = models.ImageField(upload_to='images/', default=None)
     image_alt = models.CharField(max_length=200, help_text="Enter alt text to display on mouse over of feature image")
     image_src = models.CharField(max_length=200, help_text="trying to remove this", default="")
 
