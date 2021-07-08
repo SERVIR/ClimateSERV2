@@ -1,24 +1,34 @@
 .sidebar {
+  font-size: 1rem;
   position: absolute;
-  top: 0;
-  bottom: 0;
+  top: 74px;
+  bottom: 58px;
   width: 100%;
   overflow: hidden;
   z-index: 2000;
+  background-color: rgba(255, 255, 255, 0.4);
 }
 .sidebar.collapsed {
   width: 40px;
 }
 @media (min-width: 768px) {
   .sidebar {
-    top: 10px;
-    bottom: 10px;
+    top: 74px;
+    bottom: 58px;
     transition: width 500ms;
+    border: 3px solid transparent;
+    border-radius: 4px;
   }
 }
 @media (min-width: 768px) and (max-width: 991px) {
   .sidebar {
     width: 305px;
+  }
+  span.rst__rowTitle {
+    font-size: .8em;
+  }
+  .legend-btn, .settings-btn {
+    font-size: .75em;
   }
 }
 @media (min-width: 992px) and (max-width: 1199px) {
@@ -34,10 +44,11 @@
 
 .sidebar-left {
   left: 0;
+  border-right: 3px solid transparent;
 }
 @media (min-width: 768px) {
   .sidebar-left {
-    left: 10px;
+    left: 6px;
   }
 }
 
@@ -46,7 +57,7 @@
 }
 @media (min-width: 768px) {
   .sidebar-right {
-    right: 10px;
+    right: 6px;
   }
 }
 
@@ -54,7 +65,8 @@
   top: 0;
   bottom: 0;
   height: 100%;
-  background-color: #fff;
+  background-color: rgba(0, 60, 136, 0.5);
+  overflow: hidden;
 }
 .sidebar-left .sidebar-tabs {
   left: 0;
@@ -74,15 +86,15 @@
 .sidebar-tabs > ul > li {
   width: 100%;
   height: 40px;
-  color: #333;
+  color: #fff;
   font-size: 12pt;
   overflow: hidden;
   transition: all 80ms;
 }
 .sidebar-tabs > li:hover,
 .sidebar-tabs > ul > li:hover {
-  color: #000;
-  background-color: #eee;
+  color: #fff;
+  background-color: rgba(0, 60, 136, 0.6);
 }
 .sidebar-tabs > li.active,
 .sidebar-tabs > ul > li.active {
@@ -91,7 +103,7 @@
 }
 .sidebar-tabs > li.disabled,
 .sidebar-tabs > ul > li.disabled {
-  color: rgba(51, 51, 51, 0.4);
+  color: rgba(255, 255, 255, 0.4);
 }
 .sidebar-tabs > li.disabled:hover,
 .sidebar-tabs > ul > li.disabled:hover {
@@ -149,6 +161,12 @@
   .sidebar-pane {
     min-width: 265px;
   }
+  .sidebar-tabs {
+    border-radius: 2px 0 0 2px;
+  }
+  .collapsed .sidebar-tabs {
+    border-radius: 2px;
+  }
 }
 @media (min-width: 992px) and (max-width: 1199px) {
   .sidebar-pane {
@@ -168,7 +186,7 @@
   line-height: 40px;
   font-size: 14.4pt;
   color: #fff;
-  background-color: #0074d9;
+  background-color: #002a53;
 }
 .sidebar-right .sidebar-header {
   padding-left: 40px;
@@ -201,11 +219,6 @@
 .sidebar-right ~ .sidebar-map {
   margin-right: 40px;
 }
-@media (min-width: 768px) {
-  .sidebar-right ~ .sidebar-map {
-    margin-right: 0;
-  }
-}
 
 .sidebar {
   box-shadow: 0 1px 5px rgba(0, 0, 0, 0.65);
@@ -216,6 +229,7 @@
 }
 @media (min-width: 768px) {
   .sidebar {
+    border: 3px solid transparent;
     border-radius: 4px;
   }
   .sidebar.leaflet-touch {

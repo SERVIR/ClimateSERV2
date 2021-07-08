@@ -14,7 +14,7 @@ class DataSet(models.Model):
     short_name = models.CharField(max_length=200, help_text='Enter a short name to identify the dataset', default="Unnamed")
     heading = models.CharField(max_length=200, help_text='Enter heading to display on home page when featured')
     summary = models.TextField(help_text="Enter summary to display on home page when featured")
-    image_src = models.TextField(help_text='Enter url of image to display on home page when featured')
+    dataset_image = models.ImageField(upload_to='images/', default=None)
     image_alt = models.CharField(max_length=200, help_text="Enter alt text to display on mouse over of feature image")
     button_variable = models.CharField(max_length=200, help_text='Enter variable to pass to map application which '
                                                                  'will enable the selected data type on the map')
