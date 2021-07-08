@@ -62,34 +62,32 @@
                         id="dataCarouselItems"
                 >
                     {% for dataset in datasets %}
-                        <div class="carousel-item {% if forloop.counter == 1 %} active h-100 {% else %} w-100 {% endif %}">
-                            <div class="col-lg-4 col-md-6 col-sm-12 mb-4">
-                                <div class="card bg-servir ">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ dataset.heading }}</h5>
-                                        <p class="card-text">
-                                            {{ dataset.summary }}
-                                        </p>
-                                    </div>
-                                    <p class="card-text">
-                                        <img src="{% static 'frontend/' %}{{ dataset.image_src }}"
-                                             alt="{{ dataset.image_alt }}"
-                                             class="product-card-img">
-                                    </p>
+                        <div class="mbr-section
+				mbr-section-hero
+				carousel-item dark
+				center mbr-section-full
+				carousel-item {% if forloop.counter == 1 %} active h-100 {% else %} w-100 {% endif %}"
+                             style="background-image: url({% static 'frontend/' %}{{ dataset.image_src }}); background-size: cover; min-height:600px;">
+                            <div class="mbr-table-cell">
+                                <div class="mbr-overlay" style="background-color: rgb(49, 47, 46);"></div>
+                                <div class="container-slide container">
                                     <div class="row">
-                                        <div class="col-6">
-                                            <button class="card-button"
-                                                    onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
-                                                    title="Help Center">
-                                                Help Center
-                                            </button>
-                                        </div>
-                                        <div class="col-6">
-                                            <button class="card-button"
-                                                    onclick="window.location = 'map?data={{ dataset.button_variable }}'"
-                                                    title="{{ dataset.button_text }}">
-                                                {{ dataset.button_text }}
-                                            </button>
+                                        <div class="col-md-8 col-md-offset-1" style="color:white;">
+                                            <h2 class="mbr-section-title display-4">{{ dataset.heading }}</h2>
+                                            <p class="mbr-section-lead lead">{{ dataset.summary }}</p>
+
+                                            <div class="mbr-section-btn">
+                                                <button class="btn btn-lg btn-info"
+                                                   onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
+                                                   title="Help Center">
+                                                    Help Center
+                                                    </button>
+                                                <button
+                                                        class="btn btn-lg btn-info"
+                                                        onclick="window.location = 'map?data={{ dataset.button_variable }}'"
+                                                        title="{{ dataset.button_text }}">{{ dataset.button_text }}</button>
+
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

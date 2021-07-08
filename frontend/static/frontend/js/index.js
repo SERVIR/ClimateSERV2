@@ -45,27 +45,32 @@ function initIndex() {
   });
 
   $("#dataCarousel").carousel({
-    interval: 2000,
-    transition: "fade-in",
+    interval: 8000,
+    transition: "transform 2s ease, opacity .5s ease-out"
+    // transition: "fade-in",
   });
 
-  $("#dataCarousel.carousel .carousel-item").each(function () {
-    var minPerSlide = 3;
-    var next = $(this).next();
-    if (!next.length) {
-      next = $(this).siblings(":first");
-    }
-    next.children(":first-child").clone().appendTo($(this));
+  $('#dataCarousel').on('slide.bs.carousel', function () {
+    adjustCards();
+  })
 
-    for (var i = 0; i < minPerSlide; i++) {
-      next = next.next();
-      if (!next.length) {
-        next = $(this).siblings(":first");
-      }
-
-      next.children(":first-child").clone().appendTo($(this));
-    }
-  });
+  // $("#dataCarousel.carousel .carousel-item").each(function () {
+  //   var minPerSlide = 3;
+  //   var next = $(this).next();
+  //   if (!next.length) {
+  //     next = $(this).siblings(":first");
+  //   }
+  //   next.children(":first-child").clone().appendTo($(this));
+  //
+  //   for (var i = 0; i < minPerSlide; i++) {
+  //     next = next.next();
+  //     if (!next.length) {
+  //       next = $(this).siblings(":first");
+  //     }
+  //
+  //     next.children(":first-child").clone().appendTo($(this));
+  //   }
+  // });
 
   adjustCards();
 }
