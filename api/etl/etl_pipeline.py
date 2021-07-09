@@ -1,6 +1,6 @@
 import os, sys
 
-from api.services import Config_SettingService, ETL_DatasetService, ETL_LogService
+from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService
 
 from ..models import Config_Setting
 from ..models import ETL_Dataset
@@ -182,12 +182,10 @@ class ETL_Pipeline():
     # Standard Function to record all Attempted Granules for this pipeline run to the Database.
     # Wrapper for creating
     def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="", granule_pipeline_state="ATTEMPTING", additional_json={}):
-        # granule_pipeline_state=settings.GRANULE_PIPELINE_STATE__ATTEMPTING
-
         self__etl_pipeline_run_uuid     = self.ETL_PipelineRun__UUID
         self__etl_dataset_uuid          = self.etl_dataset_uuid
         self__etl_dataset_name          = "ETL_PIPELINE__" + self.dataset_name
-        etl_Granule_Row_UUID = ETL_Granule.create_new_ETL_Granule_row(granule_name=granule_name,
+        etl_Granule_Row_UUID = ETL_GranuleService.create_new_ETL_Granule_row(granule_name=granule_name,
                                                                       granule_contextual_information=granule_contextual_information,
                                                                       etl_pipeline_run_uuid=self__etl_pipeline_run_uuid,
                                                                       etl_dataset_uuid=self__etl_dataset_uuid,
@@ -199,9 +197,8 @@ class ETL_Pipeline():
         return etl_Granule_Row_UUID
 
     # Standard Function to update the State of an individual ETL Granule's granule_pipeline_state property - (When a granule has succeeded or failed)
-    # def update_existing_ETL_Granule__granule_pipeline_state(granule_uuid, new__granule_pipeline_state):
     def etl_granule__Update__granule_pipeline_state(self, granule_uuid, new__granule_pipeline_state, is_error=False):
-        is_update_succeed = ETL_Granule.update_existing_ETL_Granule__granule_pipeline_state(granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__granule_pipeline_state(granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state)
         if is_error == True:
             self.new_etl_granule_ids__ERRORS.append(granule_uuid)
             # Placing this function call here means we don't have to ever call this from the type specific classes (Custom ETL Classes)
