@@ -28,7 +28,6 @@ class ETL_Pipeline():
     END_30MININCREMENT_NN       = ""
     REGION_CODE                 = ""
     WEEKLY_JULIAN_START_OFFSET  = ""
-    # TODO: If there are more Params, they go here
 
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -90,11 +89,9 @@ class ETL_Pipeline():
         # Julian Date Weekly Offset
         retObj["WEEKLY_JULIAN_START_OFFSET"] = str(self.WEEKLY_JULIAN_START_OFFSET).strip()
 
-
         # Pipeline - Dataset Config Options - Set by Reading From the Database
         retObj["dataset_name"]              = str(self.dataset_name).strip()
         retObj["dataset_JSONable_Object"]   = str(self.dataset_JSONable_Object).strip()
-
 
         retObj["new_etl_log_ids__EVENTS"]   = str(self.new_etl_log_ids__EVENTS).strip()
         retObj["new_etl_log_ids__ERRORS"]   = str(self.new_etl_log_ids__ERRORS).strip()
@@ -102,8 +99,6 @@ class ETL_Pipeline():
         retObj["new_etl_granule_ids"]               = str(self.new_etl_granule_ids).strip()
         retObj["new_etl_granule_ids__ERRORS"]       = str(self.new_etl_granule_ids__ERRORS).strip()
         retObj["affected_Available_Granule_ids"]    = str(self.affected_Available_Granule_ids).strip()
-
-        #retObj["FUTURE_PARAM"] = str(self.FUTURE_PARAM).strip()
 
         return retObj
 
@@ -116,8 +111,6 @@ class ETL_Pipeline():
         if not os.path.exists(dir_path):
             try:
                 os.makedirs(dir_path)
-                #print("DONE: log_etl_event - Created New Directory: " + str(dir_path))
-                #activity_event_type     = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_DIRECTORY_CREATED
                 activity_event_type     = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_DIRECTORY_CREATED", default_or_error_return_value="Directory Created")
                 activity_description    = "New Directory created at path: " + str(dir_path)
                 additional_json         = self.to_JSONable_Object()
@@ -126,7 +119,6 @@ class ETL_Pipeline():
             except:
                 # Log the Error (Unable to create a new directory)
                 sysErrorData = str(sys.exc_info())
-                #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
                 activity_description = "Unable to create new directory at: " + str(dir_path) + ".  Sys Error Message: " + str(sysErrorData)
                 additional_json = self.to_JSONable_Object()
@@ -134,7 +126,6 @@ class ETL_Pipeline():
                 ret_IsError = True
         # END OF        if not os.path.exists(dir_path):
         return ret_IsError
-
 
     # ###########################################################################################
     # # STANDARD WRAPPER FUNCTIONS - Used by this class and many of the ETL Script Sub Classes
@@ -193,7 +184,6 @@ class ETL_Pipeline():
                                                                       created_by=self__etl_dataset_name,
                                                                       additional_json=additional_json)
         self.new_etl_granule_ids.append(etl_Granule_Row_UUID)
-        print(etl_Granule_Row_UUID)
         return etl_Granule_Row_UUID
 
     # Standard Function to update the State of an individual ETL Granule's granule_pipeline_state property - (When a granule has succeeded or failed)
@@ -314,12 +304,10 @@ class ETL_Pipeline():
             self.log__pipeline_run__exit()
             return
 
-        # Validate that the dataset subtype is NOT Blank
+        # Validate that the dataset subtype is valid
         is_valid_subtype = ETL_DatasetService.is_a_valid_subtype_string(input__string=current_Dataset_SubType)
         if is_valid_subtype == False:
-            # TODO
             list_of_valid__dataset_subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
-            # activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR
             activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
             activity_description = "Unable to start pipeline.  The dataset subtype was invalid.  The value tried was: '" + current_Dataset_SubType + "'.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
             additional_json = self.to_JSONable_Object()
@@ -342,7 +330,8 @@ class ETL_Pipeline():
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
                 MM__Month__End=self.END_MONTH_MM,
-                N_offset_for_weekly_julian_start_date=self.WEEKLY_JULIAN_START_OFFSET
+                DD__Day__Start=self.START_DAY_DD,
+                DD__Day__End=self.END_DAY_DD
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
