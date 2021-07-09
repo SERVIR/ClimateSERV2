@@ -16,7 +16,6 @@ class DataSet(models.Model):
     summary = models.TextField(help_text="Enter summary to display on home page when featured")
     display_image = models.ImageField(default=1, upload_to='images/')
     image_alt = models.CharField(max_length=200, help_text="Enter alt text to display on mouse over of feature image")
-    #image_src = models.CharField(max_length=200, help_text="trying to remove this", default="")
 
     button_variable = models.CharField(max_length=200, help_text='Enter variable to pass to map application which '
                                                                  'will enable the selected data type on the map')
