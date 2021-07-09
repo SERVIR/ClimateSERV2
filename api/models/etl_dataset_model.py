@@ -26,7 +26,7 @@ class ETL_Dataset(models.Model):
     is_test_object = models.BooleanField(default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
 
     def __str__(self):
-        return self.uuid
+        return '{} ({})'.format(self.dataset_name, self.dataset_subtype)
 
     class Meta:
         verbose_name = 'ETL Dataset'
