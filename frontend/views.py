@@ -5,7 +5,7 @@ from .models import *
 def index(request):
     return render(request, 'index.html', context={
         'page': 'menu-home',
-        'datasets': DataSet.objects.all(),
+        'datasets': DataSet.objects.exclude(featured=False).all(),
     })
 
 

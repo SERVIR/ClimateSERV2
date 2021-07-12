@@ -144,7 +144,7 @@ body {
 }
 
 .carousel-caption {
-  max-width: 65%;
+  max-width: 100%;
   left: 0px;
   bottom: 40%;
 }
