@@ -248,10 +248,8 @@ class ETL_Pipeline():
 
         # Create a new ETL_PipelineRun Database object and store the ID
         try:
-            # Use the Django ORM to create a new database object for this Pipeline Run Instance and Save it with all of it's defaults.  (A new UUID gets generated in the model file)
-            new__ETL_PipelineRun_Instance = ETL_PipelineRun()
-            new__ETL_PipelineRun_Instance.save()
-            self.ETL_PipelineRun__UUID = str(new__ETL_PipelineRun_Instance.uuid).strip() # Save this ID.
+            new_pipeline_run_created, new_pipeline_run_uuid = ETL_PipelineRunService.create_etl_pipeline_run()
+            self.ETL_PipelineRun__UUID = str(new_pipeline_run_uuid).strip() # Save this ID.
         except:
             # Log the Error (Unable to Create New Database Object for this Pipeline Run - This means something may be wrong with the database or the connection to the database.  This must be fixed for all of the below steps to work proplery.)
             sysErrorData            = str(sys.exc_info())
