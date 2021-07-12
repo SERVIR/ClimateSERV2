@@ -1,11 +1,10 @@
 import os, sys
 
-from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService
+from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
 from ..models import Config_Setting
 from ..models import ETL_Dataset
 from ..models import ETL_Granule
-from ..models import ETL_PipelineRun
 
 from ..serializers import ETL_DatasetSerializer
 
@@ -269,7 +268,6 @@ class ETL_Pipeline():
         try:
             dataset = ETL_Dataset.objects.get(pk=self.etl_dataset_uuid)
             self.dataset_JSONable_Object = ETL_DatasetSerializer(dataset).data
-            # self.dataset_JSONable_Object = ETL_Dataset.objects.filter(uuid=self.etl_dataset_uuid)[0].to_JSONable_Object()
             dataset_name = self.dataset_JSONable_Object['dataset_name']
         except:
             # Log the Error (Unable to read the dataset object from the database)
