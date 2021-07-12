@@ -1,15 +1,15 @@
 import os, sys
 
-from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService
+from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
 from ..models import Config_Setting
 from ..models import ETL_Dataset
 from ..models import ETL_Granule
-from ..models import ETL_PipelineRun
 
 from ..serializers import ETL_DatasetSerializer
 
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
+from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
 
 class ETL_Pipeline():
 
@@ -51,8 +51,10 @@ class ETL_Pipeline():
     Subtype_ETL_Instance = None
 
     # Default Constructor
-    def __init__(self):
+    def __init__(self, etl_dataset_uuid):
         self.class_name = "ETL_Pipeline"
+
+        self.etl_dataset_uuid = etl_dataset_uuid
 
     # Overriding the string function
     def __str__(self):
@@ -248,10 +250,8 @@ class ETL_Pipeline():
 
         # Create a new ETL_PipelineRun Database object and store the ID
         try:
-            # Use the Django ORM to create a new database object for this Pipeline Run Instance and Save it with all of it's defaults.  (A new UUID gets generated in the model file)
-            new__ETL_PipelineRun_Instance = ETL_PipelineRun()
-            new__ETL_PipelineRun_Instance.save()
-            self.ETL_PipelineRun__UUID = str(new__ETL_PipelineRun_Instance.uuid).strip() # Save this ID.
+            new_pipeline_run_created, new_pipeline_run_uuid = ETL_PipelineRunService.create_etl_pipeline_run()
+            self.ETL_PipelineRun__UUID = str(new_pipeline_run_uuid).strip() # Save this ID.
         except:
             # Log the Error (Unable to Create New Database Object for this Pipeline Run - This means something may be wrong with the database or the connection to the database.  This must be fixed for all of the below steps to work proplery.)
             sysErrorData            = str(sys.exc_info())
@@ -269,7 +269,6 @@ class ETL_Pipeline():
         try:
             dataset = ETL_Dataset.objects.get(pk=self.etl_dataset_uuid)
             self.dataset_JSONable_Object = ETL_DatasetSerializer(dataset).data
-            # self.dataset_JSONable_Object = ETL_Dataset.objects.filter(uuid=self.etl_dataset_uuid)[0].to_JSONable_Object()
             dataset_name = self.dataset_JSONable_Object['dataset_name']
         except:
             # Log the Error (Unable to read the dataset object from the database)
@@ -332,6 +331,27 @@ class ETL_Pipeline():
                 MM__Month__End=self.END_MONTH_MM,
                 DD__Day__Start=self.START_DAY_DD,
                 DD__Day__End=self.END_DAY_DD
+            )
+
+        # IMERG Early/Late
+        if current_Dataset_SubType in ("imerg_early", "imerg_late"):
+            # Create an instance of the subtype class - this class must implement each of the pipeline functions for this to work properly.
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self)
+            # Imerg is special, requires setting which mode it is in
+            if current_Dataset_SubType == "imerg_early":
+                self.Subtype_ETL_Instance.set_imerg_mode__To__Early()
+            else:
+                self.Subtype_ETL_Instance.set_imerg_mode__To__Late()
+            # Set IMERG Params
+            self.Subtype_ETL_Instance.set_imerg_params(
+                YYYY__Year__Start=self.START_YEAR_YYYY,
+                YYYY__Year__End=self.END_YEAR_YYYY,
+                MM__Month__Start=self.START_MONTH_MM,
+                MM__Month__End=self.END_MONTH_MM,
+                DD__Day__Start=self.START_DAY_DD,
+                DD__Day__End=self.END_DAY_DD,
+                NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
+                NN__30MinIncrement__End=self.END_30MININCREMENT_NN
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE

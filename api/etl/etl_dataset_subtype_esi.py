@@ -4,17 +4,19 @@ from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
 import numpy as np
-from collections import OrderedDict
 from bs4 import BeautifulSoup
+from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+
+from api.services import Config_SettingService
 from ..models import Config_Setting
 
 class esi(ETL_Dataset_Subtype_Interface):
 
     class_name = "esi"
-    etl_parent_pipeline_instance = None # def log_etl_error(self, activity_event_type="default_error", activity_description="an error occurred", etl_granule_uuid="", is_alert=True, additional_json={}):
+    etl_parent_pipeline_instance = None
 
     # esi Has more than 1 mode which refer to sub dataset products ("12week" and "4week")
     esi_mode = "12week"  # Choices at this time are "12week" and "4week" // Controlled by setter functions. // Default is "12week"
@@ -49,7 +51,6 @@ class esi(ETL_Dataset_Subtype_Interface):
         self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
         self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start
         self.MM__Month__End = MM__Month__End if MM__Month__End != 0 else self.MM__Month__End
-        self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
         self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
         self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
 
@@ -82,19 +83,14 @@ class esi(ETL_Dataset_Subtype_Interface):
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
     @staticmethod
     def get_final_load_dir(subtype_filter):
-        esi__4week__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__4WEEK", default_or_error_return_value="")      # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/4wk/'
-        esi__12week__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__12WEEK", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/12wk/'
-
-        esi__4week__finalloaddir = '/Users/rfontanarosa/git/ClimateSERV2/data/THREDDS/esi/4week'
-        esi__12week__finalloaddir = '/Users/rfontanarosa/git/ClimateSERV2/data/THREDDS/esi/12week'
-
-        ret_dir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
+        esi__4week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__4WEEK", default_or_error_return_value="")      # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/4wk/'
+        esi__12week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__12WEEK", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/12wk/'
+        ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_dir = esi__4week__finalloaddir
         if subtype_filter == '12week':
             ret_dir = esi__12week__finalloaddir
-
         return ret_dir
 
     # Get the Remote Locations for each of the subtypes
