@@ -9,6 +9,7 @@ from ..models import ETL_Granule
 from ..serializers import ETL_DatasetSerializer
 
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
+from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
 
 class ETL_Pipeline():
 
@@ -330,6 +331,27 @@ class ETL_Pipeline():
                 MM__Month__End=self.END_MONTH_MM,
                 DD__Day__Start=self.START_DAY_DD,
                 DD__Day__End=self.END_DAY_DD
+            )
+
+        # IMERG Early/Late
+        if current_Dataset_SubType in ("imerg_early", "imerg_late"):
+            # Create an instance of the subtype class - this class must implement each of the pipeline functions for this to work properly.
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self)
+            # Imerg is special, requires setting which mode it is in
+            if current_Dataset_SubType == "imerg_early":
+                self.Subtype_ETL_Instance.set_imerg_mode__To__Early()
+            else:
+                self.Subtype_ETL_Instance.set_imerg_mode__To__Late()
+            # Set IMERG Params
+            self.Subtype_ETL_Instance.set_imerg_params(
+                YYYY__Year__Start=self.START_YEAR_YYYY,
+                YYYY__Year__End=self.END_YEAR_YYYY,
+                MM__Month__Start=self.START_MONTH_MM,
+                MM__Month__End=self.END_MONTH_MM,
+                DD__Day__Start=self.START_DAY_DD,
+                DD__Day__End=self.END_DAY_DD,
+                NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
+                NN__30MinIncrement__End=self.END_30MININCREMENT_NN
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
