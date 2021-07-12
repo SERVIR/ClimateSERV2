@@ -151,16 +151,16 @@ body {
 
 .carousel-caption h3 {
   font-size: 48px;
-  /* text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff; */
-  color: #333333;
+  text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;
+  color: #FFFFFF;
   font-weight: 800;
   font-style: italic;
 }
 
 .carousel-caption p {
   font-size: 28px;
-  /* text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff; */
-  color: #333333;
+   text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;
+  color: #FFFFFF;
   font-style: italic;
 }
 
