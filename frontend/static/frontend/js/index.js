@@ -54,26 +54,26 @@ function initIndex() {
     adjustCards();
   })
 
-  // $("#dataCarousel.carousel .carousel-item").each(function () {
-  //   var minPerSlide = 3;
-  //   var next = $(this).next();
-  //   if (!next.length) {
-  //     next = $(this).siblings(":first");
-  //   }
-  //   next.children(":first-child").clone().appendTo($(this));
-  //
-  //   for (var i = 0; i < minPerSlide; i++) {
-  //     next = next.next();
-  //     if (!next.length) {
-  //       next = $(this).siblings(":first");
-  //     }
-  //
-  //     next.children(":first-child").clone().appendTo($(this));
-  //   }
-  // });
-
   adjustCards();
+  preloadCarousel();
 }
+
+/**
+ * Preloads the carousel images
+ */
+function preloadCarousel() {
+  $('body').append('<div class="preload" aria-hidden="true" style="position: absolute; left: -9999px; height: 1px; width: 1px; overflow: hidden;"></div>');
+  const image_tags = [];
+  $('.carousel .carousel-item').each(function() {
+    const this_image = $(this).css('background-image').replace(/^url\(['"](.+)['"]\)/, '$1');
+    if(this_image != "none") {
+      const img_tag = '<img src="' + this_image + '" alt="" /><br>';
+      image_tags.push(img_tag);
+    }
+  });
+  $('.preload').append(image_tags);
+}
+
 
 /**
  * Calls initIndex on ready
