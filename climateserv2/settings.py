@@ -25,7 +25,7 @@ SECRET_KEY = '09t&&#7n=u2hdh@uaxu#!u(9h&b7h^k9fhw*%#ibkkdfe!n4)x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['climateserv2.servirglobal.net', 'climateserv.servirglobal.net', "localhost", "127.0.0.1"]
 
 
 # Application definition
