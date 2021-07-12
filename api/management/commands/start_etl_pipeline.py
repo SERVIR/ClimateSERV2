@@ -33,7 +33,7 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('start_etl_pipeline.py: Successfully called handle(): with param: (etl_dataset_uuid) {}'.format(str(etl_dataset_uuid))))
 
         # Verify that this uuid does exist
-        does_etl_dataset_exist = ETL_DatasetService.does_etl_dataset_exist__by_uuid(input__uuid=etl_dataset_uuid)
+        does_etl_dataset_exist = ETL_DatasetService.does_etl_dataset_exist__by_uuid(etl_dataset_uuid)
         if does_etl_dataset_exist == False:
             self.stdout.write(self.style.ERROR('start_etl_pipeline.handle(): Dataset with UUID: {} does not exist.  Try using "python manage.py list_etl_dataset_uuids" to see a list of all datasets and their uuids.'.format(str(etl_dataset_uuid))))
             return

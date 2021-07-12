@@ -8,7 +8,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         etl_subtypes_array = ETL_DatasetService.get_all_subtypes_as_string_array()
-        self.stdout.write(self.style.SUCCESS('ETL Dataset Subtypes: ' + str(etl_subtypes_array)))
-        self.stdout.write(self.style.SUCCESS(''))
+        self.stdout.write(self.style.SUCCESS('\nETL Dataset Subtypes: {}\n'.format(str(etl_subtypes_array))))
 
         return
