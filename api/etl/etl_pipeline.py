@@ -51,8 +51,10 @@ class ETL_Pipeline():
     Subtype_ETL_Instance = None
 
     # Default Constructor
-    def __init__(self):
+    def __init__(self, etl_dataset_uuid):
         self.class_name = "ETL_Pipeline"
+
+        self.etl_dataset_uuid = etl_dataset_uuid
 
     # Overriding the string function
     def __str__(self):

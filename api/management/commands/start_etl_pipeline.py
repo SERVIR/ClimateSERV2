@@ -42,10 +42,9 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('start_etl_pipeline.py: (does_etl_dataset_exist) {}'.format(str(does_etl_dataset_exist))))
 
         # Create an instance of the pipeline
-        etl_pipeline = ETL_Pipeline()
+        etl_pipeline = ETL_Pipeline(etl_dataset_uuid)
 
         # Set input params as configuration options on the ETL Pipeline
-        etl_pipeline.etl_dataset_uuid = etl_dataset_uuid
         etl_pipeline.START_YEAR_YYYY  = START_YEAR_YYYY
         etl_pipeline.END_YEAR_YYYY    = END_YEAR_YYYY
         etl_pipeline.START_MONTH_MM   = START_MONTH_MM
