@@ -566,7 +566,7 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
 
   return layer._url + L.Util.getParamString(params, layer._url, true);
 }
-
+var testme;
 /**
  * Sets up the sortable layers in the layer manager
  */
@@ -574,7 +574,14 @@ function sortableLayerSetup() {
   $("ol.layers").sortable({
     group: "simple_with_animation",
     pullPlaceholder: true,
-    placeholder: "<hr />",
+    placeholder: {
+      element: function (currentItem) {
+        testme = currentItem;
+        return $("<div class='ui-state-highlight'><div></div></div>")[0];
+      },
+      update: function(container, p) {
+        return;
+      }},
     // animation on drop
     onDrop: function ($item, container, _super) {
       var $clonedItem = $("<li/>").css({ height: 0 });
