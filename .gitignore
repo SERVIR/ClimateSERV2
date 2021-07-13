@@ -6,3 +6,5 @@ db.sqlite3
 package-lock.json
 staticfiles
 node_modules
+media
+*logfile.txt

@@ -28,9 +28,6 @@
           href="{% static 'frontend/css/leaflet-sidebar.css' %}"
     />
     <link rel="stylesheet"
-          href="{% static 'frontend/css/ol3-sidebar.css' %}"
-    />
-    <link rel="stylesheet"
           href="{% static 'frontend/css/map.css' %}"
     />
 
@@ -39,6 +36,20 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
+        let test_layers = []; //JSON.parse('{{ data_layers | safe }}');
+        {% for layer in data_layers %}
+            test_layers.push({
+                title: "{{ layer.title }}",
+                url: "{{ layer.url }}",
+                attribution: "{{ layer.attribution }}",
+                layers: "{{ layer.layers }}",
+                styles: "{{ layer.default_style }}",
+                colorrange: "{{ layer.default_color_range }}",
+                id: "{{ layer.ui_id }}",
+                dataset: "{{ layer.dataset_type }}",
+            })
+        {% endfor %}
+
     </script>
     <div id="root">
         <div>

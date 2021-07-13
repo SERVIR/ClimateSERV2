@@ -7,33 +7,6 @@ function setYouCanDoSlide(which) {
 }
 
 /**
- * Ensures that all data teaser cards height match the height of the highest card for uniformity.
- */
-function adjustCards() {
-  $(".card").animate({ height: "auto" }, function () {
-    $(".card").height("auto");
-    var maxHeight = Math.max.apply(
-      null,
-      $(".card")
-        .map(function () {
-          return $(this).height();
-        })
-        .get()
-    );
-    $(".card").height(maxHeight);
-  });
-}
-
-/**
- * Calls adjustCards on any window resize
- */
-$(window)
-  .resize(function () {
-    adjustCards();
-  })
-  .resize();
-
-/**
  * Sets up the carousels and loads data into the teaser from the dataItems structure.
  * It also creates cloned copies of the slides and mashes them into new slides that
  * contain three slides each in order to have the three slides showing.
@@ -47,33 +20,27 @@ function initIndex() {
   $("#dataCarousel").carousel({
     interval: 8000,
     transition: "transform 2s ease, opacity .5s ease-out"
-    // transition: "fade-in",
   });
 
-  $('#dataCarousel').on('slide.bs.carousel', function () {
-    adjustCards();
-  })
-
-  // $("#dataCarousel.carousel .carousel-item").each(function () {
-  //   var minPerSlide = 3;
-  //   var next = $(this).next();
-  //   if (!next.length) {
-  //     next = $(this).siblings(":first");
-  //   }
-  //   next.children(":first-child").clone().appendTo($(this));
-  //
-  //   for (var i = 0; i < minPerSlide; i++) {
-  //     next = next.next();
-  //     if (!next.length) {
-  //       next = $(this).siblings(":first");
-  //     }
-  //
-  //     next.children(":first-child").clone().appendTo($(this));
-  //   }
-  // });
-
-  adjustCards();
+  preloadCarousel();
 }
+
+/**
+ * Preloads the carousel images
+ */
+function preloadCarousel() {
+  $('body').append('<div class="preload" aria-hidden="true" style="position: absolute; left: -9999px; height: 1px; width: 1px; overflow: hidden;"></div>');
+  const image_tags = [];
+  $('.carousel .carousel-item').each(function() {
+    const this_image = $(this).css('background-image').replace(/^url\(['"](.+)['"]\)/, '$1');
+    if(this_image != "none") {
+      const img_tag = '<img src="' + this_image + '" alt="" /><br>';
+      image_tags.push(img_tag);
+    }
+  });
+  $('.preload').append(image_tags);
+}
+
 
 /**
  * Calls initIndex on ready
