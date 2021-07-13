@@ -69,7 +69,7 @@ function createLayer(item) {
  * @returns layer json object
  */
 function getLayer(which) {
-  return globalLayerArray.find(
+  return test_layers.find(
     (item) => item.id === which.replace("TimeLayer", "")
   );
 }
@@ -79,7 +79,7 @@ function getLayer(which) {
  * styleOptions array, which will be used to load the styles dropdown box
  */
 function buildStyles() {
-  $.get(globalLayerArray[0].url + "&request=GetCapabilities", function (xml) {
+  $.get(test_layers[0].url + "&request=GetCapabilities", function (xml) {
     var jsonObj = $.xml2json(xml);
     var styles =
       jsonObj["#document"]
@@ -277,6 +277,24 @@ function toggleLayer(which) {
   } else {
     map.addLayer(overlayMaps[which]);
   }
+  let available_times = [];
+  for (var key in overlayMaps) {
+    if (overlayMaps.hasOwnProperty(key)) {
+      if (map.hasLayer(overlayMaps[key])) {
+        available_times = available_times.concat(overlayMaps[key]._availableTimes).filter(onlyUnique);
+      }
+    }
+  }
+  map.timeDimension.setAvailableTimes(available_times, 'replace');
+  map.timeDimension.prepareNextTimes(5, 1, false)
+}
+
+/**
+ *
+ *
+ */
+function onlyUnique(value, index, self) {
+  return self.indexOf(value) === index;
 }
 
 /**
@@ -450,7 +468,7 @@ function enableAdminFeature(which) {
   );
   map.addLayer(adminLayer);
   adminLayer.setZIndex(
-    Object.keys(baseLayers).length + globalLayerArray.length + 5
+    Object.keys(baseLayers).length + test_layers.length + 5
   );
 
   // enable map click to show highlighted selections
@@ -494,7 +512,7 @@ function enableAdminFeature(which) {
           );
           map.addLayer(adminHighlightLayer);
           adminHighlightLayer.setZIndex(
-            Object.keys(baseLayers).length + globalLayerArray.length + 6
+            Object.keys(baseLayers).length + test_layers.length + 6
           );
         }
       },
@@ -585,7 +603,7 @@ function sortableLayerSetup() {
 }
 
 function adjustLayerIndex() {
-  var count = 1;
+  var count = 10;
   for (var i = $("ol.layers li").length; i > 0; i--) {
     var name = $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer");
 
@@ -612,7 +630,7 @@ getParameterByName = (name, url) => {
 function initMap() {
   passedLayer = this.getParameterByName("data") || "none";
   mapSetup();
-  globalLayerArray.forEach(createLayer);
+  test_layers.forEach(createLayer);
   sortableLayerSetup();
   try {
     buildStyles();

@@ -1,3 +1,4 @@
+from django.core import serializers
 from django.shortcuts import render
 from .models import *
 
@@ -10,7 +11,10 @@ def index(request):
 
 
 def map_app(request):
-    return render(request, 'map.html', context={'page': 'menu-map'})
+    return render(request, 'map.html', context={
+        'page': 'menu-map',
+        'data_layers': DataLayer.objects.all()
+    })
 
 
 def about(request):
