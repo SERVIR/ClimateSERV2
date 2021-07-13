@@ -573,6 +573,7 @@ var testme;
 function sortableLayerSetup() {
   $("ol.layers").sortable({
     group: "simple_with_animation",
+    handle: ".rst__moveHandle",
     pullPlaceholder: true,
     placeholder: {
       element: function (currentItem) {
