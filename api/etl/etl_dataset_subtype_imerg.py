@@ -40,14 +40,12 @@ class imerg(ETL_Dataset_Subtype_Interface):
     _remote_connection__Password = ""
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-
-    def set_imerg_mode__To__Late(self):
-        self.imerg_mode = "LATE"
-
-    def set_imerg_mode__To__Early(self):
-        self.imerg_mode = "EARLY"
+        if subtype == 'imerg_early':
+            self.esi_mode = 'EARLY'
+        elif subtype == 'imerg_late':
+            self.esi_mode = 'LATE'
 
     # Validate type or use existing default for each
     def set_imerg_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):
@@ -72,23 +70,14 @@ class imerg(ETL_Dataset_Subtype_Interface):
     # Get the local filesystem place to store data
     @staticmethod
     def get_root_local_temp_working_dir(subtype_filter): #, year):
-        # Type Specific Settings
-        imerg__EARLY__rootoutputworkingdir  = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
-        imerg__LATE__rootoutputworkingdir   = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
-
-        # ret_rootlocal_working_dir = settings.PATH__TEMP_WORKING_DIR__DEFAULT # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        ret_rootlocal_working_dir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
+        imerg__EARLY__rootoutputworkingdir  = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
+        imerg__LATE__rootoutputworkingdir   = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
+        ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'EARLY'):
+        if subtype_filter == 'EARLY':
             ret_rootlocal_working_dir = imerg__EARLY__rootoutputworkingdir
-        if (subtype_filter == 'LATE'):
+        elif subtype_filter == 'LATE':
             ret_rootlocal_working_dir = imerg__LATE__rootoutputworkingdir
-
-        # # Add the Year as a string.
-        # year = str(year).strip()    # Expecting 'year' to be something like 2019 or "2019"
-        # year_dir_name_to_append = year + "/"
-        # ret_rootlocal_working_dir = ret_rootlocal_working_dir + year_dir_name_to_append
-
         return ret_rootlocal_working_dir
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
@@ -100,23 +89,21 @@ class imerg(ETL_Dataset_Subtype_Interface):
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'EARLY':
             ret_dir = imerg__EARLY__finalloaddir
-        if subtype_filter == 'LATE':
+        elif subtype_filter == 'LATE':
             ret_dir = imerg__LATE__finalloaddir
         return ret_dir
 
     # Get the Remote Locations for each of the subtypes
     @staticmethod
     def get_roothttp_for_subtype(subtype_filter):
-        imerg__EARLY__roothttp  = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
-        imerg__LATE__roothttp   = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
-        # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        ret_roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
+        imerg__EARLY__roothttp  = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
+        imerg__LATE__roothttp   = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
+        ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         subtype_filter = str(subtype_filter).strip()
         if (subtype_filter == 'EARLY'):
             ret_roothttp = imerg__EARLY__roothttp
         if (subtype_filter == 'LATE'):
             ret_roothttp = imerg__LATE__roothttp
-
         return ret_roothttp
 
     @staticmethod

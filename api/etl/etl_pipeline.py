@@ -9,6 +9,7 @@ from ..models import ETL_Granule
 from ..serializers import ETL_DatasetSerializer
 
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
+from .etl_dataset_subtype_emodis import emodis as ETL_Dataset_Subtype_EMODIS
 from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
 
 class ETL_Pipeline():
@@ -316,13 +317,7 @@ class ETL_Pipeline():
 
         # ESI 4/12 Week
         if current_Dataset_SubType in ("esi_4week", "esi_12week"):
-            # Create an instance of the subtype class - this class must implement each of the pipeline functions for this to work properly.
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self)
-            # ESI is special, requires setting which mode it is in (12week or 4week)
-            if current_Dataset_SubType == "esi_4week":
-                self.Subtype_ETL_Instance.set_esi_mode__To__4week()
-            else:
-                self.Subtype_ETL_Instance.set_esi_mode__To__12week()
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, current_Dataset_SubType)
             # Set ESI Params
             self.Subtype_ETL_Instance.set_esi_params(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
@@ -335,13 +330,7 @@ class ETL_Pipeline():
 
         # IMERG Early/Late
         if current_Dataset_SubType in ("imerg_early", "imerg_late"):
-            # Create an instance of the subtype class - this class must implement each of the pipeline functions for this to work properly.
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self)
-            # Imerg is special, requires setting which mode it is in
-            if current_Dataset_SubType == "imerg_early":
-                self.Subtype_ETL_Instance.set_imerg_mode__To__Early()
-            else:
-                self.Subtype_ETL_Instance.set_imerg_mode__To__Late()
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, current_Dataset_SubType)
             # Set IMERG Params
             self.Subtype_ETL_Instance.set_imerg_params(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
@@ -352,6 +341,18 @@ class ETL_Pipeline():
                 DD__Day__End=self.END_DAY_DD,
                 NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
                 NN__30MinIncrement__End=self.END_30MININCREMENT_NN
+            )
+
+        # EMODIS
+        if current_Dataset_SubType == "emodis":
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
+            # Set EMODIS Params
+            self.Subtype_ETL_Instance.set_emodis_params(
+                YYYY__Year__Start=self.START_YEAR_YYYY,
+                YYYY__Year__End=self.END_YEAR_YYYY,
+                MM__Month__Start=self.START_MONTH_MM,
+                MM__Month__End=self.END_MONTH_MM,
+                XX__Region_Code=self.WEEKLY_JULIAN_START_OFFSET
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE

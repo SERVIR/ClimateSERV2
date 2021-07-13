@@ -36,14 +36,12 @@ class esi(ETL_Dataset_Subtype_Interface):
     _expected_granules                  = []    # Place to store granules
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-
-    def set_esi_mode__To__4week(self):
-        self.esi_mode = "4week"
-
-    def set_esi_mode__To__12week(self):
-        self.esi_mode = "12week"
+        if subtype == 'esi_4week':
+            self.esi_mode = '4week'
+        elif subtype == 'esi_12week':
+            self.esi_mode = '12week'
 
     # Validate type or use existing default for each
     def set_esi_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, N_offset_for_weekly_julian_start_date):
@@ -58,26 +56,21 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret_Str = '1WK'
         if self.esi_mode == '4week':
             ret_Str = "4WK"
-        if self.esi_mode == '12week':
+        elif self.esi_mode == '12week':
             ret_Str = '12WK'
         return ret_Str
 
     # Get the local filesystem place to store data
     @staticmethod
     def get_root_local_temp_working_dir(subtype_filter):
-        esi__4week__rootoutputworkingdir    = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__4WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/'
-        esi__12week__rootoutputworkingdir   = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__12WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/12week/'
-
-        esi__4week__rootoutputworkingdir = '/Users/rfontanarosa/git/ClimateSERV2/data/esi/4week'
-        esi__12week__rootoutputworkingdir = '/Users/rfontanarosa/git/ClimateSERV2/data/esi/12week'
-
-        ret_rootlocal_working_dir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
+        esi__4week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__4WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/'
+        esi__12week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__12WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/12week/'
+        ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_rootlocal_working_dir = esi__4week__rootoutputworkingdir
-        if subtype_filter == '12week':
+        elif subtype_filter == '12week':
             ret_rootlocal_working_dir = esi__12week__rootoutputworkingdir
-
         return ret_rootlocal_working_dir
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
@@ -89,26 +82,21 @@ class esi(ETL_Dataset_Subtype_Interface):
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_dir = esi__4week__finalloaddir
-        if subtype_filter == '12week':
+        elif subtype_filter == '12week':
             ret_dir = esi__12week__finalloaddir
         return ret_dir
 
     # Get the Remote Locations for each of the subtypes
     @staticmethod
     def get_roothttp_for_subtype(subtype_filter):
-        esi__4wk__roothttp      = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_4WK", default_or_error_return_value="")        # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-        esi__12wk__roothttp     = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_12WK", default_or_error_return_value="")       # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-
-        esi__4wk__roothttp = 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-        esi__12wk__roothttp = 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-
-        ret_roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
+        esi__4wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_4WK", default_or_error_return_value="")        # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
+        esi__12wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_12WK", default_or_error_return_value="")      # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
+        ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_roothttp = esi__4wk__roothttp
         if subtype_filter == '12week':
             ret_roothttp = esi__12wk__roothttp
-
         return ret_roothttp
 
     def execute__Step__Pre_ETL_Custom(self):
