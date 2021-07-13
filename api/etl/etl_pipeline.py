@@ -10,6 +10,7 @@ from ..models import ETL_PipelineRun
 from ..serializers import ETL_DatasetSerializer
 
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
+from .etl_dataset_subtype_emodis import emodis as ETL_Dataset_Subtype_EMODIS
 
 class ETL_Pipeline():
 
@@ -346,6 +347,17 @@ class ETL_Pipeline():
                 MM__Month__Start=self.START_MONTH_MM,
                 MM__Month__End=self.END_MONTH_MM,
                 N_offset_for_weekly_julian_start_date=self.WEEKLY_JULIAN_START_OFFSET
+            )
+        # EMODIS
+        if current_Dataset_SubType in ("emodis"):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
+            # Set ESI Params
+            self.Subtype_ETL_Instance.set_emodis_params(
+                YYYY__Year__Start=self.START_YEAR_YYYY,
+                YYYY__Year__End=self.END_YEAR_YYYY,
+                MM__Month__Start=self.START_MONTH_MM,
+                MM__Month__End=self.END_MONTH_MM,
+                XX__Region_Code=self.WEEKLY_JULIAN_START_OFFSET
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
