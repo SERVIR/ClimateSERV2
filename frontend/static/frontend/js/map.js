@@ -583,14 +583,7 @@ function sortableLayerSetup() {
         return;
       }},
     // animation on drop
-    onDrop: function ($item, container, _super) {
-      var $clonedItem = $("<li/>").css({ height: 0 });
-      $item.before($clonedItem);
-      $clonedItem.animate({ height: $item.height() });
-
-      $clonedItem.detach();
-      _super($item, container);
-
+    onEnd: function ($item, container, _super) {
       adjustLayerIndex();
     },
     // set $item relative to cursor position
