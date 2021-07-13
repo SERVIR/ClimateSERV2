@@ -44,7 +44,7 @@ class esi(ETL_Dataset_Subtype_Interface):
             self.esi_mode = '12week'
 
     # Validate type or use existing default for each
-    def set_esi_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, N_offset_for_weekly_julian_start_date):
+    def set_esi_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
         self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
         self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
         self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start
@@ -110,7 +110,6 @@ class esi(ETL_Dataset_Subtype_Interface):
         current_root_http_path = self.get_roothttp_for_subtype(subtype_filter=self.esi_mode)
         root_file_download_path = os.path.join(esi.get_root_local_temp_working_dir(subtype_filter=self.esi_mode), self.relative_dir_path__WorkingDir)
         final_load_dir_path = esi.get_final_load_dir(subtype_filter=self.esi_mode)
-
         self.temp_working_dir = str(root_file_download_path).strip()
         self._expected_granules = []
 
@@ -120,8 +119,7 @@ class esi(ETL_Dataset_Subtype_Interface):
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
-            url = 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-            response = requests.get(url)
+            response = requests.get(current_root_http_path)
             soup = BeautifulSoup(response.text, 'html.parser')
             filenames = []
             dates = []
@@ -150,7 +148,7 @@ class esi(ETL_Dataset_Subtype_Interface):
                 # 
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename.replace('.gz', '')
-                remote_full_filepath_gz_tif         = '{}/{}'.format(url, filename)
+                remote_full_filepath_gz_tif         = '{}/{}'.format(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -165,7 +163,7 @@ class esi(ETL_Dataset_Subtype_Interface):
                 #current_obj['local_download_path'] = local_extract_path      # Download path and extract path
                 current_obj['local_extract_path'] = local_extract_path        # Download path and extract path
                 current_obj['local_final_load_path'] = local_final_load_path  # The path where the final output granule file goes.
-                current_obj['remote_directory_path'] = url
+                current_obj['remote_directory_path'] = current_root_http_path
                 #
                 current_obj['tif_gz_filename'] = tif_gz_filename
                 current_obj['extracted_tif_filename']   = extracted_tif_filename
