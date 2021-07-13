@@ -575,35 +575,18 @@ function sortableLayerSetup() {
     group: "simple_with_animation",
     handle: ".rst__moveHandle",
     pullPlaceholder: true,
-    placeholder: {
-      element: function (currentItem) {
-        testme = currentItem;
-        return $("<div class='ui-state-highlight'><div></div></div>")[0];
-      },
-      update: function(container, p) {
-        return;
-      }},
     // animation on drop
     onEnd: function ($item, container, _super) {
       adjustLayerIndex();
     },
-    // set $item relative to cursor position
-    onDragStart: function ($item, container, _super) {
-      var offset = $item.offset(),
-        pointer = container.rootGroup.pointer;
-
-      adjustment = {
-        left: pointer.left - offset.left,
-        top: pointer.top - offset.top,
-      };
-
-      _super($item, container);
+    onChange: function (/**Event*/evt) {
+      adjustLayerIndex();
     },
-    onDrag: function ($item, position) {
-      $item.css({
-        left: position.left - adjustment.left,
-        top: position.top - adjustment.top,
-      });
+    filter: ".ignore-elements",
+    // Called when creating a clone of element
+    onClone: function (/**Event*/evt) {
+      var origEl = evt.item;
+      var cloneEl = evt.clone;
     },
   });
 }
