@@ -56,7 +56,7 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret_Str = '1WK'
         if self.esi_mode == '4week':
             ret_Str = "4WK"
-        if self.esi_mode == '12week':
+        elif self.esi_mode == '12week':
             ret_Str = '12WK'
         return ret_Str
 
@@ -69,7 +69,7 @@ class esi(ETL_Dataset_Subtype_Interface):
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_rootlocal_working_dir = esi__4week__rootoutputworkingdir
-        if subtype_filter == '12week':
+        elif subtype_filter == '12week':
             ret_rootlocal_working_dir = esi__12week__rootoutputworkingdir
         return ret_rootlocal_working_dir
 
@@ -82,7 +82,7 @@ class esi(ETL_Dataset_Subtype_Interface):
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == '4week':
             ret_dir = esi__4week__finalloaddir
-        if subtype_filter == '12week':
+        elif subtype_filter == '12week':
             ret_dir = esi__12week__finalloaddir
         return ret_dir
 
