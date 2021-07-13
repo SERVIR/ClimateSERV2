@@ -40,14 +40,12 @@ class imerg(ETL_Dataset_Subtype_Interface):
     _remote_connection__Password = ""
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-
-    def set_imerg_mode__To__Late(self):
-        self.imerg_mode = "LATE"
-
-    def set_imerg_mode__To__Early(self):
-        self.imerg_mode = "EARLY"
+        if subtype == 'imerg_early':
+            self.esi_mode = 'EARLY'
+        elif subtype == 'imerg_late':
+            self.esi_mode = 'LATE'
 
     # Validate type or use existing default for each
     def set_imerg_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):

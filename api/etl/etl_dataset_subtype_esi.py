@@ -36,14 +36,12 @@ class esi(ETL_Dataset_Subtype_Interface):
     _expected_granules                  = []    # Place to store granules
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-
-    def set_esi_mode__To__4week(self):
-        self.esi_mode = "4week"
-
-    def set_esi_mode__To__12week(self):
-        self.esi_mode = "12week"
+        if subtype == 'esi_4week':
+            self.esi_mode = '4week'
+        elif subtype == 'esi_12week':
+            self.esi_mode = '12week'
 
     # Validate type or use existing default for each
     def set_esi_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, N_offset_for_weekly_julian_start_date):
