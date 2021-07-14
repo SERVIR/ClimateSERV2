@@ -53,6 +53,7 @@ body {
   font-size: 1rem;
   background-image: url("../img/header_bg_space.jpg") !important; /* override background image gradient w/ flat color */
   background-size: cover;
+  z-index: 3000;
 }
 
 .navbar-collapse {

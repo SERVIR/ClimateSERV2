@@ -18,11 +18,6 @@ var styleOptions = [];
  * @param {object} item  - layer json object
  */
 function createLayer(item) {
-
-  // const btn = document.getElementById("legend_" + item.id + "TimeLayer");
-  // btn.addEventListener('click', function () {
-  //   openLegend(item.id+ "TimeLayer")
-  // });
   // Create actual layer and put in overlayMaps
   var key = (overlayMaps[item.id + "TimeLayer"] = L.timeDimension.layer.wms(
     L.tileLayer.wms(item.url + "&crs=EPSG%3A3857", {
