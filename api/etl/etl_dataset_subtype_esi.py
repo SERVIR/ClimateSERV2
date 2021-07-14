@@ -4,8 +4,8 @@ from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
 import numpy as np
-from bs4 import BeautifulSoup
 from collections import OrderedDict
+from bs4 import BeautifulSoup
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
@@ -15,19 +15,18 @@ from ..models import Config_Setting
 
 class esi(ETL_Dataset_Subtype_Interface):
 
-    class_name = "esi"
+    class_name = 'esi'
     etl_parent_pipeline_instance = None
 
-    # esi Has more than 1 mode which refer to sub dataset products ("12week" and "4week")
-    esi_mode = "12week"  # Choices at this time are "12week" and "4week" // Controlled by setter functions. // Default is "12week"
+    esi_mode = '12week' # It could be '12week' or '4week' - Default is '12week'
 
     # Input Settings
-    YYYY__Year__Start                       = datetime.date.today().year
-    YYYY__Year__End                         = datetime.date.today().year
-    MM__Month__Start                        = 1
-    MM__Month__End                          = 12
-    DD__Day__Start                          = 1
-    DD__Day__End                            = 31
+    YYYY__Year__Start  = datetime.date.today().year
+    YYYY__Year__End    = datetime.date.today().year
+    MM__Month__Start   = 1
+    MM__Month__End     = 12
+    DD__Day__Start     = 1
+    DD__Day__End       = 31
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -107,9 +106,9 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         # Get the root http path based on the region
-        current_root_http_path = self.get_roothttp_for_subtype(subtype_filter=self.esi_mode)
-        root_file_download_path = os.path.join(esi.get_root_local_temp_working_dir(subtype_filter=self.esi_mode), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = esi.get_final_load_dir(subtype_filter=self.esi_mode)
+        current_root_http_path = self.get_roothttp_for_subtype(self.esi_mode)
+        root_file_download_path = os.path.join(esi.get_root_local_temp_working_dir(self.esi_mode), self.relative_dir_path__WorkingDir)
+        final_load_dir_path = esi.get_final_load_dir(self.esi_mode)
         self.temp_working_dir = str(root_file_download_path).strip()
         self._expected_granules = []
 
@@ -143,7 +142,12 @@ class esi(ETL_Dataset_Subtype_Interface):
 
                 # SPORT-ESI.250.4-week.20200130T000000Z.GLOBAL.nc4
                 nc4_week = '4-week' if self.esi_mode == '4week' else '12-week'
-                final_nc4_filename = 'SPORT-ESI.250.{}.{}{}{}T000000Z.GLOBAL.nc4'.format(nc4_week, current_year__YYYY_str, current_month__MM_str, current_day__DD_str)
+                final_nc4_filename = 'SPORT-ESI.250.{}.{}{}{}T000000Z.GLOBAL.nc4'.format(
+                    nc4_week,
+                    current_year__YYYY_str,
+                    current_month__MM_str,
+                    current_day__DD_str
+                )
 
                 # 
                 tif_gz_filename                     = filename
@@ -385,23 +389,10 @@ class esi(ETL_Dataset_Subtype_Interface):
             expected_granules = self._expected_granules
             for expected_granules_object in expected_granules:
 
-                #import gzip
-                #import shutil
-
-                #local_full_filepath = '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/working_dir/DFPPM_4WK_2020218.tif.gz'
-                #local_extract_full_filepath = '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/working_dir/DFPPM_4WK_2020218.tif'
-
-                print(',,,,,,,,,,')
-                print(expected_granules_object)
-
-
                 local_full_filepath_download    = expected_granules_object['local_full_filepath_download']
                 local_extract_path              = expected_granules_object['local_extract_path']
                 extracted_tif_filename          = expected_granules_object['extracted_tif_filename']
                 local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
-
-                print(local_full_filepath_download)
-                print(local_extract_full_filepath)
 
                 if not os.path.isfile(local_full_filepath_download):
                     continue
@@ -437,9 +428,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Extract"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-
-                print('++++++++')
 
                 # print("")
                 # print("extract: (local_full_filepath_download): " + str(local_full_filepath_download))
@@ -807,16 +795,13 @@ class esi(ETL_Dataset_Subtype_Interface):
         #
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
-            if(temp_working_dir == ""):
-
+            if temp_working_dir == "":
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = "esi"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
             else:
                 #shutil.rmtree
                 rmtree(temp_working_dir)
@@ -830,8 +815,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
-
-            #print("execute__Step__Clean_Up: Cleanup is finished.")
 
         except:
             sysErrorData = str(sys.exc_info())

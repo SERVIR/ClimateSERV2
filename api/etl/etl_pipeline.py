@@ -164,12 +164,8 @@ class ETL_Pipeline():
         )
         self.new_etl_log_ids__EVENTS.append(etl_log_row_uuid)
         self.new_etl_log_ids__ERRORS.append(etl_log_row_uuid)
-        #
         # Output something to the terminal - this can be very helpful during debugging.
-        print("")
-        print("  ERROR: (error description): " + str(activity_description))
-        print("")
-        #
+        print('\n  ERROR: (error description): {}\n'.format(str(activity_description)))
         # Signal the pipeline object that errors did occur.
         self.pipeline_had_error = True
 
@@ -179,13 +175,15 @@ class ETL_Pipeline():
         self__etl_pipeline_run_uuid     = self.ETL_PipelineRun__UUID
         self__etl_dataset_uuid          = self.etl_dataset_uuid
         self__etl_dataset_name          = "ETL_PIPELINE__" + self.dataset_name
-        etl_Granule_Row_UUID = ETL_GranuleService.create_new_ETL_Granule_row(granule_name=granule_name,
-                                                                      granule_contextual_information=granule_contextual_information,
-                                                                      etl_pipeline_run_uuid=self__etl_pipeline_run_uuid,
-                                                                      etl_dataset_uuid=self__etl_dataset_uuid,
-                                                                      granule_pipeline_state=granule_pipeline_state,
-                                                                      created_by=self__etl_dataset_name,
-                                                                      additional_json=additional_json)
+        etl_Granule_Row_UUID = ETL_GranuleService.create_new_ETL_Granule_row(
+            granule_name=granule_name,
+            granule_contextual_information=granule_contextual_information,
+            etl_pipeline_run_uuid=self__etl_pipeline_run_uuid,
+            etl_dataset_uuid=self__etl_dataset_uuid,
+            granule_pipeline_state=granule_pipeline_state,
+            created_by=self__etl_dataset_name,
+            additional_json=additional_json
+        )
         self.new_etl_granule_ids.append(etl_Granule_Row_UUID)
         return etl_Granule_Row_UUID
 
@@ -210,21 +208,6 @@ class ETL_Pipeline():
         is_update_succeed = ETL_Granule.update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=sub_jsonable_object)
         return is_update_succeed
 
-    # Standard Function to record Available Granules to the database (This is for the Front End - Need to better define this model first)
-    # def create_or_update_existing_Available_Granule_row(granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
-    # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information="", additional_json={}):
-    #     self__etl_pipeline_run_uuid = self.ETL_PipelineRun__UUID
-    #     self__etl_dataset_uuid = self.etl_dataset_uuid
-    #     self__etl_dataset_name = "ETL_PIPELINE__" + self.dataset_name
-    #     affected_Available_Granule_UUID = Available_Granule.create_or_update_existing_Available_Granule_row(granule_name=granule_name,
-    #                                                                                                         granule_contextual_information=granule_contextual_information,
-    #                                                                                                         etl_pipeline_run_uuid=self__etl_pipeline_run_uuid,
-    #                                                                                                         etl_dataset_uuid=self__etl_dataset_uuid,
-    #                                                                                                         created_by=self__etl_dataset_name,
-    #                                                                                                         additional_json=additional_json)
-    #     self.affected_Available_Granule_ids.append(affected_Available_Granule_UUID)
-    #     return affected_Available_Granule_UUID
-
     # Convenient function to call just before using a return statement during 'execute_pipeline_control_function'
     def log__pipeline_run__exit(self):
         # Log Activity - Pipeline Ended
@@ -242,7 +225,7 @@ class ETL_Pipeline():
             print("")
             print("================ START ---- TERMINAL DEBUG INFO ---- START ================")
             print(str(self.to_JSONable_Object()))
-            print("================ END ---- TERMINAL DEBUG INFO ---- END ================")
+            print("================= END ----- TERMINAL DEBUG INFO ----- END =================")
             print("")
 
     # Execute The Pipeline based on what ever was pre-configured.
