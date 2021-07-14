@@ -1218,6 +1218,15 @@ button[disabled] {
   .carousel-caption p {
     font-size: 16px;
   }
+  .ui-dialog .ui-dialog-titlebar-close {
+    position: absolute;
+    right: .3em;
+    top: 50%;
+    width: 30px!important;
+    margin: -15px 0 0 0!important;
+    padding: 16px!important;
+    height: 20px;
+  }
 }
 
 @media only screen and (max-width: 700px) {
@@ -1243,14 +1252,5 @@ button[disabled] {
     left: unset;
     width: 100%;
     text-align: center;
-  }
-  .ui-dialog .ui-dialog-titlebar-close {
-    position: absolute;
-    right: .3em;
-    top: 50%;
-    width: 30px;
-    margin: -15px 0 0 0;
-    padding: 16px;
-    height: 20px;
   }
 }
