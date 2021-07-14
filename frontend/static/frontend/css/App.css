@@ -29,6 +29,14 @@ body {
   }
 }
 
+.p50{
+  padding: 50px;
+}
+
+.p50b0{
+  padding: 50px 50px 0 50px
+}
+
 .About-bolder {
   color: #bdd12f;
 }
@@ -146,7 +154,7 @@ body {
 
 .carousel-caption {
   max-width: 100%;
-  left: 0px;
+  left: 0;
   bottom: 40%;
 }
 
@@ -252,12 +260,12 @@ body {
   background: #7eaddb;
   cursor: pointer;
   margin-top: -11px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
-  box-shadow: 1px 1px 1px #50769c, 0px 0px 1px #5896d3; /* Add cool effects to your sliders! */
+  box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3; /* Add cool effects to your sliders! */
 }
 
 /* All the same stuff for Firefox */
 .layer-opacity::-moz-range-thumb {
-  box-shadow: 1px 1px 1px #50769c, 0px 0px 1px #5896d3;
+  box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3;
   border: none;
   height: 22px;
   width: 22ps;
@@ -268,7 +276,7 @@ body {
 
 /* All the same stuff for IE */
 .layer-opacity::-ms-thumb {
-  box-shadow: 1px 1px 1px #50769c, 0px 0px 1px #5896d3;
+  box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3;
   border: none;
   height: 22px;
   width: 12px;
@@ -295,7 +303,7 @@ body {
   width: 100%;
   height: 8.4px;
   cursor: pointer;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  box-shadow: 1px 1px 1px #000000, 0 0 1px #0d0d0d;
   background: #999999;
   border-radius: 1.3px;
   border: 0.2px solid #010101;
@@ -315,7 +323,7 @@ body {
   background: #2a6495;
   border: 0.2px solid #010101;
   border-radius: 2.6px;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  box-shadow: 1px 1px 1px #000000, 0 0 1px #0d0d0d;
 }
 
 .layer-opacity:focus::-ms-fill-lower {
@@ -326,7 +334,7 @@ body {
   background: #3071a9;
   border: 0.2px solid #010101;
   border-radius: 2.6px;
-  box-shadow: 1px 1px 1px #000000, 0px 0px 1px #0d0d0d;
+  box-shadow: 1px 1px 1px #000000, 0 0 1px #0d0d0d;
 }
 
 .layer-opacity:focus::-ms-fill-upper {
@@ -934,7 +942,7 @@ button[disabled] {
 
 .btnAnimate {
   background-size: cover;
-  margin: 2px 2px 0px 4px;
+  margin: 2px 2px 0 4px;
   width: 30px;
   height: 30px;
   background-color: rgb(0 60 136 / 25%); /*#4dc5f2; */
@@ -1164,7 +1172,7 @@ button[disabled] {
 @media only screen and (max-width: 1000px) {
   .carousel-caption {
     max-width: 100%;
-    left: 0px;
+    left: 0;
     bottom: unset;
     top: 10px;
   }
@@ -1206,10 +1214,18 @@ button[disabled] {
     width: 100%;
   }
 
+  .p50{
+    padding: 0 0 50px 0;
+  }
+
+  .p50b0{
+    padding: 15px 15px 0 15px
+  }
+
   .carousel-caption {
     max-width: 100%;
-    left: 0px;
-    bottom: 0px;
+    left: 0;
+    bottom: 0;
   }
 
   .carousel-caption h3 {
