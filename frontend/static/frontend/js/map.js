@@ -495,6 +495,9 @@ function enableAdminFeature(which) {
               feat_ids: highlightedIDs.join(),
             }
           );
+          if(highlightedIDs.length > 0){
+            $("#btnstep2").prop("disabled", false);
+          }
           map.addLayer(adminHighlightLayer);
           adminHighlightLayer.setZIndex(
             Object.keys(baseLayers).length + test_layers.length + 6
@@ -503,6 +506,18 @@ function enableAdminFeature(which) {
       },
     });
   });
+}
+
+function gotostep(which){
+  $("[id^=step]").hide();
+  $("[id^=btnstep]").removeClass("active");
+  $("#step" + which).show();
+  $("#btnstep" + which).addClass("active");
+
+}
+
+function enablestep3(){
+  $("#btnstep3").prop("disabled", false);
 }
 
 /**

@@ -138,13 +138,13 @@
                             </span>
                         </h1>
                         <div class="btn-group d-flex">
-                            <button class="w-100 bread-crumb active" disabled="">
+                            <button id="btnstep1" class="w-100 bread-crumb active" onclick="gotostep(1)" disabled="">
                                 Set AOI
                             </button>
-                            <button class="w-100 bread-crumb" disabled="">
+                            <button id="btnstep2" class="w-100 bread-crumb" onclick="gotostep(2)" disabled="">
                                 Set Data
                             </button>
-                            <button class="w-100 bread-crumb" disabled="">
+                            <button id="btnstep3" class="w-100 bread-crumb" onclick="gotostep(3)" disabled="">
                                 Review
                             </button>
                         </div>
@@ -262,6 +262,14 @@
                                     Next
                                 </button>
                             </div>
+                        </div>
+                        <div id="step2" style="display:none;">
+                            <h1>Step 2 will be here</h1>
+                            <button onclick="enablestep3()">Enable 3</button>
+                        </div>
+                        <div id="step3" style="display:none;">
+                            <h1>Step 3 will be here</h1>
+
                         </div>
                     </div>
 
