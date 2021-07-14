@@ -88,7 +88,46 @@
                             </span>
                         </h1>
 
-                        <ol class="layers vertical" id="layer-list"></ol>
+                        <ol class="layers vertical" id="layer-list">
+                            {% for layer in data_layers %}
+                                <li id="{{ layer.ui_id }}_node">
+                                    <div class="rst__nodeContent" style="left: 44px">
+                                        <div style="height: 100%">
+                                            <div class="rst__rowWrapper">
+                                                <div class="rst__row" style="opacity: 1" draggable="true">
+                                                    <div class="rst__moveHandle" ></div>
+                                                    <div class="rst__rowContents ignore-elements" >
+                                                        <div class="rst__rowLabel">
+                                  <span class="rst__rowTitle">
+                                      <input type="checkbox"
+                                             id="{{ layer.ui_id }}"
+                                             name="{{ layer.ui_id }}"
+                                             onchange="toggleLayer('{{ layer.ui_id}}TimeLayer')"/>
+                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
+                                      <br/>
+                                  </span>
+                                                            <div>
+                                                                <i id="legend_{{ layer.ui_id}} + TimeLayer " class="fas fa-list legend-btn"
+                                                                   onclick="openLegend('{{ layer.ui_id}}TimeLayer')"
+                                                                   style="float: left; margin: 0 0 15px 15px;">
+                                                                    Legend
+                                                                </i>
+                                                                <i class="fas fa-cog settings-btn"
+                                                                   onclick="openSettings('{{ layer.ui_id}}TimeLayer')"
+                                                                   style="float: right; margin: 0 15px 15px 0;">
+                                                                    Settings
+                                                                </i>
+                                                            </div>
+                                                        </div>
+                                                        <div class="rst__rowToolbar"></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ol>
                     </div>
 
                     <div class="sidebar-pane" id="chart">
@@ -333,44 +372,7 @@
             setActive("mnmap");
         });
     </script>
-    <script id="layersTemplate" type="text/template">
-        <li id="{id}_node">
-            <div class="rst__nodeContent" style="left: 44px">
-                <div style="height: 100%">
-                    <div class="rst__rowWrapper">
-                        <div class="rst__row" style="opacity: 1" draggable="true">
-                            <div class="rst__moveHandle" ></div>
-                            <div class="rst__rowContents ignore-elements" >
-                                <div class="rst__rowLabel">
-                                  <span class="rst__rowTitle">
-                                      <input type="checkbox"
-                                             id="{id}"
-                                             name="{id}"
-                                             onchange="toggleLayer('{layername}')"/>
-                                      <label for="{id}" title="{title}">{title}</label>
-                                      <br/>
-                                  </span>
-                                    <div>
-                                        <i id="legend_{layername}" class="fas fa-list legend-btn"
-                                           onclick="openLegend('{layername}')"
-                                           style="float: left; margin: 0 0 15px 15px;">
-                                            Legend
-                                        </i>
-                                        <i class="fas fa-cog settings-btn"
-                                           onclick="openSettings('{layername}')"
-                                           style="float: right; margin: 0 15px 15px 0;">
-                                            Settings
-                                        </i>
-                                    </div>
-                                </div>
-                                <div class="rst__rowToolbar"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </li>
-    </script>
+
     <script id="proposedChange" style="display: none" type="text/template">
         <div>
             <i class="fas fa-list" onclick="console.log('open legend')" style="
