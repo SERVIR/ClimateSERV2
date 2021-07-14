@@ -203,16 +203,9 @@ function openLegend(which) {
     height: 322,
   });
   $(".ui-dialog-title").attr("title", active_layer.title);
-  alert(0);
   $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function(){
     $("#dialog").dialog('close');
-    alert(1);
   });
-  $("ui-button-icon ui-icon ui-icon-closethick").bind("touchstart", function(){
-    $("#dialog").dialog('close');
-    alert(2);
-  });
-
 }
 
 /**
