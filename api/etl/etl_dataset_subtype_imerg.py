@@ -14,11 +14,10 @@ from ..models import Config_Setting
 
 class imerg(ETL_Dataset_Subtype_Interface):
 
-    class_name = "imerg"
+    class_name = 'imerg'
     etl_parent_pipeline_instance = None
 
-    # Imerg Has more than 1 mode which refer to sub datasets (Early and Late)
-    imerg_mode = "LATE" # Choices at this time are "LATE" and "EARLY" // Controlled by setter functions. // Default is "LATE"
+    imerg_mode = 'LATE' # It could be 'LATE' or 'EARLY' - Default is 'LATE'
 
     # Input Settings
     YYYY__Year__Start   = 2020 #2019
@@ -69,9 +68,9 @@ class imerg(ETL_Dataset_Subtype_Interface):
 
     # Get the local filesystem place to store data
     @staticmethod
-    def get_root_local_temp_working_dir(subtype_filter): #, year):
         imerg__EARLY__rootoutputworkingdir  = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
         imerg__LATE__rootoutputworkingdir   = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
+    def get_root_local_temp_working_dir(subtype_filter):
         ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'EARLY':
@@ -100,9 +99,9 @@ class imerg(ETL_Dataset_Subtype_Interface):
         imerg__LATE__roothttp   = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
         ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'EARLY'):
+        if subtype_filter == 'EARLY':
             ret_roothttp = imerg__EARLY__roothttp
-        if (subtype_filter == 'LATE'):
+        if subtype_filter == 'LATE':
             ret_roothttp = imerg__LATE__roothttp
         return ret_roothttp
 
@@ -138,47 +137,42 @@ class imerg(ETL_Dataset_Subtype_Interface):
         final_load_dir_path = imerg.get_final_load_dir(subtype_filter=self.imerg_mode)
         self.temp_working_dir = str(root_file_download_path).strip()
         self._expected_granules = []
+
         # (1) Generate Expected remote file paths
         try:
 
             # Create the list of Days (From start time to end time)
-            start_Date = datetime.datetime(year=self.YYYY__Year__Start, month=self.MM__Month__Start, day=self.DD__Day__Start)
-            end_Date = datetime.datetime(year=self.YYYY__Year__End, month=self.MM__Month__End, day=self.DD__Day__End)
+            start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
+            end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
             first_day__Start_30Min_Increment = self.NN__30MinIncrement__Start # = 0  # 0
             last_day__End_30Min_Increment = self.NN__30MinIncrement__End   # = 48  # 0
 
-            delta = end_Date - start_Date
+            delta = end_date - start_date
             print("DELTA: " + str(delta))
 
             for i in range(delta.days + 1):
-                # print start_Date + datetime.timedelta(days=i)
-                currentDate = start_Date + datetime.timedelta(days=i)
-                current_year__YYYY_str = "{:0>4d}".format(currentDate.year)
-                current_month__MM_str = "{:02d}".format(currentDate.month)
-                current_day__DD_str = "{:02d}".format(currentDate.day)
 
-                # Debug (making sure we got the right date ranges)
-                # print(currentDate)
-                # #print("i: " + str(i) + ":   (currentDate.year) " + str(currentDate.year))
-                # print("i: " + str(i) + ":   (current_year__YYYY_str) " + str(current_year__YYYY_str))
-                # print("i: " + str(i) + ":   (current_month__MM_str) " + str(current_month__MM_str))
-                # print("i: " + str(i) + ":   (current_day__DD_str) " + str(current_day__DD_str))
+                current_date = start_date + datetime.timedelta(days=i)
+                current_year__YYYY_str = "{:0>4d}".format(current_date.year)
+                current_month__MM_str = "{:02d}".format(current_date.month)
+                current_day__DD_str = "{:02d}".format(current_date.day)
 
 
                 # Get the Current Day, Start '30 min' increment
-                start_30min_increment   = 0
-                end_30min_increment     = 24 * 2
+                start_30min_increment = 0
+                end_30min_increment = 24 * 2
 
-                if (i == 0):
+                if i == 0:
                     # We are on the FIRST day, check the start and end 30 min increments
-                    start_30min_increment   = first_day__Start_30Min_Increment
-                    #print("FIRST DAY Loop: (i): " + str(i) + ", (start_30min_increment): " + str(start_30min_increment))
+                    start_30min_increment = first_day__Start_30Min_Increment
+                    # print("FIRST DAY Loop: (i): " + str(i) + ", (start_30min_increment): " + str(start_30min_increment))
 
-                if (i == delta.days):
+                if i == delta.days:
                     # We are on the LAST day, check the start and end 30 min increments
-                    end_30min_increment     = last_day__End_30Min_Increment
-                    #print("LAST DAY Loop: (i): " + str(i) + ", (end_30min_increment): " + str(end_30min_increment))
+                    end_30min_increment = last_day__End_30Min_Increment
+                    # print("LAST DAY Loop: (i): " + str(i) + ", (end_30min_increment): " + str(end_30min_increment))
+
 
                 # Analyzing the Dates
                 #
@@ -192,14 +186,9 @@ class imerg(ETL_Dataset_Subtype_Interface):
 
                 # Now we must divide the entire day into 30 minute increments.
                 #intraday_filename_helpers_list = []  # List of objects that have the parts of the file name in them, including the final file tif and tfw names
-                print('èèèè')
                 #minutes_array = []   # Result of the for loop gives us something like this:  [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, .... 1410] //, 1440]
                 #for j in range((24*2) + 1):  # There is no 1440, so removing the '+ 1' part
                 #for j in range(24 * 2):
-
-                print(start_30min_increment)
-                print(end_30min_increment + 30)
-                print(range(start_30min_increment, end_30min_increment + 30))
 
                 for j in range(start_30min_increment, end_30min_increment + 1):
                     print(j)
@@ -210,7 +199,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     hh_remainder    = float(increment_minute_value__Div_60 - int(increment_minute_value__Div_60))   # 0.5
                     start_mm_str    = "00"  # Correct if hh_remainder is NOT 0.5
                     end_mm_str      = "29"  # Correct if hh_remainder is NOT 0.5
-                    if (hh_remainder == 0.5):
+                    if hh_remainder == 0.5:
                         start_mm_str    = "30"
                         end_mm_str      = "59"
                     start_ss_str    = "00"
@@ -248,50 +237,28 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     tif_filename = base_filename + 'tif'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tif
                     # .1410.V06B.30min.tfw
 
-                    #print("i,j: " + str(j) + ":   delta date:  delta[i]")
-
-                    # 20200402-S233000-E235959.1410.V06B.30min.tfw
 
                     # Building the Common NC4 Filename
-                    # # Example filename (IMERG Late:   # nasa-imerg-late.20190101T033000Z.global.nc4
-                    #expected_file_path_object['final_nc4_filename'] = final_nc4_filename
-                    final_nc4_filename = ''
-                    final_nc4_filename += 'nasa-imerg-'                     # nasa-imerg-
-                    if (self.imerg_mode == "LATE"):
-                        final_nc4_filename += 'late'                    # nasa-imerg-late
-                    if (self.imerg_mode == "EARLY"):
-                        final_nc4_filename += 'early'                   # nasa-imerg-early
-                    final_nc4_filename += '.'                               # nasa-imerg-late.
-                    final_nc4_filename += current_year__YYYY_str            # nasa-imerg-late.2020
-                    final_nc4_filename += current_month__MM_str             # nasa-imerg-late.202001
-                    final_nc4_filename += current_day__DD_str               # nasa-imerg-late.20200130
-                    final_nc4_filename += 'T'                               # nasa-imerg-late.20200130T
-                    final_nc4_filename += both_hh_str                       # nasa-imerg-late.20200130T23
-                    final_nc4_filename += start_mm_str                      # nasa-imerg-late.20200130T2330
-                    final_nc4_filename += start_ss_str                      # nasa-imerg-late.20200130T233000
-                    final_nc4_filename += 'Z.global.nc4'                    # nasa-imerg-late.20200130T233000Z.global.nc4
-
+                    # nasa-imerg-late.20200130T233000Z.global.nc4
+                    nc4_type = 'LATE' if self.imerg_mode == 'LATE' else 'EARLY'
+                    final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}{}{}Z.global.nc4'.format(
+                        nc4_type,
+                        current_year__YYYY_str,
+                        current_month__MM_str,
+                        current_day__DD_str,
+                        both_hh_str,
+                        start_mm_str,
+                        start_ss_str
+                    )
 
                     # Now get the remote File Paths (Directory) based on the date infos.
-                    #current_remote_dir_path
-                    # REMOTE_PATH__ROOT_HTTP__IMERG__LATE   // ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/
-                    # REMOTE_PATH__ROOT_HTTP__IMERG__EARLY  // ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/
-                    # Remote DIR Patterns are like this
-                    # Late      ...path_to_gis_dir/YYYY/MM/<files_here>             // All of the files for the whole month are in here
-                    # Early     ...path_to_gis_early_dir/YYYY/MM/<files_here>       // All of the files for the whole month are in here
-
-                    remote_directory_path = "UNSET/"
-                    if self.imerg_mode == "LATE":
-                        remote_directory_path = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE",   default_or_error_return_value="ERROR_GETTING_DIR_FOR_LATE/")
-                    if self.imerg_mode == "EARLY":
-                        remote_directory_path = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY",  default_or_error_return_value="ERROR_GETTING_DIR_FOR_EARLY/")
+                    remote_directory_path = current_root_http_path
 
                     # Add the Year and Month to the directory path.
                     remote_directory_path += current_year__YYYY_str
                     remote_directory_path += '/'
                     remote_directory_path += current_month__MM_str
                     remote_directory_path += '/'
-
 
                     # Getting full paths
                     remote_full_filepath_tif = str(os.path.join(remote_directory_path, tif_filename)).strip()
@@ -301,9 +268,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
 
                     local_full_filepath_final_nc4_file    = os.path.join(final_load_dir_path, final_nc4_filename)
-
-
-                    print(remote_directory_path)
 
                     current_obj = {}
 
