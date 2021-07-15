@@ -133,29 +133,31 @@ function openSettings(which) {
       map.removeLayer(overlayMaps[which]);
     }
     overlayMaps[which] = L.timeDimension.layer.wms(
-      L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
-        layers: active_layer.layers,
-        format: "image/png",
-        transparent: true,
-        colorscalerange:
-          document.getElementById("range-min").value +
-          "," +
-          document.getElementById("range-max").value,
-        abovemaxcolor: "transparent",
-        belowmincolor: "transparent",
-        numcolorbands: 100,
-        styles: $("#style_table").val(),
-      }),
-      {
-        updateTimeDimension: true,
-      }
+        L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+          layers: active_layer.layers,
+          format: "image/png",
+          transparent: true,
+          colorscalerange:
+              document.getElementById("range-min").value +
+              "," +
+              document.getElementById("range-max").value,
+          abovemaxcolor: "transparent",
+          belowmincolor: "transparent",
+          numcolorbands: 100,
+          styles: $("#style_table").val(),
+        }),
+        {
+          updateTimeDimension: true,
+        }
     );
     map.addLayer(overlayMaps[which]);
-      document.getElementById(which.replace("TimeLayer", "")).checked = true;
-      active_layer.styles = $("#style_table").val();
-      active_layer.colorrange = document.getElementById("range-min").value +
-          "," +
-          document.getElementById("range-max").value
+    document.getElementById(which.replace("TimeLayer", "")).checked = true;
+    active_layer.styles = $("#style_table").val();
+    active_layer.colorrange = document.getElementById("range-min").value +
+        "," +
+        document.getElementById("range-max").value
+    overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
+    overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
   };
   // Update min/max
   document.getElementById("range-min").value =
