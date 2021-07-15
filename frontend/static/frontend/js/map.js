@@ -327,6 +327,7 @@ function clearAOISelections() {
   if (uploadLayer) {
     uploadLayer.remove();
   }
+  $("#nextStep1").prop("disabled", true);
 }
 
 /**
@@ -347,10 +348,22 @@ function enableUpload() {
     e.preventDefault();
     var reader = new FileReader();
     reader.onloadend = function () {
-      var data = JSON.parse(this.result);
-      uploadLayer.clearLayers();
-      uploadLayer.addData(data);
-      map.fitBounds(uploadLayer.getBounds());
+      try {
+        var data = JSON.parse(this.result);
+        uploadLayer.clearLayers();
+        uploadLayer.addData(data);
+        map.fitBounds(uploadLayer.getBounds());
+        if (uploadLayer.getLayers().length > 0) {
+          $("#nextStep1").prop("disabled", false);
+        } else {
+          $("#nextStep1").prop("disabled", true);
+        }
+        $("#upload_error").hide();
+      } catch(e){
+        // When the section is built the url will need to add #pageanchorlocation
+        $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "'>Help Center</a> for more info about upload formats..")
+        $("#upload_error").show();
+      }
     };
     var files = e.target.files || e.dataTransfer.files;
     for (var i = 0, file; (file = files[i]); i++) {
@@ -399,6 +412,11 @@ function enableUpload() {
             $("#encoding").val("");
             $("#info").addClass("picInfo");
             $("#option").slideUp(500);
+            if(uploadLayer.getLayers().length > 0){
+              $("#nextStep1").prop("disabled", false);
+            } else {
+              $("#nextStep1").prop("disabled", true);
+            }
           }
         );
       }
@@ -431,6 +449,19 @@ function enableDrawing() {
     }
     // Do whatever else you need to. (save to db; add to map etc)
     drawnItems.addLayer(layer);
+    if(drawnItems.getLayers().length > 0){
+      $("#nextStep1").prop("disabled", false);
+    } else {
+      $("#nextStep1").prop("disabled", true);
+    }
+  });
+
+  map.on(L.Draw.Event.DELETED, function (e) {
+    if(drawnItems.getLayers().length > 0){
+      $("#nextStep1").prop("disabled", false);
+    } else {
+      $("#nextStep1").prop("disabled", true);
+    }
   });
 
   map.on("draw:drawstart", function (e) {
@@ -500,9 +531,15 @@ function enableAdminFeature(which) {
               feat_ids: highlightedIDs.join(),
             }
           );
+          // if(highlightedIDs.length > 0){
+          //   $("#btnstep2").prop("disabled", false);
+          // }
           if(highlightedIDs.length > 0){
-            $("#btnstep2").prop("disabled", false);
+            $("#nextStep1").prop("disabled", false);
+          } else {
+            $("#nextStep1").prop("disabled", true);
           }
+
           map.addLayer(adminHighlightLayer);
           adminHighlightLayer.setZIndex(
             Object.keys(baseLayers).length + test_layers.length + 6
