@@ -198,7 +198,7 @@ function openLegend(which) {
   );
   $("#dialog").dialog({
     title: active_layer.title,
-    resizable: false, //{ handles: "se" },
+    resizable: { handles: "se" },
     width: 169,
     height: 322,
   });

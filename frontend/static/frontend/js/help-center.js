@@ -4,7 +4,23 @@ $(document).ready(function () {
         console.log("metaid not null");
         getMetaData(metaid);
     }
+    adjustCards();
 });
+
+function adjustCards() {
+    $(".card").animate({ height: "auto" }, function () {
+        $(".card").height("auto");
+        var maxHeight = Math.max.apply(
+            null,
+            $(".card")
+                .map(function () {
+                    return $(this).height();
+                })
+                .get()
+        );
+        $(".card").height(maxHeight);
+    });
+}
 
 $(window).resize(function () {
     $(".ui-dialog").css({
@@ -14,6 +30,7 @@ $(window).resize(function () {
     $("#dialog").css({
         height: "calc(100% - 60px)",
     });
+    adjustCards();
 });
 
 getParameterByName = (name, url) => {
@@ -59,7 +76,7 @@ function openDialog(metaData) {
         title: metaData.title,
         width: $(window).width() - 100,
         height: $(window).height() - 140,
-        draggable: false,
+        draggable: true,
         resizable: false,
         open: function () {
             //Solution HERE

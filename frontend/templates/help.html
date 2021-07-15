@@ -23,69 +23,28 @@
         </p>
     </div>
     <div class="data-cards">
-        <div class="col-sm-6 col-lg-4">
-            <div
-                    class="card"
-                    onclick="getMetaData('ec5da150-d043-414a-80cd-1b750debd805')"
-            >
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
+        {% for dataset in datasets %}
+            <div class="col-sm-6 col-lg-4">
+                <div
+                        class="card"
+                        onclick="getMetaData('{{ dataset.metadata_id }}')"
+                >
+                    <div class="card-header bg-behance content-center">
+                        <i class="text-white">{{ dataset.short_name }}</i>
+                    </div>
+                    <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
+{#                    <img src="{{ dataset.display_image.url }}" alt="{{ dataset.short_name }}" style="width: 100%" />#}
+                    <div class="card-body">
+                        <div class="summary">
+                            {{ dataset.summary|slice:"0:250" }}...
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        {% endfor %}
+
+
     </div>
     <!-- Full screen modal -->
     <div id="dialog" style="display: none" class="ui-widget-content">
