@@ -39,9 +39,9 @@ class imerg(ETL_Dataset_Subtype_Interface):
     def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         if subtype == 'imerg_early':
-            self.esi_mode = 'EARLY'
+            self.imerg_mode = 'EARLY'
         elif subtype == 'imerg_late':
-            self.esi_mode = 'LATE'
+            self.imerg_mode = 'LATE'
 
     # Validate type or use existing default for each
     def set_imerg_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):
