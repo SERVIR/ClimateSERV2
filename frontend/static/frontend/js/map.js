@@ -162,6 +162,9 @@ function openSettings(which) {
     overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
   document.getElementById("range-max").value =
     overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+  $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function(){
+    $("#dialog").dialog('close');
+  });
 }
 
 /**
