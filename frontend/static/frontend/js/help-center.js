@@ -8,17 +8,18 @@ $(document).ready(function () {
 });
 
 function adjustCards() {
-    $(".card").animate({ height: "auto" }, function () {
-        $(".card").height("auto");
+    $(".help-card").animate({ height: "auto" }, function () {
+        $(".help-card").height("auto");
         var maxHeight = Math.max.apply(
             null,
-            $(".card")
+            $(".help-card.text-card")
                 .map(function () {
                     return $(this).height();
                 })
                 .get()
         );
-        $(".card").height(maxHeight);
+        $(".help-card").height(maxHeight);
+        $(".help-image").height(maxHeight);
     });
 }
 
@@ -46,7 +47,7 @@ getParameterByName = (name, url) => {
             : ""
         : null;
 };
-
+let scroll_freeze = 0;
 function openDialog(metaData) {
     // close dialog if open to ensure proper load and scroll
     if ($("#dialog").hasClass("ui-dialog-content") &&
@@ -79,9 +80,14 @@ function openDialog(metaData) {
         draggable: true,
         resizable: false,
         open: function () {
-            //Solution HERE
             $(".ui-dialog-content").scrollTop(0);
-            //End of Solution
+            scroll_freeze = document.documentElement.scrollTop;
+            $('body').css('top', -(document.documentElement.scrollTop) + 'px')
+                .addClass('noscroll');
+        },
+        close: function(){
+            $('body').removeClass('noscroll');
+            document.documentElement.scrollTop = scroll_freeze;
         }
     });
 }

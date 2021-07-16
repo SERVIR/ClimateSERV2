@@ -16,42 +16,64 @@
 
     <div style="background-color: #f6f6f6;" class="p50">
         <div class="row mx-auto my-auto underline-header" >
-            <div class="col-4 tab-holder">
-            <h2  id="metadata" class="help-tabs active" onclick="activate('metadata')">
+            <div class="col-12 tab-holder">
+            <span  id="metadata" class="help-tabs active" onclick="activate('metadata')">
                 Dataset Metadata
-            </h2>
-            </div>
-            <div class="col-4 tab-holder">
-                <h2  id="user-interface" class="help-tabs" onclick="activate('user-interface')">
+            </span>
+
+                <span  id="user-interface" class="help-tabs" onclick="activate('user-interface')">
                     User Interface
-                </h2>
-            </div>
-            <div class="col-4 tab-holder">
-                <h2 id="api" class="help-tabs" onclick="activate('api')">
+                </span>
+
+                <span id="api" class="help-tabs" onclick="activate('api')">
                     API
-                </h2>
+                </span>
             </div>
         </div>
     </div>
     <div id="metadata-help-section" class="data-cards p50">
+
         {% for dataset in datasets %}
-            <div class="col-sm-6 col-lg-4">
-                <div
-                        class="card"
-                        onclick="getMetaData('{{ dataset.metadata_id }}')"
-                >
-                    <div class="card-header bg-behance content-center">
-                        <i class="text-white">{{ dataset.short_name }}</i>
+
+            {% if forloop.counter|divisibleby:2 %}
+                <div class="col-sm-6 col-lg-6 help-bottom">
+                    <div class="help-card">
+                        <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
+
                     </div>
-                    <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
-{#                    <img src="{{ dataset.display_image.url }}" alt="{{ dataset.short_name }}" style="width: 100%" />#}
-                    <div class="card-body">
-                        <div class="summary">
-                            {{ dataset.summary|slice:"0:250" }}...
+                </div>
+                <div class="col-sm-6 col-lg-6 help-bottom">
+                    <div class="help-card text-card">
+
+                            <h2 class="data-title">{{ dataset.short_name }}</h2>
+
+                        <div class="card-body">
+                            <div class="summary">
+                                {{ dataset.summary|slice:"0:500" }}...
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+                {% else %}
+                <div class="col-sm-6 col-lg-6 help-bottom">
+                    <div class="help-card text-card">
+                        <h2 class="data-title">{{ dataset.short_name }}</h2>
+                        <div class="card-body">
+                            <div class="summary">
+                                {{ dataset.summary|slice:"0:500" }}...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6 col-lg-6 help-bottom">
+                    <div class="help-card">
+                        <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
+
+                    </div>
+                </div>
+
+            {% endif %}
+
 
         {% endfor %}
 

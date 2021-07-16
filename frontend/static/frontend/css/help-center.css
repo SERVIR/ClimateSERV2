@@ -137,17 +137,43 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
 .help-tabs{
     padding:5px;
     cursor: pointer;
+    color:#b3b3b3
+}
+
+.help-tabs:hover{
+    color: #002a53;
 }
 
 .help-tabs.active{
-    border: 1px solid #bdd12f;
-    border-bottom: 0;
-    border-top-left-radius: .25rem;
-    border-top-right-radius: .25rem;
+    /*border: 1px solid #bdd12f;*/
+    /*border-bottom: 0;*/
+    /*border-top-left-radius: .25rem;*/
+    /*border-top-right-radius: .25rem;*/
     color: #002a53;
 }
 
 .tab-holder{
     margin-bottom: 0;
     padding-left: 0;
+    text-align: center;
+}
+
+.noscroll { position: fixed; overflow-y:scroll }
+
+.data-title{
+    font-size: 32px;
+    line-height: 36px;
+    font-weight: 700;
+    color: #003468;
+}
+
+.summary{
+    color: #616d72;
+    font-size: 15px;
+    line-height: 24px;
+    font-weight: 400;
+}
+
+.help-bottom{
+    margin-bottom: 100px;
 }
