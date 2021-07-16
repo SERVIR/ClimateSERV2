@@ -327,7 +327,7 @@ class ETL_Pipeline():
         if current_Dataset_SubType in ('esi_4week', 'esi_12week'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, current_Dataset_SubType)
             # Set params
-            self.Subtype_ETL_Instance.set_imerg_1_day_params(
+            self.Subtype_ETL_Instance.set_esi_params(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
@@ -350,11 +350,9 @@ class ETL_Pipeline():
                 NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
                 NN__30MinIncrement__End=self.END_30MININCREMENT_NN
             )
-        # IMERG Early/Late
+        # IMERG 1 Day
         if current_Dataset_SubType == 'ImergOneDay':
-            print('n 1day')
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, current_Dataset_SubType)
-            print('imerg inside')
             # Set params
             self.Subtype_ETL_Instance.set_imerg_1_day_params(
                 start_year=self.START_YEAR_YYYY,

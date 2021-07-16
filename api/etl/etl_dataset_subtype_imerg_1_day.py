@@ -57,16 +57,15 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
     _remote_connection__Password = ""
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
-        print('initt')
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(subtype_filter=self.imerg_mode),
+        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(subtype_filter=subtype),
                                                self.relative_dir_path__WorkingDir)
         self.temp_working_dir = str(root_file_download_path).strip()
         self._expected_granules = []
 
-    def set_imerg_mode(self, which):
-        self.imerg_mode = which
+    # def set_imerg_1_day_mode(self, which):
+    #     self.imerg_mode = which
 
     # Validate type or use existing default for each
     def set_imerg_1_day_params(self, start_year, end_year, start_month, end_month, start_day, end_day):
@@ -154,9 +153,7 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-
-        final_load_dir_path = self.get_final_load_dir(subtype_filter=self.imerg_mode)
-
+        final_load_dir_path = "D:/imergload/" #self.get_final_load_dir(subtype_filter=self.imerg_mode)
         # (1) Generate Expected remote file paths
         try:
 
@@ -188,11 +185,11 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
                         + current_day__dd_str + 'T' + runTime[1:7] + 'Z.global.nc4'
 
                     # Now get the remote File Paths (Directory) based on the date infos.
-                    remote_directory_path = "UNSET/"
+                    remote_directory_path = "d:/imerg1day/"
                     if self.imerg_mode == "LATE":
-                        remote_directory_path = Config_Setting.get_value(
-                            setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE",
-                            default_or_error_return_value="ERROR_GETTING_DIR_FOR_LATE/")
+                        remote_directory_path = "D:/imerglate/" #Config_Setting.get_value(
+                            #setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE",
+                            #default_or_error_return_value="ERROR_GETTING_DIR_FOR_LATE/")
                     if self.imerg_mode == "EARLY":
                         remote_directory_path = Config_Setting.get_value(
                             setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY",
@@ -207,7 +204,6 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
                     # Getting full paths
                     remote_full_filepath_tif = str(os.path.join(remote_directory_path, tif_filename)).strip()
                     remote_full_filepath_tfw = str(os.path.join(remote_directory_path, tfw_filename)).strip()
-
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
 
@@ -233,22 +229,23 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
 
                     granule_name = final_nc4_filename
                     granule_contextual_information = ""
-                    granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING",
-                                                                      default_or_error_return_value="Attempting")
+                    granule_pipeline_state = "attempting" #Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING",
+                                                                      #default_or_error_return_value="Attempting")
                     # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
                     additional_json = current_obj  # {}
-                    new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
-                        granule_name=granule_name,
-                        granule_contextual_information=granule_contextual_information,
-                        granule_pipeline_state=granule_pipeline_state,
-                        additional_json=additional_json)
-                    #
-                    # Save the Granule's UUID for reference in later steps
-                    current_obj['Granule_UUID'] = str(new_granule_uuid).strip()
+                    # new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
+                    #     granule_name=granule_name,
+                    #     granule_contextual_information=granule_contextual_information,
+                    #     granule_pipeline_state=granule_pipeline_state,
+                    #     additional_json=additional_json)
+                    # print(new_granule_uuid)
+                    # print('afte log')
+                    # #
+                    # # Save the Granule's UUID for reference in later steps
+                    # current_obj['Granule_UUID'] = str(new_granule_uuid).strip()
 
                     # Add to the granules list
                     self._expected_granules.append(current_obj)
-
         except Exception:
             error_message = "Error: There was an error when generating the expected remote file paths.  "
             "See the additional data for details on which expected file caused the "
@@ -263,10 +260,10 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
                                                            "class_name": self.__class__.__name__,
                                                            "function_name": "execute__Step__Pre_ETL_Custom"
                                                        })
-
         # Make sure the directories exist
         #
-        if self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir):
+        print('^^^^')
+        if self.etl_parent_pipeline_instance.create_dir_if_not_exist(self,self.temp_working_dir):
             error_message = "Error: There was an error when the pipeline tried to create a new directory on " \
                             "the filesystem.  The path that the pipeline tried to create was: " \
                             + str(self.temp_working_dir) + ".  There should be another error logged " \
@@ -284,7 +281,7 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
                                                            "class_name": self.__class__.__name__,
                                                            "function_name": "execute__Step__Pre_ETL_Custom"
                                                        })
-
+        print('------')
         # final_load_dir_path
         if self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path):
             error_message = "Error: There was an error when the pipeline tried to create a new directory on the " \
@@ -306,6 +303,7 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
                                                        })
 
         # Ended, now for reporting
+        print("before returb")
 
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(
             len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(
