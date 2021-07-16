@@ -115,3 +115,9 @@
 span.ui-button-icon.ui-icon.ui-icon-closethick {
     display: none;
 }
+
+.help-image{
+    background-size: cover;
+    min-height: 200px;
+    background-position: center;
+}

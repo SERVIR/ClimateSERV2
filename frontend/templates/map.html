@@ -211,6 +211,9 @@
                                     </div>
                                     <div class="file-display-container"></div>
                                 </div>
+                                <div class="errors" id="upload_error" style="display:none;">
+
+                                </div>
                                 <div class="modal">
                                     <div class="overlay"></div>
                                     <span class="close">X</span>
@@ -258,7 +261,7 @@
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                <button disabled="" style="position: absolute; right: 0">
+                                <button id="nextStep1" onclick="gotostep(2)" disabled="" style="position: absolute; right: 0">
                                     Next
                                 </button>
                             </div>

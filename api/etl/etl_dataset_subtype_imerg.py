@@ -20,14 +20,14 @@ class imerg(ETL_Dataset_Subtype_Interface):
     imerg_mode = 'LATE' # It could be 'LATE' or 'EARLY' - Default is 'LATE'
 
     # Input Settings
-    YYYY__Year__Start   = 2020 #2019
-    YYYY__Year__End     = 2020
-    MM__Month__Start    = 1 #12    # 2 #1
-    MM__Month__End      = 1     # 4 #6
-    DD__Day__Start      = 1 # 30    # 23
-    DD__Day__End        = 1 #2     # 9
-    NN__30MinIncrement__Start    = 22 #0     # 0
-    NN__30MinIncrement__End      = 24 #48    # 0
+    YYYY__Year__Start          = datetime.date.today().year
+    YYYY__Year__End            = datetime.date.today().year
+    MM__Month__Start           = 1
+    MM__Month__End             = 1
+    DD__Day__Start             = 1
+    DD__Day__End               = 1
+    NN__30MinIncrement__Start  = 0
+    NN__30MinIncrement__End    = 2
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -35,16 +35,13 @@ class imerg(ETL_Dataset_Subtype_Interface):
     _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
     _expected_granules                  = []    # Place to store granules
 
-    _remote_connection__Username = ""
-    _remote_connection__Password = ""
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         if subtype == 'imerg_early':
-            self.esi_mode = 'EARLY'
+            self.imerg_mode = 'EARLY'
         elif subtype == 'imerg_late':
-            self.esi_mode = 'LATE'
+            self.imerg_mode = 'LATE'
 
     # Validate type or use existing default for each
     def set_imerg_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):
@@ -54,13 +51,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
         self.MM__Month__End = MM__Month__End if MM__Month__End != 0 else self.MM__Month__End
         self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
         self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
-        self.NN__30MinIncrement__Start = NN__30MinIncrement__Start if self.NN__30MinIncrement__Start != 0 else self.NN__30MinIncrement__Start
-        self.NN__30MinIncrement__End = NN__30MinIncrement__End if self.NN__30MinIncrement__End != 0 else self.NN__30MinIncrement__End
-
-    # Get the credentials from the settings for connecting to the IMERG Data Source, and then set them to the Instance Vars.
-    # def get_credentials_and_set_to_class(self):
-    #     self._remote_connection__Username = Config_SettingService.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="")
-    #     self._remote_connection__Password = Config_SettingService.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="")
+        self.NN__30MinIncrement__Start = NN__30MinIncrement__Start if NN__30MinIncrement__Start != 0 else self.NN__30MinIncrement__Start
+        self.NN__30MinIncrement__End = NN__30MinIncrement__End if NN__30MinIncrement__End != 0 else self.NN__30MinIncrement__End
 
     # Months between two dates
     def diff_month(latest_datetime, earliest_datetime):
@@ -69,13 +61,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
     # Get the local filesystem place to store data
     @staticmethod
     def get_root_local_temp_working_dir(subtype_filter):
-        imerg__EARLY__rootoutputworkingdir = Config_SettingService.get_value(
-            setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY",
-            default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
-        imerg__LATE__rootoutputworkingdir = Config_SettingService.get_value(
-            setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE",
-            default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
-
+        imerg__EARLY__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
+        imerg__LATE__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
         ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'EARLY':
@@ -100,8 +87,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
     # Get the Remote Locations for each of the subtypes
     @staticmethod
     def get_roothttp_for_subtype(subtype_filter):
-        imerg__EARLY__roothttp  = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
-        imerg__LATE__roothttp   = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
+        imerg__EARLY__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
+        imerg__LATE__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
         ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'EARLY':
@@ -141,20 +128,15 @@ class imerg(ETL_Dataset_Subtype_Interface):
         root_file_download_path = os.path.join(imerg.get_root_local_temp_working_dir(subtype_filter=self.imerg_mode), self.relative_dir_path__WorkingDir)
         final_load_dir_path = imerg.get_final_load_dir(subtype_filter=self.imerg_mode)
         self.temp_working_dir = str(root_file_download_path).strip()
-        self._expected_granules = []
 
         # (1) Generate Expected remote file paths
         try:
 
-            # Create the list of Days (From start time to end time)
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
-            first_day__Start_30Min_Increment = self.NN__30MinIncrement__Start # = 0  # 0
-            last_day__End_30Min_Increment = self.NN__30MinIncrement__End   # = 48  # 0
-
             delta = end_date - start_date
-            print("DELTA: " + str(delta))
+            # print('DELTA: {}'.format(str(delta)))
 
             for i in range(delta.days + 1):
 
@@ -163,6 +145,12 @@ class imerg(ETL_Dataset_Subtype_Interface):
                 current_month__MM_str = "{:02d}".format(current_date.month)
                 current_day__DD_str = "{:02d}".format(current_date.day)
 
+                # Debug (making sure we got the right date ranges)
+                # print(current_date)
+                # print("i: " + str(i) + ": (currentDate.year) " + str(current_date.year))
+                # print("i: " + str(i) + ": (current_year__YYYY_str) " + str(current_year__YYYY_str))
+                # print("i: " + str(i) + ": (current_month__MM_str) " + str(current_month__MM_str))
+                # print("i: " + str(i) + ": (current_day__DD_str) " + str(current_day__DD_str))
 
                 # Get the Current Day, Start '30 min' increment
                 start_30min_increment = 0
@@ -170,33 +158,24 @@ class imerg(ETL_Dataset_Subtype_Interface):
 
                 if i == 0:
                     # We are on the FIRST day, check the start and end 30 min increments
-                    start_30min_increment = first_day__Start_30Min_Increment
+                    start_30min_increment = self.NN__30MinIncrement__Start
                     # print("FIRST DAY Loop: (i): " + str(i) + ", (start_30min_increment): " + str(start_30min_increment))
 
                 if i == delta.days:
                     # We are on the LAST day, check the start and end 30 min increments
-                    end_30min_increment = last_day__End_30Min_Increment
+                    end_30min_increment = self.NN__30MinIncrement__End
                     # print("LAST DAY Loop: (i): " + str(i) + ", (end_30min_increment): " + str(end_30min_increment))
-
 
                 # Analyzing the Dates
                 #
                 # # April 2nd, 2020, FIRST 30 min item of the day
                 # # # 3B-HHR-L.MS.MRG.3IMERG.20200402-S000000-E002959.0000.V06B.30min.tfw
                 #
-                #
                 # # April 2nd, 2020, LAST 30 min item of the day
                 # # # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tfw
 
+                for j in range(start_30min_increment, end_30min_increment):
 
-                # Now we must divide the entire day into 30 minute increments.
-                #intraday_filename_helpers_list = []  # List of objects that have the parts of the file name in them, including the final file tif and tfw names
-                #minutes_array = []   # Result of the for loop gives us something like this:  [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330, .... 1410] //, 1440]
-                #for j in range((24*2) + 1):  # There is no 1440, so removing the '+ 1' part
-                #for j in range(24 * 2):
-
-                for j in range(start_30min_increment, end_30min_increment + 1):
-                    print(j)
                     increment_minute_value = j * 30                                                                 # 1410
                     increment_minute_value_4Char_Str ="{:0>4d}".format(increment_minute_value)                      # "1410"    # Note: A number like 0 gets turned into "0000"
                     increment_minute_value__Div_60 = float(increment_minute_value / 60)                             # 23.5
@@ -210,17 +189,12 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     start_ss_str    = "00"
                     end_ss_str      = "59"
 
-                    #minutes_array.append(increment_minute_value)
-
-                    start_hour_calc = int(increment_minute_value / 60)          # 0, 1, 2 ... 23
-                    start_hour_HH = "00"
-
                     base_filename = ''
-                    base_filename += '3B-HHR-'                      # 3B-HHR-
-                    if(self.imerg_mode == "LATE"):
-                        base_filename += 'L'                        # 3B-HHR-L
-                    if (self.imerg_mode == "EARLY"):
-                        base_filename += 'E'                        # 3B-HHR-E
+                    base_filename += '3B-HHR-'                              # 3B-HHR-
+                    if self.imerg_mode == 'LATE':
+                        base_filename += 'L'                                # 3B-HHR-L
+                    if self.imerg_mode == 'EARLY':
+                        base_filename += 'E'                                # 3B-HHR-E
                     base_filename += '.MS.MRG.3IMERG.'                      # 3B-HHR-L.MS.MRG.3IMERG.
                     base_filename += current_year__YYYY_str                 # 3B-HHR-L.MS.MRG.3IMERG.2020
                     base_filename += current_month__MM_str                  # 3B-HHR-L.MS.MRG.3IMERG.202004
@@ -240,8 +214,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     base_filename += '.V06B.30min.'                         # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.
                     tfw_filename = base_filename + 'tfw'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tfw
                     tif_filename = base_filename + 'tif'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tif
-                    # .1410.V06B.30min.tfw
-
 
                     # Building the Common NC4 Filename
                     # nasa-imerg-late.20200130T233000Z.global.nc4
@@ -257,13 +229,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     )
 
                     # Now get the remote File Paths (Directory) based on the date infos.
-                    remote_directory_path = current_root_http_path
-
                     # Add the Year and Month to the directory path.
-                    remote_directory_path += current_year__YYYY_str
-                    remote_directory_path += '/'
-                    remote_directory_path += current_month__MM_str
-                    remote_directory_path += '/'
+                    remote_directory_path = '{}/{}/{}/'.format(current_root_http_path, current_year__YYYY_str, current_month__MM_str)
 
                     # Getting full paths
                     remote_full_filepath_tif = str(os.path.join(remote_directory_path, tif_filename)).strip()
@@ -272,7 +239,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
 
-                    local_full_filepath_final_nc4_file    = os.path.join(final_load_dir_path, final_nc4_filename)
+                    local_full_filepath_final_nc4_file = os.path.join(final_load_dir_path, final_nc4_filename)
 
                     current_obj = {}
 
@@ -311,35 +278,23 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     current_obj['local_full_filepath_tfw']              = local_full_filepath_tfw
                     current_obj['local_full_filepath_final_nc4_file']   = local_full_filepath_final_nc4_file
 
-                    #
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
-                    # # Granule Helpers
-                    # # # def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="", granule_pipeline_state=settings.GRANULE_PIPELINE_STATE__ATTEMPTING, additional_json={}):
-                    # # # def etl_granule__Update__granule_pipeline_state(self, granule_uuid, new__granule_pipeline_state, is_error):
-                    # # # def etl_granule__Update__is_missing_bool_val(self, granule_uuid, new__is_missing__Bool_Val):
-                    # # # def etl_granule__Append_JSON_To_Additional_JSON(self, granule_uuid, new_json_key_to_append, sub_jsonable_object):
                     granule_name = final_nc4_filename
-                    granule_contextual_information = ""
-                    # granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__ATTEMPTING  # At the start of creating a new Granule, it starts off as 'attempting' - So we can see Active Granules in the database while the system is running.
-                    granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")  # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
-                    additional_json = current_obj  # {}
+                    granule_contextual_information = ''
+                    granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")  # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
+                    additional_json = current_obj
                     new_Granule_UUID = self.etl_parent_pipeline_instance.log_etl_granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, granule_pipeline_state=granule_pipeline_state, additional_json=additional_json)
-                    #
+
                     # Save the Granule's UUID for reference in later steps
                     current_obj['Granule_UUID'] = str(new_Granule_UUID).strip()
 
                     # Add to the granules list
                     self._expected_granules.append(current_obj)
 
-                    #print("DEBUG: JUST DO ONE GRANULE - BREAKING THIS FOR LOOP AFTER 1 ITERATION... BREAKING NOW.")
-                    #break
+                    # print("DEBUG: JUST DO ONE GRANULE - BREAKING THIS FOR LOOP AFTER 1 ITERATION... BREAKING NOW.")
+                    # break
 
-                print('òòòòò')
-            # End Loop for getting all the granules for each of the days.
-
-            # DEBUG
-            #print("len(expected_granules): " + str(len(self._expected_granules)))
-            #print("First Granule: str(expected_granules[0]): " + str(self._expected_granules[0]))
+            # End Loop for getting all the granules for each of the days
 
         except:
             sysErrorData = str(sys.exc_info())
@@ -360,10 +315,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-
-
         # Make sure the directories exist
-        #
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
         if is_error_creating_directory == True:
             error_JSON = {}
@@ -392,7 +344,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
 
         # Ended, now for reporting
         ret__detail_state_info['class_name'] = "imerg"
@@ -499,10 +450,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-        print(111)
-        print(expected_granules)
-        print(222)
-
         for expected_granule in expected_granules:
 
             try:
@@ -530,7 +477,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                 Granule_UUID = expected_granule['Granule_UUID']
                 granule_name = expected_granule['granule_name']
 
-
                 # FTP Processes
                 # # 1 - Change Directory to the directory path
                 ftp_Connection.cwd(remote_directory_path)
@@ -556,7 +502,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                 # print("local_full_filepath_tif: " + str(local_full_filepath_tif))
                 # print("local_full_filepath_tfw: " + str(local_full_filepath_tfw))
 
-
                 if file_found_count == 2:
                     hasFiles = True
 
@@ -568,9 +513,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     #return
                 # TODO - Fix the problems with checking if a file exists        END
 
-
                 ## Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working.
-                #hasFiles = True
+                # hasFiles = True
 
                 # print("DEBUG OUTS")
                 # print("remote_directory_path: " + str(remote_directory_path))
@@ -581,7 +525,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
                 # # print("DEBUG RETURN")
                 # # return {}
 
-                if (hasFiles == True):
+                if hasFiles == True:
                     # Both files were found, so let's now download them.
 
                     # Backwards compatibility
@@ -591,7 +535,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     # # Local Paths (Where the files are being saved)
                     local_FullFilePath_ToSave_Tif = local_full_filepath_tif
                     local_FullFilePath_ToSave_Twf = local_full_filepath_tfw
-
 
                     try:
                         # Download the Tif
@@ -637,8 +580,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                                     activity_description = warn_JSON['warning']
                                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
-
-
 
                                     # Give the FTP Connection a short break (Server spam protection mitigation)
                         time.sleep(3)
@@ -686,7 +627,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                                     activity_description = warn_JSON['warning']
                                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
-
                         # Give the FTP Connection a short break (Server spam protection mitigation)
                         time.sleep(3)
 
@@ -716,11 +656,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
                         activity_description        = warn_JSON['warning']
                         self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
-
-
                     # END   try:    Where the file downloads happen
                 # END   if (hasFiles == True):
-
 
                 # # Will at least 1 download work?
                 # print("DEBUG OUTS")
@@ -732,8 +669,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                 # print("DEBUG RETURN")
                 # return {}
 
-
-
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
@@ -744,9 +679,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
 
                 # Maybe in here is an error with sending the warning in an earlier step?
             loop_counter = loop_counter + 1
-
-
-
 
         # Ended, now for reporting
         #
@@ -796,7 +728,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
             for expected_granules_object in expected_granules:
                 try:
 
-
                     # Getting info ready for the current granule.
                     local_extract_path = expected_granules_object['local_extract_path']
                     tif_filename = expected_granules_object['tif_filename']
@@ -843,10 +774,8 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     # Determine the timestamp for the data.
 
                     # Determine starting and ending times.
-                    # # Error with pandas.Timestamp function (Solution, just use Datetime to parse this)
-                    # startTime = pd.Timestamp.strptime(yyyymmdd + hhmmss, '%Y%m%dS%H%M%S')   # pandas can't seem to use datetime to parse timestrings...
                     startTime = datetime.datetime.strptime(yyyymmdd + hhmmss, '%Y%m%dS%H%M%S')
-                    endTime = startTime + pd.Timedelta('29M') + pd.Timedelta('59S')  # 4 weeks (i.e. 28 days)
+                    endTime = startTime + pd.Timedelta('29 minutes 59 seconds')  # 4 weeks (i.e. 28 days)
 
                     ############################################################
                     # Beging extracting data and creating output netcdf file.
@@ -965,9 +894,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         try:
             expected_granules = self._expected_granules
             for expected_granules_object in expected_granules:
@@ -992,19 +919,10 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file) #(src, dst)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
-                    # # Granule Helpers
-                    # # # def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="", granule_pipeline_state=settings.GRANULE_PIPELINE_STATE__ATTEMPTING, additional_json={}):
-                    # # # def etl_granule__Update__granule_pipeline_state(self, granule_uuid, new__granule_pipeline_state, is_error):
-                    # # # def etl_granule__Update__is_missing_bool_val(self, granule_uuid, new__is_missing__Bool_Val):
-                    # # # def etl_granule__Append_JSON_To_Additional_JSON(self, granule_uuid, new_json_key_to_append, sub_jsonable_object):
                     Granule_UUID                = expected_granules_object['Granule_UUID']
-                    #new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__SUCCESS # When a granule has a NC4 file in the correct location, this counts as a Success.
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")  #
+                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
                     is_error                    = False
                     is_update_succeed           = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    #
-
-
 
                     # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
                     #
@@ -1014,8 +932,7 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     granule_contextual_information  = ""
                     additional_json                 = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
-
+                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
@@ -1039,7 +956,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
-
                     # # Exit Here With Error info loaded up
                     # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
                     # ret__is_error = True
@@ -1062,7 +978,6 @@ class imerg(ETL_Dataset_Subtype_Interface):
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj

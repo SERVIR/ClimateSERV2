@@ -22,4 +22,7 @@ def about(request):
 
 
 def help_center(request):
-    return render(request, 'help.html', context={'page': 'menu-help'})
+    return render(request, 'help.html', context={
+        'page': 'menu-help',
+        'datasets': DataSet.objects.all()
+    })

@@ -952,6 +952,12 @@ button[disabled] {
   background-position: center;
 }
 
+.errors {
+  border: red 1px solid;
+  padding: 5px;
+  color: red;
+}
+
 .handle {
   height: 40px;
   padding: 0 !important;

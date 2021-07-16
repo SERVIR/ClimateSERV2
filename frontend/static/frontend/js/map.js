@@ -133,35 +133,40 @@ function openSettings(which) {
       map.removeLayer(overlayMaps[which]);
     }
     overlayMaps[which] = L.timeDimension.layer.wms(
-      L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
-        layers: active_layer.layers,
-        format: "image/png",
-        transparent: true,
-        colorscalerange:
-          document.getElementById("range-min").value +
-          "," +
-          document.getElementById("range-max").value,
-        abovemaxcolor: "transparent",
-        belowmincolor: "transparent",
-        numcolorbands: 100,
-        styles: $("#style_table").val(),
-      }),
-      {
-        updateTimeDimension: true,
-      }
+        L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+          layers: active_layer.layers,
+          format: "image/png",
+          transparent: true,
+          colorscalerange:
+              document.getElementById("range-min").value +
+              "," +
+              document.getElementById("range-max").value,
+          abovemaxcolor: "transparent",
+          belowmincolor: "transparent",
+          numcolorbands: 100,
+          styles: $("#style_table").val(),
+        }),
+        {
+          updateTimeDimension: true,
+        }
     );
     map.addLayer(overlayMaps[which]);
-      document.getElementById(which.replace("TimeLayer", "")).checked = true;
-      active_layer.styles = $("#style_table").val();
-      active_layer.colorrange = document.getElementById("range-min").value +
-          "," +
-          document.getElementById("range-max").value
+    document.getElementById(which.replace("TimeLayer", "")).checked = true;
+    active_layer.styles = $("#style_table").val();
+    active_layer.colorrange = document.getElementById("range-min").value +
+        "," +
+        document.getElementById("range-max").value
+    overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
+    overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
   };
   // Update min/max
   document.getElementById("range-min").value =
     overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
   document.getElementById("range-max").value =
     overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+  $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function(){
+    $("#dialog").dialog('close');
+  });
 }
 
 /**
@@ -193,7 +198,7 @@ function openLegend(which) {
   );
   $("#dialog").dialog({
     title: active_layer.title,
-    resizable: false, //{ handles: "se" },
+    resizable: { handles: "se" },
     width: 169,
     height: 322,
   });
@@ -322,6 +327,7 @@ function clearAOISelections() {
   if (uploadLayer) {
     uploadLayer.remove();
   }
+  $("#nextStep1").prop("disabled", true);
 }
 
 /**
@@ -342,10 +348,22 @@ function enableUpload() {
     e.preventDefault();
     var reader = new FileReader();
     reader.onloadend = function () {
-      var data = JSON.parse(this.result);
-      uploadLayer.clearLayers();
-      uploadLayer.addData(data);
-      map.fitBounds(uploadLayer.getBounds());
+      try {
+        var data = JSON.parse(this.result);
+        uploadLayer.clearLayers();
+        uploadLayer.addData(data);
+        map.fitBounds(uploadLayer.getBounds());
+        if (uploadLayer.getLayers().length > 0) {
+          $("#nextStep1").prop("disabled", false);
+        } else {
+          $("#nextStep1").prop("disabled", true);
+        }
+        $("#upload_error").hide();
+      } catch(e){
+        // When the section is built the url will need to add #pageanchorlocation
+        $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#user-interface'>Help Center</a> for more info about upload formats..")
+        $("#upload_error").show();
+      }
     };
     var files = e.target.files || e.dataTransfer.files;
     for (var i = 0, file; (file = files[i]); i++) {
@@ -394,6 +412,11 @@ function enableUpload() {
             $("#encoding").val("");
             $("#info").addClass("picInfo");
             $("#option").slideUp(500);
+            if(uploadLayer.getLayers().length > 0){
+              $("#nextStep1").prop("disabled", false);
+            } else {
+              $("#nextStep1").prop("disabled", true);
+            }
           }
         );
       }
@@ -426,6 +449,19 @@ function enableDrawing() {
     }
     // Do whatever else you need to. (save to db; add to map etc)
     drawnItems.addLayer(layer);
+    if(drawnItems.getLayers().length > 0){
+      $("#nextStep1").prop("disabled", false);
+    } else {
+      $("#nextStep1").prop("disabled", true);
+    }
+  });
+
+  map.on(L.Draw.Event.DELETED, function (e) {
+    if(drawnItems.getLayers().length > 0){
+      $("#nextStep1").prop("disabled", false);
+    } else {
+      $("#nextStep1").prop("disabled", true);
+    }
   });
 
   map.on("draw:drawstart", function (e) {
@@ -495,9 +531,15 @@ function enableAdminFeature(which) {
               feat_ids: highlightedIDs.join(),
             }
           );
+          // if(highlightedIDs.length > 0){
+          //   $("#btnstep2").prop("disabled", false);
+          // }
           if(highlightedIDs.length > 0){
-            $("#btnstep2").prop("disabled", false);
+            $("#nextStep1").prop("disabled", false);
+          } else {
+            $("#nextStep1").prop("disabled", true);
           }
+
           map.addLayer(adminHighlightLayer);
           adminHighlightLayer.setZIndex(
             Object.keys(baseLayers).length + test_layers.length + 6

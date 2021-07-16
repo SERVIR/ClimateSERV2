@@ -12,81 +12,60 @@
 
 {% block content %}
 
-    <div class="col">
-        <h1>Help Center Coming soon</h1>
-        <p>
-            Many data cards will be here that will be clickable to open the data
-            info box. They will be dynamically built, but these demo are hard coded.
-            Only the first card has the click event which opens the dialog that will
-            contain more data info. This text will be replaced by a brief welcome
-            and explaination of the data center usage.
-        </p>
+    <div style="background-color: #f6f6f6;" class="p50">
+        <div class="row mx-auto my-auto">
+            <h2 class="underline-header" id="metadata">
+                Dataset Metadata
+            </h2>
+        </div>
     </div>
     <div class="data-cards">
-        <div class="col-sm-6 col-lg-4">
-            <div
-                    class="card"
-                    onclick="getMetaData('ec5da150-d043-414a-80cd-1b750debd805')"
-            >
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
+        {% for dataset in datasets %}
+            <div class="col-sm-6 col-lg-4">
+                <div
+                        class="card"
+                        onclick="getMetaData('{{ dataset.metadata_id }}')"
+                >
+                    <div class="card-header bg-behance content-center">
+                        <i class="text-white">{{ dataset.short_name }}</i>
+                    </div>
+                    <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
+{#                    <img src="{{ dataset.display_image.url }}" alt="{{ dataset.short_name }}" style="width: 100%" />#}
+                    <div class="card-body">
+                        <div class="summary">
+                            {{ dataset.summary|slice:"0:250" }}...
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-behance content-center">
-                    <i class="fab fa-dribbble icon text-white">IMERG</i>
-                </div>
-                <img src="{% static 'frontend/img/imerg.jpg' %}" alt="IMERG" style="width: 100%" />
-                <div class="card-body text-center">
-                    <div class="summary">
-                        This metadata entry represents a set of SERVIR-hosted web mapping
-                        services of precipitation data from the Integrated Multi-satellitE
-                        Retrievals (IMERG) for Global Precipitation Mission (GPM).
-                    </div>
-                </div>
-            </div>
-        </div>
+
+        {% endfor %}
+
+
     </div>
+
+    <div style="background-color: #f6f6f6;" class="p50">
+        <div class="row mx-auto my-auto">
+            <h2 class="underline-header" id="user-interface">
+                User Interface
+            </h2>
+        </div>
+        <p style="padding: 15px 15px 0 15px">
+            This section will contain useful information about using the system.
+        </p>
+    </div>
+
+    <div style="background-color: #f6f6f6;" class="p50">
+        <div class="row mx-auto my-auto">
+            <h2 class="underline-header" id="api">
+                API
+            </h2>
+        </div>
+        <p style="padding: 15px 15px 0 15px">
+            This section will contain useful information about using the web API.
+        </p>
+    </div>
+
     <!-- Full screen modal -->
     <div id="dialog" style="display: none" class="ui-widget-content">
         <p>
