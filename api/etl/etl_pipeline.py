@@ -298,8 +298,8 @@ class ETL_Pipeline():
             return
 
         # CHIRPS chirp/chirps/chrips_gefs
-        if current_Dataset_SubType in ('chrip', 'chrips', 'chrips_gefs'):
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self)
+        if current_Dataset_SubType in ('chirp', 'chirps', 'chirps_gefs'):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, current_Dataset_SubType)
             # Set params
             self.Subtype_ETL_Instance.set_chirps_params(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
