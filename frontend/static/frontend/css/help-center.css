@@ -121,3 +121,33 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     min-height: 200px;
     background-position: center;
 }
+
+.highlight {
+    background: #ffffff;
+}
+
+.highlight pre {
+    font-size: 95%;
+    padding: 0.8em;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    background: #eee;
+}
+
+.help-tabs{
+    padding:5px;
+    cursor: pointer;
+}
+
+.help-tabs.active{
+    border: 1px solid #bdd12f;
+    border-bottom: 0;
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem;
+    color: #002a53;
+}
+
+.tab-holder{
+    margin-bottom: 0;
+    padding-left: 0;
+}

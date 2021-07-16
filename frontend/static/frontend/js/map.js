@@ -361,7 +361,7 @@ function enableUpload() {
         $("#upload_error").hide();
       } catch(e){
         // When the section is built the url will need to add #pageanchorlocation
-        $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#user-interface'>Help Center</a> for more info about upload formats..")
+        $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
         $("#upload_error").show();
       }
     };

@@ -189,3 +189,10 @@ function getMetaData(which) {
         }
     );
 }
+
+function activate(which){
+    $(".help-tabs").removeClass("active");
+    $("#" + which).addClass("active");
+    $("[id$=help-section]").hide()
+    $("#" + which + "-help-section").show();
+}

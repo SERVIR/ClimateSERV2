@@ -12,14 +12,28 @@
 
 {% block content %}
 
+
+
     <div style="background-color: #f6f6f6;" class="p50">
-        <div class="row mx-auto my-auto">
-            <h2 class="underline-header" id="metadata">
+        <div class="row mx-auto my-auto underline-header" >
+            <div class="col-4 tab-holder">
+            <h2  id="metadata" class="help-tabs active" onclick="activate('metadata')">
                 Dataset Metadata
             </h2>
+            </div>
+            <div class="col-4 tab-holder">
+                <h2  id="user-interface" class="help-tabs" onclick="activate('user-interface')">
+                    User Interface
+                </h2>
+            </div>
+            <div class="col-4 tab-holder">
+                <h2 id="api" class="help-tabs" onclick="activate('api')">
+                    API
+                </h2>
+            </div>
         </div>
     </div>
-    <div class="data-cards">
+    <div id="metadata-help-section" class="data-cards p50">
         {% for dataset in datasets %}
             <div class="col-sm-6 col-lg-4">
                 <div
@@ -44,24 +58,43 @@
 
     </div>
 
-    <div style="background-color: #f6f6f6;" class="p50">
+    <div id="user-interface-help-section" style="display: none;" class="p50">
+
+
         <div class="row mx-auto my-auto">
             <h2 class="underline-header" id="user-interface">
-                User Interface
+                General
             </h2>
         </div>
-        <p style="padding: 15px 15px 0 15px">
-            This section will contain useful information about using the system.
+        <p style="padding: 15px 15px 0 15px">General help topics about ClimateSERV
         </p>
+        <div class="row mx-auto my-auto">
+            <h2 class="underline-header" id="user-interface">
+                Map page
+            </h2>
+        </div>
+    <p style="padding: 15px 15px 0 15px">
+        a bunch of stuff here including how to format geojson/json upload:
+        <figure class="highlight" id="geojson"><pre><code class="language-json" data-lang="json"><span class="p">{</span><span class="w">
+  </span><span class="s2">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Feature"</span><span class="p">,</span><span class="w">
+  </span><span class="s2">"geometry"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Point"</span><span class="p">,</span><span class="w">
+    </span><span class="s2">"coordinates"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="mf">125.6</span><span class="p">,</span><span class="w"> </span><span class="mf">10.1</span><span class="p">]</span><span class="w">
+  </span><span class="p">},</span><span class="w">
+  </span><span class="s2">"properties"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span class="w">
+    </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Dinagat Islands"</span><span class="w">
+  </span><span class="p">}</span><span class="w">
+</span><span class="p">}</span></code></pre></figure>
+    </p>
     </div>
 
-    <div style="background-color: #f6f6f6;" class="p50">
-        <div class="row mx-auto my-auto">
-            <h2 class="underline-header" id="api">
-                API
-            </h2>
-        </div>
-        <p style="padding: 15px 15px 0 15px">
+    <div id="api-help-section" style="display: none;" class="p50">
+{#        <div class="row mx-auto my-auto">#}
+{#            <h2 class="underline-header" id="api">#}
+{#                API#}
+{#            </h2>#}
+{#        </div>#}
+        <p>
             This section will contain useful information about using the web API.
         </p>
     </div>
