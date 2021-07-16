@@ -41,6 +41,7 @@ class DataLayer(models.Model):
     ui_id = models.CharField(max_length=200, help_text='ID for the UI to use and access in javascript')
     dataset_type = models.ForeignKey(DatasetType, on_delete=models.CASCADE, related_name="datatype")
     dataset_id = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="dataset")
+    api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
 
     def __str__(self):
         return f"{self.title}"

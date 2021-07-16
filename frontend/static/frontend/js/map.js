@@ -555,7 +555,17 @@ function gotostep(which){
   $("[id^=btnstep]").removeClass("active");
   $("#step" + which).show();
   $("#btnstep" + which).addClass("active");
-
+  switch(which){
+    case 1:
+      $("[id^=btnstep]").prop("disabled", true);
+      break;
+    case 2:
+      $("#btnstep1").prop("disabled", false);
+      break
+    case 3:
+      $("#btnstep2").prop("disabled", false);
+      break;
+  }
 }
 
 function enablestep3(){
@@ -662,6 +672,11 @@ function initMap() {
     buildStyles();
   } catch (e) {}
   adjustLayerIndex();
+}
+
+function isComplete(){
+  //sDate_new_cooked
+  //eDate_new_cooked
 }
 
 /**
