@@ -1,4 +1,5 @@
-import datetime, gzip, os, shutil, sys
+import os, sys
+import zipfile
 from urllib import request as urllib_request
 from shutil import copyfile, rmtree
 import xarray as xr
@@ -6,7 +7,6 @@ import pandas as pd
 import numpy as np
 import re
 from collections import OrderedDict
-
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from ..models import Config_Setting
@@ -27,35 +27,33 @@ class emodis(ETL_Dataset_Subtype_Interface):
     XX__Region_Code = "ea"
     relative_dir_path__WorkingDir = 'working_dir'
     temp_working_dir = ""
+
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+
     # Validate type or use existing default for each
     def set_emodis_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, XX__Region_Code):
         try:
-            self.YYYY__Year__Start = int(YYYY__Year__Start)
+            self.YYYY__Year__Start = int(YYYY__Year__Start) if YYYY__Year__Start != 0 else self.YYYY__Year__Start
         except:
             pass
         try:
-            self.YYYY__Year__End = int(YYYY__Year__End)
+            self.YYYY__Year__End = int(YYYY__Year__End) if YYYY__Year__End != 0 else self.YYYY__Year__End
         except:
             pass
         try:
-            self.MM__Month__Start = int(MM__Month__Start)
+            self.MM__Month__Start = int(MM__Month__Start) if MM__Month__Start != 0 else self.MM__Month__Start
         except:
             pass
         try:
-            self.MM__Month__End = int(MM__Month__End)
+            self.MM__Month__End = int(MM__Month__End) if MM__Month__End != 0 else self.MM__Month__End
         except:
             pass
-
         try:
-            self.XX__Region_Code = int(XX__Region_Code)
+            self.XX__Region_Code = str(XX__Region_Code).strip() if XX__Region_Code != "" else "ea"
         except:
             pass
-        # Defaults
-        if(self.XX__Region_Code == ""):
-            self.XX__Region_Code = "ea"  # Default is 'ea'
 
 # Get the local filesystem place to store data
     @staticmethod
@@ -157,7 +155,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
     def diff_month(latest_datetime, earliest_datetime):
         return (latest_datetime.year - earliest_datetime.year) * 12 + latest_datetime.month - earliest_datetime.month
 
-
     # Calculate the Month Number from a Dekadal input
     @staticmethod
     def get_Month_Number_From_Dekadal(dekadal_string="01"):
@@ -230,17 +227,17 @@ class emodis(ETL_Dataset_Subtype_Interface):
         try:
             filenum = "{:0>2d}{:0>2d}".format(year_YYYY - 2000, dekadal_N)
             filename = region_code + filenum + ".zip"
-            remote_full_filepath    = str( os.path.join(root_path, filename) ).strip()
+            remote_full_filepath    = str(os.path.join(root_path, filename)).strip()
             local_full_filepath     = os.path.join(root_file_download_path, filename)
             local_extract_path      = root_file_download_path
             local_final_load_path   = final_load_dir_path
-            #
+
             retObj['filename']              = str(filename).strip()
             retObj['remote_full_filepath']  = str(remote_full_filepath).strip()
             retObj['local_full_filepath']   = str(local_full_filepath).strip()
             retObj['local_extract_path']    = str(local_extract_path).strip()
             retObj['local_final_load_path'] = str(local_final_load_path).strip()
-            #
+
             retObj['region_code']           = region_code
             retObj['current_year']          = year_YYYY
             retObj['current_dekadal']       = dekadal_N
@@ -267,7 +264,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
 
         # Get the root http path based on the region.
         current_root_http_path      = self.get_roothttp_for_regioncode(region_code=self.XX__Region_Code)
@@ -308,7 +304,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                 if (end_dekadal > 36):
                     end_dekadal = 36
                 # Iterate on each month (then do all 3 of the dekadal numbers
-
                 # Iterate on Dekadal Ranges
                 # for NN__Dekadal in range(1, 4):  # 1, 2, 3 (Dekadals, just do all 3 for any given month)
                 #for NN__Dekadal in range(self.NN__Dekadal__Start, (self.NN__Dekadal__End + 1)):
@@ -359,6 +354,7 @@ class emodis(ETL_Dataset_Subtype_Interface):
         # # # # # World file: wa2012.tfw
         try:
             expected_file_path_objects = self._expected_remote_full_file_paths
+            print(expected_file_path_objects)
             for expected_file_path_object in expected_file_path_objects:
                 try:
                     # # expected_file_path_object Has these properties, 'filename', 'remote_full_filepath', 'region_code', 'current_year', 'current_dekadal'
@@ -419,11 +415,10 @@ class emodis(ETL_Dataset_Subtype_Interface):
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
         # Make sure the directories exist
         #
         #rootWorking_Dir = self.get_root_local_temp_working_dir(region_code=self.XX__Region_Code)
-        rootWorking_Dir = root_file_download_path # os.path.join(emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir)
+        rootWorking_Dir = os.path.join(emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir) # os.path.join(emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir)
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(rootWorking_Dir)
         if(is_error_creating_directory == True):
             error_JSON = {}
@@ -439,7 +434,7 @@ class emodis(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # final_load_dir_path
-        # final_load_dir_path # = os.path.join(emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir)
+        final_load_dir_path  = os.path.join(emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir)
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
         if (is_error_creating_directory == True):
             error_JSON = {}
@@ -454,11 +449,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-
-
-
-
-
         # DEBUG
         # print("")
         # print("DEBUG: emodis.execute__Step__Pre_ETL_Custom:")
@@ -466,7 +456,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         # print("DEBUG: ")
         # print("DEBUG: self._expected_granules[len(self._expected_granules - 1)]: " + str(self._expected_granules[len(self._expected_granules) - 1]))
         # print("")
-
 
         # Ended, now for reporting
         ret__detail_state_info['class_name'] = "emodis"
@@ -491,14 +480,12 @@ class emodis(ETL_Dataset_Subtype_Interface):
         # # TODO - Log errors as warnings (not show stoppers) - Add indexes to allow skipping over items (so the ETL job can continue in an automated way). - Need to think this through very carefully, so that the clientside can know about these errors and skip over them as well (and allow the clientside to handle random missing granules - which happens sometimes).
         #
 
-
         download_counter    = 0
         loop_counter        = 0
         error_counter       = 0
         detail_errors       = []
 
         #root_file_download_path = os.path.join( emodis.get_root_local_temp_working_dir(region_code=self.XX__Region_Code), self.relative_dir_path__WorkingDir)
-
 
         # # expected_file_path_object Has these properties, 'filename', 'remote_full_filepath', 'region_code', 'current_year', 'current_dekadal'
         expected_remote_file_path_objects = self._expected_remote_full_file_paths
@@ -524,9 +511,7 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
                 current_url_to_download                             = expected_remote_file_path_object['remote_full_filepath']
-                current_download_destination_local_filename         = expected_remote_file_path_object['filename']
                 current_download_destination_local_full_file_path   = expected_remote_file_path_object['local_full_filepath']
-                #current_download_destination_local_full_file_path   = os.path.join(root_file_download_path, current_download_destination_local_filename)
 
                 # Actually do the download now
                 try:
@@ -550,8 +535,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     activity_description        = warn_JSON['warning']
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
-
-
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
@@ -562,8 +545,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
 
                 # Maybe in here is an error with sending the warning in an earlier step?
             loop_counter = loop_counter + 1
-
-
 
         # #DEBUG
         # print("")
@@ -587,8 +568,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
-
-
     def execute__Step__Extract(self):
         ret__function_name = "execute__Step__Extract"
         ret__is_error = False
@@ -605,7 +584,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         detail_errors = []
         error_counter = 0
 
-
         try:
             expected_granules = self._expected_granules
             for expected_granules_object in expected_granules:
@@ -616,8 +594,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                 expected_full_path_to_local_extracted_tfw_file = os.path.join(local_extract_path, tfw_filename)
 
                 #print("execute__Step__Extract: PLACEHOLDER: (local_full_filepath): " + str(local_full_filepath))
-
-
 
                 # Unzip the current zip file # Example: path_to_working_dir/ea2001.zip
                 try:
@@ -680,16 +656,11 @@ class emodis(ETL_Dataset_Subtype_Interface):
             # print("")
             # print("execute__Step__Extract: PLACEHOLDER_CODE_ERROR: (sysErrorData): " + str(sysErrorData))
             # print("")
-
         ret__detail_state_info['class_name'] = "emodis"
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
-
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-
         return retObj
-
-
 
     def execute__Step__Transform(self):
         ret__function_name = "execute__Step__Transform"
@@ -728,7 +699,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     #regionTimeStr = geotiffFile.split('.')[0]
                     regionTimeStr       = tif_filename.split('.')[0]
                     regionTimeStrSplit  = re.split('(\d+)', regionTimeStr)
-                    regionStr           = regionTimeStrSplit[0]
                     timeStr             = regionTimeStrSplit[1]
 
                     # Based on the year, create an index of the dates associated with the dekads 1-36
@@ -814,9 +784,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     ndvi.time.encoding = timeEncoding
                     ndvi.time_bnds.encoding = timeBoundsEncoding
 
-                    # 5) Output File
-                    #outputFile_Name         = 'EMODIS-NDVI.' + startTime.strftime('%Y%m%dT%H%M%SZ') + '.' + regionID + '.nc4'
-                    #outputFile_FullPath = os.path.join(local_extract_path, outputFile_Name)
                     outputFile_FullPath     = os.path.join(local_extract_path, final_nc4_filename)
                     ndvi.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
@@ -845,9 +812,7 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Transform"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
                     pass
-
             pass
 
         except:
@@ -863,8 +828,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
-
 
         ret__detail_state_info['class_name'] = "emodis"
         ret__detail_state_info['error_counter'] = error_counter
@@ -889,15 +852,12 @@ class emodis(ETL_Dataset_Subtype_Interface):
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
-
-
                 try:
                     local_extract_path = expected_granules_object['local_extract_path']
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file) #(src, dst)
@@ -913,21 +873,10 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")  #
                     is_error                    = False
                     is_update_succeed           = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    #
 
-
-
-                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
-                    #
                     # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
-                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
-                    granule_name                    = final_nc4_filename
-                    granule_contextual_information  = ""
                     additional_json                 = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
-
-
                 except:
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
@@ -935,11 +884,10 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     error_JSON['is_error'] = True
                     error_JSON['class_name'] = "emodis"
                     error_JSON['function_name'] = "execute__Step__Load"
-                    #
+
                     # Additional infos
                     error_JSON['expected_full_path_to_local_working_nc4_file']  = str(expected_full_path_to_local_working_nc4_file).strip()
                     error_JSON['expected_full_path_to_local_final_nc4_file']    = str(expected_full_path_to_local_final_nc4_file).strip()
-                    #
 
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -949,15 +897,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
                     is_update_succeed   = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-
-                    # # Exit Here With Error info loaded up
-                    # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
-                    # ret__is_error = True
-                    # ret__error_description = error_JSON['error']
-                    # ret__detail_state_info = error_JSON
-                    # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-                    # return retObj
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
@@ -976,8 +915,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
-
-
     def execute__Step__Post_ETL_Custom(self):
         ret__function_name = "execute__Step__Post_ETL_Custom"
         ret__is_error = False
@@ -990,8 +927,6 @@ class emodis(ETL_Dataset_Subtype_Interface):
         #
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
-
-
 
     def execute__Step__Clean_Up(self):
         ret__function_name = "execute__Step__Clean_Up"
@@ -1009,28 +944,23 @@ class emodis(ETL_Dataset_Subtype_Interface):
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_event_type = "temp_dir_blank"#Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = "emodis"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
             else:
                 #shutil.rmtree
                 rmtree(temp_working_dir)
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_event_type ="removed" #Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = "emodis"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
-
-            #print("execute__Step__Clean_Up: Cleanup is finished.")
-
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
