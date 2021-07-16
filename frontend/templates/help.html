@@ -36,13 +36,14 @@
         {% for dataset in datasets %}
 
             {% if forloop.counter|divisibleby:2 %}
-                <div class="col-sm-6 col-lg-6 help-bottom">
+<div style="display: flex; -ms-flex-wrap: wrap; flex-wrap: wrap;">
+                <div class="col-sm-12 col-lg-6 help-bottom">
                     <div class="help-card">
                         <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
 
                     </div>
                 </div>
-                <div class="col-sm-6 col-lg-6 help-bottom">
+                <div class="col-sm-12 col-lg-6 help-bottom">
                     <div class="help-card text-card">
 
                             <h2 class="data-title">{{ dataset.short_name }}</h2>
@@ -54,8 +55,10 @@
                         </div>
                     </div>
                 </div>
+</div>
                 {% else %}
-                <div class="col-sm-6 col-lg-6 help-bottom">
+                <div style="display: flex; -ms-flex-wrap: wrap; flex-wrap: wrap;">
+                <div class="col-sm-12 col-lg-6 help-bottom">
                     <div class="help-card text-card">
                         <h2 class="data-title">{{ dataset.short_name }}</h2>
                         <div class="card-body">
@@ -65,11 +68,12 @@
                         </div>
                     </div>
                 </div>
-                <div class="col-sm-6 col-lg-6 help-bottom">
+                <div class="col-sm-12 col-lg-6 help-bottom order-me">
                     <div class="help-card">
                         <div class="help-image" style="background-image: url({{ dataset.display_image.url }})" title="{{ dataset.short_name }}"></div>
 
                     </div>
+                </div>
                 </div>
 
             {% endif %}

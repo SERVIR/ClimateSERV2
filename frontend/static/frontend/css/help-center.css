@@ -165,6 +165,7 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     line-height: 36px;
     font-weight: 700;
     color: #003468;
+    padding: 0 0 0 1.25rem;
 }
 
 .summary{
@@ -176,4 +177,12 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
 
 .help-bottom{
     margin-bottom: 100px;
+}
+@media only screen and (max-width: 991px) {
+    .order-me {
+        -webkit-box-ordinal-group: 0;
+        -webkit-order: -1;
+        -ms-flex-order: -1;
+        order: -1;
+    }
 }
