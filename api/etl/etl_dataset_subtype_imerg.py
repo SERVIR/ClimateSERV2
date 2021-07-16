@@ -68,9 +68,14 @@ class imerg(ETL_Dataset_Subtype_Interface):
 
     # Get the local filesystem place to store data
     @staticmethod
-        imerg__EARLY__rootoutputworkingdir  = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
-        imerg__LATE__rootoutputworkingdir   = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
     def get_root_local_temp_working_dir(subtype_filter):
+        imerg__EARLY__rootoutputworkingdir = Config_SettingService.get_value(
+            setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY",
+            default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
+        imerg__LATE__rootoutputworkingdir = Config_SettingService.get_value(
+            setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE",
+            default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
+
         ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'EARLY':
