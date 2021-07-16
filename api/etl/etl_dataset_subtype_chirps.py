@@ -1,4 +1,4 @@
-import datetime, os, sys
+import datetime, gzip, os, shutil, sys
 from urllib import request as urllib_request
 from shutil import copyfile, rmtree
 import xarray as xr
@@ -425,8 +425,8 @@ class chirps(ETL_Dataset_Subtype_Interface):
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
-                current_url_to_download     = remote_directory_path + tif_filename
-                local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                current_url_to_download     = remote_directory_path + tif_filename + '.gz'
+                local_full_filepath_tif     = expected_granule['local_full_filepath_tif'] + '.gz'
                 #
                 # Granule info
                 Granule_UUID    = expected_granule['Granule_UUID']
@@ -500,17 +500,72 @@ class chirps(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
-        # There is no extract step for these, the files that are downloaded ARE tifs - for all 3 current Chirp types datasets
+        detail_errors = []
+        error_counter = 0
 
-        # For chirps, there is nothing to extract.  We are already downloading the TIF file directly.
-        ret__detail_state_info['class_name'] = "chirps"
-        # ret__detail_state_info['error_counter'] = error_counter
-        ret__detail_state_info['custom_message'] = "Chirps types do not need to be extracted.  The source files are non-compressed Tif files."
+        try:
+            expected_granules = self._expected_granules
+            for expected_granules_object in expected_granules:
 
+                print(expected_granules_object)
+
+                local_full_filepath_download    = expected_granules_object['local_full_filepath_tif'] + '.gz'
+                local_extract_path              = expected_granules_object['local_extract_path']
+                extracted_tif_filename          = expected_granules_object['tif_filename']
+                local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
+
+                if not os.path.isfile(local_full_filepath_download):
+                    continue
+
+                try:
+                    with gzip.open(local_full_filepath_download, 'rb') as f_in:
+                        with open(local_extract_full_filepath, 'wb') as f_out:
+                            shutil.copyfileobj(f_in, f_out)
+
+                except Exception as e:
+                    print(e)
+                    # This granule errored on the Extract step.
+                    sysErrorData = str(sys.exc_info())
+
+                    Granule_UUID = expected_granules_object['Granule_UUID']
+
+                    error_message = "esi.execute__Step__Extract: An Error occurred during the Extract step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
+
+                    # print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
+
+                    # Individual Transform Granule Error
+                    error_counter = error_counter + 1
+                    detail_errors.append(error_message)
+
+                    error_JSON = {}
+                    error_JSON['error_message'] = error_message
+
+                    # Update this Granule for Failure (store the error info in the granule also)
+                    # Granule_UUID = expected_granules_object['Granule_UUID']
+                    # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__FAILED  # When a granule has a NC4 file in the correct location, this counts as a Success.
+                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
+                    is_error = True
+                    is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
+                    new_json_key_to_append = "execute__Step__Extract"
+                    is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
+
+                # print("")
+                # print("extract: (local_full_filepath_download): " + str(local_full_filepath_download))
+                # print("extract: (local_extract_path): " + str(local_extract_path))
+                # print("extract: (extracted_tif_filename): " + str(extracted_tif_filename))
+                # print("extract: (local_extract_full_filepath): " + str(local_extract_full_filepath))
+                # print("extract: (expected_granules_object): " + str(expected_granules_object))
+                # print("")
+
+        except:
+            sysErrorData = str(sys.exc_info())
+            ret__is_error = True
+            ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when attempting to Extract the Granules.  System Error Message: " + str(sysErrorData)
+
+        ret__detail_state_info['class_name'] = "esi"
+        ret__detail_state_info['error_counter'] = error_counter
+        ret__detail_state_info['detail_errors'] = detail_errors
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
@@ -818,7 +873,7 @@ class chirps(ETL_Dataset_Subtype_Interface):
                     granule_contextual_information = ""
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
+                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
