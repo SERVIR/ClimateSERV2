@@ -13,7 +13,7 @@ def index(request):
 def map_app(request):
     return render(request, 'map.html', context={
         'page': 'menu-map',
-        'data_layers': DataLayer.objects.all()
+        'data_layers': DataLayer.objects.order_by('title').all()
     })
 
 
