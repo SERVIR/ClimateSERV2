@@ -120,6 +120,8 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     background-size: cover;
     min-height: 200px;
     background-position: center;
+    border-radius: 8px;
+    border: 4px solid #758055;
 }
 
 .highlight {
@@ -137,11 +139,11 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
 .help-tabs{
     padding:5px;
     cursor: pointer;
-    color:#b3b3b3
+    color: #75805594;
 }
 
 .help-tabs:hover{
-    color: #002a53;
+    color: #758055;
 }
 
 .help-tabs.active{
@@ -149,7 +151,8 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     /*border-bottom: 0;*/
     /*border-top-left-radius: .25rem;*/
     /*border-top-right-radius: .25rem;*/
-    color: #002a53;
+    color: #758055;
+    font-weight: bold;
 }
 
 .tab-holder{
@@ -164,7 +167,7 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     font-size: 32px;
     line-height: 36px;
     font-weight: 700;
-    color: #003468;
+    color: #758055;
     padding: 0 0 0 1.25rem;
 }
 
