@@ -10,6 +10,7 @@ from .etl_dataset_subtype_chirps import chirps as ETL_Dataset_Subtype_CHIRPS
 from .etl_dataset_subtype_emodis import emodis as ETL_Dataset_Subtype_EMODIS
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
 from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
+from .etl_dataset_subtype_imerg_1_day import ImergOneDay as ETL_Dataset_Subtype_IMERG_1_DAY
 
 class ETL_Pipeline():
 
@@ -298,8 +299,8 @@ class ETL_Pipeline():
             return
 
         # CHIRPS chirp/chirps/chrips_gefs
-        if current_Dataset_SubType in ('chrip', 'chrips', 'chrips_gefs'):
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self)
+        if current_Dataset_SubType in ('chirp', 'chirps', 'chirps_gefs'):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, current_Dataset_SubType)
             # Set params
             self.Subtype_ETL_Instance.set_chirps_params(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
@@ -348,6 +349,18 @@ class ETL_Pipeline():
                 DD__Day__End=self.END_DAY_DD,
                 NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
                 NN__30MinIncrement__End=self.END_30MININCREMENT_NN
+            )
+        # IMERG 1 Day
+        if current_Dataset_SubType == 'ImergOneDay':
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, current_Dataset_SubType)
+            # Set params
+            self.Subtype_ETL_Instance.set_imerg_1_day_params(
+                start_year=self.START_YEAR_YYYY,
+                end_year=self.END_YEAR_YYYY,
+                start_month=self.START_MONTH_MM,
+                end_month=self.END_MONTH_MM,
+                start_day=self.START_DAY_DD,
+                end_day=self.END_DAY_DD
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
