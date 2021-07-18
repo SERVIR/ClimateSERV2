@@ -195,7 +195,7 @@ body {
     }
 
 #servirmap {
-  height: calc(100vh - 116px);
+  height: calc(100vh - 109px);
 }
 
 .sidebar-header {
@@ -1257,9 +1257,13 @@ button[disabled] {
     height: 100px;
   }
 
+  #servirmap {
+    height: calc(100vh - 139px);
+  }
+
   .climate-copy {
-    top: unset;
-    bottom: 5px;
+    bottom: unset;
+    top:38px;
     transform: unset;
     margin-right: unset !important;
     right: unset;
@@ -1268,10 +1272,9 @@ button[disabled] {
   }
 
   .climate-power {
-    top: 15px;
+    top: 8px;
     transform: unset;
     margin-left: unset !important;
-    top: 15px;
     left: unset;
     width: 100%;
     text-align: center;

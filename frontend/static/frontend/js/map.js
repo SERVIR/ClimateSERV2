@@ -677,6 +677,30 @@ function initMap() {
 function isComplete(){
   //sDate_new_cooked
   //eDate_new_cooked
+  let isReady = false;
+  sDate_new_cooked = document.getElementById("sDate_new_cooked");
+  eDate_new_cooked = document.getElementById("eDate_new_cooked");
+  if(sDate_new_cooked.value && eDate_new_cooked.value){
+    isReady = $(sDate_new_cooked).valid({rules: { field: { required: true, dateISO:true } }}) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
+    if(isReady){
+      // Also should confirm s < e;
+      if(moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value) )
+      {
+        isReady = false;
+        $("#compare-error").text("End date must be equal or greater than the start date");
+        $("#compare-error").show();
+      } else{
+        $("#compare-error").hide();
+      }
+      //isReady = moment(sDate_new_cooked.value) <= moment(eDate_new_cooked.value);
+    }
+
+  } else{
+    $(sDate_new_cooked).valid({rules: { field: { required: true, dateISO:true } }});
+    $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
+  }
+  console.log(isReady);
+   $("#nextStep2").prop("disabled", !isReady);
 }
 
 /**
