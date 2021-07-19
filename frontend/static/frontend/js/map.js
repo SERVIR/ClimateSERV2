@@ -475,7 +475,6 @@ function enableDrawing() {
  */
 function enableAdminFeature(which) {
   clearAOISelections();
-
   adminLayer = L.tileLayer.wms(
     "https://climateserv2-ui.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
     {
@@ -561,9 +560,14 @@ function gotostep(which){
       break;
     case 2:
       $("#btnstep1").prop("disabled", false);
+      // also disable any drawing ability, remove drawing bar
+      // also disable any drawing ability, remove drawing bar
+      drawtoolbar.remove();
+      map.off("click");
       break
     case 3:
       $("#btnstep2").prop("disabled", false);
+      collect_review_data();
       break;
   }
 }
@@ -687,20 +691,40 @@ function isComplete(){
       if(moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value) )
       {
         isReady = false;
-        $("#compare-error").text("End date must be equal or greater than the start date");
         $("#compare-error").show();
       } else{
         $("#compare-error").hide();
       }
-      //isReady = moment(sDate_new_cooked.value) <= moment(eDate_new_cooked.value);
     }
 
   } else{
     $(sDate_new_cooked).valid({rules: { field: { required: true, dateISO:true } }});
     $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
   }
-  console.log(isReady);
    $("#nextStep2").prop("disabled", !isReady);
+}
+
+function collect_review_data(){
+  //get all data and fill review
+
+  $("#dataType").text($("#sourcemenu").val() + " - " + $( "#sourcemenu option:selected" ).text());
+  $("#begintime").text(moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY'));
+  $("#endtime").text(moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY'));
+  $("#operationtype").text($("#operationmenu").val() + " - " + $( "#operationmenu option:selected" ).text());
+  if(highlightedIDs.length > 0){
+    console.log("highlighted");
+    const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
+    $("#geometry").text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country")+ highlightedIDs.join());
+  } else if(drawnItems.getLayers().length > 0) {
+    console.log("drawn");
+    $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+  } else if(uploadLayer){
+    console.log("uploaded");
+    $("#geometry").text(JSON.stringify(uploadLayer.toGeoJSON()));
+  } else {
+    console.log("nothing");
+  }
+
 }
 
 /**
