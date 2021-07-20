@@ -13,6 +13,6 @@ router.register(r'etl_pipeline_run', views.ETL_PipelineRunViewSet)
 # Additionally, we include login URLs for the browsable API.
 urlpatterns = [
     path('', include(router.urls)),
-    path('etl_subtypes/', views.ETL_SubtypesView.as_view(), name='etl_subtypes'),
+    path('get_etl_subtypes/', views.ETL_SubtypesView.as_view(), name='get_etl_subtypes'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
