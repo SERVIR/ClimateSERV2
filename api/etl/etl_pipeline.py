@@ -11,6 +11,7 @@ from .etl_dataset_subtype_emodis import emodis as ETL_Dataset_Subtype_EMODIS
 from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
 from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_imerg_1_day import ImergOneDay as ETL_Dataset_Subtype_IMERG_1_DAY
+from .etl_dataset_subtype_smap import ETL_Dataset_Subtype_SMAP
 
 class ETL_Pipeline():
 
@@ -362,6 +363,19 @@ class ETL_Pipeline():
                 end_month=self.END_MONTH_MM,
                 start_day=self.START_DAY_DD,
                 end_day=self.END_DAY_DD
+            )
+
+        # SMAP
+        if current_Dataset_SubType == 'smap':
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self)
+            # Set params
+            self.Subtype_ETL_Instance.set_optional_parameters(
+                self.START_YEAR_YYYY,
+                self.END_YEAR_YYYY,
+                self.START_MONTH_MM,
+                self.END_MONTH_MM,
+                self.START_DAY_DD,
+                self.END_DAY_DD
             )
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
