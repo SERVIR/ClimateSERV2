@@ -17,19 +17,19 @@ class ETL_DatasetViewSet(ModelViewSet):
     serializer_class = ETL_DatasetSerializer
 
 class ETL_GranuleViewSet(ModelViewSet):
-    queryset = ETL_Granule.objects.all().order_by('granule_name')
+    queryset = ETL_Granule.objects.all().order_by('-created_at')
     serializer_class = ETL_GranuleSerializer
 
 class ETL_LogViewSet(ModelViewSet):
-    queryset = ETL_Log.objects.all().order_by('activity_event_type')
+    queryset = ETL_Log.objects.all().order_by('-created_at')
     serializer_class = ETL_LogSerializer
 
 class ETL_PipelineRunViewSet(ModelViewSet):
-    queryset = ETL_PipelineRun.objects.all().order_by('created_by')
+    queryset = ETL_PipelineRun.objects.all().order_by('-created_at')
     serializer_class = ETL_PipelineRunSerializer
 
 class ETL_SubtypesView(APIView):
 
     def get(self, request, format=None):
         subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
-        return JsonResponse({"subtypes": subtypes})
+        return JsonResponse({'subtypes': subtypes})
