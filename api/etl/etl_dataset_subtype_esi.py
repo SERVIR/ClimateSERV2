@@ -1,5 +1,4 @@
-import datetime, gzip, os, requests, shutil, sys
-from urllib import request as urllib_request
+import datetime, gzip, os, requests, shutil, urllib, sys
 from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
@@ -17,8 +16,7 @@ class esi(ETL_Dataset_Subtype_Interface):
 
     class_name = 'esi'
     etl_parent_pipeline_instance = None
-
-    esi_mode = '12week' # It could be '12week' or '4week' - Default is '12week'
+    mode = '12week'
 
     # Input Settings
     YYYY__Year__Start  = datetime.date.today().year
@@ -38,9 +36,9 @@ class esi(ETL_Dataset_Subtype_Interface):
     def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         if subtype == 'esi_4week':
-            self.esi_mode = '4week'
+            self.mode = '4week'
         elif subtype == 'esi_12week':
-            self.esi_mode = '12week'
+            self.mode = '12week'
 
     # Validate type or use existing default for each
     def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
@@ -51,50 +49,36 @@ class esi(ETL_Dataset_Subtype_Interface):
         self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
         self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
 
-    def get_expected_file_name_wk_number_string(self):
-        ret_Str = '1WK'
-        if self.esi_mode == '4week':
-            ret_Str = "4WK"
-        elif self.esi_mode == '12week':
-            ret_Str = '12WK'
-        return ret_Str
-
     # Get the local filesystem place to store data
-    @staticmethod
-    def get_root_local_temp_working_dir(subtype_filter):
+    def get_root_local_temp_working_dir(self):
         esi__4week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__4WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/'
         esi__12week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__12WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/12week/'
         ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == '4week':
+        if self.mode == '4week':
             ret_rootlocal_working_dir = esi__4week__rootoutputworkingdir
-        elif subtype_filter == '12week':
+        elif self.mode == '12week':
             ret_rootlocal_working_dir = esi__12week__rootoutputworkingdir
         return ret_rootlocal_working_dir
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    @staticmethod
-    def get_final_load_dir(subtype_filter):
+    def get_final_load_dir(self):
         esi__4week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__4WEEK", default_or_error_return_value="")      # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/4wk/'
         esi__12week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__12WEEK", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/12wk/'
         ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == '4week':
+        if self.mode == '4week':
             ret_dir = esi__4week__finalloaddir
-        elif subtype_filter == '12week':
+        elif self.mode == '12week':
             ret_dir = esi__12week__finalloaddir
         return ret_dir
 
     # Get the Remote Locations for each of the subtypes
-    @staticmethod
-    def get_roothttp_for_subtype(subtype_filter):
+    def get_roothttp_for_subtype(self):
         esi__4wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_4WK", default_or_error_return_value="")        # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
         esi__12wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_12WK", default_or_error_return_value="")      # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
         ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == '4week':
+        if self.mode == '4week':
             ret_roothttp = esi__4wk__roothttp
-        if subtype_filter == '12week':
+        if self.mode == '12week':
             ret_roothttp = esi__12wk__roothttp
         return ret_roothttp
 
@@ -106,14 +90,16 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         # Get the root http path based on the region
-        current_root_http_path = self.get_roothttp_for_subtype(self.esi_mode)
-        root_file_download_path = os.path.join(esi.get_root_local_temp_working_dir(self.esi_mode), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = esi.get_final_load_dir(self.esi_mode)
+        current_root_http_path = self.get_roothttp_for_subtype()
+        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(), self.relative_dir_path__WorkingDir)
+        final_load_dir_path = self.get_final_load_dir()
         self.temp_working_dir = str(root_file_download_path).strip()
         self._expected_granules = []
 
         # (1) Generate Expected remote file paths
         try:
+
+            expected_file_name_wk_number_string = '4W' if self.mode == '4week' else '12WK'
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
@@ -125,11 +111,8 @@ class esi(ETL_Dataset_Subtype_Interface):
             for _, link in enumerate(soup.findAll('a')):
                 if link.get('href').endswith('.tif.gz'):
                     _, wk, rest = link.get('href').split('_')
-                    if wk == self.get_expected_file_name_wk_number_string():
-                        year_day = rest.replace('.tif.gz', '')
-                        year = int(year_day[:4])
-                        day_of_year = int(year_day[4:])
-                        date = datetime.datetime.strptime('{} {}'.format(day_of_year, year),'%j %Y')
+                    if wk == expected_file_name_wk_number_string:
+                        date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif.gz', ''), rest[:4]),'%j %Y')
                         if date >= start_date and date <= end_date:
                             filenames.append(link.get('href'))
                             dates.append(date)
@@ -141,7 +124,7 @@ class esi(ETL_Dataset_Subtype_Interface):
                 current_day__DD_str     = "{:02d}".format(date.day)
 
                 # SPORT-ESI.250.4-week.20200130T000000Z.GLOBAL.nc4
-                nc4_week = '4-week' if self.esi_mode == '4week' else '12-week'
+                nc4_week = '4-week' if self.mode == '4week' else '12-week'
                 final_nc4_filename = 'SPORT-ESI.250.{}.{}{}{}T000000Z.GLOBAL.nc4'.format(
                     nc4_week,
                     current_year__YYYY_str,
@@ -149,10 +132,9 @@ class esi(ETL_Dataset_Subtype_Interface):
                     current_day__DD_str
                 )
 
-                # 
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename.replace('.gz', '')
-                remote_full_filepath_gz_tif         = '{}/{}'.format(current_root_http_path, filename)
+                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -180,7 +162,7 @@ class esi(ETL_Dataset_Subtype_Interface):
 
                 granule_name = final_nc4_filename
                 granule_contextual_information = ""
-                granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")  # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
+                granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
                 additional_json = current_obj
                 new_Granule_UUID = self.etl_parent_pipeline_instance.log_etl_granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, granule_pipeline_state=granule_pipeline_state, additional_json=additional_json)
 
@@ -294,19 +276,15 @@ class esi(ETL_Dataset_Subtype_Interface):
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
-        if (modulus_size < 1):
+        if modulus_size < 1:
             modulus_size = 1
-
-        # Connect FTP
-        # # - No FTP in ESI types (just do direct downloads)
 
         # Process each expected granule
         for expected_granule in expected_granules:
             try:
-                if (((loop_counter + 1) % modulus_size) == 0):
+                if ((loop_counter + 1) % modulus_size) == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    # activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")  # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
@@ -316,7 +294,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                 #remote_full_filepath_gz_tif = expected_granule['remote_full_filepath_gz_tif']
                 current_url_to_download                             = expected_granule['remote_full_filepath_gz_tif']
                 current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download'] # current_download_destination_local_full_file_path = expected_granule['local_full_filepath']
-                #FIXTHIS__THERE_IS_NO_LOCAL_FULL_FILEPATH___CHECK_NDVI    -   current_download_destination_local_full_file_path   = expected_granule['local_full_filepath']
 
                 # remote_directory_path = expected_granule['remote_directory_path']
                 # # remote_full_filepath_tif    = expected_granule['remote_full_filepath_tif']
@@ -327,12 +304,11 @@ class esi(ETL_Dataset_Subtype_Interface):
                 Granule_UUID = expected_granule['Granule_UUID']
                 granule_name = expected_granule['granule_name']
 
-                # Download the file.
-                # Actually do the download now
+                # Download the file - Actually do the download now
                 try:
-                    urllib_request.urlretrieve(current_url_to_download, current_download_destination_local_full_file_path)  # urllib_request.urlretrieve(url, endfilename)
-                    # print(" - (GRANULE LOGGING) Log Each Download into the Granule Storage Area: (current_download_destination_local_full_file_path): " + str(current_download_destination_local_full_file_path))
-
+                    r = requests.get(current_url_to_download)
+                    with open(current_download_destination_local_full_file_path, 'wb') as outfile:
+                        outfile.write(r.content)
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -345,7 +321,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                     warn_JSON['function_name'] = "execute__Step__Download"
                     warn_JSON['current_object_info'] = expected_granule
                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                    # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                     activity_description = warn_JSON['warning']
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
@@ -355,7 +330,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                 sysErrorData = str(sys.exc_info())
                 error_message = "esi.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
-                #print("esi.execute__Step__Download: Generic Uncaught Error: " + str(sysErrorData))
                 print(error_message)
 
             loop_counter = loop_counter + 1
@@ -456,9 +430,6 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         # error_counter, detail_errors
         error_counter = 0
@@ -486,12 +457,12 @@ class esi(ETL_Dataset_Subtype_Interface):
                     mode_var__attr_composite_interval = ""
                     mode_var__attr_comment = ""
                     mode_var__TemporalResolution = ""
-                    if (self.esi_mode == "4week"):
+                    if self.mode == '4week':
                         mode_var__pd_timedelta += '28d'
                         mode_var__attr_composite_interval += '4 week'
                         mode_var__attr_comment += '4-week mean composite estimate of evaporative stress index'
                         mode_var__TemporalResolution += '4-week'
-                    if (self.esi_mode == "12week"):
+                    if self.mode == '12week':
                         mode_var__pd_timedelta += '84d'
                         mode_var__attr_composite_interval += '12 week'
                         mode_var__attr_comment += '12-week mean composite estimate of evaporative stress index'
@@ -673,9 +644,6 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         try:
             expected_granules = self._expected_granules
@@ -774,9 +742,7 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -786,9 +752,7 @@ class esi(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == "":
@@ -803,7 +767,6 @@ class esi(ETL_Dataset_Subtype_Interface):
                 rmtree(temp_working_dir)
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
