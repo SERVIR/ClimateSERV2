@@ -66,7 +66,7 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
         self.imerg_mode = which
 
     # Validate type or use existing default for each
-    def set_imerg_1_day_params(self, start_year, end_year, start_month, end_month, start_day, end_day):
+    def set_optional_parameters(self, start_year, end_year, start_month, end_month, start_day, end_day):
         try:
             self.YYYY__Year__Start = int(start_year) if start_year != 0 else self.YYYY__Year__Start
         except ValueError:

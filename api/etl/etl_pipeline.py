@@ -302,7 +302,7 @@ class ETL_Pipeline():
         if current_Dataset_SubType in ('chirp', 'chirps', 'chirps_gefs'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, current_Dataset_SubType)
             # Set params
-            self.Subtype_ETL_Instance.set_chirps_params(
+            self.Subtype_ETL_Instance.set_optional_parameters(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
@@ -315,7 +315,7 @@ class ETL_Pipeline():
         if current_Dataset_SubType == 'emodis':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
             # Set params
-            self.Subtype_ETL_Instance.set_emodis_params(
+            self.Subtype_ETL_Instance.set_optional_parameters(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
@@ -327,7 +327,7 @@ class ETL_Pipeline():
         if current_Dataset_SubType in ('esi_4week', 'esi_12week'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, current_Dataset_SubType)
             # Set params
-            self.Subtype_ETL_Instance.set_esi_params(
+            self.Subtype_ETL_Instance.set_optional_parameters(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
@@ -340,7 +340,7 @@ class ETL_Pipeline():
         if current_Dataset_SubType in ('imerg_early', 'imerg_late'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, current_Dataset_SubType)
             # Set params
-            self.Subtype_ETL_Instance.set_imerg_params(
+            self.Subtype_ETL_Instance.set_optional_parameters(
                 YYYY__Year__Start=self.START_YEAR_YYYY,
                 YYYY__Year__End=self.END_YEAR_YYYY,
                 MM__Month__Start=self.START_MONTH_MM,
@@ -350,11 +350,12 @@ class ETL_Pipeline():
                 NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
                 NN__30MinIncrement__End=self.END_30MININCREMENT_NN
             )
+
         # IMERG 1 Day
         if current_Dataset_SubType == 'ImergOneDay':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, current_Dataset_SubType)
             # Set params
-            self.Subtype_ETL_Instance.set_imerg_1_day_params(
+            self.Subtype_ETL_Instance.set_optional_parameters(
                 start_year=self.START_YEAR_YYYY,
                 end_year=self.END_YEAR_YYYY,
                 start_month=self.START_MONTH_MM,
