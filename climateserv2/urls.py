@@ -22,8 +22,6 @@ from views import *
 import frontend,api
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', api.urls),
-    path('', 'frontend.urls'),
     url(r'^admin/doc/', admindocs.urls),
     # Uncomment the next line to enable the admin:
     url(r'^admin/', admin.site.urls),
