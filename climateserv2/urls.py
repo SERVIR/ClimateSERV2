@@ -25,7 +25,7 @@ urlpatterns = [
     # Uncomment the next line to enable the admin:
     url('', include('frontend.urls')),
     url(r'^admin/', admin.site.urls),
-    url(r'^/chirps/getParameterTypes/', getParameterTypes),
+    url('chirps/getParameterTypes/', getParameterTypes),
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     # url(r'^/chirps/submitDataRequest/', submitDataRequest),
     # url(r'^/chirps/getDataRequestProgress/', getDataRequestProgress),
