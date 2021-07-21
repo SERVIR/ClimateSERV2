@@ -64,7 +64,7 @@ class EveryFiveDaysIndex:
         return range(start, end)
     
     def getIndexBasedOnDate(self,day,month,year):
-        print "************************django*************************"	
+        print("************************django*************************")
         return self.getIndexBasedOnEpoch(convertDayMonthYearToEpoch(day,month,year))
     
     def getIndexesBasedOnDate(self,daystart,monthstart,yearstart,dayend,monthend,yearend):
