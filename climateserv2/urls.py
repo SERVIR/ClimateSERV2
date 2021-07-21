@@ -16,14 +16,16 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.conf.urls import url
-from django.contrib import admin
+from django.contrib import admin,admindocs
 from django.urls import path, include
 from views import *
+import api
+import frontend
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', 'api.urls'),
-    path('', 'frontend.urls'),
-    url(r'^admin/doc/', 'django.contrib.admindocs.urls'),
+    path('api/', api.urls),
+    path('', frontend.urls),
+    url(r'^admin/doc/', admindocs.urls),
     # Uncomment the next line to enable the admin:
     url(r'^admin/', admin.site.urls),
     url(r'^/chirps/getParameterTypes/', getParameterTypes),
