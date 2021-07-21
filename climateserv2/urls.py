@@ -21,13 +21,11 @@ from django.urls import path, include
 from views import *
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
-    path('', include('frontend.urls')),
-    url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
+    path('api/', 'api.urls'),
+    path('', 'frontend.urls'),
+    url(r'^admin/doc/', 'django.contrib.admindocs.urls'),
     # Uncomment the next line to enable the admin:
-    url(r'^admin/', include(admin.site.urls)),
-    url(r'^pydash/', include('pydash.urls')),
-    url(r'^metrics/', include('servirmetrics.urls')),
+    url(r'^admin/', admin.site.urls),
     url(r'^/chirps/getParameterTypes/', getParameterTypes),
     url(r'^/chirps/getRequiredElements/', getRequiredElements),
     url(r'^/chirps/submitDataRequest/', submitDataRequest),
