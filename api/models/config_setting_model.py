@@ -9,7 +9,7 @@ class Config_Setting(models.Model):
     created_at = models.DateTimeField('created_at', auto_now_add=True, blank=True)
 
     def __str__(self):
-        return self.setting_name
+        return '{} ({})'.format(self.setting_name, self.setting_data_type)
 
     class Meta:
         verbose_name = 'Config Setting'

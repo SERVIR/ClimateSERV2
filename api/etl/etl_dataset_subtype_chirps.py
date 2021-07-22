@@ -43,7 +43,7 @@ class chirps(ETL_Dataset_Subtype_Interface):
         elif subtype == 'chirps_gefs':
             self.chirps_mode = 'chirps_gefs'
 
-    def set_chirps_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
+    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
         self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
         self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
         self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start

@@ -33,7 +33,7 @@ class emodis(ETL_Dataset_Subtype_Interface):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
 
     # Validate type or use existing default for each
-    def set_emodis_params(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, XX__Region_Code):
+    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, XX__Region_Code):
         try:
             self.YYYY__Year__Start = int(YYYY__Year__Start) if YYYY__Year__Start != 0 else self.YYYY__Year__Start
         except:

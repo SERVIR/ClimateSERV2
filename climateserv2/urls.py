@@ -15,13 +15,29 @@ Including another URLconf
 """
 from django.conf import settings
 from django.conf.urls.static import static
-from django.contrib import admin
+from django.conf.urls import url
+from django.contrib import admin,admindocs
 from django.urls import path, include
+from views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('api.urls')),
-    path('', include('frontend.urls')),
+    # Uncomment the next line to enable the admin:
+    url('', include('frontend.urls')),
+    url(r'^admin/', admin.site.urls),
+    url('chirps/getParameterTypes/', getParameterTypes),
+    # url(r'^/chirps/getRequiredElements/', getRequiredElements),
+    # url(r'^/chirps/submitDataRequest/', submitDataRequest),
+    # url(r'^/chirps/getDataRequestProgress/', getDataRequestProgress),
+    url(r'^/chirps/getDataFromRequest/', getDataFromRequest),
+    url(r'^/chirps/getFeatureLayers/', getFeatureLayers),
+    # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
+    # url(r'^/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
+    # url(r'^/chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
+    # url(r'^/chirps/getFileForJobID/', getFileForJobID),
+    # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
+    # url(r'^/chirps/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
+    # url(r'^/chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
 ]
 
 if settings.DEBUG:
