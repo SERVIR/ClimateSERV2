@@ -921,7 +921,7 @@ function getDataFromRequest(id){
                       console.log("exporting!!!");
                       var width = this.chartWidth - 105,
                           height = this.chartHeight - 130;
-                      this.renderer.image('https://banzaihobby.com/bmz_cache/6/6ff8c45a6b093e6dad07186a5c1c5d7a.image.250x54.jpg', 200, 50, 250, 54
+                      this.renderer.image(static_url + 'frontend/img/servir_color.png', 200, 50, 250, 54
                       ).add();
                     }
                   }
