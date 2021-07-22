@@ -921,7 +921,7 @@ function getDataFromRequest(id){
                       console.log("exporting!!!");
                       var width = this.chartWidth - 105,
                           height = this.chartHeight - 130;
-                      this.renderer.image(static_url + 'frontend/img/servir_color.png', 200, 50, 250, 54
+                      this.renderer.image('https://climateserv2.servirglobal.net/static/frontend/img/servir_color.jpg', 200, 50, 100, 77
                       ).add();
                     }
                   }
