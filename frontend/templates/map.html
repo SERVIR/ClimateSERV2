@@ -333,7 +333,7 @@
                                 <label for="geometry">Geometry</label>
                                 <span class="form-control" id="geometry" style="height: unset; word-break: break-all;">features: 201</span>
                             </div>
-                            <button>Send Request</button>
+                            <button onclick="sendRequest()">Send Request</button>
                         </div>
                     </div>
 
@@ -397,6 +397,11 @@
             type="text/javascript"
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/export-data.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
     <script src="{% static 'frontend/js/map-layers.js' %}"></script>
     <script src="{% static 'frontend/js/base-layers.js' %}"></script>
     <script
