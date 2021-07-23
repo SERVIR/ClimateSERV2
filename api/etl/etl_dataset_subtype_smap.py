@@ -33,8 +33,11 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
     _expected_granules                  = []    # Place to store granules
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+
+        if subtype == 'smap_10km':
+            self.mode = 'smap_10km'
 
     # Validate type or use existing default for each
     def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):

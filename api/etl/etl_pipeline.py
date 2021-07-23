@@ -367,7 +367,7 @@ class ETL_Pipeline():
 
         # SMAP
         if current_Dataset_SubType == 'smap':
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self)
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, current_Dataset_SubType)
             # Set params
             self.Subtype_ETL_Instance.set_optional_parameters(
                 self.START_YEAR_YYYY,
