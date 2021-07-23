@@ -11,20 +11,11 @@ from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from ..models import Config_Setting
 
-class emodis(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
+
     class_name = "emodis"
     etl_parent_pipeline_instance = None
 
-    # Input Settings
-    YYYY__Year__Start = 2019
-    YYYY__Year__End = 2020
-    MM__Month__Start = 11  # 2 #1
-    MM__Month__End = 2  # 4 #6
-
-    # Removing Dekadals (Because Datetime object can't easily convert between these and normal datetimes for custom ranges)
-    # NN__Dekadal__Start      = 2 #2 #1
-    # NN__Dekadal__End        = 3 #4 #6
-    XX__Region_Code = "ea"
     relative_dir_path__WorkingDir = 'working_dir'
     temp_working_dir = ""
 
@@ -32,28 +23,13 @@ class emodis(ETL_Dataset_Subtype_Interface):
     def __init__(self, etl_parent_pipeline_instance):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
 
-    # Validate type or use existing default for each
-    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, XX__Region_Code):
-        try:
-            self.YYYY__Year__Start = int(YYYY__Year__Start) if YYYY__Year__Start != 0 else self.YYYY__Year__Start
-        except:
-            pass
-        try:
-            self.YYYY__Year__End = int(YYYY__Year__End) if YYYY__Year__End != 0 else self.YYYY__Year__End
-        except:
-            pass
-        try:
-            self.MM__Month__Start = int(MM__Month__Start) if MM__Month__Start != 0 else self.MM__Month__Start
-        except:
-            pass
-        try:
-            self.MM__Month__End = int(MM__Month__End) if MM__Month__End != 0 else self.MM__Month__End
-        except:
-            pass
-        try:
-            self.XX__Region_Code = str(XX__Region_Code).strip() if XX__Region_Code != "" else "ea"
-        except:
-            pass
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or 2019
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or 2020
+        self.MM__Month__Start = params.get('MM__Month__Start') or 11
+        self.MM__Month__End = params.get('MM__Month__End') or 2
+        self.XX__Region_Code = params.get('XX__Region_Code') or 'ea'
 
 # Get the local filesystem place to store data
     @staticmethod

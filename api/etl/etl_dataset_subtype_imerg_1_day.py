@@ -13,8 +13,9 @@ from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from ..models import Config_Setting
 
-class ImergOneDay(ETL_Dataset_Subtype_Interface):
-    class_name = "ImergOneDay"
+class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
+
+    class_name = 'ImergOneDay'
     etl_parent_pipeline_instance = None
 
     @staticmethod
@@ -33,14 +34,6 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
     # Imerg Has more than 1 mode which refer to sub datasets (Early and Late)
     imerg_mode = "LATE"  # Choices at this time are "LATE" and "EARLY" // Controlled by setter functions. // Default
     # is "LATE"
-
-    # Input Settings
-    YYYY__Year__Start = 2020  # 2019
-    YYYY__Year__End = 2020
-    MM__Month__Start = 1  # 12    # 2 #1
-    MM__Month__End = 1  # 4 #6
-    DD__Day__Start = 1  # 30    # 23
-    DD__Day__End = 1  # 2     # 9
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -65,32 +58,14 @@ class ImergOneDay(ETL_Dataset_Subtype_Interface):
     def set_imerg_mode(self, which):
         self.imerg_mode = which
 
-    # Validate type or use existing default for each
-    def set_optional_parameters(self, start_year, end_year, start_month, end_month, start_day, end_day):
-        try:
-            self.YYYY__Year__Start = int(start_year) if start_year != 0 else self.YYYY__Year__Start
-        except ValueError:
-            pass
-        try:
-            self.YYYY__Year__End = int(end_year) if end_year != 0 else self.YYYY__Year__End
-        except ValueError:
-            pass
-        try:
-            self.MM__Month__Start = int(start_month) if start_month != 0 else self.MM__Month__Start
-        except ValueError:
-            pass
-        try:
-            self.MM__Month__End = int(end_month) if end_month != 0 else self.MM__Month__End
-        except ValueError:
-            pass
-        try:
-            self.DD__Day__Start = int(start_day) if start_day != 0 else self.DD__Day__Start
-        except ValueError:
-            pass
-        try:
-            self.DD__Day__End = int(end_day) if end_day != 0 else self.DD__Day__End
-        except ValueError:
-            pass
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or 2020
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or 2020
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.DD__Day__Start = params.get('DD__Day__Start') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or 1
 
     # Get the credentials from the settings for connecting to the IMERG Data Source, and then set them to the
     # Instance Vars.

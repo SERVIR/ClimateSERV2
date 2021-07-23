@@ -18,14 +18,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
     etl_parent_pipeline_instance = None
     mode = 'smap_10km'
 
-    # Input Settings
-    YYYY__Year__Start  = datetime.date.today().year
-    YYYY__Year__End    = datetime.date.today().year
-    MM__Month__Start   = 1
-    MM__Month__End     = 12
-    DD__Day__Start     = 1
-    DD__Day__End       = 31
-
     relative_dir_path__WorkingDir = 'working_dir'
 
     # DRAFTING - Suggestions
@@ -35,18 +27,17 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance, subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-
         if subtype == 'smap_10km':
             self.mode = 'smap_10km'
 
-    # Validate type or use existing default for each
-    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
-        self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
-        self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
-        self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start
-        self.MM__Month__End = MM__Month__End if MM__Month__End != 0 else self.MM__Month__End
-        self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
-        self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or 12
+        self.DD__Day__Start = params.get('DD__Day__Start', 1) or 1
+        self.DD__Day__End = params.get('DD__Day__End') or 31
 
     # Get the local filesystem place to store data
     def get_root_local_temp_working_dir(self):
