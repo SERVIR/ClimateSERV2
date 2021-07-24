@@ -922,7 +922,7 @@ function getDataFromRequest(id){
                       var width = this.chartWidth - 105,
                           height = this.chartHeight - 130;
                       console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
-                      this.renderer.image(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg', 200, 50, 100, 77
+                      this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
                       ).add();
                     }
                   }
@@ -968,7 +968,7 @@ function getDataFromRequest(id){
             var width = chart.chartWidth - 105,
                 height = chart.chartHeight - 130;
             img = chart.renderer
-                .image(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg', width, height, "100", "77")
+                .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
                 .add();
           });
         }
