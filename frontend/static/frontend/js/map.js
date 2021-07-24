@@ -921,7 +921,8 @@ function getDataFromRequest(id){
                       console.log("exporting!!!");
                       var width = this.chartWidth - 105,
                           height = this.chartHeight - 130;
-                      this.renderer.image('https://climateserv2.servirglobal.net/static/frontend/img/servir_color.jpg', 200, 50, 100, 77
+                      console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
+                      this.renderer.image(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg', 200, 50, 100, 77
                       ).add();
                     }
                   }
@@ -967,7 +968,7 @@ function getDataFromRequest(id){
             var width = chart.chartWidth - 105,
                 height = chart.chartHeight - 130;
             img = chart.renderer
-                .image(static_url + 'frontend/img/servir_color.png', width, height, "100", "77")
+                .image(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg', width, height, "100", "77")
                 .add();
           });
         }
