@@ -6,11 +6,11 @@ from ..models import Config_Setting, ETL_Dataset, ETL_Granule
 
 from ..serializers import ETL_DatasetSerializer
 
-from .etl_dataset_subtype_chirps import chirps as ETL_Dataset_Subtype_CHIRPS
-from .etl_dataset_subtype_emodis import emodis as ETL_Dataset_Subtype_EMODIS
-from .etl_dataset_subtype_esi import esi as ETL_Dataset_Subtype_ESI
-from .etl_dataset_subtype_imerg import imerg as ETL_Dataset_Subtype_IMERG
-from .etl_dataset_subtype_imerg_1_day import ImergOneDay as ETL_Dataset_Subtype_IMERG_1_DAY
+from .etl_dataset_subtype_chirps import ETL_Dataset_Subtype_CHIRPS
+from .etl_dataset_subtype_emodis import ETL_Dataset_Subtype_EMODIS
+from .etl_dataset_subtype_esi import ETL_Dataset_Subtype_ESI
+from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
+from .etl_dataset_subtype_imerg_1_day import ETL_Dataset_Subtype_IMERG_1_DAY
 from .etl_dataset_subtype_smap import ETL_Dataset_Subtype_SMAP
 
 class ETL_Pipeline():
@@ -299,84 +299,32 @@ class ETL_Pipeline():
             self.log__pipeline_run__exit()
             return
 
-        # CHIRPS chirp/chirps/chrips_gefs
+        # Create dataset instance
         if current_Dataset_SubType in ('chirp', 'chirps', 'chirps_gefs'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, current_Dataset_SubType)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                YYYY__Year__Start=self.START_YEAR_YYYY,
-                YYYY__Year__End=self.END_YEAR_YYYY,
-                MM__Month__Start=self.START_MONTH_MM,
-                MM__Month__End=self.END_MONTH_MM,
-                DD__Day__Start=self.START_DAY_DD,
-                DD__Day__End=self.END_DAY_DD
-            )
-
-        # EMODIS
         if current_Dataset_SubType == 'emodis':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                YYYY__Year__Start=self.START_YEAR_YYYY,
-                YYYY__Year__End=self.END_YEAR_YYYY,
-                MM__Month__Start=self.START_MONTH_MM,
-                MM__Month__End=self.END_MONTH_MM,
-                XX__Region_Code=self.WEEKLY_JULIAN_START_OFFSET
-            )
-
-        # ESI 4/12 Week
         if current_Dataset_SubType in ('esi_4week', 'esi_12week'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, current_Dataset_SubType)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                YYYY__Year__Start=self.START_YEAR_YYYY,
-                YYYY__Year__End=self.END_YEAR_YYYY,
-                MM__Month__Start=self.START_MONTH_MM,
-                MM__Month__End=self.END_MONTH_MM,
-                DD__Day__Start=self.START_DAY_DD,
-                DD__Day__End=self.END_DAY_DD
-            )
-
-        # IMERG Early/Late
         if current_Dataset_SubType in ('imerg_early', 'imerg_late'):
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, current_Dataset_SubType)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                YYYY__Year__Start=self.START_YEAR_YYYY,
-                YYYY__Year__End=self.END_YEAR_YYYY,
-                MM__Month__Start=self.START_MONTH_MM,
-                MM__Month__End=self.END_MONTH_MM,
-                DD__Day__Start=self.START_DAY_DD,
-                DD__Day__End=self.END_DAY_DD,
-                NN__30MinIncrement__Start=self.START_30MININCREMENT_NN,
-                NN__30MinIncrement__End=self.END_30MININCREMENT_NN
-            )
-
-        # IMERG 1 Day
         if current_Dataset_SubType == 'ImergOneDay':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, current_Dataset_SubType)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                start_year=self.START_YEAR_YYYY,
-                end_year=self.END_YEAR_YYYY,
-                start_month=self.START_MONTH_MM,
-                end_month=self.END_MONTH_MM,
-                start_day=self.START_DAY_DD,
-                end_day=self.END_DAY_DD
-            )
-
-        # SMAP
         if current_Dataset_SubType == 'smap':
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self)
-            # Set params
-            self.Subtype_ETL_Instance.set_optional_parameters(
-                self.START_YEAR_YYYY,
-                self.END_YEAR_YYYY,
-                self.START_MONTH_MM,
-                self.END_MONTH_MM,
-                self.START_DAY_DD,
-                self.END_DAY_DD
-            )
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, current_Dataset_SubType)
+
+        # Set optional params
+        self.Subtype_ETL_Instance.set_optional_parameters({
+            'YYYY__Year__Start': self.START_YEAR_YYYY,
+            'YYYY__Year__End': self.END_YEAR_YYYY,
+            'MM__Month__Start': self.START_MONTH_MM,
+            'MM__Month__End': self.END_MONTH_MM,
+            'DD__Day__Start': self.START_DAY_DD,
+            'DD__Day__End': self.END_DAY_DD,
+            'NN__30MinIncrement__Start': self.START_30MININCREMENT_NN,
+            'NN__30MinIncrement__End': self.END_30MININCREMENT_NN,
+            'XX__Region_Code': self.WEEKLY_JULIAN_START_OFFSET
+        })
 
         # Validate that 'self.Subtype_ETL_Instance' is NOT NONE
         if self.Subtype_ETL_Instance is None:
