@@ -5,7 +5,8 @@ Created on Jun 3, 2014
 Modified starting from Sept 2015
 @author: Kris Stanton
 '''
-from . import dateIndexTools as dit
+
+from .processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
 
