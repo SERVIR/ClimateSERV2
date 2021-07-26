@@ -12,20 +12,11 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from api.services import Config_SettingService
 from ..models import Config_Setting
 
-class chirps(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
     class_name = 'chirps'
     etl_parent_pipeline_instance = None
-
     chirps_mode = 'chirp'
-
-    # Input Settings
-    YYYY__Year__Start = 2020  # 2019
-    YYYY__Year__End = 2020
-    MM__Month__Start = 1  # 12    # 2 #1
-    MM__Month__End = 1  # 4 #6
-    DD__Day__Start = 1  # 30    # 23
-    DD__Day__End = 1  # 2     # 9
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -43,13 +34,14 @@ class chirps(ETL_Dataset_Subtype_Interface):
         elif subtype == 'chirps_gefs':
             self.chirps_mode = 'chirps_gefs'
 
-    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End):
-        self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
-        self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
-        self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start
-        self.MM__Month__End = MM__Month__End if MM__Month__End != 0 else self.MM__Month__End
-        self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
-        self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or 2020
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or 2020
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.DD__Day__Start = params.get('DD__Day__Start') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or 1
 
     # Get the local filesystem place to store data
     @staticmethod

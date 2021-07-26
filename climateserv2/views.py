@@ -2,7 +2,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
-import climateserv2.parameters as params
+
+from . import parameters as params
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )

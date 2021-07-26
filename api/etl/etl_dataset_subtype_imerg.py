@@ -12,22 +12,11 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from api.services import Config_SettingService
 from ..models import Config_Setting
 
-class imerg(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
     class_name = 'imerg'
     etl_parent_pipeline_instance = None
-
-    imerg_mode = 'LATE' # It could be 'LATE' or 'EARLY' - Default is 'LATE'
-
-    # Input Settings
-    YYYY__Year__Start          = datetime.date.today().year
-    YYYY__Year__End            = datetime.date.today().year
-    MM__Month__Start           = 1
-    MM__Month__End             = 1
-    DD__Day__Start             = 1
-    DD__Day__End               = 1
-    NN__30MinIncrement__Start  = 0
-    NN__30MinIncrement__End    = 2
+    imerg_mode = 'LATE'
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -42,6 +31,17 @@ class imerg(ETL_Dataset_Subtype_Interface):
             self.imerg_mode = 'EARLY'
         elif subtype == 'imerg_late':
             self.imerg_mode = 'LATE'
+
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.DD__Day__Start = params.get('DD__Day__Start') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or 1
+        self.NN__30MinIncrement__Start = params.get('NN__30MinIncrement__Start', 0) or 0
+        self.NN__30MinIncrement__End = params.get('NN__30MinIncrement__End', 2) or 2
 
     # Validate type or use existing default for each
     def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):

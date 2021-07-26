@@ -21,7 +21,7 @@ from django.urls import path, include
 from climateserv2.views import *
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    #path('admin/', admin.site.urls),
     # Uncomment the next line to enable the admin:
     url('', include('frontend.urls')),
     url(r'^admin/', admin.site.urls),

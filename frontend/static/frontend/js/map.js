@@ -562,7 +562,9 @@ function gotostep(which){
       $("#btnstep1").prop("disabled", false);
       // also disable any drawing ability, remove drawing bar
       // also disable any drawing ability, remove drawing bar
-      drawtoolbar.remove();
+      if(drawtoolbar) {
+        drawtoolbar.remove();
+      }
       map.off("click");
       break
     case 3:
@@ -726,6 +728,254 @@ function collect_review_data(){
   }
 
 }
+
+function getEnsDataType(){
+  // will need to write this for the selected ensembles
+  return
+}
+
+function sendRequest(){
+
+  //https://climateserv.servirglobal.net/chirps/submitDataRequest/?callback=successCallback
+  const formData = new FormData();
+  if($("#requestTypeSelect").val() === "datasets") {
+    formData.append(
+        "datatype", $("#sourcemenu").val()
+    );
+    formData.append("begintime", $("#begintime").text()); // "01/01/2020");
+    formData.append("endtime", $("#endtime").text()); //"06/30/2020");
+    formData.append("intervaltype", 0);
+    formData.append("operationtype", $("#operationmenu").val());
+    formData.append("dateType_Category", "default");
+    formData.append("isZip_CurrentDataType", false);
+  } else{
+    // this is climatology
+      // this looks like it currently needs to be a get request not a post so we'll have to do it a bit different
+  }
+  if(highlightedIDs.length > 0){
+    formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+    formData.append("featureids", highlightedIDs.join(","));
+  } else if(drawnItems.getLayers().length > 0) {
+    formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+  } else if(uploadLayer){
+    formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+  }
+
+  fetch(
+      //"https://climateserv2-beta-server.servirglobal.net/chirps/submitDataRequest/",
+      "https://climateserv.servirglobal.net/chirps/submitDataRequest/",
+      {
+        crossDomain: true,
+        method: "POST",
+        body: formData,
+      }
+  )
+      .then((response) => response.json())
+      .then((data) => {
+        pollForProgress(data[0]);
+      }); // this is the jobID to poll with and get data
+}
+
+function pollForProgress(id){
+  fetch(
+    //"https://climateserv2-beta-server.servirglobal.net/chirps/getDataRequestProgress/?id=" +
+    "https://climateserv.servirglobal.net/chirps/getDataRequestProgress/?id=" +
+    id,
+    {
+      crossDomain: true,
+      method: "GET",
+    }
+)
+    .then((response) => response.json())
+    .then((data) => {
+      const val = data[0];
+      if (val !== -1 && val !== 100) {
+        pollForProgress(id);
+      } else if (val === 100) {
+        getDataFromRequest(id);
+      } else {
+        console.log("Server Error");
+      }
+    }); // this is the jobID to poll with and get data
+}
+
+function getDataFromRequest(id){
+  //https://climateserv.servirglobal.net/chirps/getDataFromRequest/?callback=successCallback&id=e77f48f5-b2c0-4fbc-9efc-f94fb2d08019&_=1607277911298
+  fetch(
+      //"https://climateserv2-beta-server.servirglobal.net/chirps/getDataFromRequest/?id=" +
+      "https://climateserv.servirglobal.net/chirps/getDataFromRequest/?id=" +
+      id,
+      {
+        crossDomain: true,
+        method: "GET",
+      }
+  )
+      .then((response) => response.json())
+      .then((data) => {
+        const compiledData = [];
+        const otState = parseInt($("#operationmenu").val());
+        if (otState === 6) {
+          // this is a download request form download link
+        } else {
+          let min = 9999;
+          let max = -9999;
+          data.data.forEach((d) => {
+            let val = 0;
+
+            val =
+                otState === 0
+                    ? d.value.max
+                    : otState === 1
+                    ? d.value.min
+                    : otState === 5
+                        ? d.value.avg
+                        : -9191;
+
+            if (val > -9000) {
+              const darray = [];
+              darray.push(parseInt(d.epochTime) * 1000);
+              //fix this
+              if (val < min) {
+                min = val;
+              }
+              if (val > max) {
+                max = val;
+              }
+              darray.push(val);
+              compiledData.push(darray); // i can likely store min and max here
+            }
+          });
+          const dif = (max - min) * 0.1;
+          console.log(compiledData.sort((a, b) => a[0] - b[0]));
+          $("#dialog").html(
+              '<div id="chart_holder"></p>'
+          );
+          // $("#chart_holder").resize(function(){
+          //   window.dispatchEvent(new Event('resize'));
+          // });
+          $("#dialog").dialog({
+            title: "Statistical Query",
+            resizable: { handles: "se" },
+            width: $(window).width() - 100,
+            height: $(window).height() - 140,
+            resize: function(){
+              window.dispatchEvent(new Event('resize'));
+            }
+          });
+          Highcharts.chart('chart_holder', {
+
+            title: {
+              text: $( "#sourcemenu option:selected" ).text()
+            },
+
+            subtitle: {
+              text: 'Source: climateserv.servirglobal.net'
+            },
+            xAxis: {
+              type: "datetime"
+            },
+            yAxis: {
+              title: {
+                text: "Need to get units from some place"
+              }
+            },
+
+            legend: {
+              layout: 'vertical',
+              align: 'right',
+              verticalAlign: 'middle'
+            },
+
+            plotOptions: {
+              series: {
+                connectNulls: false,
+
+                marker: {
+                  radius: 2
+                },
+                lineWidth: 1,
+                states: {
+                  hover: {
+                    lineWidth: 1
+                  }
+                },
+                threshold: null,
+                allowPointSelect: true,
+                point: {
+                  events: {
+                    select: function(e) {
+                      var full = new Date(e.target.x);
+                      var date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+
+                      console.log(date);
+                    }
+                  }
+                }
+              }
+            },
+            exporting: {
+              chartOptions: {
+                chart: {
+                  events: {
+                    load: function() {
+                      console.log("exporting!!!");
+                      var width = this.chartWidth - 105,
+                          height = this.chartHeight - 130;
+                      console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
+                      this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                      ).add();
+                    }
+                  }
+                }
+              }
+            },
+            chart:{
+            events: {
+              redraw: function (e) {
+                img.translate(
+                    this.chartWidth - originalWidth,
+                    this.chartHeight - originalHeight
+                );
+              }
+              }},
+            series: [{
+              type: "line",
+              name: $( "#operationmenu option:selected" ).text(),
+              data: compiledData
+            }],
+            tooltip: {
+              pointFormat: "Value: {point.y}"
+            },
+            responsive: {
+              rules: [{
+                condition: {
+                  maxWidth: 500
+                },
+                chartOptions: {
+                  legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                  }
+                }
+              }]
+            }
+
+          }, function (chart) { // on complete
+
+            originalWidth = chart.chartWidth;
+            originalHeight = chart.chartHeight;
+            var width = chart.chartWidth - 105,
+                height = chart.chartHeight - 130;
+            img = chart.renderer
+                .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
+                .add();
+          });
+        }
+      });
+};
+
+var img, originalWidth, originalHeight;
 
 /**
  * Calls initMap

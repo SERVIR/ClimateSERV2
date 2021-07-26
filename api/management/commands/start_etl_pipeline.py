@@ -8,14 +8,14 @@ class Command(BaseCommand):
     # Parsing params
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
-        parser.add_argument('--START_YEAR_YYYY', nargs='?', type=int, default=0)
-        parser.add_argument('--END_YEAR_YYYY', nargs='?', type=int, default=0)
-        parser.add_argument('--START_MONTH_MM', nargs='?', type=int, default=0)
-        parser.add_argument('--END_MONTH_MM', nargs='?', type=int, default=0)
-        parser.add_argument('--START_DAY_DD', nargs='?', type=int, default=0)
-        parser.add_argument('--END_DAY_DD', nargs='?', type=int, default=0)
-        parser.add_argument('--START_30MININCREMENT_NN', nargs='?', type=int, default=0)
-        parser.add_argument('--END_30MININCREMENT_NN', nargs='?', type=int, default=0)
+        parser.add_argument('--START_YEAR_YYYY', nargs='?', type=int)
+        parser.add_argument('--END_YEAR_YYYY', nargs='?', type=int)
+        parser.add_argument('--START_MONTH_MM', nargs='?', type=int)
+        parser.add_argument('--END_MONTH_MM', nargs='?', type=int)
+        parser.add_argument('--START_DAY_DD', nargs='?', type=int)
+        parser.add_argument('--END_DAY_DD', nargs='?', type=int)
+        parser.add_argument('--START_30MININCREMENT_NN', nargs='?', type=int)
+        parser.add_argument('--END_30MININCREMENT_NN', nargs='?', type=int)
 
     # Function Handler
     def handle(self, *args, **options):
