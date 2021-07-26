@@ -31,6 +31,10 @@ body {
   padding: 5px 18px;
 }
 
+.progress-bar{
+  height: 20px;
+}
+
 .ui-widget-header {
   border: 0;
   background: #002a53;

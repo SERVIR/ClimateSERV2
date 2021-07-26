@@ -772,8 +772,28 @@ function sendRequest(){
   )
       .then((response) => response.json())
       .then((data) => {
+        let progress = '<div style="width:100%; height:100%; display: flex;\n' +
+            '    align-items: center;\n' +
+            '}">';
+        progress += '<div class="progress">';
+        progress += '<div class="progress-bar progress-bar-striped progress-bar-animated"\n' +
+            ' role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"\n' +
+            ' style="width: 0%"><span><span class="percentage" id="txtpercent">0%</span></span></div>';
+        progress += '</div></div>';
+        $("#dialog").html(progress);
+        $("#dialog").dialog({
+          title: "Query Progress",
+          resizable: false,
+          width: $(window).width()/2,
+          height: 200
+        });
         pollForProgress(data[0]);
-      }); // this is the jobID to poll with and get data
+      });
+}
+
+function updateProgress(val){
+  $('.progress-bar').css('width', val+'%').attr('aria-valuenow', val);
+  $("#txtpercent").text(parseInt(val) + '%');
 }
 
 function pollForProgress(id){
@@ -790,6 +810,7 @@ function pollForProgress(id){
     .then((data) => {
       const val = data[0];
       if (val !== -1 && val !== 100) {
+        updateProgress(val);
         pollForProgress(id);
       } else if (val === 100) {
         getDataFromRequest(id);
