@@ -29,8 +29,8 @@ urlpatterns = [
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     # url(r'^/chirps/submitDataRequest/', submitDataRequest),
     # url(r'^/chirps/getDataRequestProgress/', getDataRequestProgress),
-    url(r'^/chirps/getDataFromRequest/', getDataFromRequest),
-    url(r'^/chirps/getFeatureLayers/', getFeatureLayers),
+    url(r'chirps/getDataFromRequest/', getDataFromRequest),
+    url(r'chirps/getFeatureLayers/', getFeatureLayers),
     # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
     # url(r'^/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
     # url(r'^/chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
