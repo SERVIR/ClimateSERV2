@@ -18,7 +18,7 @@ from django.conf.urls.static import static
 from django.conf.urls import url
 from django.contrib import admin,admindocs
 from django.urls import path, include
-from views import *
+from climateserv2.views import *
 
 urlpatterns = [
     path('admin/', admin.site.urls),

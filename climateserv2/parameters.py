@@ -27,7 +27,7 @@ isDev = False
 #        import parameters_local as params
 
 # else:
-import parameters_ops as params
+import climateserv2.parameters_ops as params
 
 DEBUG_LIVE = params.DEBUG_LIVE
 logToConsole = params.logToConsole
