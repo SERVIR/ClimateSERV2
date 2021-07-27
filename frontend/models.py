@@ -15,7 +15,7 @@ class DataSet(models.Model):
     heading = models.CharField(max_length=200, help_text='Enter heading to display on home page when featured')
     feature_subtext = models.TextField(help_text="Enter subtext to display on home page when featured", default="")
     summary = models.TextField(help_text="Enter summary to display in help center card", default="")
-    display_image = models.ImageField(default=1, upload_to='images/')
+    display_image = models.ImageField(default='images/no_data_preview.png', upload_to='images/')
     image_alt = models.CharField(max_length=200, help_text="Enter alt text to display on mouse over of feature image")
 
     button_variable = models.CharField(max_length=200, help_text='Enter variable to pass to map application which '

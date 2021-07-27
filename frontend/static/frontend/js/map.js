@@ -476,7 +476,7 @@ function enableDrawing() {
 function enableAdminFeature(which) {
   clearAOISelections();
   adminLayer = L.tileLayer.wms(
-    "https://climateserv2-ui.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
+    "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
     {
       layers: which,
       format: "image/png",
@@ -519,7 +519,7 @@ function enableAdminFeature(which) {
           }
 
           adminHighlightLayer = L.tileLayer.wms(
-            "https://climateserv2-ui.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
+            "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
             {
               layers: which + "_highlight",
               format: "image/png",
@@ -762,7 +762,6 @@ function sendRequest(){
   }
 
   fetch(
-      //"https://climateserv2-beta-server.servirglobal.net/chirps/submitDataRequest/",
       "https://climateserv.servirglobal.net/chirps/submitDataRequest/",
       {
         crossDomain: true,
