@@ -111,6 +111,11 @@ function openSettings(which) {
     resizable: { handles: "se" },
     width: "auto",
     height: "auto",
+    position: {
+      my: "center",
+      at: "center",
+      of: window
+    }
   });
   $(".ui-dialog-title").attr("title", "Settings");
   $(styleOptions).each(function () {
@@ -202,6 +207,11 @@ function openLegend(which) {
     resizable: { handles: "se" },
     width: 169,
     height: 322,
+    position: {
+      my: "center",
+      at: "center",
+      of: window
+    }
   });
   $(".ui-dialog-title").attr("title", active_layer.title);
   $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function(){
@@ -555,6 +565,7 @@ function gotostep(which){
   $("[id^=btnstep]").removeClass("active");
   $("#step" + which).show();
   $("#btnstep" + which).addClass("active");
+  $("#btnstep" + which).addClass("active");
   switch(which){
     case 1:
       $("[id^=btnstep]").prop("disabled", true);
@@ -783,7 +794,12 @@ function sendRequest(){
           title: "Query Progress",
           resizable: false,
           width: $(window).width()/2,
-          height: 200
+          height: 200,
+          position: {
+            my: "center",
+            at: "center",
+            of: window
+          }
         });
         pollForProgress(data[0]);
       });
@@ -875,6 +891,11 @@ function getDataFromRequest(id){
             height: $(window).height() - 140,
             resize: function(){
               window.dispatchEvent(new Event('resize'));
+            },
+            position: {
+              my: "center",
+              at: "center",
+              of: window
             }
           });
 
