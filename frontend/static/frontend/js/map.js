@@ -11,7 +11,8 @@ var baseLayers;
 var drawnItems;
 var drawtoolbar;
 var styleOptions = [];
-
+const api_url = "https://climateserv.servirglobal.net";
+const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
  * creates the map layer and stores it in the overlayMaps array
@@ -51,7 +52,7 @@ function createLayer(item) {
  * @returns layer json object
  */
 function getLayer(which) {
-  return test_layers.find(
+  return client_layers.find(
     (item) => item.id === which.replace("TimeLayer", "")
   );
 }
@@ -61,7 +62,7 @@ function getLayer(which) {
  * styleOptions array, which will be used to load the styles dropdown box
  */
 function buildStyles() {
-  $.get(test_layers[0].url + "&request=GetCapabilities", function (xml) {
+  $.get(client_layers[0].url + "&request=GetCapabilities", function (xml) {
     var jsonObj = $.xml2json(xml);
     var styles =
       jsonObj["#document"]
@@ -476,7 +477,7 @@ function enableDrawing() {
 function enableAdminFeature(which) {
   clearAOISelections();
   adminLayer = L.tileLayer.wms(
-    "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
+      admin_layer_url,
     {
       layers: which,
       format: "image/png",
@@ -488,7 +489,7 @@ function enableAdminFeature(which) {
   );
   map.addLayer(adminLayer);
   adminLayer.setZIndex(
-    Object.keys(baseLayers).length + test_layers.length + 5
+    Object.keys(baseLayers).length + client_layers.length + 5
   );
 
   // enable map click to show highlighted selections
@@ -519,7 +520,7 @@ function enableAdminFeature(which) {
           }
 
           adminHighlightLayer = L.tileLayer.wms(
-            "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100",
+              admin_layer_url,
             {
               layers: which + "_highlight",
               format: "image/png",
@@ -541,7 +542,7 @@ function enableAdminFeature(which) {
 
           map.addLayer(adminHighlightLayer);
           adminHighlightLayer.setZIndex(
-            Object.keys(baseLayers).length + test_layers.length + 6
+            Object.keys(baseLayers).length + client_layers.length + 6
           );
         }
       },
@@ -672,7 +673,7 @@ getParameterByName = (name, url) => {
 function initMap() {
   passedLayer = this.getParameterByName("data") || "none";
   mapSetup();
-  test_layers.forEach(createLayer);
+  client_layers.forEach(createLayer);
   sortableLayerSetup();
   try {
     buildStyles();
@@ -735,8 +736,6 @@ function getEnsDataType(){
 }
 
 function sendRequest(){
-
-  //https://climateserv.servirglobal.net/chirps/submitDataRequest/?callback=successCallback
   const formData = new FormData();
   if($("#requestTypeSelect").val() === "datasets") {
     formData.append(
@@ -762,7 +761,7 @@ function sendRequest(){
   }
 
   fetch(
-      "https://climateserv.servirglobal.net/chirps/submitDataRequest/",
+      api_url + "/chirps/submitDataRequest/",
       {
         crossDomain: true,
         method: "POST",
@@ -797,8 +796,7 @@ function updateProgress(val){
 
 function pollForProgress(id){
   fetch(
-    //"https://climateserv2-beta-server.servirglobal.net/chirps/getDataRequestProgress/?id=" +
-    "https://climateserv.servirglobal.net/chirps/getDataRequestProgress/?id=" +
+      api_url + "/chirps/getDataRequestProgress/?id=" +
     id,
     {
       crossDomain: true,
@@ -820,10 +818,8 @@ function pollForProgress(id){
 }
 
 function getDataFromRequest(id){
-  //https://climateserv.servirglobal.net/chirps/getDataFromRequest/?callback=successCallback&id=e77f48f5-b2c0-4fbc-9efc-f94fb2d08019&_=1607277911298
   fetch(
-      //"https://climateserv2-beta-server.servirglobal.net/chirps/getDataFromRequest/?id=" +
-      "https://climateserv.servirglobal.net/chirps/getDataFromRequest/?id=" +
+      api_url + "/chirps/getDataFromRequest/?id=" +
       id,
       {
         crossDomain: true,
@@ -865,8 +861,7 @@ function getDataFromRequest(id){
               compiledData.push(darray); // i can likely store min and max here
             }
           });
-          const dif = (max - min) * 0.1;
-          console.log(compiledData.sort((a, b) => a[0] - b[0]));
+
           $("#dialog").html(
               '<div id="chart_holder"></p>'
           );
@@ -882,6 +877,11 @@ function getDataFromRequest(id){
               window.dispatchEvent(new Event('resize'));
             }
           });
+
+          const units = client_layers.find(
+              (item) => item.app_id === $("#sourcemenu").val()
+            ).units;
+
           Highcharts.chart('chart_holder', {
 
             title: {
@@ -896,7 +896,7 @@ function getDataFromRequest(id){
             },
             yAxis: {
               title: {
-                text: "Need to get units from some place"
+                text: units
               }
             },
 
@@ -961,10 +961,10 @@ function getDataFromRequest(id){
             series: [{
               type: "line",
               name: $( "#operationmenu option:selected" ).text(),
-              data: compiledData
+              data: compiledData.sort((a, b) => a[0] - b[0])
             }],
             tooltip: {
-              pointFormat: "Value: {point.y}"
+              pointFormat: "Value: {point.y:.2f} " + units
             },
             responsive: {
               rules: [{

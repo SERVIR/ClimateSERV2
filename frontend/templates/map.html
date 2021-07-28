@@ -36,9 +36,9 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
-        let test_layers = []; //JSON.parse('{{ data_layers | safe }}');
+        let client_layers = []; //JSON.parse('{{ data_layers | safe }}');
         {% for layer in data_layers %}
-            test_layers.push({
+            client_layers.push({
                 title: "{{ layer.title }}",
                 url: "{{ layer.url }}",
                 attribution: "{{ layer.attribution }}",
@@ -47,6 +47,8 @@
                 colorrange: "{{ layer.default_color_range }}",
                 id: "{{ layer.ui_id }}",
                 dataset: "{{ layer.dataset_type }}",
+                app_id: "{{ layer.api_id }}",
+                units: "{{ layer.units }}"
             })
         {% endfor %}
 
