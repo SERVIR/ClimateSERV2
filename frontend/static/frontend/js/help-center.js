@@ -8,7 +8,7 @@ $(document).ready(function () {
 });
 
 function adjustCards() {
-    $(".help-card").animate({ height: "auto" }, function () {
+    $(".help-card").animate({height: "auto"}, function () {
         $(".help-card").height("auto");
         var maxHeight = Math.max.apply(
             null,
@@ -34,20 +34,8 @@ $(window).resize(function () {
     adjustCards();
 });
 
-getParameterByName = (name, url) => {
-    const regex = new RegExp(
-        "[?&]" + name.replace(/[[\]]/g, "\\$&") + "(=([^&#]*)|&|#|$)"
-    );
-    const results = regex.exec(
-        decodeURIComponent(url || window.location.href)
-    );
-    return results
-        ? results[2]
-            ? decodeURIComponent(results[2].replace(/\+/g, " "))
-            : ""
-        : null;
-};
 let scroll_freeze = 0;
+
 function openDialog(metaData) {
     // close dialog if open to ensure proper load and scroll
     if ($("#dialog").hasClass("ui-dialog-content") &&
@@ -85,13 +73,15 @@ function openDialog(metaData) {
             $('body').css('top', -(document.documentElement.scrollTop) + 'px')
                 .addClass('noscroll');
         },
-        close: function(){
+        close: function () {
             $('body').removeClass('noscroll');
             document.documentElement.scrollTop = scroll_freeze;
         }
     });
 }
+
 var holdme;
+
 function getMetaData(which) {
     //sample http://gis1.servirglobal.net:8080/geonetwork/srv/api/records/ec5da150-d043-414a-80cd-1b750debd805/formatters/xml
     $.get(
@@ -119,7 +109,8 @@ function getMetaData(which) {
                         ]["gmd:MD_DataIdentification"]["gmd:citation"][
                         "gmd:CI_Citation"
                         ]["gmd:title"]["gco:CharacterString"];
-            } catch (e) { }
+            } catch (e) {
+            }
             var abstract = "No Abstract implemented";
             try {
                 abstract = jsonObj["#document"]["gmd:MD_Metadata"][
@@ -157,7 +148,8 @@ function getMetaData(which) {
                         ]["gmd:MD_DataIdentification"]["gmd:graphicOverview"][
                         "gmd:MD_BrowseGraphic"
                         ]["gmd:fileName"]["gco:CharacterString"];
-            } catch (e) { }
+            } catch (e) {
+            }
             var credit = "No Credits implemented";
             try {
                 credit =
@@ -166,7 +158,8 @@ function getMetaData(which) {
                         ]["gmd:MD_DataIdentification"]["gmd:credit"][
                         "gco:CharacterString"
                         ];
-            } catch (e) { }
+            } catch (e) {
+            }
 
             openDialog({
                 title: title.replaceAll("\\\\n", "<br />"),
@@ -196,7 +189,7 @@ function getMetaData(which) {
     );
 }
 
-function activate(which){
+function activate(which) {
     $(".help-tabs").removeClass("active");
     $("#" + which).addClass("active");
     $("[id$=help-section]").hide()

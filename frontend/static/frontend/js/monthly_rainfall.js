@@ -4,26 +4,6 @@
 // var monthlyRainfallAnalysis_Start_Date = "";  // expected format is:
 // var monthlyRainfallAnalysis_End_Date = "";
 
-function get_Year_From_YYYY_MM_DD_String(YYYY_MM_DD_String) {
-    //str.split("_");
-    var yearPart = (YYYY_MM_DD_String.split("_")[0] * 1);
-    var monthPart = (YYYY_MM_DD_String.split("_")[1] * 1);
-    var dayPart = (YYYY_MM_DD_String.split("_")[2] * 1);
-    //var retDate = new Date(yearPart, monthPart - 1, dayPart);
-    //return retDate;
-    return yearPart;
-}
-
-function get_Month_From_YYYY_MM_DD_String(YYYY_MM_DD_String) {
-    //str.split("_");
-    var yearPart = (YYYY_MM_DD_String.split("_")[0] * 1);
-    var monthPart = (YYYY_MM_DD_String.split("_")[1] * 1);
-    var dayPart = (YYYY_MM_DD_String.split("_")[2] * 1);
-    //var retDate = new Date(yearPart, monthPart - 1, dayPart);
-    //return retDate;
-    return monthPart;
-}
-
 // monthNumberString is a value between "1" and "12"  ("1" == Jan)
 function get_category_month_name_for_monthNumberString(monthNumberString) {
     if (monthNumberString == "1") {
@@ -106,27 +86,27 @@ function get_MonthIndex_from_MonthString(monthString, raw_data_obj) {
 // monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, "1"); // Seasonal Forecase Ensemebles average of averages for JAN
 // monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, "2"); // Seasonal Forecase Ensemebles average of averages for FEB
 // monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, "5"); // Seasonal Forecase Ensemebles average of averages for MAY
-function monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, monthString) {
+function monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, month) {
 
     braw.push(raw_data_obj);
 
-    // If there is trouble with this first section (I.E getting the wrong data, we may need to match month numbers)
-    // Convert monthString to month_index
-    // monthString is a string (that is a number) from "1" to "12", ("1" is Jan, "2" is Feb, etc)
-    // month_index is a number from 0-11  (0 is Jan, 1 is Feb, etc)
-    //var month_index = (monthString * 1) - 1;   // Converts a "3", which is march to the number 2, which is the index inside the dataset object for the month of march data.
-    var month_index = get_MonthIndex_from_MonthString(monthString, raw_data_obj);
-
     // Get the full list of averages for all ensembles for a given month
     var indexList_for_SeasonalForecast_Datasets = monthlyRainfall_Analysis__Get_SeasonalForecast_IndexList(raw_data_obj);
-    var singleMonth_SeasonalForecast_List_Of_Averages = [];  // List of all the averages for March (for example) for ALL ensembles.
-    for (var i = 0; i < indexList_for_SeasonalForecast_Datasets.length; i++) {
+    const singleMonth_SeasonalForecast_List_Of_Averages = [];  // List of all the averages for March (for example) for ALL ensembles.
+    for (let i = 0; i < indexList_for_SeasonalForecast_Datasets.length; i++) {
         var current_dataset_index = indexList_for_SeasonalForecast_Datasets[i];
-        var theAverage = raw_data_obj.MonthlyAnalysisOutput.dataset_info_list[current_dataset_index].avg_percentiles_dataLines[month_index].col02_MonthlyAverage == "nan" ? 0 : raw_data_obj.MonthlyAnalysisOutput.dataset_info_list[current_dataset_index].avg_percentiles_dataLines[month_index].col02_MonthlyAverage;
-        var col02_MonthlyAverage = theAverage * 1;
-        singleMonth_SeasonalForecast_List_Of_Averages.push(col02_MonthlyAverage);
-        // raw_data_obj.MonthlyAnalysisOutput.dataset_info_list[0].avg_percentiles_dataLines[2] // March
-        //avg_percentiles_dataLines
+        const theAverage = raw_data_obj
+            .MonthlyAnalysisOutput
+            .dataset_info_list[current_dataset_index]
+            .avg_percentiles_dataLines[month - 1]
+            .col02_MonthlyAverage == "nan"
+            ? 0
+            : parseInt(raw_data_obj
+                .MonthlyAnalysisOutput
+                .dataset_info_list[current_dataset_index]
+                .avg_percentiles_dataLines[month - 1]
+                .col02_MonthlyAverage);
+        singleMonth_SeasonalForecast_List_Of_Averages.push(theAverage);
     }
     monthlies.push(singleMonth_SeasonalForecast_List_Of_Averages);
     // Compute the average of all the averages.

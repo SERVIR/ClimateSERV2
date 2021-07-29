@@ -1,16 +1,16 @@
 /** Global Variables */
-var active_basemap = "OSM";
-var map;
-var passedLayer;
-var overlayMaps = {};
-var adminLayer;
-var adminHighlightLayer;
-var highlightedIDs = [];
-var uploadLayer;
-var baseLayers;
-var drawnItems;
-var drawtoolbar;
-var styleOptions = [];
+let active_basemap = "OSM";
+let map;
+let passedLayer;
+let overlayMaps = {};
+let adminLayer;
+let adminHighlightLayer;
+let highlightedIDs = [];
+let uploadLayer;
+let baseLayers;
+let drawnItems;
+let drawToolbar;
+let styleOptions = [];
 const api_url = "https://climateserv.servirglobal.net";
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 
@@ -21,7 +21,7 @@ const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/
  */
 function createLayer(item) {
     // Create actual layer and put in overlayMaps
-    var key = (overlayMaps[item.id + "TimeLayer"] = L.timeDimension.layer.wms(
+    overlayMaps[item.id + "TimeLayer"] = L.timeDimension.layer.wms(
         L.tileLayer.wms(item.url + "&crs=EPSG%3A3857", {
             layers: item.layers,
             format: "image/png",
@@ -35,7 +35,7 @@ function createLayer(item) {
         {
             updateTimeDimension: true,
         }
-    ));
+    );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
 
     if (item.id.includes(passedLayer)) {
@@ -65,8 +65,8 @@ function getLayer(which) {
  */
 function buildStyles() {
     $.get(client_layers[0].url + "&request=GetCapabilities", function (xml) {
-        var jsonObj = $.xml2json(xml);
-        var styles =
+        const jsonObj = $.xml2json(xml);
+        const styles =
             jsonObj["#document"]
                 .WMS_Capabilities
                 .Capability
@@ -75,11 +75,11 @@ function buildStyles() {
                 .Layer
                 .Style
                 .sort(function (a, b) {
-                    var x = a.Name;
-                    var y = b.Name;
+                    const x = a.Name;
+                    const y = b.Name;
                     return ((x < y) ? -1 : ((x > y) ? 1 : 0));
                 });
-        for (i = 0; i < styles.length; i++) {
+        for (let i = 0; i < styles.length; i++) {
             styleOptions.push({
                 val: styles[i].Name,
                 text: styles[i].Name,
@@ -93,10 +93,10 @@ function buildStyles() {
  * @param {string} which - Name of layer to open settings for
  */
 function openSettings(which) {
-    var active_layer = getLayer(which);
+    const active_layer = getLayer(which);
 
-    var settingsHtml = "";
-    if (active_layer.dataset == "model") {
+    let settingsHtml = "";
+    if (active_layer.dataset === "model") {
         // need to get available ensembles then
         // add checkboxes for each to enable turning on and off
         // will likely have to adjust the apply button as well since
@@ -106,9 +106,9 @@ function openSettings(which) {
     }
 
     settingsHtml += baseSettingsHtml();
-
-    $("#dialog").html(settingsHtml);
-    $("#dialog").dialog({
+    let dialog = $("#dialog");
+    dialog.html(settingsHtml);
+    dialog.dialog({
         title: "Settings",
         resizable: {handles: "se"},
         width: "auto",
@@ -128,13 +128,13 @@ function openSettings(which) {
 
     $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
 
-    var slider = document.getElementById("opacityctrl");
+    const slider = document.getElementById("opacityctrl");
     slider.value = overlayMaps[which].options.opacity;
     slider.oninput = function () {
         overlayMaps[which].setOpacity(this.value);
     };
 
-    var applyStylebtn = document.getElementById("applyStylebtn");
+    const applyStylebtn = document.getElementById("applyStylebtn");
 
     applyStylebtn.onclick = function () {
         if (map.hasLayer(overlayMaps[which])) {
@@ -182,8 +182,7 @@ function openSettings(which) {
  * @returns html
  */
 function baseSettingsHtml() {
-    var replica = $("#styletemplate:first").clone();
-    return replica.html();
+    return ($("#styletemplate:first").clone()).html();
 }
 
 /**
@@ -192,8 +191,8 @@ function baseSettingsHtml() {
  */
 function openLegend(which) {
     //fix this, it's not getting the new style if the user changes, it's getting the default
-    var active_layer = getLayer(which);
-    var src =
+    const active_layer = getLayer(which);
+    const src =
         active_layer.url +
         "&REQUEST=GetLegendGraphic&LAYER=" +
         active_layer.layers +
@@ -240,8 +239,8 @@ function mapSetup() {
     L.control.sidebar("sidebar").addTo(map);
 
     //create the basemap thumbnails in the panel
-    for (var key of Object.keys(baseLayers)) {
-        var img = $("<img>");
+    for (let key of Object.keys(baseLayers)) {
+        const img = $("<img>");
         img.attr("src", static_url + 'frontend/' + baseLayers[key].options.thumb);
         img.addClass("basemapbtn");
         img.attr("alt", baseLayers[key].options.displayName);
@@ -281,7 +280,7 @@ function toggleLayer(which) {
         map.addLayer(overlayMaps[which]);
     }
     let available_times = [];
-    for (var key in overlayMaps) {
+    for (let key in overlayMaps) {
         if (overlayMaps.hasOwnProperty(key)) {
             if (map.hasLayer(overlayMaps[key])) {
                 available_times = available_times.concat(overlayMaps[key]._availableTimes).filter(onlyUnique);
@@ -321,8 +320,8 @@ function selectAOI(which) {
  * Removes all existing AOI selections and map click event
  */
 function clearAOISelections() {
-    if (drawtoolbar) {
-        drawtoolbar.remove();
+    if (drawToolbar) {
+        drawToolbar.remove();
     }
 
     map.off("click");
@@ -349,7 +348,7 @@ function clearAOISelections() {
 function enableUpload() {
     uploadLayer = L.geoJson().addTo(map);
 
-    var targetEl = document.getElementById("drop-container");
+    const targetEl = document.getElementById("drop-container");
     targetEl.addEventListener("dragenter", function (e) {
         e.preventDefault();
     });
@@ -359,10 +358,10 @@ function enableUpload() {
 
     targetEl.addEventListener("drop", function (e) {
         e.preventDefault();
-        var reader = new FileReader();
+        const reader = new FileReader();
         reader.onloadend = function () {
             try {
-                var data = JSON.parse(this.result);
+                const data = JSON.parse(this.result);
                 uploadLayer.clearLayers();
                 uploadLayer.addData(data);
                 map.fitBounds(uploadLayer.getBounds());
@@ -378,8 +377,8 @@ function enableUpload() {
                 $("#upload_error").show();
             }
         };
-        var files = e.target.files || e.dataTransfer.files;
-        for (var i = 0, file; (file = files[i]); i++) {
+        const files = e.target.files || e.dataTransfer.files;
+        for (let i = 0, file; (file = files[i]); i++) {
             if (file.type === "application/json") {
                 reader.readAsText(file);
             } else if (file.name.indexOf(".geojson") > -1) {
@@ -396,24 +395,14 @@ function enableUpload() {
                         EPSG: 4326,
                     },
                     function (data) {
-                        var URL =
+                        let URL =
                                 window.URL || window.webkitURL || window.mozURL || window.msURL,
                             url = URL.createObjectURL(
                                 new Blob([JSON.stringify(data)], {type: "application/json"})
                             );
-
-                        //$('#link').attr('href', url);
-                        //$('#link').html(file.name + '.geojson' + '<i class="download icon"></i>').attr('download', file.name + '.geojson');
-
-                        //$('#downloadLink').slideDown(400);
-
-                        //$('.shp-modal').toggleClass('effect');
-                        //$('.overlay').toggleClass('effect');
-                        //    $('#wrap').toggleClass('blur');
                         if (data.features.length > 10) {
                             data.features = data.features.splice(0, 10);
                         }
-                        console.log(data);
                         uploadLayer.addData(data);
                         map.fitBounds([
                             [data.bbox[1], data.bbox[0]],
@@ -442,7 +431,7 @@ function enableUpload() {
  */
 function enableDrawing() {
     clearAOISelections();
-    drawtoolbar = new L.Control.Draw({
+    drawToolbar = new L.Control.Draw({
         draw: {
             polyline: false,
             circle: false,
@@ -452,10 +441,10 @@ function enableDrawing() {
             featureGroup: drawnItems,
         },
     });
-    map.addControl(drawtoolbar);
+    map.addControl(drawToolbar);
 
     map.on(L.Draw.Event.CREATED, function (e) {
-        var type = e.layerType,
+        const type = e.layerType,
             layer = e.layer;
         if (type === "marker") {
             // Do marker specific actions
@@ -506,7 +495,7 @@ function enableAdminFeature(which) {
 
     // enable map click to show highlighted selections
     map.on("click", function (e) {
-        var url = getFeatureInfoUrl(map, adminLayer, e.latlng, {
+        const url = getFeatureInfoUrl(map, adminLayer, e.latlng, {
             info_format: "application/json",
             propertyName: "NAME,AREA_CODE,DESCRIPTIO",
         });
@@ -524,7 +513,7 @@ function enableAdminFeature(which) {
                         adminHighlightLayer.remove();
                     }
 
-                    var selectedID = response["data"];
+                    const selectedID = response["data"];
                     if (highlightedIDs.includes(selectedID)) {
                         highlightedIDs = highlightedIDs.filter((e) => e !== selectedID);
                     } else {
@@ -576,8 +565,8 @@ function gotostep(which) {
             $("#btnstep1").prop("disabled", false);
             // also disable any drawing ability, remove drawing bar
             // also disable any drawing ability, remove drawing bar
-            if (drawtoolbar) {
-                drawtoolbar.remove();
+            if (drawToolbar) {
+                drawToolbar.remove();
             }
             map.off("click");
             break
@@ -610,17 +599,17 @@ function enablestep3() {
  * @returns string url
  */
 function getFeatureInfoUrl(map, layer, latlng, params) {
-    var point = map.latLngToContainerPoint(latlng, map.getZoom()),
-        size = map.getSize(),
-        bounds = map.getBounds(),
-        sw = bounds.getSouthWest(),
-        ne = bounds.getNorthEast(),
-        sw = L.CRS.EPSG3857.project(new L.LatLng(sw.lat, sw.lng)),
-        ne = L.CRS.EPSG3857.project(new L.LatLng(ne.lat, ne.lng));
+    const point = map.latLngToContainerPoint(latlng, map.getZoom());
+    const size = map.getSize();
+    const bounds = map.getBounds();
+    let sw = bounds.getSouthWest();
+    let ne = bounds.getNorthEast();
+    sw = L.CRS.EPSG3857.project(new L.LatLng(sw.lat, sw.lng));
+    ne = L.CRS.EPSG3857.project(new L.LatLng(ne.lat, ne.lng));
 
-    var bb = sw.x + "," + sw.y + "," + ne.x + "," + ne.y;
+    const bb = sw.x + "," + sw.y + "," + ne.x + "," + ne.y;
 
-    var defaultParams = {
+    const defaultParams = {
         request: "GetFeatureInfo",
         service: "WMS",
         srs: "EPSG:102100",
@@ -643,7 +632,6 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
     return layer._url + L.Util.getParamString(params, layer._url, true);
 }
 
-var testme;
 
 /**
  * Sets up the sortable layers in the layer manager
@@ -663,33 +651,21 @@ function sortableLayerSetup() {
         filter: ".ignore-elements",
         // Called when creating a clone of element
         onClone: function (/**Event*/evt) {
-            var origEl = evt.item;
-            var cloneEl = evt.clone;
+            let origEl = evt.item;
+            let cloneEl = evt.clone;
         },
     });
 }
 
 function adjustLayerIndex() {
-    var count = 10;
-    for (var i = $("ol.layers li").length; i > 0; i--) {
-        var name = $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer");
-
-        overlayMaps[name].setZIndex(count);
+    let count = 10;
+    for (let i = $("ol.layers li").length; i > 0; i--) {
+        overlayMaps[
+            $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+            ].setZIndex(count);
         count++;
     }
 }
-
-getParameterByName = (name, url) => {
-    const regex = new RegExp(
-        "[?&]" + name.replace(/[[\]]/g, "\\$&") + "(=([^&#]*)|&|#|$)"
-    );
-    const results = regex.exec(decodeURIComponent(url || window.location.href));
-    return results
-        ? results[2]
-            ? decodeURIComponent(results[2].replace(/\+/g, " "))
-            : ""
-        : null;
-};
 
 /**
  * Page load functions, initializes all parts of application
@@ -963,7 +939,7 @@ function getDataFromRequest(id, isClimate) {
                     data: []
                 });
                 // create these from the object dates
-                var xaxis = {
+                const xaxis = {
                     categories: []
                 }
                 test_obj.forEach(o => {
@@ -1071,8 +1047,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title) {
                 point: {
                     events: {
                         select: function (e) {
-                            var full = new Date(e.target.x);
-                            var date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                            const full = new Date(e.target.x);
+                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
 
                             console.log(date);
                         }
@@ -1086,8 +1062,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title) {
                     events: {
                         load: function () {
                             console.log("exporting!!!");
-                            var width = this.chartWidth - 105,
-                                height = this.chartHeight - 130;
+                            const width = this.chartWidth - 105;
+                            const height = this.chartHeight - 130;
                             console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
                             this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
                             ).add();
@@ -1129,8 +1105,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title) {
 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
-        var width = chart.chartWidth - 105,
-            height = chart.chartHeight - 130;
+        const width = chart.chartWidth - 105;
+        const height = chart.chartHeight - 130;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
@@ -1157,33 +1133,31 @@ function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
         var seasonal_start_date = single_climate_model_capabiliites.startDateTime; //"2017_05_01";
         var seasonal_end_date = single_climate_model_capabiliites.endDateTime; //"2017_10_28";
 
-        var year_start = get_Year_From_YYYY_MM_DD_String(seasonal_start_date);
-        var year_end = get_Year_From_YYYY_MM_DD_String(seasonal_end_date);
-        if (year_start == year_end) {
-            is_range_in_same_year = true;
-        } else {
-            is_range_in_same_year = false;
-        }
+        var year_start = parseInt(seasonal_start_date.split("_")[0]);
+        var year_end = parseInt(seasonal_end_date.split("_")[0]);
+        // if (year_start == year_end) {
+        //     is_range_in_same_year = true;
+        // } else {
+        //     is_range_in_same_year = false;
+        // }
+        is_range_in_same_year = year_start === year_end;
         monthlyRainfall_Start_Year = year_start;
 
-        seasonal_start_month = get_Month_From_YYYY_MM_DD_String(seasonal_start_date);
-        seasonal_end_month = get_Month_From_YYYY_MM_DD_String(seasonal_end_date);
+        seasonal_start_month = parseInt(seasonal_start_date.split("_")[1]);
+        seasonal_end_month = parseInt(seasonal_end_date.split("_")[1]);
     } catch (err_Getting_Dates_From_Climate_Model_Capabilities) {
         //console.log("Exception hit");
 
-        seasonal_start_month = "1";  // "1" is Jan
-        seasonal_end_month = "12";   // "12" is Dec
+        seasonal_start_month = 1;  // "1" is Jan1
+        seasonal_end_month = 12;   // "12" is Dec
     }
 
     // Note, it is possible that the months span over multiple years.
 
-    // Convert Years to numbers
-    seasonal_start_month_num = seasonal_start_month * 1;
-    seasonal_end_month_num = seasonal_end_month * 1;
 
     // Need to build the list of months to use in the for loop (months in order so nov, dec, (year 2) jan, feb,.. etc)
     var month_string_list = [];  // looks like this ["2", "3", "4", etc]  or [ "11", "12", "1", "2", etc]  when done.
-    var current_month_num = seasonal_start_month_num;
+    var current_month_num = seasonal_start_month;
     var current_year_num = monthlyRainfall_Start_Year;
 
     // Creating a new way to tell what number is next?
@@ -1194,14 +1168,11 @@ function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
     // Also that object should contain definitions for what to pass into the labels....
     for (var aMonth = 1; aMonth < 13; aMonth++) {
         if (is_range_in_same_year == true) {
-            // Always the same year
-            // if(current_month_num <= seasonal_end_month_num)  // Just does all 12 months for my example dataset
-            //if( (current_month_num <= seasonal_end_month_num) && (aMonth >= current_month_num) )
-            if (current_month_num <= seasonal_end_month_num) {
+            if (current_month_num <= seasonal_end_month) {
 
                 // Process this month, convert back to a string
                 var current_Month_String = current_month_num + "";
-                var currentMonth_CurrentSeasonalForecast_Average_Value = monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, current_Month_String);
+                var currentMonth_CurrentSeasonalForecast_Average_Value = monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, current_month_num);
                 var currentMonth_CurrentCHIRPS_LongTermAverage_Value = monthlyRainfall_Analysis__Get_Chirps_LongTermAverage_ForMonth(raw_data_obj, current_Month_String);
                 var currentMonth_CurrentCHIRPS_25thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_25thPercentile_ForMonth(raw_data_obj, current_Month_String);
                 var currentMonth_CurrentCHIRPS_75thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_75thPercentile_ForMonth(raw_data_obj, current_Month_String);
@@ -1305,7 +1276,7 @@ function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
                 }
             } else {
                 // We are now in the second year. (Need to make sure we don't do months we don't need or want in the result data...)
-                if (current_month_num <= seasonal_end_month_num) {
+                if (current_month_num <= seasonal_end_month) {
 
                     // Process this month, convert back to a string
                     var current_Month_String = current_month_num + "";
