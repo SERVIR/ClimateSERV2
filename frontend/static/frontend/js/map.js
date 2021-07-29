@@ -910,11 +910,11 @@ function inti_chart_dialog() {
 
 function getIndex(which) {
     switch (which) {
-        case 'LongTermAverage':
-            return 0;
         case 'SeasonalFcstAvg':
+            return 0;
+        case '75thPercentile':
             return 1;
-        case '25thPercentile':
+        case 'LongTermAverage':
             return 2;
         default:
             return 3;
