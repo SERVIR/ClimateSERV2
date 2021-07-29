@@ -975,7 +975,7 @@ function getDataFromRequest(id, isClimate) {
                 });
                 inti_chart_dialog();
 
-                finalize_chart(rainfall_data, "mm", xaxis);
+                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis");
 
             } else {
                 const compiledData = [];
@@ -1024,17 +1024,17 @@ function getDataFromRequest(id, isClimate) {
                         data: compiledData.sort((a, b) => a[0] - b[0])
                     }], units, {
                         type: "datetime"
-                    });
+                    }, $("#sourcemenu option:selected").text());
                 }
             }
         });
 };
 
-function finalize_chart(compiled_series, units, xAxis_object) {
+function finalize_chart(compiled_series, units, xAxis_object, title) {
     Highcharts.chart('chart_holder', {
-
+// fix title is Monthly Rainfall Analysis.
         title: {
-            text: $("#sourcemenu option:selected").text()
+            text: title
         },
 
         subtitle: {
@@ -1058,12 +1058,12 @@ function finalize_chart(compiled_series, units, xAxis_object) {
                 connectNulls: false,
 
                 marker: {
-                    radius: 2
+                    radius: 3
                 },
-                lineWidth: 1,
+                lineWidth: 2,
                 states: {
                     hover: {
-                        lineWidth: 1
+                        lineWidth: 2
                     }
                 },
                 threshold: null,
@@ -1317,7 +1317,7 @@ function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
                     var current_Month_Name = get_category_month_name_for_monthNumberString(current_Month_String);
                     var current_Year_as_String = current_year_num + ""; //monthlyRainfall_Start_Year + "";
                     var current_Month_Year_Value = current_Month_Name + "-" + current_Year_as_String;   // (Expecting "May" + "-" + 2017)  (to turn into "May-2017")
-                    
+
                     var data_line_object__SeasonalFcstAvg = [];
                     data_line_object__SeasonalFcstAvg['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
                     data_line_object__SeasonalFcstAvg['data_series_type'] = "SeasonalFcstAvg";
