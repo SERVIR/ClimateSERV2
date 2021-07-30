@@ -91,7 +91,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         # (1) Generate Expected remote file paths
         try:
 
-            expected_file_name_wk_number_string = '4W' if self.mode == '4week' else '12WK'
+            expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
