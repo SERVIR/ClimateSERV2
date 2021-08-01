@@ -886,11 +886,11 @@ function inti_chart_dialog() {
 
 function getIndex(which) {
     switch (which) {
-        case 'SeasonalFcstAvg':
-            return 0;
-        case '75thPercentile':
-            return 1;
         case 'LongTermAverage':
+            return 0;
+        case 'SeasonalFcstAvg':
+            return 1;
+        case '25thPercentile':
             return 2;
         default:
             return 3;
@@ -1115,218 +1115,49 @@ function finalize_chart(compiled_series, units, xAxis_object, title) {
 
 
 function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
-
     const ret_dataLines_List = [];
-
-
-    // Definitions of Data
-    // LongTermAverage  (CHIRPS, 50th percentile for each month)
-
-    // Need a controlling mechanism (so we know which Months to use)
-    // Setup the Values to submit to the server.
-    var seasonal_start_month = "1";  // "1" is Jan
-    var seasonal_end_month = "12";   // "12" is Dec
-    var monthlyRainfall_Start_Year = 2012;   // Only need this for the x axis on the chart.
-    var is_range_in_same_year = true; // Has an affect on how the data is looked up.
+    let seasonal_end_month;
+    let single_climate_model_capabiliites;
     try {
-        var single_climate_model_capabiliites = JSON.parse(climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities);
-        var seasonal_start_date = single_climate_model_capabiliites.startDateTime; //"2017_05_01";
-        var seasonal_end_date = single_climate_model_capabiliites.endDateTime; //"2017_10_28";
-
-        var year_start = parseInt(seasonal_start_date.split("_")[0]);
-        var year_end = parseInt(seasonal_end_date.split("_")[0]);
-        // if (year_start == year_end) {
-        //     is_range_in_same_year = true;
-        // } else {
-        //     is_range_in_same_year = false;
-        // }
-        is_range_in_same_year = year_start === year_end;
-        monthlyRainfall_Start_Year = year_start;
-
-        seasonal_start_month = parseInt(seasonal_start_date.split("_")[1]);
-        seasonal_end_month = parseInt(seasonal_end_date.split("_")[1]);
-    } catch (err_Getting_Dates_From_Climate_Model_Capabilities) {
-        //console.log("Exception hit");
-
-        seasonal_start_month = 1;  // "1" is Jan1
-        seasonal_end_month = 12;   // "12" is Dec
+        single_climate_model_capabiliites = JSON.parse(climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities);
+    } catch (err_Getting_Dates_From_Climate_Model_Capabilities) {  // something different needs to happen here if we don't have the capabilities object we can't continue this process
+        return;
     }
+    const seasonal_start_date = single_climate_model_capabiliites.startDateTime; //"2017_05_01";
+    const seasonal_end_date = single_climate_model_capabiliites.endDateTime; //"2017_10_28";
+    seasonal_end_month = parseInt(seasonal_end_date.split("_")[1]);
+    let current_month_num = parseInt(seasonal_start_date.split("_")[1]);
+    let current_year_num = parseInt(seasonal_start_date.split("_")[0]);
 
-    // Note, it is possible that the months span over multiple years.
-
-
-    // Need to build the list of months to use in the for loop (months in order so nov, dec, (year 2) jan, feb,.. etc)
-    var month_string_list = [];  // looks like this ["2", "3", "4", etc]  or [ "11", "12", "1", "2", etc]  when done.
-    var current_month_num = seasonal_start_month;
-    var current_year_num = monthlyRainfall_Start_Year;
-
-    // Creating a new way to tell what number is next?
-
-
-    // Always the same year
-    // TODO! Code Improvement // The better way to refactor this to remove all the duplicate code is to make a list of objects (kind of like the 'month_string_list' thing above) and use that as the iterator.
-    // Also that object should contain definitions for what to pass into the labels....
-    for (var aMonth = 1; aMonth < 13; aMonth++) {
-        if (is_range_in_same_year == true) {
-            if (current_month_num <= seasonal_end_month) {
-
-                // Process this month, convert back to a string
-                var current_Month_String = current_month_num + "";
-                var currentMonth_CurrentSeasonalForecast_Average_Value = monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, current_month_num);
-                var currentMonth_CurrentCHIRPS_LongTermAverage_Value = monthlyRainfall_Analysis__Get_Chirps_LongTermAverage_ForMonth(raw_data_obj, current_Month_String);
-                var currentMonth_CurrentCHIRPS_25thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_25thPercentile_ForMonth(raw_data_obj, current_Month_String);
-                var currentMonth_CurrentCHIRPS_75thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_75thPercentile_ForMonth(raw_data_obj, current_Month_String);
-
-                var current_Month_Name = get_category_month_name_for_monthNumberString(current_Month_String);
-                var current_Year_as_String = current_year_num + ""; //monthlyRainfall_Start_Year + "";
-                var current_Month_Year_Value = current_Month_Name + "-" + current_Year_as_String;   // (Expecting "May" + "-" + 2017)  (to turn into "May-2017")
-
-                // CREATE THE OBJECTS (DATA LINES)
-                //
-                // Would normally create like this,     some_object = { prop_name:value, prop2_name:value_2 } but I don't know if the dimple chart can handle that type.
-                //
-                // SEASONAL FORECAST - Only one type of these - SeasonalFcstAvg
-                var data_line_object__SeasonalFcstAvg = [];
-                data_line_object__SeasonalFcstAvg['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__SeasonalFcstAvg['data_series_type'] = "SeasonalFcstAvg";
-                data_line_object__SeasonalFcstAvg['Monthly_Rainfall_mm'] = currentMonth_CurrentSeasonalForecast_Average_Value; //30.510046690142;
-
-                // CHIRPS - LongTermAverage - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_LongTermAverage = [];
-                data_line_object__Chirps_LongTermAverage['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_LongTermAverage['data_series_type'] = "LongTermAverage";
-                data_line_object__Chirps_LongTermAverage['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_LongTermAverage_Value; // 22.222046690142;
-
-                // CHIRPS - 25thPercentile - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_25thPercentile = [];
-                data_line_object__Chirps_25thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_25thPercentile['data_series_type'] = "25thPercentile";
-                data_line_object__Chirps_25thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_25thPercentile_Value; // 11.111046690142;
-
-                // CHIRPS - 75thPercentile - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_75thPercentile = [];
-                data_line_object__Chirps_75thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_75thPercentile['data_series_type'] = "75thPercentile";
-                data_line_object__Chirps_75thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_75thPercentile_Value; // 33.333046690142;
-
-
-                ret_dataLines_List.push(data_line_object__SeasonalFcstAvg);
-                ret_dataLines_List.push(data_line_object__Chirps_LongTermAverage);
-                ret_dataLines_List.push(data_line_object__Chirps_25thPercentile);
-                ret_dataLines_List.push(data_line_object__Chirps_75thPercentile);
-
-                //alert("Was working with 'monthlyRainfall_Start_Year' ");
-
-                // Increment the month.
-                current_month_num = current_month_num + 1;
-            }
-        } else {
-            // Not always the same year..
-            if (current_year_num == monthlyRainfall_Start_Year) {
-                // We are still within the first year.
-
-                // Process this month, convert back to a string
-                var current_Month_String = current_month_num + "";
-                var currentMonth_CurrentSeasonalForecast_Average_Value = monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, current_Month_String);
-                var currentMonth_CurrentCHIRPS_LongTermAverage_Value = monthlyRainfall_Analysis__Get_Chirps_LongTermAverage_ForMonth(raw_data_obj, current_Month_String);
-                var currentMonth_CurrentCHIRPS_25thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_25thPercentile_ForMonth(raw_data_obj, current_Month_String);
-                var currentMonth_CurrentCHIRPS_75thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_75thPercentile_ForMonth(raw_data_obj, current_Month_String);
-
-                var current_Month_Name = get_category_month_name_for_monthNumberString(current_Month_String);
-                var current_Year_as_String = current_year_num + ""; //monthlyRainfall_Start_Year + "";
-                var current_Month_Year_Value = current_Month_Name + "-" + current_Year_as_String;   // (Expecting "May" + "-" + 2017)  (to turn into "May-2017")
-
-                var data_line_object__SeasonalFcstAvg = [];
-                data_line_object__SeasonalFcstAvg['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__SeasonalFcstAvg['data_series_type'] = "SeasonalFcstAvg";
-                data_line_object__SeasonalFcstAvg['Monthly_Rainfall_mm'] = currentMonth_CurrentSeasonalForecast_Average_Value; //30.510046690142;
-
-                // CHIRPS - LongTermAverage - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_LongTermAverage = [];
-                data_line_object__Chirps_LongTermAverage['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_LongTermAverage['data_series_type'] = "LongTermAverage";
-                data_line_object__Chirps_LongTermAverage['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_LongTermAverage_Value; // 22.222046690142;
-
-                // CHIRPS - 25thPercentile - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_25thPercentile = [];
-                data_line_object__Chirps_25thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_25thPercentile['data_series_type'] = "25thPercentile";
-                data_line_object__Chirps_25thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_25thPercentile_Value; // 11.111046690142;
-
-                // CHIRPS - 75thPercentile - Only one type of these - SeasonalFcstAvg
-                var data_line_object__Chirps_75thPercentile = [];
-                data_line_object__Chirps_75thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                data_line_object__Chirps_75thPercentile['data_series_type'] = "75thPercentile";
-                data_line_object__Chirps_75thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_75thPercentile_Value; // 33.333046690142;
-
-
-                ret_dataLines_List.push(data_line_object__SeasonalFcstAvg);
-                ret_dataLines_List.push(data_line_object__Chirps_LongTermAverage);
-                ret_dataLines_List.push(data_line_object__Chirps_25thPercentile);
-                ret_dataLines_List.push(data_line_object__Chirps_75thPercentile);
-
-
-                // Increment things
-                current_month_num = current_month_num + 1;
-                // Check for year change
-                if (current_month_num > 12) {
-                    // Time to change the year.
-                    current_month_num = 1; // Forcing set to Jan
-                    current_year_num = current_year_num + 1; // Increasing the year.
-                }
-            } else {
-                // We are now in the second year. (Need to make sure we don't do months we don't need or want in the result data...)
-                if (current_month_num <= seasonal_end_month) {
-
-                    // Process this month, convert back to a string
-                    var current_Month_String = current_month_num + "";
-                    var currentMonth_CurrentSeasonalForecast_Average_Value = monthlyRainfall_Analysis__Compute_SeasonalForecast_Average_ForMonth(raw_data_obj, current_Month_String);
-                    var currentMonth_CurrentCHIRPS_LongTermAverage_Value = monthlyRainfall_Analysis__Get_Chirps_LongTermAverage_ForMonth(raw_data_obj, current_Month_String);
-                    var currentMonth_CurrentCHIRPS_25thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_25thPercentile_ForMonth(raw_data_obj, current_Month_String);
-                    var currentMonth_CurrentCHIRPS_75thPercentile_Value = monthlyRainfall_Analysis__Get_Chirps_75thPercentile_ForMonth(raw_data_obj, current_Month_String);
-
-                    var current_Month_Name = get_category_month_name_for_monthNumberString(current_Month_String);
-                    var current_Year_as_String = current_year_num + ""; //monthlyRainfall_Start_Year + "";
-                    var current_Month_Year_Value = current_Month_Name + "-" + current_Year_as_String;   // (Expecting "May" + "-" + 2017)  (to turn into "May-2017")
-
-                    var data_line_object__SeasonalFcstAvg = [];
-                    data_line_object__SeasonalFcstAvg['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                    data_line_object__SeasonalFcstAvg['data_series_type'] = "SeasonalFcstAvg";
-                    data_line_object__SeasonalFcstAvg['Monthly_Rainfall_mm'] = currentMonth_CurrentSeasonalForecast_Average_Value; //30.510046690142;
-
-                    // CHIRPS - LongTermAverage - Only one type of these - SeasonalFcstAvg
-                    var data_line_object__Chirps_LongTermAverage = [];
-                    data_line_object__Chirps_LongTermAverage['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                    data_line_object__Chirps_LongTermAverage['data_series_type'] = "LongTermAverage";
-                    data_line_object__Chirps_LongTermAverage['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_LongTermAverage_Value; // 22.222046690142;
-
-                    // CHIRPS - 25thPercentile - Only one type of these - SeasonalFcstAvg
-                    var data_line_object__Chirps_25thPercentile = [];
-                    data_line_object__Chirps_25thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                    data_line_object__Chirps_25thPercentile['data_series_type'] = "25thPercentile";
-                    data_line_object__Chirps_25thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_25thPercentile_Value; // 11.111046690142;
-
-                    // CHIRPS - 75thPercentile - Only one type of these - SeasonalFcstAvg
-                    var data_line_object__Chirps_75thPercentile = [];
-                    data_line_object__Chirps_75thPercentile['Month_Year'] = current_Month_Year_Value; // "May-17"; //TEMP_ITEM_4['date'] = "May-17";
-                    data_line_object__Chirps_75thPercentile['data_series_type'] = "75thPercentile";
-                    data_line_object__Chirps_75thPercentile['Monthly_Rainfall_mm'] = currentMonth_CurrentCHIRPS_75thPercentile_Value; // 33.333046690142;
-
-
-                    ret_dataLines_List.push(data_line_object__SeasonalFcstAvg);
-                    ret_dataLines_List.push(data_line_object__Chirps_LongTermAverage);
-                    ret_dataLines_List.push(data_line_object__Chirps_25thPercentile);
-                    ret_dataLines_List.push(data_line_object__Chirps_75thPercentile);
-
-                    // Increment things
-                    current_month_num = current_month_num + 1;
-
-                }
-            }
-        }
-    }
+    do {
+        current_month_num = current_month_num % 12 === 0 ? 12 : current_month_num % 12;
+        const current_Month_Year_Value = moment().month(current_month_num - 1).format("MMM") + "-" + current_year_num;
+        processData(ret_dataLines_List, raw_data_obj, current_month_num, "SEASONAL_FORECAST", "col02_MonthlyAverage", current_Month_Year_Value, "SeasonalFcstAvg");
+        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col02_MonthlyAverage", current_Month_Year_Value, "LongTermAverage");
+        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col03_25thPercentile", current_Month_Year_Value, "25thPercentile");
+        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col04_75thPercentile", current_Month_Year_Value, "75thPercentile");
+        current_month_num === 12 && current_year_num++;
+        current_month_num++;
+    } while (current_month_num % 12 != (seasonal_end_month + 1) % 12);
 
     return ret_dataLines_List;
+}
+
+function processData(ret_dataLines_List, data_object, current_month_num, subtype, variable, current_Month_Year_Value, retrun_variable) {
+    let data = get_values_By_month(data_object, current_month_num, subtype, variable)
+    ret_dataLines_List.push(getDataLine(
+        current_Month_Year_Value,
+        retrun_variable,
+        subtype === "SEASONAL_FORECAST" ? data.reduce((a, b) => a + b) / data.length : data[0]
+    ));
+}
+
+function getDataLine(mmm_Y, type, data) {
+    const data_line = [];
+    data_line['Month_Year'] = mmm_Y;
+    data_line['data_series_type'] = type;
+    data_line['Monthly_Rainfall_mm'] = data;
+    return data_line;
 }
 
 function openDataTypePanel(select_control) {
