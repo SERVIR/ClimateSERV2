@@ -31,5 +31,5 @@ ClimateSERV 2.0 is distributed by SERVIR under the terms of the MIT License. See
 
 ## Privacy & Terms of Use
 
-ClimateSERV abides to all of SERVIR's privacy and terms of use as
-described [here](https://servirglobal.net/Privacy-Terms-of-Use).
+ClimateSERV abides to all of SERVIR's privacy and terms of use as described
+at [https://servirglobal.net/Privacy-Terms-of-Use](https://servirglobal.net/Privacy-Terms-of-Use).
