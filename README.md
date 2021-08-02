@@ -12,6 +12,10 @@ improve understanding of, and make improved decisions for, issues related to agr
 
 ### Required
 
+- [Python 3.9.5 or greater](https://www.python.org/downloads/)
+- [Postgresql (version 13)](https://www.postgresql.org/download)
+- [PostGIS (version 3)](https://postgis.net/install/)
+
 ### Environment
 
 ### Suggested server aliases
