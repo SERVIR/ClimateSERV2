@@ -16,6 +16,6 @@ improve understanding of, and make improved decisions for, issues related to agr
 
 ### Authors
 
-- [Billy Ashmall (NASA)]([mailto:billy.ashmall@nasa.gov)
+- [Billy Ashmall (NASA)](mailto:billy.ashmall@nasa.gov)
 - [Roberto Fontanarosa (NASA)](mailto:roberto.fontanarosa@nasa.gov)
 - [Githika Tondapu (NASA)](mailto:githika.tondapu@nasa.gov)
