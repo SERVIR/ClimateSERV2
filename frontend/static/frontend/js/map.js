@@ -743,7 +743,6 @@ function getEnsDataType() {
 }
 
 function handle_initial_request_data(data, isClimate) {
-    console.log("new handle");
     let progress = '<div style="width:100%; height:100%; display: flex;\n' +
         '    align-items: center;\n' +
         '}">';
@@ -902,6 +901,24 @@ var rainfall_data;
 var from_compiled;
 
 function getDataFromRequest(id, isClimate) {
+    let complete = '<div style="width:100%; height:100%; display: flex;\n' +
+        '    align-items: center;\n' +
+        '}">';
+    complete += '<div style="width:100%">';
+    complete += '<h1 class="step-marker">Download complete, downloading results.</h1>';
+    complete += '</div>';
+    $("#dialog").html(complete);
+    $("#dialog").dialog({
+        title: "Query Complete, Downloading Results",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: 200,
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
     fetch(
         api_url + "/chirps/getDataFromRequest/?id=" +
         id,
