@@ -9,7 +9,7 @@ def makeFilePath(dir,filename):
     if not os.path.exists(dir):
         os.makedirs(dir)
     if not os.path.exists(dir+"/"+filename):
-        f = file(dir+"/"+filename,'w+')
+        f = open(dir+"/"+filename,'w+')
         print("Created "+dir+"/"+filename)
         f.close()
     else:

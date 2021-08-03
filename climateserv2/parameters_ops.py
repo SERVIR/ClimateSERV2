@@ -12,18 +12,18 @@ DEBUG_LIVE = False
 
 logToConsole = True
 serviringestroot = '''/data/data/cserv/pythonCode/serviringest/'''
-maskstorage = '''/data/data/mask/'''
-dbfilepath = '''/data/data/db/servirchirps.db'''
-newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
-capabilities_db_filepath = '''/data/data/db/servirchirps_bsd_capabilities.db'''
-requestLog_db_basepath = '''/data/data/db/requestLog/'''
+maskstorage = '''D:/tmp/'''# '''/data/data/mask/'''
+dbfilepath = '''D:/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
+newdbfilepath = '''D:/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
+capabilities_db_filepath = '''D:/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
+requestLog_db_basepath = '''D:/tmp/''' #'''/data/data/db/requestLog/'''
 zipFile_MediumTermStorage_Path = '''/data/data/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 zipFile_ScratchWorkspace_Path = '''/data/data/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 # zipFile_MediumTermStorage_Path = '''/data2/data2/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 # zipFile_ScratchWorkspace_Path = '''/data2/data2/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-logfilepath = '''/data/data/logs/'''
-workpath = '''/data/data/work'''
-shapefilepath = '''/data/data/gis/mapfiles/'''
+logfilepath = '''D:/tmp/'''#'''/data/data/logs/'''
+workpath = '''D:/tmp/'''#'''/data/data/work'''
+shapefilepath = '''D:/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
 ageInDaysToPurgeData = 7
 
 # parameters = ([0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"],[5,'avg','Average'])

@@ -28,7 +28,7 @@ urlpatterns = [
     url(r'chirps/getParameterTypes/', getParameterTypes),
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     url(r'chirps/submitDataRequest/', submitDataRequest),
-    # url(r'^/chirps/getDataRequestProgress/', getDataRequestProgress),
+    url(r'chirps/getDataRequestProgress/', getDataRequestProgress),
     url(r'chirps/getDataFromRequest/', getDataFromRequest),
     url(r'chirps/getFeatureLayers/', getFeatureLayers),
     # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),

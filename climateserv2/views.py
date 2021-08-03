@@ -2,11 +2,12 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
-
+import climateserv2.db.bddbprocessing as bdp
 from . import parameters as params
 from .processtools import uutools as uutools
 from . import geoutils as decodeGeoJSON
-import climateserv2.zmqconnected as zmq
+import zmq
+import dbm
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
 logger = logging.getLogger(__name__)
@@ -23,6 +24,18 @@ def readResults(uid):
     f.close()
     f = None
     return x
+
+def readProgress(uid):
+    '''
+    Read a progress file from the filesystem
+    :param uid: unique identifier to find the correct result.
+    :rtype: the progress associated with the unique id.
+    '''
+    conn = bdp.BDDbConnector()
+
+    value = conn.getProgress(uid)
+    conn.close()
+    return value
 
 def processCallBack(request, output, contenttype):
     '''
@@ -105,6 +118,29 @@ def intTryParse(value):
         return int(value), True
     except ValueError:
         return value, False
+@csrf_exempt
+def getDataRequestProgress(request):
+    '''
+    Get feedback on the request as to the progress of the request. Will return the float percentage of progress
+    :param request: contains the id of the request you want to look up.
+    '''
+
+    logger.debug("Getting Data Request Progress")
+    # print "Request for progress on id ",requestid
+    ###Check request status and then respond with the
+    try:
+        requestid = request.GET["id"]
+        progress = readProgress(requestid)
+        logger.debug("Progress =" + str(progress))
+        if (progress == -1.0):
+            logger.warn("Problem with getDataRequestProgress: " + str(request))
+            return processCallBack(request, json.dumps([-1]), "application/json")
+        else:
+            return processCallBack(request, json.dumps([progress]), "application/json")
+        ## return processCallBack(request,json.dumps([jsonresults['progress']]),"application/json")
+    except (Exception, OSError) as e :
+        logger.warn("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
+        return processCallBack(request, json.dumps([-1]), "application/json")
 
 @csrf_exempt
 def submitDataRequest(request):
@@ -113,6 +149,7 @@ def submitDataRequest(request):
     :param request: actual request that contains the data needed to put together the request for
     processing
     '''
+    print("from submit")
     logger.debug("Submitting Data Request")
     error = []
     polygonstring = None
@@ -124,7 +161,7 @@ def submitDataRequest(request):
 
     if request.method == 'POST':
         # Get datatype
-
+        print("from post")
         try:
             logger.debug("looking at getting datatype" + str(request))
             datatype = int(request.POST["datatype"])
@@ -151,8 +188,9 @@ def submitDataRequest(request):
         # Get geometry from parameter
         # Or extract from shapefile
         geometry = None
-        featureList = False;
+        featureList = False
         if request.POST.get("layerid") is not None:
+            print(request.POST.get("layerid"))
             try:
                 layerid = str(request.POST["layerid"])
                 fids = str(request.POST["featureids"]).split(',')
@@ -172,6 +210,7 @@ def submitDataRequest(request):
                 error.append("Error with finding geometry: layerid:" + str(layerid) + " featureid: " + str(featureids))
 
         else:
+            print('in elseee')
             try:
                 polygonstring = request.POST["geometry"]
                 geometry = decodeGeoJSON(polygonstring);
@@ -278,7 +317,7 @@ def submitDataRequest(request):
         ##logger.info("submitting ",dictionary)
         context = zmq.Context()
         sender = context.socket(zmq.PUSH)
-        sender.connect("ipc:///tmp/servir/Q1/input")
+        sender.connect("inproc://D:/tmp") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
         sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")

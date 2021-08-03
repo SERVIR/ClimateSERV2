@@ -203,8 +203,8 @@ if __name__ == "__main__":
     name = sys.argv[1]
     inputconn = sys.argv[2]
     outputconn = sys.argv[3]
-    #print("alert 1")
-    #logger2 = llog.getNamedLogger("request_processor")
-    #logger2.debug("Alert 1")
+    print("alert 1")
+    logger2 = llog.getNamedLogger("request_processor")
+    logger2.debug("Alert 1")
     ZMQCHIRPSDataWorker(name, inputconn, outputconn)       
         

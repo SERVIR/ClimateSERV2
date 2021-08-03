@@ -4,27 +4,27 @@ Created on Jan 30, 2015
 @author: jeburks
 @author: Kris Stanton
 '''
-import CHIRPS.utils.geo.geoutils as geoutils
-import CHIRPS.utils.processtools.dateprocessor as dproc
-import CHIRPS.utils.configuration.parameters as params
-import CHIRPS.utils.file.npmemmapstorage as rp
-import CHIRPS.utils.geo.clippedmaskgenerator as mg
-import CHIRPS.utils.file.dateutils as dateutils
-import CHIRPS.utils.db.bddbprocessing as bdp
+import climateserv2.geoutils as geoutils
+import climateserv2.processtools.dateprocessor as dproc
+import climateserv2.parameters as params
+import climateserv2.file.npmemmapstorage as rp
+import climateserv2.geo.clippedmaskgenerator as mg
+import climateserv2.file.dateutils as dateutils
+import climateserv2.db.bddbprocessing as bdp
 import sys
-import CHIRPS.utils.locallog.locallogging as llog
+import climateserv2.locallog.locallogging as llog
 import zmq
 import json
-import CHIRPS.utils.processtools.uutools as uu
-import CHIRPS.utils.file.MaskTempStorage  as mst
-import CHIRPS.utils.geo.shapefile.readShapesfromFiles as sf
-import CHIRPS.utils.processtools.pMathOperations as pMath
+import climateserv2.processtools.uutools as uu
+import climateserv2.file.MaskTempStorage  as mst
+import climateserv2.geo.shapefile.readShapesfromFiles as sf
+import climateserv2.processtools.pMathOperations as pMath
 import time
 from copy import deepcopy
 from operator import itemgetter
-import CHIRPS.utils.RequestLog.requestLog as reqLog
-import CHIRPS.utils.file.ExtractTifFromH5 as extractTif
-import CHIRPS.utils.processtools.AnalysisTools as analysisTools
+import climateserv2.requestLog as reqLog
+import climateserv2.file.ExtractTifFromH5 as extractTif
+import climateserv2.processtools.AnalysisTools as analysisTools
 
 class ZMQCHIRPSHeadProcessor():
     
@@ -977,6 +977,7 @@ class ZMQCHIRPSHeadProcessor():
         self.logger.info("Errors  ",errors)
         
 if __name__ == "__main__":
+    print('from zmqhirps:')
     name = sys.argv[1]
     inputconn = sys.argv[2]
     outputconn = sys.argv[3]

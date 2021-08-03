@@ -5,7 +5,7 @@ Created on Jan 29, 2015
 '''
 import sys
 import logging
-import CHIRPS.utils.configuration.parameters as params
+import climateserv2.parameters as params
 from logging.handlers import RotatingFileHandler
 import time
 

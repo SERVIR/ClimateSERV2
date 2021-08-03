@@ -1,5 +1,5 @@
 import zmq
-import CHIRPS.utils.locallog.locallogging as llog
+import climateserv2.locallog.locallogging as llog
 import sys
 
 class ARGProxyQueue:
