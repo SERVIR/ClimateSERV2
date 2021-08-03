@@ -1,6 +1,5 @@
 import datetime, ftplib, os, shutil, sys, time
 from urllib import request as urllib_request
-from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -16,7 +15,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
     class_name = 'imerg'
     etl_parent_pipeline_instance = None
-    imerg_mode = 'LATE'
+    mode = 'LATE'
 
     relative_dir_path__WorkingDir = 'working_dir'
 
@@ -25,12 +24,12 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
     _expected_granules                  = []    # Place to store granules
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, subtype):
+    def __init__(self, etl_parent_pipeline_instance, dataset_subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        if subtype == 'imerg_early':
-            self.imerg_mode = 'EARLY'
-        elif subtype == 'imerg_late':
-            self.imerg_mode = 'LATE'
+        if dataset_subtype == 'imerg_early':
+            self.mode = 'EARLY'
+        elif dataset_subtype == 'imerg_late':
+            self.mode = 'LATE'
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
@@ -43,57 +42,40 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         self.NN__30MinIncrement__Start = params.get('NN__30MinIncrement__Start', 0) or 0
         self.NN__30MinIncrement__End = params.get('NN__30MinIncrement__End', 2) or 2
 
-    # Validate type or use existing default for each
-    def set_optional_parameters(self, YYYY__Year__Start, YYYY__Year__End, MM__Month__Start, MM__Month__End, DD__Day__Start, DD__Day__End, NN__30MinIncrement__Start, NN__30MinIncrement__End):
-        self.YYYY__Year__Start = YYYY__Year__Start if YYYY__Year__Start != 0 else self.YYYY__Year__Start
-        self.YYYY__Year__End = YYYY__Year__End if YYYY__Year__End != 0 else self.YYYY__Year__End
-        self.MM__Month__Start = MM__Month__Start if MM__Month__Start != 0 else self.MM__Month__Start
-        self.MM__Month__End = MM__Month__End if MM__Month__End != 0 else self.MM__Month__End
-        self.DD__Day__Start = DD__Day__Start if DD__Day__Start != 0 else self.DD__Day__Start
-        self.DD__Day__End = DD__Day__End if DD__Day__End != 0 else self.DD__Day__End
-        self.NN__30MinIncrement__Start = NN__30MinIncrement__Start if NN__30MinIncrement__Start != 0 else self.NN__30MinIncrement__Start
-        self.NN__30MinIncrement__End = NN__30MinIncrement__End if NN__30MinIncrement__End != 0 else self.NN__30MinIncrement__End
-
     # Months between two dates
     def diff_month(latest_datetime, earliest_datetime):
         return (latest_datetime.year - earliest_datetime.year) * 12 + latest_datetime.month - earliest_datetime.month
 
     # Get the local filesystem place to store data
-    @staticmethod
-    def get_root_local_temp_working_dir(subtype_filter):
+    def get_root_local_temp_working_dir(self):
         imerg__EARLY__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
         imerg__LATE__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
         ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'EARLY':
+        if self.mode == 'EARLY':
             ret_rootlocal_working_dir = imerg__EARLY__rootoutputworkingdir
-        elif subtype_filter == 'LATE':
+        elif self.mode == 'LATE':
             ret_rootlocal_working_dir = imerg__LATE__rootoutputworkingdir
         return ret_rootlocal_working_dir
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    @staticmethod
-    def get_final_load_dir(subtype_filter):
+    def get_final_load_dir(self):
         imerg__EARLY__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__EARLY", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/nasa-imerg-early/global/0.1deg/30min/'
         imerg__LATE__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/nasa-imerg-late/global/0.1deg/30min/'
         ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'EARLY':
+        if self.mode == 'EARLY':
             ret_dir = imerg__EARLY__finalloaddir
-        elif subtype_filter == 'LATE':
+        elif self.mode == 'LATE':
             ret_dir = imerg__LATE__finalloaddir
         return ret_dir
 
     # Get the Remote Locations for each of the subtypes
-    @staticmethod
-    def get_roothttp_for_subtype(subtype_filter):
+    def get_roothttp_for_subtype(self):
         imerg__EARLY__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
         imerg__LATE__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
         ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'EARLY':
+        if self.mode == 'EARLY':
             ret_roothttp = imerg__EARLY__roothttp
-        if subtype_filter == 'LATE':
+        if self.mode == 'LATE':
             ret_roothttp = imerg__LATE__roothttp
         return ret_roothttp
 
@@ -124,9 +106,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         # Get the root http path based on the region.
-        current_root_http_path = self.get_roothttp_for_subtype(subtype_filter=self.imerg_mode)
-        root_file_download_path = os.path.join(imerg.get_root_local_temp_working_dir(subtype_filter=self.imerg_mode), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = imerg.get_final_load_dir(subtype_filter=self.imerg_mode)
+        current_root_http_path = self.get_roothttp_for_subtype()
+        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(), self.relative_dir_path__WorkingDir)
+        final_load_dir_path = self.get_final_load_dir()
         self.temp_working_dir = str(root_file_download_path).strip()
 
         # (1) Generate Expected remote file paths
@@ -191,9 +173,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     base_filename = ''
                     base_filename += '3B-HHR-'                              # 3B-HHR-
-                    if self.imerg_mode == 'LATE':
+                    if self.mode == 'LATE':
                         base_filename += 'L'                                # 3B-HHR-L
-                    if self.imerg_mode == 'EARLY':
+                    if self.mode == 'EARLY':
                         base_filename += 'E'                                # 3B-HHR-E
                     base_filename += '.MS.MRG.3IMERG.'                      # 3B-HHR-L.MS.MRG.3IMERG.
                     base_filename += current_year__YYYY_str                 # 3B-HHR-L.MS.MRG.3IMERG.2020
@@ -217,7 +199,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     # Building the Common NC4 Filename
                     # nasa-imerg-late.20200130T233000Z.global.nc4
-                    nc4_type = 'LATE' if self.imerg_mode == 'LATE' else 'EARLY'
+                    nc4_type = 'LATE' if self.mode == 'LATE' else 'EARLY'
                     final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}{}{}Z.global.nc4'.format(
                         nc4_type,
                         current_year__YYYY_str,
@@ -715,9 +697,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         # error_counter, detail_errors
         error_counter = 0
@@ -916,7 +895,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file) #(src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID                = expected_granules_object['Granule_UUID']
@@ -988,9 +967,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -1000,37 +977,26 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
-            if(temp_working_dir == ""):
-
-                # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK
+            if temp_working_dir == "":
+                # Log an ETL Activity that says that the value of the temp_working_dir was blank
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = "imerg"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
             else:
-                #shutil.rmtree
-                rmtree(temp_working_dir)
-
-                # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED
+                shutil.rmtree(temp_working_dir)
+                # Log an ETL Activity that says that the value of the temp_working_dir was blank
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = "imerg"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
-
-            #print("execute__Step__Clean_Up: Cleanup is finished.")
-
+            # print("execute__Step__Clean_Up: Cleanup is finished.")
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
