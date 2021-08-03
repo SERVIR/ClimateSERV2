@@ -1,5 +1,4 @@
-import datetime, gzip, os, requests, shutil, urllib, sys
-from shutil import copyfile, rmtree
+import datetime, gzip, os, requests, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -25,11 +24,11 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
     _expected_granules                  = []    # Place to store granules
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, subtype):
+    def __init__(self, etl_parent_pipeline_instance, dataset_subtype):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        if subtype == 'esi_4week':
+        if dataset_subtype == 'esi_4week':
             self.mode = '4week'
-        elif subtype == 'esi_12week':
+        elif dataset_subtype == 'esi_12week':
             self.mode = '12week'
 
     # Set default parameters or using default
@@ -91,7 +90,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         # (1) Generate Expected remote file paths
         try:
 
-            expected_file_name_wk_number_string = '4W' if self.mode == '4week' else '12WK'
+            expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
@@ -222,7 +221,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Download(self):
-
         ret__function_name = "execute__Step__Download"
         ret__is_error = False
         ret__event_description = ""
@@ -274,7 +272,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         # Process each expected granule
         for expected_granule in expected_granules:
             try:
-                if ((loop_counter + 1) % modulus_size) == 0:
+                if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")  # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
@@ -348,8 +346,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        detail_errors = []
         error_counter = 0
+        detail_errors = []
 
         try:
             expected_granules = self._expected_granules
@@ -423,7 +421,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # error_counter, detail_errors
         error_counter = 0
         detail_errors = []
 
@@ -652,7 +649,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     # # Granule Helpers
@@ -755,8 +752,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                 additional_json['subclass'] = "esi"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
-                #shutil.rmtree
-                rmtree(temp_working_dir)
+                shutil.rmtree(temp_working_dir)
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #

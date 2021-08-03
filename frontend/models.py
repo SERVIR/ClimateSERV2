@@ -35,6 +35,7 @@ class DataLayer(models.Model):
     url = models.TextField(help_text="Enter url to the TDS WMS service")
     attribution = models.TextField(help_text="Enter data attribution to display in map UI")
     layers = models.CharField(max_length=200, help_text='Enter layer names from the WMS to display')
+    units = models.CharField(max_length=200, help_text='Enter units to display on chart', default='Dimensionless')
     default_style = models.CharField(max_length=200, help_text='Enter default style to use for WMS to display')
     default_color_range = models.CharField(max_length=200, help_text='Enter default color range to use for WMS to '
                                                                      'display')

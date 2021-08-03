@@ -36,9 +36,9 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
-        let test_layers = []; //JSON.parse('{{ data_layers | safe }}');
+        let client_layers = []; //JSON.parse('{{ data_layers | safe }}');
         {% for layer in data_layers %}
-            test_layers.push({
+            client_layers.push({
                 title: "{{ layer.title }}",
                 url: "{{ layer.url }}",
                 attribution: "{{ layer.attribution }}",
@@ -47,6 +47,8 @@
                 colorrange: "{{ layer.default_color_range }}",
                 id: "{{ layer.ui_id }}",
                 dataset: "{{ layer.dataset_type }}",
+                app_id: "{{ layer.api_id }}",
+                units: "{{ layer.units }}"
             })
         {% endfor %}
 
@@ -95,25 +97,26 @@
                                         <div style="height: 100%">
                                             <div class="rst__rowWrapper">
                                                 <div class="rst__row" style="opacity: 1" draggable="true">
-                                                    <div class="rst__moveHandle" ></div>
-                                                    <div class="rst__rowContents ignore-elements" >
+                                                    <div class="rst__moveHandle"></div>
+                                                    <div class="rst__rowContents ignore-elements">
                                                         <div class="rst__rowLabel">
                                   <span class="rst__rowTitle">
                                       <input type="checkbox"
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
-                                             onchange="toggleLayer('{{ layer.ui_id}}TimeLayer')"/>
+                                             onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
                                       <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
                                       <br/>
                                   </span>
                                                             <div>
-                                                                <i id="legend_{{ layer.ui_id}}TimeLayer " class="fas fa-list legend-btn"
-                                                                   onclick="openLegend('{{ layer.ui_id}}TimeLayer')"
+                                                                <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                   class="fas fa-list legend-btn"
+                                                                   onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
                                                                    style="float: left; margin: 0 0 15px 15px;">
                                                                     Legend
                                                                 </i>
                                                                 <i class="fas fa-cog settings-btn"
-                                                                   onclick="openSettings('{{ layer.ui_id}}TimeLayer')"
+                                                                   onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
                                                                    style="float: right; margin: 0 15px 15px 0;">
                                                                     Settings
                                                                 </i>
@@ -261,73 +264,112 @@
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                <button id="nextStep1" onclick="gotostep(2)" disabled="" style="position: absolute; right: 0">
+                                <button id="nextStep1" onclick="gotostep(2)" disabled=""
+                                        style="position: absolute; right: 0">
                                     Next
                                 </button>
                             </div>
                         </div>
                         <div id="step2" style="display:none;">
-                        <form id="query-form" onsubmit="return false;">
-                            <h2 class="step-marker">Set Data</h2>
-                            <div class="form-group panel-buffer">
-                                <label for="requestTypeSelect">Type</label>
-                                <select name="requestTypeSelect" class="form-control" id="requestTypeSelect">
-                                    <option value="datasets">Dataset</option>
-                                    <option value="monthly_analysis">Monthly Rainfall Analysis</option>
-                                </select>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <label for="sourcemenu">Data Source</label>
-                                <select name="sourcemenu" class="form-control" id="sourcemenu" >
-                                    {% for layer in data_layers %}
-                                        <option value="{{ layer.api_id }}">{{ layer.title }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <label for="operationmenu">Calculation</label>
-                                <select name="operationmenu" id="operationmenu" class="form-control">
-                                    <option value="0">Max</option>
-                                    <option value="1">Min</option>
-                                    <option value="5">Average</option>
-                                    <option value="6">Download Raw Data</option>
-                                </select>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <input type="date" class="form-control" placeholder="YYYY-MM-DD" id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31" onchange="isComplete()">
-                                <div class="input-group-addon">to</div>
-                                <input type="date" class="form-control" placeholder="YYYY-MM-DD" id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31" onchange="isComplete()">
-                                <label id="compare-error" for="eDate_new_cooked" style="color:#da2020; display: none;">End date must be equal or greater than the start date</label>
-                            </div>
-                            <div style="
+                            <form id="query-form" onsubmit="return false;">
+                                <h2 class="step-marker">Set Data</h2>
+                                <div class="form-group panel-buffer">
+                                    <label for="requestTypeSelect">Type</label>
+                                    <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
+                                            onchange="openDataTypePanel(this)">
+                                        <option value="datasets">Dataset</option>
+                                        <option value="monthly_analysis">Monthly Rainfall Analysis</option>
+                                    </select>
+                                </div>
+                                <div id="panel_dataset">
+                                    <div class="form-group panel-buffer">
+                                        <label for="sourcemenu">Data Source</label>
+                                        <select name="sourcemenu" class="form-control" id="sourcemenu">
+                                            {% for layer in data_layers %}
+                                                <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer">
+                                        <label for="operationmenu">Calculation</label>
+                                        <select name="operationmenu" id="operationmenu" class="form-control">
+                                            <option value="0">Max</option>
+                                            <option value="1">Min</option>
+                                            <option value="5">Average</option>
+                                            <option value="6">Download Raw Data</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer">
+                                        <input type="date" class="form-control" placeholder="YYYY-MM-DD"
+                                               id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
+                                               onchange="isComplete()">
+                                        <div class="input-group-addon">to</div>
+                                        <input type="date" class="form-control" placeholder="YYYY-MM-DD"
+                                               id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
+                                               onchange="isComplete()">
+                                        <label id="compare-error" for="eDate_new_cooked"
+                                               style="color:#da2020; display: none;">End date must be equal or greater
+                                            than
+                                            the start date</label>
+                                    </div>
+                                </div>
+                                <div id="panel_monthly_rainfall" style="display: none;">
+                                    <div class="form-group panel-buffer">
+                                        <p style="text-align: justify;">
+                                            No other options are necessary. Choose 'Next' below to proceed to the
+                                            review panel, then click 'Submit Request'.
+                                        </p>
+                                        <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
+                                            Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
+                                            data and current NMME Seasonal Forecast data.
+
+                                        </p>
+                                    </div>
+                                </div>
+                                <div style="
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                <button id="nextStep2" onclick="gotostep(3)" disabled="" style="position: absolute; right: 0">
-                                    Next
-                                </button>
-                            </div>
-                        </form>
+                                    <button id="nextStep2" onclick="gotostep(3)" disabled=""
+                                            style="position: absolute; right: 0">
+                                        Next
+                                    </button>
+                                </div>
+                            </form>
                         </div>
                         <div id="step3" style="display:none;">
                             <h2 class="step-marker">Review</h2>
                             <p>Please review the parameters then click the Send Request at the bottom.</p>
+                            <div id="dataset_review">
+                                <div class="form-group panel-buffer">
+                                    <label for="dataType">Data Type</label>
+                                    <span class="form-control" id="dataType">0 - CHIRPS Rainfall</span>
+                                </div>
+                                <div class="form-group panel-buffer">
+                                    <label for="begintime">Start date</label>
+                                    <span class="form-control" id="begintime">01/01/2021</span>
+                                </div>
+                                <div class="form-group panel-buffer">
+                                    <label for="endtime">End date</label>
+                                    <span class="form-control" id="endtime">07/19/2021</span>
+                                </div>
+                                <div class="form-group panel-buffer">
+                                    <label for="operationtype">Operationtype</label>
+                                    <span class="form-control" id="operationtype">5 - Average</span>
+                                </div>
+                            </div>
 
-                           <div class="form-group panel-buffer">
-                               <label for="dataType">Data Type</label>
-                               <span class="form-control" id="dataType">0 - CHIRPS Rainfall</span>
-                           </div>
-                            <div class="form-group panel-buffer">
-                                <label for="begintime">Start date</label>
-                                <span class="form-control" id="begintime">01/01/2021</span>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <label for="endtime">End date</label>
-                                <span class="form-control" id="endtime">07/19/2021</span>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <label for="operationtype">Operationtype</label>
-                                <span class="form-control" id="operationtype">5 - Average</span>
+                            <div id="monthly_rainfall_review" style="display: none;">
+                                <div class="form-group panel-buffer">
+                                    <p style="text-align: justify; margin-top: 20px;">
+                                        Geometry is the only option for Monthly Rainfall Analysis.
+                                    </p>
+                                    <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
+                                        Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
+                                        data and current NMME Seasonal Forecast data.
+
+                                    </p>
+                                </div>
                             </div>
                             <div class="form-group panel-buffer">
                                 <label for="geometry">Geometry</label>
@@ -370,7 +412,9 @@
             </p>
         </div>
     </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+            integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.3/proj4.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
@@ -378,7 +422,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-sortablejs@latest/jquery-sortable.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js" integrity="sha512-37T7leoNS06R80c8Ulq7cdCDU5MNQBwlYoy1TX/WUsLFC2eYNqtKlV0QjH7r8JpG/S0GUMZwebnVFLPd6SU5yg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"
+            integrity="sha512-37T7leoNS06R80c8Ulq7cdCDU5MNQBwlYoy1TX/WUsLFC2eYNqtKlV0QjH7r8JpG/S0GUMZwebnVFLPd6SU5yg=="
+            crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
     <script
             type="text/javascript"
@@ -418,32 +464,10 @@
 
     <script src="{% static 'frontend/js/preprocess.js' %}"></script>
     <script src="{% static 'frontend/js/preview.js' %}"></script>
-
+    <script src="{% static 'frontend/js/monthly_rainfall.js' %}"></script>
+    <script src="{% static 'frontend/js/utils.js' %}"></script>
     <script src="{% static 'frontend/js/map.js' %}"></script>
-    <script>
-        $(function () {
-            jQuery.fn.center = function () {
-                this.css("position", "absolute");
-                this.css(
-                    "top",
-                    Math.max(
-                        0,
-                        ($(window).height() - $(this).outerHeight()) / 2 +
-                        $(window).scrollTop()
-                    ) + "px"
-                );
-                this.css(
-                    "left",
-                    Math.max(
-                        0,
-                        ($(window).width() - $(this).outerWidth()) / 2 +
-                        $(window).scrollLeft()
-                    ) + "px"
-                );
-                return this;
-            };
-        });
-    </script>
+
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     <script>
         $(document).ready(function () {
@@ -470,8 +494,15 @@
             </button>
             <br><br>
             <label for="opacityctrl" style="font-weight: 100">Opacity</label>
-            <input id="opacityctrl" type="range" class="layer-opacity form-control" min="0" max="1" step=".01" value="1"
-                   style="width:100%">
+            <input
+                    id="opacityctrl"
+                    type="range"
+                    class="layer-opacity form-control"
+                    min="0"
+                    max="1"
+                    step=".01"
+                    value="1"
+                    style="width:100%">
         </div>
     </script>
 
