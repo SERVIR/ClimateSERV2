@@ -12,7 +12,7 @@
             <h2 class="underline-header page-title">
                 ABOUT CLIMATESERV
             </h2>
-            <p class="p50b0">
+            <p class="p5010p">
                 This tool allows development practitioners, scientists/researchers, and government
                 decision-makers to visualize and download historical rainfall data,
                 vegetation condition data, and 180-day forecasts of rainfall and
@@ -36,7 +36,13 @@
                     However, that data fails to show the region-wide variability that reveals comprehensive rainfall
                     patterns.
                 </p>
-
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/home_screen.jpg' %}"/>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-8 ">
                 <h1 style="font-weight:500;">Application Purpose</h1>
                 <p class="p50b0">
                     SERVIR has created a user-friendly, web-based tool -- ClimateSERV -- that provides three important
@@ -50,8 +56,87 @@
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/home_screen.jpg' %}"/>
                 <img src="{% static 'frontend/img/display_data.jpg' %}" style="padding-top: 50px;"/>
+
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-8 ">
+                <h1 style="font-weight:500;">(1) Climate Hazards group IR Precipitation with Stations (CHIRPS)</h1>
+                <p class="p50b0">
+                    Scientists at Famine and Early Warning System (FEWS NET) who are members of the SERVIR Applied
+                    Sciences Team used 30 years' (1982- present) worth of multiple satellite data sources and ground
+                    observations to produce an unprecedented, global, spatially and temporally consistent and continuous
+                    30-year record of satellite-derived rainfall data. This CHIRPS global dataset makes it possible to
+                    accurately assess and monitor large-scale rainfall patterns and analyze how they may be affected by
+                    climate change. The data are updated to the latest available rainfall estimates.
+
+                </p>
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_chirps.jpg' %}" style="padding-top: 50px;"/>
+
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-8 ">
+                <h1 style="font-weight:500;">(2) North American Multi-Model Ensemble (NMME) dataset</h1>
+                <p class="p50b0">
+                    Forecasts of future precipitation are also critical to decision-makers. The NMME dataset, a
+                    compliation by National Oceanic and Atmospheric Administration (NOAA), reflects cutting edge work on
+                    seasonal forecasting. A SERVIR AST project has taken the NMME data and performed bias correction and
+                    spatial disaggregation using standard, well-accepted techniques to generate daily, 180-day
+                    temperature and precipitation forecasts for the entire globe. These seasonal forecasts, along with
+                    the CHIRPS historical rainfall data, provide an overall perspective to connect rainfall patterns
+                    from the past to future rainfall (up to 180 days out) as projected by NMME.
+                </p>
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_nmme.jpg' %}" style="padding-top: 50px;"/>
+
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-8 ">
+                <h1 style="font-weight:500;">(3) MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI)</h1>
+                <p class="p50b0">
+                    SERVIR is also piloting the USGS pentadal eMODIS NDVI dataset at 250m spatial resolution over West
+                    Africa. NDVI, a measure of vegetation condition, provides a proxy for agricultural productivity by
+                    showing photosynthetic activity. By providing this 15 year dataset, SERVIR is enabling Ministries of
+                    Agriculure and the international donor community to explore how CHIRPS and NMME data link to
+                    vegetation growth and health. (The NDVI dataset is being expanded to other parts of Africa and
+                    beyond.) ClimateSERV enables decision-makers to link historical precipitation trends (CHIRPS) to
+                    past vegetation trends (NDVI) to gain insight into potential vegetation growth and health based on
+                    seasonal (up to 180 days) precipitation and temperature forecasts (NMME).
+                </p>
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_ndvi.jpg' %}" style="padding-top: 50px;"/>
+
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-8 ">
+                <h1 style="font-weight:500;">Application Uses</h1>
+                <p class="p50b0">
+                    With this tool, decision-makers can download, view, graph, and interpret the CHIRPS, eMODIS NDVI,
+                    and NMME seasonal forecast data in a web-based user interface. ClimateSERV can help decision-makers
+                    assess and monitor large-scale rainfall patterns, analyze how those patterns may be affected by
+                    climate change, determine likelihood of drought, and infer crop condition. Kenya Meteorological
+                    Service field offices are already using the data to provide climate resilience guidance to farmers.
+                    For example, KMS's Kericho office is using the CHIRPS dataset to downscale seasonal climate outlooks
+                    for farmers' use in planning crop cultivars and planting times. SERVIR hubs plan to train end-users
+                    in their regions to use and analyze the CHIRPS, NMME, and NDVI data through ClimateSERV. Use of
+                    seasonal forecasts by end-users has been increasing. ClimateSERV will assist in the conversion of
+                    these large datasets into actionable information. For more information check out the documentation
+                </p>
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_graph.jpg' %}" style="padding-top: 50px;"/>
 
             </div>
 
