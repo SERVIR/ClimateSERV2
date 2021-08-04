@@ -1,5 +1,4 @@
-import datetime, gzip, os, requests, shutil, urllib, sys
-from shutil import copyfile, rmtree
+import datetime, os, requests, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -280,7 +279,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
             loop_counter = loop_counter + 1
 
         # Ended, now for reporting
-        #
         ret__detail_state_info['class_name'] = self.class_name
         ret__detail_state_info['download_counter'] = download_counter
         ret__detail_state_info['error_counter'] = error_counter
@@ -289,7 +287,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
         # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
-        #
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
@@ -523,7 +520,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     # # Granule Helpers
@@ -626,8 +623,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 additional_json['subclass'] = "esi"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
-                #shutil.rmtree
-                rmtree(temp_working_dir)
+                shutil.rmtree(temp_working_dir)
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
