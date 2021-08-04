@@ -6,7 +6,7 @@ Modified starting from Sept 2015
 @author: Kris Stanton
 '''
 
-from .processtools import dateIndexTools as dit
+from processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
 

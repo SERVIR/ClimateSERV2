@@ -1,7 +1,7 @@
-import CHIRPS.utils.configuration.parameters as params
+import climateserv2.parameters as params
 import numpy as np
 import os
-import CHIRPS.utils.processtools.dateIndexTools as dit
+import climateserv2.processtools.dateIndexTools as dit
 
 def getSpatialReference(self,dataType):
     '''
@@ -87,7 +87,7 @@ class datastorage(object):
             self.memmap[index,:,:] = array
             self.memmap.flush()
         else:
-            print "File not open for writing"
+            print("File not open for writing")
         
     def close(self):
         if (self.forWriting == True):

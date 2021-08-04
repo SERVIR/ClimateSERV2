@@ -6,25 +6,31 @@ Modified from: Sept 2015 to: ????
 @author: Kris Stanton
 '''
 import numpy as np
-import CHIRPS.utils.configuration.parameters as params
-import CHIRPS.utils.file.h5datastorage as dStore
-import CHIRPS.utils.processtools.pMathOperations as pMath
-import CHIRPS.utils.processtools.dateIndexTools as dit
-import CHIRPS.utils.locallog.locallogging as llog
-import CHIRPS.utils.file.ExtractTifFromH5 as extractTif
-
-
-# KS Note 2015 : All these added for download job types only
-import os
 import sys
-import datetime
-import CHIRPS.utils.file.npmemmapstorage as rp
-import CHIRPS.utils.geo.geoutils as geoutils
-
 from gdalconst import *
 from osgeo import gdal #, gdalnumeric, ogr, osr
+try:
+    import climateserv2.parameters as params
+    import climateserv2.locallog.locallogging as llog
+    import climateserv2.file.h5datastorage as dStore
+    import climateserv2.processtools.pMathOperations as pMath
+    import climateserv2.processtools.dateIndexTools as dit
+    import climateserv2.locallog.locallogging as llog
+    import climateserv2.file.ExtractTifFromH5 as extractTif
+    import climateserv2.file.npmemmapstorage as rp
+    import climateserv2.geoutils as geoutils
+except:
+    import parameters as params
+    import locallog.locallogging as llog
+    import file.h5datastorage as dStore
+    import processtools.pMathOperations as pMath
+    import processtools.dateIndexTools as dit
+    import locallog.locallogging as llog
+    import file.ExtractTifFromH5 as extractTif
+    import file.npmemmapstorage as rp
+    import geoutils as geoutils
 
-
+# KS Note 2015 : All these added for download job types only
 logger = llog.getNamedLogger("request_processor")
 
 # Some Hacky stuff here...  

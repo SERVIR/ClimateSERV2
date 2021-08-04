@@ -3,10 +3,8 @@ Created on Jan 23, 2014
 
 @author: jeburks
 '''
-import copy
 
-from osgeo import gdal, ogr
-
+from osgeo import ogr
 
 def decodeGeoJSON(input):
     '''

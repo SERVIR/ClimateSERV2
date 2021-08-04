@@ -5,9 +5,11 @@ from PIL import ImageDraw
 from osgeo import osr
 import numpy as np
 import sys
-
+try:
+    import climateserv2.locallog.locallogging as llog
+except:
 # Debug time!
-import climateserv2.locallog.locallogging as llog
+    import locallog.locallogging as llog
 logger = llog.getNamedLogger("request_processor")
 # Debug time!
 

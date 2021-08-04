@@ -25,15 +25,15 @@ def makeFilePath(dirLoc,filename):
     if not os.path.exists(dirLoc):
         os.makedirs(dirLoc)
     if not os.path.exists(pathToFile):
-        f = file(pathToFile ,'w+')
-        print "Created "+pathToFile
+        f = open(pathToFile ,'w+')
+        print("Created "+pathToFile)
         f.close()
     else:
-        print pathToFile+" already exists "
+        print(pathToFile+" already exists ")
     
 def makePath(dirLoc):
     if not os.path.exists(dirLoc):
-        print "Making dir: "+dirLoc
+        print("Making dir: "+dirLoc)
         os.makedirs(dirLoc)
      
 

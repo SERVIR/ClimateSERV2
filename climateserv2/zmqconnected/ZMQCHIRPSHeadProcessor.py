@@ -4,27 +4,49 @@ Created on Jan 30, 2015
 @author: jeburks
 @author: Kris Stanton
 '''
-import climateserv2.geoutils as geoutils
-import climateserv2.processtools.dateprocessor as dproc
-import climateserv2.parameters as params
-import climateserv2.file.npmemmapstorage as rp
-import climateserv2.geo.clippedmaskgenerator as mg
-import climateserv2.file.dateutils as dateutils
-import climateserv2.db.bddbprocessing as bdp
+import os
 import sys
-import climateserv2.locallog.locallogging as llog
+import time
 import zmq
 import json
-import climateserv2.processtools.uutools as uu
-import climateserv2.file.MaskTempStorage  as mst
-import climateserv2.geo.shapefile.readShapesfromFiles as sf
-import climateserv2.processtools.pMathOperations as pMath
-import time
 from copy import deepcopy
 from operator import itemgetter
-import climateserv2.requestLog as reqLog
-import climateserv2.file.ExtractTifFromH5 as extractTif
-import climateserv2.processtools.AnalysisTools as analysisTools
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+
+try:
+    import climateserv2.geoutils as geoutils
+    import climateserv2.processtools.dateprocessor as dproc
+    import climateserv2.parameters as params
+    import climateserv2.file.npmemmapstorage as rp
+    import climateserv2.geo.clippedmaskgenerator as mg
+    import climateserv2.file.dateutils as dateutils
+    import climateserv2.db.bddbprocessing as bdp
+    import climateserv2.locallog.locallogging as llog
+    import climateserv2.processtools.uutools as uu
+    import climateserv2.file.MaskTempStorage  as mst
+    import climateserv2.geo.shapefile.readShapesfromFiles as sf
+    import climateserv2.processtools.pMathOperations as pMath
+    import climateserv2.requestLog as reqLog
+    import climateserv2.file.ExtractTifFromH5 as extractTif
+    import climateserv2.processtools.AnalysisTools as analysisTools
+except:
+    import geoutils as geoutils
+    import processtools.dateprocessor as dproc
+    import parameters as params
+    import file.npmemmapstorage as rp
+    import geo.clippedmaskgenerator as mg
+    import file.dateutils as dateutils
+    import db.bddbprocessing as bdp
+    import locallog.locallogging as llog
+    import processtools.uutools as uu
+    import file.MaskTempStorage  as mst
+    import geo.shapefile.readShapesfromFiles as sf
+    import processtools.pMathOperations as pMath
+    import requestLog as reqLog
+    import file.ExtractTifFromH5 as extractTif
+    import processtools.AnalysisTools as analysisTools
 
 class ZMQCHIRPSHeadProcessor():
     

@@ -5,7 +5,10 @@ Created on Jun 24, 2014
 '''
 
 from datetime import date
-import CHIRPS.utils.configuration.parameters as params
+try:
+    import climateserv2.parameters as params
+except:
+    import parameters as params
 import time
 import logging
 import math

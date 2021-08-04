@@ -7,8 +7,12 @@ Created on Feb 13, 2014
 
 import numpy as np
 import os.path
-import CHIRPS.utils.processtools.MathOperations as mo
-import CHIRPS.utils.configuration.parameters as params
+try:
+    import climateserv2.processtools.MathOperations as mo
+    import climateserv2.parameters as params
+except:
+    import processtools.MathOperations as mo
+    import parameters as params
 
 def openFileForWriting(dataType, year):
     outputfile = params.getFilename(dataType, year)

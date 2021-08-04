@@ -137,7 +137,7 @@ class pAvg(pSum):
             raise(ValueError()) 
     
 class pMax(object):
-    maxValue =  -sys.maxint - 1
+    maxValue =  -sys.maxsize - 1
     totalCount = 0
     
     def addData(self,array):
@@ -157,7 +157,7 @@ class pMax(object):
         pass
     
 class pMin(object):
-    minValue =  sys.maxint
+    minValue =  sys.maxsize
     totalCount = 0
     
     def addData(self,array):

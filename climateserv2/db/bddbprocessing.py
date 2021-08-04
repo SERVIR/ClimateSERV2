@@ -1,15 +1,21 @@
 '''
 Created on Feb 10, 2015
-
 @author: jeburks
 '''
-import dbm #bsddb(not supported in py3)
-import climateserv2.parameters as params
+import sys
 import os
-import climateserv2.locallog.locallogging as llog
 import datetime
 import json
-
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+import dbm #bsddb(not supported in py3)
+try:
+    import climateserv2.parameters as params
+    import climateserv2.locallog.locallogging as llog
+except:
+    import parameters as params
+    import locallog.locallogging as llog
 
 def setupBSDDB():
     logger = llog.getNamedLogger("request_processor")

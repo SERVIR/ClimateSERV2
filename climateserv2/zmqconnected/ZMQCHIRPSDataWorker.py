@@ -5,15 +5,25 @@ Created on Jan 30, 2015
 Modified starting from Sept 2015
 @author: Kris Stanton
 '''
-from climateserv2.file import DataCalculator as dc
-import json
-import climateserv2.zmqconnected as zmq
-from climateserv2.locallog import locallogging as llog
-from climateserv2.file import MaskTempStorage  as mst
-import sys
-import climateserv2.processtools.pMathOperations as pMath
 import os
+import sys
+import json
 
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+try:
+    from climateserv2.file import DataCalculator as dc
+    import climateserv2.zmqconnected as zmq
+    from climateserv2.locallog import locallogging as llog
+    from climateserv2.file import MaskTempStorage  as mst
+    import climateserv2.processtools.pMathOperations as pMath
+except:
+    from file import DataCalculator as dc
+    import zmqconnected as zmq
+    from locallog import locallogging as llog
+    from file import MaskTempStorage  as mst
+    import processtools.pMathOperations as pMath
 
 class ZMQCHIRPSDataWorker():
     logger = llog.getNamedLogger("request_processor")

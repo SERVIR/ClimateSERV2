@@ -4,8 +4,13 @@ Created on Jan 29, 2015
 @author: jeburks
 '''
 import sys
+
+
 import logging
-import climateserv2.parameters as params
+try:
+    import climateserv2.parameters as params
+except:
+    import parameters as params
 from logging.handlers import RotatingFileHandler
 import time
 

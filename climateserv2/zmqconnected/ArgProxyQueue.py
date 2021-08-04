@@ -1,5 +1,14 @@
+
+import os
+import sys
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
 import zmq
-import climateserv2.locallog.locallogging as llog
+try:
+    import climateserv2.locallog.locallogging as llog
+except:
+    import locallog.locallogging as llog
 import sys
 
 class ARGProxyQueue:

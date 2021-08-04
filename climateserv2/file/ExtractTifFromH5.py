@@ -4,17 +4,22 @@ Created on Oct 11, 2015
 @author: Kris Stanton
 '''
 
-import os
 import zipfile
-import sys
 import datetime
 import json
-
-import CHIRPS.utils.configuration.parameters as params
-import CHIRPS.utils.locallog.locallogging as llog
-import CHIRPS.utils.db.bddbprocessing as bdp
-
-
+import os
+import sys
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+try:
+    import climateserv2.parameters as params
+    import climateserv2.locallog.locallogging as llog
+    import climateserv2.db.bddbprocessing as bdp
+except:
+    import parameters as params
+    import locallog.locallogging as llog
+    import db.bddbprocessing as bdp
 # Utils
 # Set of functions that when used together result in zipfile(s) which contain Tif file collections (datasets) that were extracted from H5 files.
 
@@ -140,7 +145,7 @@ def zip_Extracted_Tif_Files_Controller(theJobID):
         # only if we have atleast 1 file..
         if(len(list_Of_File_FullPaths_To_Zip) > 0):
             zipFilePath = zip_List_Of_Files(list_Of_File_FullPaths_To_Zip, zipFile_FullPath)
-            os.chmod(zipFilePath, 0777)
+            os.chmod(zipFilePath, 0o0777)
         else:
             zipFilePath = None
             errorMessage = "Error, no files found to zip!"

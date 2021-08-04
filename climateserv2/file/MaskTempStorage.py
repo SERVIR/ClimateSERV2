@@ -4,7 +4,7 @@ Created on Feb 12, 2015
 @author: jeburks
 '''
 import numpy as np
-import CHIRPS.utils.configuration.parameters as params
+import climateserv2.parameters as params
 import h5py
 
 def writeMaskToTempStorage(uid, array):
