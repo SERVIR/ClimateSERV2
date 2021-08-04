@@ -1,16 +1,13 @@
-from collections import OrderedDict
-import datetime
-import ftplib
-import numpy as np
-import os
-import pandas as pd
+import datetime, ftplib, os, sys, time
 from shutil import copyfile, rmtree
-import sys
-import time
 import xarray as xr
+import pandas as pd
+import numpy as np
+from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+
 from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
@@ -38,11 +35,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
     relative_dir_path__WorkingDir = 'working_dir'
 
     # DRAFTING - Suggestions
-    _expected_remote_full_file_paths = []  # Place to store a list of remote file paths (URLs) that the script will
-    # need to download.
-    _expected_granules = []  # Place to store granules
-    #
-    # TODO: Other Props used by the script
+    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
+    _expected_granules                  = []    # Place to store granules
 
     _remote_connection__Username = ""
     _remote_connection__Password = ""

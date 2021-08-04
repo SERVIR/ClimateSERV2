@@ -1,14 +1,14 @@
-import os, sys
-import zipfile
+import os, re, sys, zipfile
 from urllib import request as urllib_request
 from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
 import numpy as np
-import re
 from collections import OrderedDict
+
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+
 from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
@@ -31,7 +31,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
         self.MM__Month__End = params.get('MM__Month__End') or 2
         self.XX__Region_Code = params.get('XX__Region_Code') or 'ea'
 
-# Get the local filesystem place to store data
+    # Get the local filesystem place to store data
     @staticmethod
     def get_root_local_temp_working_dir(region_code):
         # Type Specific Settings

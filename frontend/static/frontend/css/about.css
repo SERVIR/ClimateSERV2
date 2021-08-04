@@ -1,0 +1,10 @@
+@media (min-width: 1199px) {
+    body {
+        font-size: 1.25rem !important;
+    }
+}
+
+.page-title {
+    text-align: center;
+    font-size: 1.5em;
+}

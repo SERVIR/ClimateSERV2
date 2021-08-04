@@ -2,11 +2,60 @@
 {% load static %}
 {% block title %}ClimateSERV - About{% endblock %}
 {% block script %}
-
+    <link href="{% static 'frontend/css/about.css' %}" rel="stylesheet"/>
 {% endblock %}
 
 {% block content %}
 
-<h1>Coming soon</h1>
+    <div style="background-color: #f6f6f6;" class="p50b0">
+        <div class="row mx-auto my-auto">
+            <h2 class="underline-header page-title">
+                ABOUT CLIMATESERV
+            </h2>
+            <p class="p50b0">
+                This tool allows development practitioners, scientists/researchers, and government
+                decision-makers to visualize and download historical rainfall data,
+                vegetation condition data, and 180-day forecasts of rainfall and
+                temperature to improve understanding of, and make improved decisions for,
+                issues related to agriculture and water availability.
+
+            </p>
+        </div>
+    </div>
+    <div style="background-color: #f6f6f6;" class="p50">
+        <div class="row">
+            <div class="col-md-8 ">
+                <p style="padding: 0 50px 50px 50px;">
+                    In SERVIR regions, where long-term ground observations of rainfall are sparse, there is a critical
+                    need for satellite and model-derived rainfall data for predicting droughts, estimating crop yields,
+                    and more. Decision-makers need a way to accurately asses how severe a drought will be, how it
+                    compares to past droughts, and its potential effect on crop yields. Such assessments require
+                    accurate estimations of rainfall variations in space and time. It is important to place an evolving
+                    dryer-than-normal season into historical context in order to analyze the severity of rainfall
+                    deficits. Until now, such analyses used rainfall data from specific points on the Earth's surface.
+                    However, that data fails to show the region-wide variability that reveals comprehensive rainfall
+                    patterns.
+                </p>
+
+                <h1 style="font-weight:500;">Application Purpose</h1>
+                <p class="p50b0">
+                    SERVIR has created a user-friendly, web-based tool -- ClimateSERV -- that provides three important
+                    datasets together in one system to help decision-makers in SERVIR's data-sparse regions assess the
+                    evolving situation via holistic analysis of water and agriculture. Using ClimateSERV, development
+                    practitioners, scientists/researchers, and government decision-makers can readily analyze historical
+                    rainfall for the past 30 years and compare it with the best available forecasts for the next 180
+                    days for their defined area of interest to improve the understanding of, and make improved decisions
+                    for, issues related to agriculture and water availability. The three key datasets that ClimateSERV
+                    provides to make this possible are as follows:
+                </p>
+            </div>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/home_screen.jpg' %}"/>
+                <img src="{% static 'frontend/img/display_data.jpg' %}" style="padding-top: 50px;"/>
+
+            </div>
+
+        </div>
+    </div>
 
 {% endblock %}

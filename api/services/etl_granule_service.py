@@ -1,3 +1,4 @@
+from ..etl import utils
 from ..models import ETL_Dataset, ETL_Granule, ETL_PipelineRun
 import json
 
@@ -40,6 +41,19 @@ class ETL_GranuleService():
         try:
             existing_ETL_Granule_Row = ETL_Granule.objects.filter(uuid=str(granule_uuid).strip())[0]
             existing_ETL_Granule_Row.granule_pipeline_state = str(new__granule_pipeline_state).strip()
+            existing_ETL_Granule_Row.save()
+            ret__update_is_success = True
+        except:
+            ret__update_is_success = False
+        return ret__update_is_success
+
+    @staticmethod
+    def update_existing_ETL_Granule__is_missing_bool_val(granule_uuid, new__is_missing__Bool_Val):
+        ret__update_is_success = False
+        try:
+            is_missing__BOOL = utils.get_True_or_False_from_boolish_string(bool_ish_str_value=new__is_missing__Bool_Val, defaultBoolValue=True)  # Usually when this function is called, it is because there was an error and the granule is missing..
+            existing_ETL_Granule_Row = ETL_Granule.objects.filter(uuid=str(granule_uuid).strip())[0]
+            existing_ETL_Granule_Row.is_missing = is_missing__BOOL
             existing_ETL_Granule_Row.save()
             ret__update_is_success = True
         except:
