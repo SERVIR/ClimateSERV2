@@ -5,7 +5,7 @@ Created on Dec 9, 2013
 Modified starting from Sept 2015
 @author: Kris Stanton 
 '''
-from gdalconst import *
+from osgeo.gdalconst import *
 from osgeo import gdal, gdalnumeric, ogr,osr
 import numpy as np
 
@@ -16,8 +16,8 @@ def openGeoTiff_WithUpdateFlag(filename):
     '''
     ds = gdal.Open(filename, GA_Update)#, GA_ReadOnly) 
     if ds is None:
-        print 'Could not open ' + filename
-        raise ValueError, "Problem opening file"
+        print('Could not open ' + filename)
+        raise ValueError("Problem opening file")
     return ds
 
 def openGeoTiff(filename):
@@ -27,8 +27,8 @@ def openGeoTiff(filename):
     '''
     ds = gdal.Open(filename, GA_ReadOnly) 
     if ds is None:
-        print 'Could not open ' + filename
-        raise ValueError, "Problem opening file"
+        print('Could not open ' + filename)
+        raise(ValueError, "Problem opening file")
     return ds
 
 def readBandFromFile(ds,bandnumber):

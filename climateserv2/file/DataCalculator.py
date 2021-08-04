@@ -7,7 +7,7 @@ Modified from: Sept 2015 to: ????
 '''
 import numpy as np
 import sys
-from gdalconst import *
+from osgeo.gdalconst import *
 from osgeo import gdal #, gdalnumeric, ogr, osr
 try:
     import climateserv2.parameters as params
