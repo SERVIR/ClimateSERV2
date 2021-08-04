@@ -7,24 +7,31 @@
 
 {% block content %}
 
-    <div style="background-color: #f6f6f6;" class="p50b0">
-        <div class="row mx-auto my-auto">
-            <h2 class="underline-header page-title">
-                ABOUT CLIMATESERV
-            </h2>
-            <p class="p5010p">
-                This tool allows development practitioners, scientists/researchers, and government
-                decision-makers to visualize and download historical rainfall data,
-                vegetation condition data, and 180-day forecasts of rainfall and
-                temperature to improve understanding of, and make improved decisions for,
-                issues related to agriculture and water availability.
 
-            </p>
+    <div style="background-color: #f6f6f6; border-bottom: solid 2px #939b7a17;" class="p50">
+        <div class="row mx-auto my-auto">
+            <div class="col-12 tab-holder">
+                <h2 class="section-heading" style="text-align: center; font-size: 1.5em;">
+                    ABOUT CLIMATESERV
+                </h2>
+                <p class="p5010p" style="color: #758055c4;">
+                    This tool allows development practitioners, scientists/researchers, and government
+                    decision-makers to visualize and download historical rainfall data,
+                    vegetation condition data, and 180-day forecasts of rainfall and
+                    temperature to improve understanding of, and make improved decisions for,
+                    issues related to agriculture and water availability.
+
+                </p>
+            </div>
         </div>
     </div>
-    <div style="background-color: #f6f6f6;" class="p50">
-        <div class="row">
-            <div class="col-md-8 ">
+    <div class="p50">
+        <div class="row" style="display: flex; -ms-flex-wrap: wrap; flex-wrap: wrap;">
+
+            <div class="col-md-4 ">
+                <img src="{% static 'frontend/img/home_screen.jpg' %}" class="help-image"/>
+            </div>
+            <div class="col-md-8 order-me">
                 <p style="padding: 0 50px 50px 50px;">
                     In SERVIR regions, where long-term ground observations of rainfall are sparse, there is a critical
                     need for satellite and model-derived rainfall data for predicting droughts, estimating crop yields,
@@ -37,13 +44,10 @@
                     patterns.
                 </p>
             </div>
-            <div class="col-md-4">
-                <img src="{% static 'frontend/img/home_screen.jpg' %}"/>
-            </div>
         </div>
         <div class="row">
             <div class="col-md-8 ">
-                <h1 style="font-weight:500;">Application Purpose</h1>
+                <h1 class="section-heading">Application Purpose</h1>
                 <p class="p50b0">
                     SERVIR has created a user-friendly, web-based tool -- ClimateSERV -- that provides three important
                     datasets together in one system to help decision-makers in SERVIR's data-sparse regions assess the
@@ -56,14 +60,19 @@
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_data.jpg' %}" style="padding-top: 50px;"/>
+                <img src="{% static 'frontend/img/display_data.jpg' %}" class="help-image" style="margin-top: 50px;"/>
 
             </div>
 
         </div>
         <div class="row">
-            <div class="col-md-8 ">
-                <h1 style="font-weight:500;">(1) Climate Hazards group IR Precipitation with Stations (CHIRPS)</h1>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_chirps.jpg' %}" class="help-image"
+                     style="margin-top: 50px;"/>
+
+            </div>
+            <div class="col-md-8 order-me">
+                <h1 class="section-heading">(1) Climate Hazards group IR Precipitation with Stations (CHIRPS)</h1>
                 <p class="p50b0">
                     Scientists at Famine and Early Warning System (FEWS NET) who are members of the SERVIR Applied
                     Sciences Team used 30 years' (1982- present) worth of multiple satellite data sources and ground
@@ -74,15 +83,12 @@
 
                 </p>
             </div>
-            <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_chirps.jpg' %}" style="padding-top: 50px;"/>
 
-            </div>
 
         </div>
         <div class="row">
             <div class="col-md-8 ">
-                <h1 style="font-weight:500;">(2) North American Multi-Model Ensemble (NMME) dataset</h1>
+                <h1 class="section-heading">(2) North American Multi-Model Ensemble (NMME) dataset</h1>
                 <p class="p50b0">
                     Forecasts of future precipitation are also critical to decision-makers. The NMME dataset, a
                     compliation by National Oceanic and Atmospheric Administration (NOAA), reflects cutting edge work on
@@ -94,14 +100,18 @@
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_nmme.jpg' %}" style="padding-top: 50px;"/>
+                <img src="{% static 'frontend/img/display_nmme.jpg' %}" class="help-image" style="margin-top: 50px;"/>
 
             </div>
 
         </div>
         <div class="row">
-            <div class="col-md-8 ">
-                <h1 style="font-weight:500;">(3) MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI)</h1>
+            <div class="col-md-4">
+                <img src="{% static 'frontend/img/display_ndvi.jpg' %}" class="help-image" style="margin-top: 50px;"/>
+
+            </div>
+            <div class="col-md-8 order-me">
+                <h1 class="section-heading">(3) MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI)</h1>
                 <p class="p50b0">
                     SERVIR is also piloting the USGS pentadal eMODIS NDVI dataset at 250m spatial resolution over West
                     Africa. NDVI, a measure of vegetation condition, provides a proxy for agricultural productivity by
@@ -113,15 +123,12 @@
                     seasonal (up to 180 days) precipitation and temperature forecasts (NMME).
                 </p>
             </div>
-            <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_ndvi.jpg' %}" style="padding-top: 50px;"/>
 
-            </div>
 
         </div>
         <div class="row">
             <div class="col-md-8 ">
-                <h1 style="font-weight:500;">Application Uses</h1>
+                <h1 class="section-heading">Application Uses</h1>
                 <p class="p50b0">
                     With this tool, decision-makers can download, view, graph, and interpret the CHIRPS, eMODIS NDVI,
                     and NMME seasonal forecast data in a web-based user interface. ClimateSERV can help decision-makers
@@ -136,7 +143,7 @@
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_graph.jpg' %}" style="padding-top: 50px;"/>
+                <img src="{% static 'frontend/img/display_graph.jpg' %}" class="help-image" style="margin-top: 50px;"/>
 
             </div>
 
