@@ -19,10 +19,10 @@ try:
     from climateserv2.file import MaskTempStorage  as mst
     import climateserv2.processtools.pMathOperations as pMath
 except:
-    from file import DataCalculator as dc
-    import zmqconnected as zmq
-    from locallog import locallogging as llog
-    from file import MaskTempStorage  as mst
+    from ..file import DataCalculator as dc
+    import  zmqconnected as zmq
+    from ..locallog import locallogging as llog
+    from ..file import MaskTempStorage  as mst
     import processtools.pMathOperations as pMath
 
 class ZMQCHIRPSDataWorker():
