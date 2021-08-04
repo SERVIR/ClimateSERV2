@@ -12,6 +12,7 @@ from .etl_dataset_subtype_esi import ETL_Dataset_Subtype_ESI
 from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_imerg_1_day import ETL_Dataset_Subtype_IMERG_1_DAY
 from .etl_dataset_subtype_smap import ETL_Dataset_Subtype_SMAP
+from . import etl_exceptions
 
 class ETL_Pipeline():
 
@@ -109,7 +110,6 @@ class ETL_Pipeline():
     # Standard UTIL functions (Checking for and Making Directories, parsing file names, handling datetime objects, etc)
 
     # Utility for creating a directory if one does not exist.
-    #@staticmethod
     def create_dir_if_not_exist(self, dir_path):
         ret_IsError = False
         if not os.path.exists(dir_path):
@@ -247,14 +247,11 @@ class ETL_Pipeline():
             self.log__pipeline_run__exit()
             return
 
-        # The Steps
-        # (1) Read dataset info from the database
-        self.dataset_JSONable_Object = {} #dataset_info_JSON = {} #
-        dataset_name = ""
+        # Read dataset info from the database
         try:
-            dataset = ETL_Dataset.objects.get(pk=self.etl_dataset_uuid)
-            self.dataset_JSONable_Object = ETL_DatasetSerializer(dataset).data
-            dataset_name = self.dataset_JSONable_Object['dataset_name']
+            self.dataset = ETL_Dataset.objects.get(pk=self.etl_dataset_uuid)
+            self.dataset_JSONable_Object = ETL_DatasetSerializer(self.dataset).data
+            self.dataset_name = self.dataset_JSONable_Object['dataset_name']
         except:
             # Log the Error (Unable to read the dataset object from the database)
             sysErrorData            = str(sys.exc_info())
@@ -265,53 +262,59 @@ class ETL_Pipeline():
             self.log__pipeline_run__exit()
             return
 
-        # Set Params pulled from the database
-        self.dataset_name = dataset_name
 
-        # Log Activity - Pipeline Started
-        activity_event_type     = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STARTED", default_or_error_return_value="ETL Pipeline Started")
-        activity_description    = "Starting Pipeline for Dataset: " + str(self.dataset_name)
-        additional_json         = self.to_JSONable_Object()
-        self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+        try:
 
-        # Get the Dataset SubType
-        current_Dataset_SubType = str(self.dataset_JSONable_Object['dataset_subtype']).strip()
-
-        # Validate that the dataset subtype is NOT Blank
-        current_Dataset_SubType = str(current_Dataset_SubType).strip()
-        if current_Dataset_SubType == "":
+            activity_event_type = ''
+            activity_description = ''
             list_of_valid__dataset_subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
+
+            # Log Activity - Pipeline Started
+            activity_event_type     = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STARTED", default_or_error_return_value="ETL Pipeline Started")
+            activity_description    = "Starting Pipeline for Dataset: " + str(self.dataset_name)
+            additional_json         = self.to_JSONable_Object()
+            self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+
+            # Get the Dataset SubType and alidate that the dataset subtype is NOT Blank
+            dataset_subtype = str(self.dataset_JSONable_Object['dataset_subtype']).strip()
+            if dataset_subtype == '':
+                raise etl_exceptions.BlankDatasetSubtypeException()
+
+            # Validate that the dataset subtype is valid
+            is_valid_subtype = ETL_DatasetService.is_a_valid_subtype_string(input__string=dataset_subtype)
+            if is_valid_subtype == False:
+                raise etl_exceptions.InvalidDatasetSubtypeException()
+
+        except etl_exceptions.BlankDatasetSubtypeException:
             activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
             activity_description = "Unable to start pipeline.  The dataset subtype was blank.  This value is required for etl pipeline operation.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
             additional_json = self.to_JSONable_Object()
             self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
-            self.log__pipeline_run__exit()
-            return
 
-        # Validate that the dataset subtype is valid
-        is_valid_subtype = ETL_DatasetService.is_a_valid_subtype_string(input__string=current_Dataset_SubType)
-        if is_valid_subtype == False:
-            list_of_valid__dataset_subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
+        except etl_exceptions.InvalidDatasetSubtypeException:
             activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-            activity_description = "Unable to start pipeline.  The dataset subtype was invalid.  The value tried was: '" + current_Dataset_SubType + "'.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
+            activity_description = "Unable to start pipeline.  The dataset subtype was invalid.  The value tried was: '" + dataset_subtype + "'.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
             additional_json = self.to_JSONable_Object()
             self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+
+        finally:
             self.log__pipeline_run__exit()
-            return
 
         # Create dataset instance
-        if current_Dataset_SubType in ('chirp', 'chirps', 'chirps_gefs'):
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, current_Dataset_SubType)
-        if current_Dataset_SubType == 'emodis':
+        if dataset_subtype in ('chirp', 'chirps', 'chirps_gefs'):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, dataset_subtype)
+        elif dataset_subtype == 'emodis':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
-        if current_Dataset_SubType in ('esi_4week', 'esi_12week'):
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, current_Dataset_SubType)
-        if current_Dataset_SubType in ('imerg_early', 'imerg_late'):
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, current_Dataset_SubType)
-        if current_Dataset_SubType == 'ImergOneDay':
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, current_Dataset_SubType)
-        if current_Dataset_SubType == 'smap':
-            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, current_Dataset_SubType)
+        elif dataset_subtype in ('esi_4week', 'esi_12week'):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, dataset_subtype)
+        elif dataset_subtype in ('imerg_early', 'imerg_late'):
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
+        elif dataset_subtype == 'ImergOneDay':
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, dataset_subtype)
+        elif dataset_subtype == 'smap':
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, dataset_subtype)
+        else:
+            pass
 
         # Set optional params
         self.Subtype_ETL_Instance.set_optional_parameters({
