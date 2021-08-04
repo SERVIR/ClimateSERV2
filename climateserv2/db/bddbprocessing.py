@@ -14,7 +14,7 @@ try:
     import climateserv2.parameters as params
     import climateserv2.locallog.locallogging as llog
 except:
-    import parameters as params
+    from .. import parameters as params
     import locallog.locallogging as llog
 
 def setupBSDDB():
