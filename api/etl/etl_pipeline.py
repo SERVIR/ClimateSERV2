@@ -10,6 +10,7 @@ from .etl_dataset_subtype_chirps import ETL_Dataset_Subtype_CHIRPS
 from .etl_dataset_subtype_emodis import ETL_Dataset_Subtype_EMODIS
 from .etl_dataset_subtype_esi import ETL_Dataset_Subtype_ESI
 from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
+from .etl_dataset_subtype_nmme import ETL_Dataset_Subtype_NMME
 from .etl_dataset_subtype_imerg_1_day import ETL_Dataset_Subtype_IMERG_1_DAY
 from .etl_dataset_subtype_smap import ETL_Dataset_Subtype_SMAP
 from . import etl_exceptions
@@ -311,6 +312,8 @@ class ETL_Pipeline():
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
         elif dataset_subtype == 'ImergOneDay':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, dataset_subtype)
+        elif dataset_subtype == 'nmme':
+            self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NMME(self)
         elif dataset_subtype == 'smap':
             self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, dataset_subtype)
         else:
