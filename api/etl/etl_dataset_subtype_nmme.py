@@ -1,4 +1,4 @@
-import datetime, glob, gzip, os, requests, shutil, sys, urllib
+import calendar, datetime, glob, os, shutil, sys
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -50,48 +50,55 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
 
             # (1) Generate Expected remote file paths
 
-            # start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
-            # end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
+            start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, 1)
+            end_monthrange = calendar.monthrange(self.YYYY__Year__Start, self.MM__Month__End)
+            end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, end_monthrange[1])
 
-            filenames = []
-            dates = []
-            ids = []
-            for path in glob.glob(current_root_http_path + '/202107/ens015/*.tif'):
-                filename = os.path.basename(path)
-                _, datestring, _, id = filename.split('_')
-                date = datetime.datetime.strptime(datestring,'%Y%m')
-                filenames.append(filename)
-                dates.append(date)
-                ids.append(id)
+            filenames, dates, ids, ensambles = [], [], [], []
+            for date_dir in os.scandir(current_root_http_path):
+                if date_dir.is_dir():
+                    date = datetime.datetime.strptime(date_dir.name,'%Y%m')
+                    if date >= start_date and date <= end_date:
+                        for ensemble_dir in os.scandir(os.path.join(current_root_http_path, date_dir.name)):
+                            if ensemble_dir.is_dir():
+                                for path in glob.glob(os.path.join(current_root_http_path, date_dir.name, ensemble_dir.name, '*.tif')):
+                                    filename = os.path.basename(path)
+                                    _, _, _, id = filename.replace('.tif', '').split('_')
+                                    filenames.append(filename)
+                                    dates.append(date)
+                                    ids.append(id)
+                                    ensambles.append(ensemble_dir.name)
 
-            for filename, date, id in zip(filenames, dates, ids):
+            for filename, date, id, ensamble in zip(filenames, dates, ids, ensambles):
 
                 current_year__YYYY_str = '{:0>4d}'.format(date.year)
                 current_month__MM_str = '{:02d}'.format(date.month)
                 current_day__DD_str = '{:02d}'.format(date.day)
 
-                final_nc4_filename = 'nmme.{}.{}{}{}T000000Z.nc4'.format(
-                    id,
+                final_nc4_filename = 'nmme-cfs_v2.{}{}{}T000000Z.{}.global.daily.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str
+                    current_day__DD_str,
+                    id
                 )
+
+                date_str = date.strftime('%Y%m')
 
                 # Granule
                 current_obj = {}
-                current_obj['local_download_path'] = self.temp_working_dir
-                current_obj['local_final_load_path'] = final_load_dir_path
-                current_obj['remote_directory_path'] = current_root_http_path
+                current_obj['local_download_path'] = os.path.join(self.temp_working_dir, date_str, ensamble)
+                current_obj['local_final_load_path'] = os.path.join(final_load_dir_path, date_str, ensamble)
                 #
                 current_obj['tif_filename'] = filename
                 current_obj['final_nc4_filename'] = final_nc4_filename
                 current_obj['granule_name'] = final_nc4_filename
                 #
-                current_obj['remote_full_filepath_tif'] = os.path.join(current_root_http_path, '202107/ens015', filename)
+                current_obj['remote_directory_path'] = current_root_http_path
+                current_obj['remote_full_filepath_tif'] = os.path.join(current_root_http_path, date_str, ensamble, filename)
                 #
-                current_obj['local_full_filepath_download'] = os.path.join(self.temp_working_dir, filename)
-                current_obj['working_full_filepath_final_nc4_file'] = os.path.join(self.temp_working_dir, final_nc4_filename)
-                current_obj['local_full_filepath_final_nc4_file'] = os.path.join(final_load_dir_path, final_nc4_filename)
+                current_obj['local_full_filepath_download'] = os.path.join(self.temp_working_dir, date_str, ensamble, filename)
+                current_obj['working_full_filepath_final_nc4_file'] = os.path.join(self.temp_working_dir, date_str, ensamble, final_nc4_filename)
+                current_obj['local_full_filepath_final_nc4_file'] = os.path.join(final_load_dir_path, date_str, ensamble, final_nc4_filename)
 
                 granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
 
@@ -102,6 +109,36 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
 
                 # Add to the granules list
                 self._expected_granules.append(current_obj)
+
+                # Make sure the directories exist
+                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(self.temp_working_dir, date_str, ensamble))
+                if is_error_creating_directory == True:
+                    error_JSON = {}
+                    error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+                    error_JSON['is_error'] = True
+                    error_JSON['class_name'] = "esi"
+                    error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
+                    # Exit Here With Error info loaded up
+                    ret__is_error = True
+                    ret__error_description = error_JSON['error']
+                    ret__detail_state_info = error_JSON
+                    retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+                    return retObj
+
+                # final_load_dir_path
+                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(final_load_dir_path, date_str, ensamble))
+                if is_error_creating_directory == True:
+                    error_JSON = {}
+                    error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+                    error_JSON['is_error'] = True
+                    error_JSON['class_name'] = "esi"
+                    error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
+                    # Exit Here With Error info loaded up
+                    ret__is_error = True
+                    ret__error_description = error_JSON['error']
+                    ret__detail_state_info = error_JSON
+                    retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+                    return retObj
 
         except Exception as e:
             sysErrorData = str(sys.exc_info())
@@ -121,39 +158,8 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-        # Make sure the directories exist
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
-        if is_error_creating_directory == True:
-            error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
-            error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
-            # Exit Here With Error info loaded up
-            ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-            return retObj
-
-        # final_load_dir_path
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
-        if is_error_creating_directory == True:
-            error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
-            error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
-            # Exit Here With Error info loaded up
-            ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-            return retObj
-
         # Ended, now for reporting
-        ret__detail_state_info['class_name'] = "esi"
-        # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
+        ret__detail_state_info['class_name'] = "nmme"
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
@@ -426,7 +432,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
