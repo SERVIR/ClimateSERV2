@@ -412,24 +412,24 @@ body {
 .bread-crumb {
     text-decoration: underline;
     background-color: unset;
-    color: #002a53;
+    color: #758055;
 }
 
 .bread-crumb:hover {
     text-decoration: none;
     background-color: unset;
-    color: #002a53;
+    color: rgba(117, 128, 85, 0.8);
 }
 
 .bread-crumb[disabled] {
     text-decoration: none;
     background-color: unset;
-    color: #002a5380;
+    color: rgba(117, 128, 85, 0.34);
     cursor: not-allowed;
 }
 
 button.w-100.bread-crumb.active {
-    color: #002a53;
+    color: #758055;
 }
 
 .btn-group,
@@ -439,8 +439,8 @@ button.w-100.bread-crumb.active {
 
 .tablinks {
     background-color: unset;
-    color: #002a53;
-    border: 1px solid #002a53;
+    color: #758055;
+    border: 1px solid #758055;
     border-radius: unset;
 }
 
@@ -934,18 +934,18 @@ button {
     cursor: pointer;
     -webkit-appearance: none;
     -webkit-font-smoothing: antialiased;
-    background-color: #00acec;
+    background-color: #758055;
 }
 
 button:hover,
 button.tablinks.w-100.active,
 button.btnAnimate.active {
-    background-color: rgba(0, 60, 136, 0.6);
+    background-color: rgba(117, 128, 85, 0.8);
     color: #fff;
 }
 
 button[disabled] {
-    background-color: #afd9ff;
+    background-color: rgba(117, 128, 85, 0.34);
     color: #fff;
     cursor: not-allowed;
 }

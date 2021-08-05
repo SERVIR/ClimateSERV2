@@ -1,5 +1,5 @@
 /** Global Variables */
-let active_basemap = "OSM";
+let active_basemap = "Gsatellite";
 let map;
 let passedLayer;
 let overlayMaps = {};
@@ -968,7 +968,7 @@ function getDataFromRequest(id, isClimate) {
                 });
                 inti_chart_dialog();
 
-                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis");
+                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
             } else {
                 const compiledData = [];
@@ -1012,6 +1012,7 @@ function getDataFromRequest(id, isClimate) {
                     ).units;
 
                     finalize_chart([{
+                        color: "#758055",
                         type: "line",
                         name: $("#operationmenu option:selected").text(),
                         data: compiledData.sort((a, b) => a[0] - b[0])
@@ -1023,102 +1024,117 @@ function getDataFromRequest(id, isClimate) {
         });
 };
 
-function finalize_chart(compiled_series, units, xAxis_object, title) {
-    Highcharts.chart('chart_holder', {
-// fix title is Monthly Rainfall Analysis.
+function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) {
+    let chart_obj = {};
+    chart_obj.title = {
+        text: title
+    };
+
+    chart_obj.subtitle = {
+        text: 'Source: climateserv.servirglobal.net'
+    };
+    chart_obj.xAxis = xAxis_object;
+    chart_obj.yAxis = {
         title: {
-            text: title
-        },
+            text: units
+        }
+    };
 
-        subtitle: {
-            text: 'Source: climateserv.servirglobal.net'
-        },
-        xAxis: xAxis_object,
-        yAxis: {
-            title: {
-                text: units
-            }
-        },
+    chart_obj.legend = {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+    };
 
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle'
-        },
-
-        plotOptions: {
-            series: {
-                connectNulls: false,
-
-                marker: {
-                    radius: 3
-                },
-                lineWidth: 2,
+    chart_obj.plotOptions = {
+        series: {
+            connectNulls: false,
+            marker: {
+                radius: 3,
+                fillColor: "#758055",
                 states: {
                     hover: {
-                        lineWidth: 2
+                        fillColor: '#758055',
+                    },
+                    halo: {
+                        fillColor: '#758055',
                     }
                 },
-                threshold: null,
-                allowPointSelect: true,
-                point: {
-                    events: {
-                        select: function (e) {
-                            const full = new Date(e.target.x);
-                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+            },
+            lineWidth: 2,
+            states: {
+                hover: {
+                    lineWidth: 2
+                },
+                halo: {
+                    fillColor: '#758055',
+                }
+            },
+            threshold: null,
+            allowPointSelect: true,
+            point: {
+                events: {
+                    select: function (e) {
+                        const full = new Date(e.target.x);
+                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
 
-                            console.log(date);
-                        }
+                        console.log(date);
                     }
                 }
             }
-        },
-        exporting: {
-            chartOptions: {
-                chart: {
-                    events: {
-                        load: function () {
-                            console.log("exporting!!!");
-                            const width = this.chartWidth - 105;
-                            const height = this.chartHeight - 130;
-                            console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
-                            this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
-                            ).add();
-                        }
-                    }
-                }
-            }
-        },
-        chart: {
-            events: {
-                redraw: function (e) {
-                    img.translate(
-                        this.chartWidth - originalWidth,
-                        this.chartHeight - originalHeight
-                    );
-                }
-            }
-        },
-        series: compiled_series,
-        tooltip: {
-            pointFormat: "Value: {point.y:.2f} " + units
-        },
-        responsive: {
-            rules: [{
-                condition: {
-                    maxWidth: 500
-                },
-                chartOptions: {
-                    legend: {
-                        layout: 'horizontal',
-                        align: 'center',
-                        verticalAlign: 'bottom'
-                    }
-                }
-            }]
         }
+    };
+    if (isClimate) {
+        chart_obj.plotOptions.series.marker = {
+            radius: 3
+        };
+    }
 
-    }, function (chart) { // on complete
+    chart_obj.exporting = {
+        chartOptions: {
+            chart: {
+                events: {
+                    load: function () {
+                        const width = this.chartWidth - 105;
+                        const height = this.chartHeight - 130;
+                        this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                        ).add();
+                    }
+                }
+            }
+        }
+    };
+    chart_obj.chart = {
+        events: {
+            redraw: function (e) {
+                img.translate(
+                    this.chartWidth - originalWidth,
+                    this.chartHeight - originalHeight
+                );
+            }
+        }
+    };
+    chart_obj.series = compiled_series;
+    chart_obj.tooltip = {
+        pointFormat: "Value: {point.y:.2f} " + units,
+        borderColor: "#758055",
+    };
+    chart_obj.responsive = {
+        rules: [{
+            condition: {
+                maxWidth: 500
+            },
+            chartOptions: {
+                legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
+            }
+        }]
+    };
+
+    Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
