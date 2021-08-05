@@ -236,7 +236,10 @@ function mapSetup() {
     map.addLayer(drawnItems);
     baseLayers = getCommonBaseLayers(map); // use baselayers.js to add, remove, or edit
     L.control.layers(baseLayers, overlayMaps).addTo(map);
-    L.control.sidebar("sidebar").addTo(map);
+    const sidebar = L.control.sidebar("sidebar").addTo(map);
+
+    sidebar.open('chart');
+
 
     //create the basemap thumbnails in the panel
     for (let key of Object.keys(baseLayers)) {
