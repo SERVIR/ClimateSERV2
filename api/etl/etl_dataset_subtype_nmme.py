@@ -44,17 +44,13 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
             current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
-            print(current_root_http_path)
-            print(final_load_dir_path)
-            print(self.temp_working_dir)
-
             # (1) Generate Expected remote file paths
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, 1)
             end_monthrange = calendar.monthrange(self.YYYY__Year__Start, self.MM__Month__End)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, end_monthrange[1])
 
-            filenames, dates, ids, ensambles = [], [], [], []
+            filenames, dates, ensambles = [], [], []
             for date_dir in os.scandir(current_root_http_path):
                 if date_dir.is_dir():
                     date = datetime.datetime.strptime(date_dir.name,'%Y%m')
@@ -63,23 +59,21 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                             if ensemble_dir.is_dir():
                                 for path in glob.glob(os.path.join(current_root_http_path, date_dir.name, ensemble_dir.name, '*.tif')):
                                     filename = os.path.basename(path)
-                                    _, _, _, id = filename.replace('.tif', '').split('_')
+                                    # _, _, _, _ = filename.replace('.tif', '').split('_')
                                     filenames.append(filename)
                                     dates.append(date)
-                                    ids.append(id)
                                     ensambles.append(ensemble_dir.name)
 
-            for filename, date, id, ensamble in zip(filenames, dates, ids, ensambles):
+            for filename, date, ensamble in zip(filenames, dates, ensambles):
 
                 current_year__YYYY_str = '{:0>4d}'.format(date.year)
                 current_month__MM_str = '{:02d}'.format(date.month)
                 current_day__DD_str = '{:02d}'.format(date.day)
 
-                final_nc4_filename = 'nmme-cfs_v2.{}{}{}T000000Z.{}.global.daily.nc4'.format(
+                final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
                     current_day__DD_str,
-                    id
                 )
 
                 date_str = date.strftime('%Y%m')
@@ -116,7 +110,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
                     error_JSON['is_error'] = True
-                    error_JSON['class_name'] = "esi"
+                    error_JSON['class_name'] = self.__class__.__name__
                     error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
                     # Exit Here With Error info loaded up
                     ret__is_error = True
@@ -131,7 +125,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
                     error_JSON['is_error'] = True
-                    error_JSON['class_name'] = "esi"
+                    error_JSON['class_name'] = self.__class__.__name__
                     error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
                     # Exit Here With Error info loaded up
                     ret__is_error = True
@@ -141,11 +135,12 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     return retObj
 
         except Exception as e:
+            print(e)
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when generating the expected remote filepaths.  See the additional data for details on which expected file caused the error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
             # Call Error handler right here (If this is commented out, then the info should be bubbling up to the calling function))
             # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR
@@ -159,7 +154,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # Ended, now for reporting
-        ret__detail_state_info['class_name'] = "nmme"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
@@ -210,7 +205,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     warn_JSON = {}
                     warn_JSON['warning'] = "Warning: There was an uncaught error when attempting to download file at URL: " + str(current_url_to_download) + ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
                     warn_JSON['is_error'] = True
-                    warn_JSON['class_name'] = "esi"
+                    warn_JSON['class_name'] = self.__class__.__name__
                     warn_JSON['function_name'] = "execute__Step__Download"
                     warn_JSON['current_object_info'] = expected_granule
                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
@@ -228,7 +223,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             loop_counter = loop_counter + 1
 
         # Ended, now for reporting
-        ret__detail_state_info['class_name'] = 'nmme'
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['download_counter'] = download_counter
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['loop_counter'] = loop_counter
@@ -263,12 +258,12 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         error_counter = 0
         detail_errors = []
 
-        try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
-                try:
+        datasets = []
 
-                    # print("A")
+        try:
+
+            for expected_granules_object in self._expected_granules:
+                try:
 
                     # Getting info ready for the current granule.
                     local_download_path                                 = expected_granules_object['local_download_path']
@@ -279,8 +274,6 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
 
-                    # print("B")
-
                     # Note there are only 3 lines of differences between the 4wk and 12 wk scripts
                     # TODO: Place those difference variables here.
                     mode_var__pd_timedelta = ""
@@ -288,38 +281,36 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     mode_var__attr_comment = ""
                     mode_var__TemporalResolution = ""
 
-                    # print("C")
-
                     # Determine starting and ending times
-                    _, datestring, _, id = tif_filename.split('_')
+                    type, datestring, _, day = tif_filename.replace('.tif', '').split('_')
                     endTime = datetime.datetime.strptime(datestring,'%Y%m')
                     startTime = datetime.datetime.strptime(datestring,'%Y%m')
 
-                    # print("D")
+                    dataset_name = '{}_{}'.format(type, day)
 
                     ############################################################
                     # Beging extracting data and creating output netcdf file.
                     ############################################################
                     # 1) Read the geotiff data into an xarray data array
-                    tiffData = xr.open_rasterio(geotiffFile_FullPath)  #tiffData = xr.open_rasterio(geotiffFile)
+                    tiffData = xr.open_rasterio(geotiffFile_FullPath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    esi = tiffData.rename('esi').to_dataset()
+                    ds = tiffData.rename(dataset_name).to_dataset()
                     # Handle selecting/adding the dimesions
-                    esi = esi.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
+                    ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
-                    esi = esi.assign_coords(time=endTime).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=endTime).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    esi['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
+                    ds['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
                     #esi.rename({'y': 'latitude', 'x': 'longitude'}, inplace=True)  # rename lat/lon
-                    esi = esi.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    ds = ds.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
                     # Lat/Lon/Time dictionaries.
                     # Use Ordered dict
                     latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
                     lonAttr = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     timeAttr = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     timeBoundsAttr = OrderedDict([('long_name', 'time_bounds')])
-                    esiAttr = OrderedDict([('long_name', 'evaporative_stress_index'), ('units', 'unitless'), ('composite_interval', str(mode_var__attr_composite_interval)), ('comment', str(mode_var__attr_comment))])
+                    dsAttr = OrderedDict([('long_name', 'evaporative_stress_index'), ('units', 'unitless'), ('composite_interval', str(mode_var__attr_composite_interval)), ('comment', str(mode_var__attr_comment))])
                     fileAttr = OrderedDict([('Description', 'The Evaporative Stress Index (ESI) at ~5-kilometer resolution for the entire globe reveals regions of drought where vegetation is stressed due to lack of water, enabling agriculture ministries to provide farmers with actionable advice about irrigation.  The 4 week composite responds to fast-changing conditions, while the 12-week composite integrates data over a longer period and responds to slower evolving conditions.'), \
                                             ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                             ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'), \
@@ -328,40 +319,36 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                                             ('Reference', 'Hain, C. R. and M.C. Anderson, 2017: Estimating morning change in land surface temperature from MODIS day/night observations: Applications for surface energy balance modeling., Geophys. Res. Letts., 44, 9723-9733, doi:10.1002/2017GL074952.'), \
                                             ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                             ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('SouthernmostLatitude', np.min(esi.latitude.values)), \
-                                            ('NorthernmostLatitude', np.max(esi.latitude.values)), \
-                                            ('WesternmostLongitude', np.min(esi.longitude.values)), \
-                                            ('EasternmostLongitude', np.max(esi.longitude.values)), \
+                                            ('SouthernmostLatitude', np.min(ds.latitude.values)), \
+                                            ('NorthernmostLatitude', np.max(ds.latitude.values)), \
+                                            ('WesternmostLongitude', np.min(ds.longitude.values)), \
+                                            ('EasternmostLongitude', np.max(ds.longitude.values)), \
                                             ('TemporalResolution', str(mode_var__TemporalResolution)), \
                                             ('SpatialResolution', '0.05deg')])
 
-                    # print("E")
-
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
-                    esiEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+                    encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32')
+                    }
+                    time_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+                    time_bounds_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+
                     # Set the Attributes
-                    esi.latitude.attrs = latAttr
-                    esi.longitude.attrs = lonAttr
-                    esi.time.attrs = timeAttr
-                    esi.time_bnds.attrs = timeBoundsAttr
-                    esi.esi.attrs = esiAttr
-                    esi.attrs = fileAttr
+                    ds.latitude.attrs = latAttr
+                    ds.longitude.attrs = lonAttr
+                    ds.time.attrs = timeAttr
+                    ds.time_bnds.attrs = timeBoundsAttr
+                    ds[dataset_name].attrs = dsAttr
+                    ds.attrs = fileAttr
+
                     # Set the Endcodings
-                    esi.esi.encoding = esiEncoding
-                    esi.time.encoding = timeEncoding
-                    esi.time_bnds.encoding = timeBoundsEncoding
+                    ds[dataset_name].encoding = encoding
+                    ds.time.encoding = time_encoding
+                    ds.time_bnds.encoding = time_bounds_encoding
 
-                    # print("F")
-
-                    # 5) Output File
-                    esi.to_netcdf(local_full_filepath_final_nc4_file, unlimited_dims='time')
-
-                    # print("outputFile_FullPath: " + str(outputFile_FullPath))
-                    # Can't put ':' in file names...
-
-                    # print("G")
+                    datasets.append(ds)
 
                 except Exception as e:
                     print(e)
@@ -390,16 +377,17 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     new_json_key_to_append = "execute__Step__Transform"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
-                pass
+            # 5) Output File
+            merged_ds = xr.merge(datasets)
+            merged_ds.to_netcdf(local_full_filepath_final_nc4_file, unlimited_dims='time')
 
         except Exception as e:
             print(e)
-
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Transform step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Transform"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -408,7 +396,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-        ret__detail_state_info['class_name'] = "esi"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
@@ -458,7 +446,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
                     error_JSON['is_error'] = True
-                    error_JSON['class_name'] = "esi"
+                    error_JSON['class_name'] = self.__class__.__name__
                     error_JSON['function_name'] = "execute__Step__Load"
                     #
                     # Additional infos
@@ -489,7 +477,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Load step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Load"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -525,7 +513,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "esi"
+                additional_json['subclass'] = self.__class__.__name__
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
                 shutil.rmtree(temp_working_dir)
@@ -534,7 +522,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "esi"
+                additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
@@ -544,7 +532,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is supposed to simply remove the working directory.  This means the working directory was not removed.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "esi"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Clean_Up"
             #
             # Additional info
