@@ -59,8 +59,7 @@ body {
 .navbar,
 .navbar-default {
     font-size: 1rem;
-    background-image: url("../img/header_bg_space.jpg") !important; /* override background image gradient w/ flat color */
-    background-size: cover;
+    background-color: #000000;
     z-index: 3000;
 }
 

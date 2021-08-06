@@ -225,7 +225,7 @@ function openLegend(which) {
  */
 function mapSetup() {
     map = L.map("servirmap", {
-        zoom: 5,
+        zoom: 3,
         fullscreenControl: true,
         timeDimension: true,
         timeDimensionControl: true,
@@ -345,6 +345,11 @@ function clearAOISelections() {
     $("#nextStep1").prop("disabled", true);
 }
 
+function triggerUpload(e) {
+    e.preventDefault();
+    $("#upload_files").trigger('click');
+}
+
 /**
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
@@ -360,73 +365,77 @@ function enableUpload() {
     });
 
     targetEl.addEventListener("drop", function (e) {
-        e.preventDefault();
-        const reader = new FileReader();
-        reader.onloadend = function () {
-            try {
-                const data = JSON.parse(this.result);
-                uploadLayer.clearLayers();
-                uploadLayer.addData(data);
-                map.fitBounds(uploadLayer.getBounds());
-                if (uploadLayer.getLayers().length > 0) {
-                    $("#nextStep1").prop("disabled", false);
-                } else {
-                    $("#nextStep1").prop("disabled", true);
-                }
-                $("#upload_error").hide();
-            } catch (e) {
-                // When the section is built the url will need to add #pageanchorlocation
-                $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
-                $("#upload_error").show();
-            }
-        };
-        const files = e.target.files || e.dataTransfer.files;
-        for (let i = 0, file; (file = files[i]); i++) {
-            if (file.type === "application/json") {
-                reader.readAsText(file);
-            } else if (file.name.indexOf(".geojson") > -1) {
-                reader.readAsText(file);
-            } else if (file.type === "application/x-zip-compressed") {
-                // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
-                if (uploadLayer) {
-                    uploadLayer.clearLayers();
-                }
-                loadshp(
-                    {
-                        url: file,
-                        encoding: "UTF-8",
-                        EPSG: 4326,
-                    },
-                    function (data) {
-                        let URL =
-                                window.URL || window.webkitURL || window.mozURL || window.msURL,
-                            url = URL.createObjectURL(
-                                new Blob([JSON.stringify(data)], {type: "application/json"})
-                            );
-                        if (data.features.length > 10) {
-                            data.features = data.features.splice(0, 10);
-                        }
-                        uploadLayer.addData(data);
-                        map.fitBounds([
-                            [data.bbox[1], data.bbox[0]],
-                            [data.bbox[3], data.bbox[2]],
-                        ]);
-                        $(".dimmer").removeClass("active");
-                        $("#preview").addClass("disabled");
-                        $("#epsg").val("");
-                        $("#encoding").val("");
-                        $("#info").addClass("picInfo");
-                        $("#option").slideUp(500);
-                        if (uploadLayer.getLayers().length > 0) {
-                            $("#nextStep1").prop("disabled", false);
-                        } else {
-                            $("#nextStep1").prop("disabled", true);
-                        }
-                    }
-                );
-            }
-        }
+        handleFiles(e);
     });
+}
+
+function handleFiles(e) {
+    e.preventDefault();
+    const reader = new FileReader();
+    reader.onloadend = function () {
+        try {
+            const data = JSON.parse(this.result);
+            uploadLayer.clearLayers();
+            uploadLayer.addData(data);
+            map.fitBounds(uploadLayer.getBounds());
+            if (uploadLayer.getLayers().length > 0) {
+                $("#nextStep1").prop("disabled", false);
+            } else {
+                $("#nextStep1").prop("disabled", true);
+            }
+            $("#upload_error").hide();
+        } catch (e) {
+            // When the section is built the url will need to add #pageanchorlocation
+            $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+            $("#upload_error").show();
+        }
+    };
+    const files = e.target.files || e.dataTransfer.files || this.files;
+    for (let i = 0, file; (file = files[i]); i++) {
+        if (file.type === "application/json") {
+            reader.readAsText(file);
+        } else if (file.name.indexOf(".geojson") > -1) {
+            reader.readAsText(file);
+        } else if (file.type === "application/x-zip-compressed") {
+            // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
+            if (uploadLayer) {
+                uploadLayer.clearLayers();
+            }
+            loadshp(
+                {
+                    url: file,
+                    encoding: "UTF-8",
+                    EPSG: 4326,
+                },
+                function (data) {
+                    let URL =
+                            window.URL || window.webkitURL || window.mozURL || window.msURL,
+                        url = URL.createObjectURL(
+                            new Blob([JSON.stringify(data)], {type: "application/json"})
+                        );
+                    if (data.features.length > 10) {
+                        data.features = data.features.splice(0, 10);
+                    }
+                    uploadLayer.addData(data);
+                    map.fitBounds([
+                        [data.bbox[1], data.bbox[0]],
+                        [data.bbox[3], data.bbox[2]],
+                    ]);
+                    $(".dimmer").removeClass("active");
+                    $("#preview").addClass("disabled");
+                    $("#epsg").val("");
+                    $("#encoding").val("");
+                    $("#info").addClass("picInfo");
+                    $("#option").slideUp(500);
+                    if (uploadLayer.getLayers().length > 0) {
+                        $("#nextStep1").prop("disabled", false);
+                    } else {
+                        $("#nextStep1").prop("disabled", true);
+                    }
+                }
+            );
+        }
+    }
 }
 
 /**
@@ -1229,6 +1238,12 @@ $(function () {
         getClimateScenarioInfo();
     } catch (e) {
         console.log("ClimateScenarioInfo Failed");
+    }
+    try {
+        const inputElement = document.getElementById("upload_files");
+        inputElement.addEventListener("change", handleFiles, false);
+    } catch (e) {
+        console.log("upload handler Failed");
     }
 });
 

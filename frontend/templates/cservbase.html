@@ -8,7 +8,7 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi"
     />
     <title>{% block title %}ClimateSERV{% endblock %}</title>
-    <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'  />
+    <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
     <link
             rel="stylesheet"
             href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
@@ -17,9 +17,9 @@
             rel="stylesheet"
             href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
     />
-    <link href="{% static 'frontend/css/bulma.min.css' %}" rel="stylesheet" />
-    <link href="{% static 'frontend/css/App.css' %}" rel="stylesheet" />
-    <link href="{% static 'frontend/css/card.css' %}" rel="stylesheet" />
+    <link href="{% static 'frontend/css/bulma.min.css' %}" rel="stylesheet"/>
+    <link href="{% static 'frontend/css/App.css' %}" rel="stylesheet"/>
+    <link href="{% static 'frontend/css/card.css' %}" rel="stylesheet"/>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
@@ -43,59 +43,60 @@
 </head>
 <body>
 <header>
-<nav id="nav" class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a href="#home" class="navbar-brand">
-    <img src="{% static 'frontend/img/logo_climateserv_WithGlobe.png' %}" alt="ClimateSERV" />
-</a>
-    <button
-            class="navbar-toggler"
-            type="button"
-            data-toggle="collapse"
-            data-target="#navbarCollapse"
-            aria-controls="navbarCollapse"
-            aria-expanded="false"
-            aria-label="Toggle navigation"
-    >
-        <span class="navbar-toggler-icon"></span>
-    </button>
-    <div class="navbar-collapse collapse" id="navbarCollapse">
+    <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
+        <a href="#home" class="navbar-brand">
+            <img src="{% static 'frontend/img/logo_climateserv_WithGlobe.png' %}" alt="ClimateSERV"/>
+        </a>
+        <button
+                class="navbar-toggler"
+                type="button"
+                data-toggle="collapse"
+                data-target="#navbarCollapse"
+                aria-controls="navbarCollapse"
+                aria-expanded="false"
+                aria-label="Toggle navigation"
+        >
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarCollapse">
             <ul class="navbar-nav mr-auto">
                 <li>
-            <a aria-current="page" id="menu-home" class="nav-link" href="{% url 'ClimateSERV_UI:home' %}">Home</a>
+                    <a aria-current="page" id="menu-home" class="nav-link"
+                       href="{% url 'ClimateSERV_UI:home' %}">Home</a>
                 </li>
                 <li>
-            <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">Map</a>
+                    <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">Map</a>
                 </li>
                 <li>
-            <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">About</a>
+                    <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">About</a>
                 </li>
             </ul>
-        <div class="navbar-nav">
-            <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">Help Center</a>
+            <div class="navbar-nav">
+                <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">Help Center</a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 </header>
 {% block content %}{% endblock %}
 <div class="d-flex flex-column">
-<footer id="footer">
-    <div class="climate-copy">
-        <a href="https://climateserv.net">ClimateSERV</a>
-        <span>© 2020 SERVIR Global</span>
-    </div>
-    <div class="ml-auto climate-power">
-        <span>Powered by </span>
-        <a href="https://servirglobal.net">
-            <img
-                    src="{% static 'frontend/img/logo_servir_global_better.png' %}"
-                    alt="SERVIR Global"
-                    style="margin-left: 8px"
-            />
-        </a>
-    </div>
+    <footer id="footer">
+        <div class="climate-copy">
+            <a href="https://climateserv.net">ClimateSERV</a>
+            <span>© 2020 SERVIR Global</span>
+        </div>
+        <div class="ml-auto climate-power">
+            <span>Powered by </span>
+            <a href="https://servirglobal.net">
+                <img
+                        src="{% static 'frontend/img/logo_servir_global_better.png' %}"
+                        alt="SERVIR Global"
+                        style="margin-left: 8px"
+                />
+            </a>
+        </div>
 
-</footer>
+    </footer>
 </div>
-{%  block item-template %}{% endblock %}
+{% block item-template %}{% endblock %}
 </body>
 </html>

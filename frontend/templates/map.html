@@ -205,12 +205,13 @@
                             >
                                 <div class="acontainer">
                                     <div class="drop-container" id="drop-container">
-                                        <div class="drop-message">
+                                        <div class="drop-message" onclick="triggerUpload(event)">
                                             <div class="upload-icon"></div>
                                             Drag &amp; Drop json, geojson, or zipped shapefile here
                                             or click to select file
                                         </div>
-                                        <input class="file-input" type="file" multiple=""/>
+                                        <input id="upload_files" class="upload_files" type="file" multiple=""
+                                               style="display: none;"/>
                                     </div>
                                     <div class="file-display-container"></div>
                                 </div>
