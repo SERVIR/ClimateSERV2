@@ -76,6 +76,15 @@ body {
     z-index: 1000 !important;
 }
 
+.ui-dialog .ui-resizable-sw {
+    right: 0 !important;
+    bottom: 0 !important;
+    background-position: -64px -224px !important;
+    width: 17px;
+    height: 17px;
+    z-index: 1000 !important;
+}
+
 .ui-dialog .ui-dialog-title {
     font-weight: 400;
     font-size: 14.4pt;

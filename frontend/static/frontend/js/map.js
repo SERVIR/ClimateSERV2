@@ -779,6 +779,7 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
+    $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
         formData.append(
@@ -868,6 +869,7 @@ function pollForProgress(id, isClimate) {
                 getDataFromRequest(id, isClimate);
             } else {
                 console.log("Server Error");
+                $("#btnRequest").prop("disabled", false);
             }
         }); // this is the jobID to poll with and get data
 }
@@ -1033,6 +1035,7 @@ function getDataFromRequest(id, isClimate) {
                     }, $("#sourcemenu option:selected").text());
                 }
             }
+            $("#btnRequest").prop("disabled", false);
         });
 };
 
