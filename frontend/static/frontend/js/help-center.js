@@ -195,3 +195,30 @@ function activate(which) {
     $("[id$=help-section]").hide()
     $("#" + which + "-help-section").show();
 }
+
+
+function toggleHelpImage(which) {
+    let img = $(which);
+    img.toggleClass("fullSize");
+    img.parent().toggleClass("fullSize");
+
+
+}
+
+var debugme;
+var debugme2;
+$(function () {
+    try {
+        $(".collapse").on('show.bs.collapse', function (e) {
+            console.log("show");
+            debugme = this;
+            debugme2 = e.target;
+            $($(this).prev().first().children()[0]).removeClass("fa-angle-down").addClass("fa-angle-up");
+        }).on('hide.bs.collapse', function (e) {
+            console.log("hide");
+            $($(this).prev().first().children()[0]).removeClass("fa-angle-up").addClass("fa-angle-down");
+        });
+    } catch (e) {
+        console.log("aoiOptionToggle Failed");
+    }
+});

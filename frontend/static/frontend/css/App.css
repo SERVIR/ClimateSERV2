@@ -409,7 +409,7 @@ body {
 }
 
 .bread-crumb {
-    text-decoration: underline;
+    /*text-decoration: underline;*/
     background-color: unset;
     color: #758055;
 }
