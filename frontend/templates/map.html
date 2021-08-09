@@ -140,46 +140,43 @@
                               <i class="fas fa-caret-left"></i>
                             </span>
                         </h1>
-                        <div class="btn-group d-flex">
-                            <button id="btnstep1" class="w-100 bread-crumb active" onclick="gotostep(1)" disabled="">
-                                Set AOI
+                        <div id="step1 card-header">
+                            <h2 class="step-marker">Set Area of Interest</h2>
+                            <button
+                                    type="button"
+                                    class="bread-crumb"
+                                    data-toggle="collapse"
+                                    data-target="#aoiOptions">
+                                About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
-                            <button id="btnstep2" class="w-100 bread-crumb" onclick="gotostep(2)" disabled="">
-                                Set Data
-                            </button>
-                            <button id="btnstep3" class="w-100 bread-crumb" onclick="gotostep(3)" disabled="">
-                                Review
-                            </button>
-                        </div>
-
-                        <div id="step1">
-                            <h2 class="step-marker">Set AOI</h2>
-                            <p>
-                                Choose how you would like to define your area of interest
-                                (AOI)
-                            </p>
-                            <ul class="step-list">
-                                <li>
-                                    <span class="bold">Draw:</span> Enables drawing on the map.
-                                    You must make a closed polygon to define your AOI.
-                                </li>
-                                <li>
-                                    <span class="bold">Upload:</span> Enables either drag and
-                                    drop or click to upload a json file with your defined AOI
-                                </li>
-                                <li>
-                                    <span class="bold">Select:</span> Adds administrative
-                                    boundaries at different levels for you to choose your AOI.
-                                </li>
-                            </ul>
+                            <div id="aoiOptions" class="collapse" style="padding: 0 10px 20px 20px;">
+                                <p>
+                                    Choose how you would like to define your area of interest
+                                    (AOI)
+                                </p>
+                                <ul class="step-list">
+                                    <li>
+                                        <span class="bold">Draw:</span> Enables drawing on the map.
+                                        You must make a closed polygon to define your AOI.
+                                    </li>
+                                    <li>
+                                        <span class="bold">Upload:</span> Enables either drag and
+                                        drop or click to upload a json file with your defined AOI
+                                    </li>
+                                    <li>
+                                        <span class="bold">Select:</span> Adds administrative
+                                        boundaries at different levels for you to choose your AOI.
+                                    </li>
+                                </ul>
+                            </div>
                             <div class="btn-group d-flex">
-                                <button class="tablinks w-100" onclick="selectAOI('draw')">
+                                <button id="btnAOIdraw" class="tablinks w-100" onclick="selectAOI('draw')">
                                     Draw
                                 </button>
-                                <button class="tablinks w-100" onclick="selectAOI('upload')">
+                                <button id="btnAOIupload" class="tablinks w-100" onclick="selectAOI('upload')">
                                     Upload
                                 </button>
-                                <button class="tablinks w-100" onclick="selectAOI('select')">
+                                <button id="btnAOIselect" class="tablinks w-100" onclick="selectAOI('select')">
                                     Select
                                 </button>
                             </div>
@@ -241,18 +238,21 @@
                                 </p>
                                 <div class="btn-group d-flex">
                                     <button
+                                            id="btnAdminFeatcountry"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('country')"
                                     >
                                         Country
                                     </button>
                                     <button
+                                            id="btnAdminFeatadmin_1_earth"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('admin_1_earth')"
                                     >
                                         Admin #1
                                     </button>
                                     <button
+                                            id="btnAdminFeatadmin_2_af"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('admin_2_af')"
                                     >
@@ -260,20 +260,15 @@
                                     </button>
                                 </div>
                             </div>
-
-                            <div style="
-                                    width: calc(100% - 10px);
-                                    position: relative;
-                                    margin-top: 20px;">
-                                <button id="nextStep1" onclick="gotostep(2)" disabled=""
-                                        style="position: absolute; right: 0">
-                                    Next
-                                </button>
+                            <div class="form-group panel-buffer">
+                                <label for="geometry">Geometry</label>
+                                <span class="form-control" id="geometry"
+                                      style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">
+                                    {"type":"FeatureCollection","features":[]}
+                                </span>
                             </div>
-                        </div>
-                        <div id="step2" style="display:none;">
                             <form id="query-form" onsubmit="return false;">
-                                <h2 class="step-marker">Set Data</h2>
+                                <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
                                     <label for="requestTypeSelect">Type</label>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
@@ -327,16 +322,18 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div style="
+
+                            </form>
+
+                            <div style="
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                    <button id="nextStep2" onclick="gotostep(3)" disabled=""
-                                            style="position: absolute; right: 0">
-                                        Next
-                                    </button>
-                                </div>
-                            </form>
+                                <button id="btnRequest" onclick="sendRequest()">Send Request</button>
+                            </div>
+                        </div>
+                        <div id="step2" style="display:none;">
+
                         </div>
                         <div id="step3" style="display:none;">
                             <h2 class="step-marker">Review</h2>
@@ -372,11 +369,8 @@
                                     </p>
                                 </div>
                             </div>
-                            <div class="form-group panel-buffer">
-                                <label for="geometry">Geometry</label>
-                                <span class="form-control" id="geometry" style="height: unset; word-break: break-all;">features: 201</span>
-                            </div>
-                            <button id="btnRequest" onclick="sendRequest()">Send Request</button>
+
+
                         </div>
                     </div>
 

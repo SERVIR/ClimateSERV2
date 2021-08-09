@@ -307,6 +307,8 @@ function onlyUnique(value, index, self) {
  * @param {string} which - name of selection method to activate
  */
 function selectAOI(which) {
+    $("[id^=btnAOI]").removeClass("active");
+    $("#btnAOI" + which).addClass("active");
     $(".selectAOI").hide();
     $("#" + which + "AOI").show();
 
@@ -340,9 +342,11 @@ function clearAOISelections() {
         drawnItems.clearLayers();
     }
     if (uploadLayer) {
+        uploadLayer.clearLayers();
         uploadLayer.remove();
     }
     $("#nextStep1").prop("disabled", true);
+    collect_review_data();
 }
 
 function triggerUpload(e) {
@@ -384,6 +388,7 @@ function handleFiles(e) {
                 $("#nextStep1").prop("disabled", true);
             }
             $("#upload_error").hide();
+            collect_review_data();
         } catch (e) {
             // When the section is built the url will need to add #pageanchorlocation
             $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
@@ -432,6 +437,7 @@ function handleFiles(e) {
                     } else {
                         $("#nextStep1").prop("disabled", true);
                     }
+                    collect_review_data();
                 }
             );
         }
@@ -468,6 +474,7 @@ function enableDrawing() {
         } else {
             $("#nextStep1").prop("disabled", true);
         }
+        collect_review_data();
     });
 
     map.on(L.Draw.Event.DELETED, function (e) {
@@ -476,6 +483,7 @@ function enableDrawing() {
         } else {
             $("#nextStep1").prop("disabled", true);
         }
+        collect_review_data();
     });
 
     map.on("draw:drawstart", function (e) {
@@ -488,6 +496,8 @@ function enableDrawing() {
  * @param {string} which - name of admin layer to activate
  */
 function enableAdminFeature(which) {
+    $("[id^=btnAdminFeat]").removeClass("active");
+    $("#btnAdminFeat" + which).addClass("active");
     clearAOISelections();
     adminLayer = L.tileLayer.wms(
         admin_layer_url,
@@ -557,6 +567,7 @@ function enableAdminFeature(which) {
                     adminHighlightLayer.setZIndex(
                         Object.keys(baseLayers).length + client_layers.length + 6
                     );
+                    collect_review_data();
                 }
             },
         });
@@ -744,6 +755,7 @@ function collect_review_data() {
         console.log("uploaded");
         $("#geometry").text(JSON.stringify(uploadLayer.toGeoJSON()));
     } else {
+        $("#geometry").text('{"type":"FeatureCollection","features":[]}');
         console.log("nothing");
     }
 
@@ -884,14 +896,14 @@ function inti_chart_dialog() {
     $("#dialog").dialog({
         title: "Statistical Query",
         resizable: {handles: "se"},
-        width: $(window).width() - 100,
+        width: $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
             window.dispatchEvent(new Event('resize'));
         },
         position: {
-            my: "center",
-            at: "center",
+            my: "right",
+            at: "right-25",
             of: window
         }
     });
@@ -1247,6 +1259,15 @@ $(function () {
         inputElement.addEventListener("change", handleFiles, false);
     } catch (e) {
         console.log("upload handler Failed");
+    }
+    try {
+        $(".collapse").on('show.bs.collapse', function () {
+            $("#aoiOptionToggle").removeClass("fa-angle-down").addClass("fa-angle-up");
+        }).on('hide.bs.collapse', function () {
+            $("#aoiOptionToggle").removeClass("fa-angle-up").addClass("fa-angle-down");
+        });
+    } catch (e) {
+        console.log("aoiOptionToggle Failed");
     }
 });
 
