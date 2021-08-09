@@ -345,8 +345,8 @@ function clearAOISelections() {
         uploadLayer.clearLayers();
         uploadLayer.remove();
     }
-    $("#nextStep1").prop("disabled", true);
     collect_review_data();
+    verify_ready();
 }
 
 function triggerUpload(e) {
@@ -382,13 +382,9 @@ function handleFiles(e) {
             uploadLayer.clearLayers();
             uploadLayer.addData(data);
             map.fitBounds(uploadLayer.getBounds());
-            if (uploadLayer.getLayers().length > 0) {
-                $("#nextStep1").prop("disabled", false);
-            } else {
-                $("#nextStep1").prop("disabled", true);
-            }
             $("#upload_error").hide();
             collect_review_data();
+            verify_ready();
         } catch (e) {
             // When the section is built the url will need to add #pageanchorlocation
             $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
@@ -432,12 +428,8 @@ function handleFiles(e) {
                     $("#encoding").val("");
                     $("#info").addClass("picInfo");
                     $("#option").slideUp(500);
-                    if (uploadLayer.getLayers().length > 0) {
-                        $("#nextStep1").prop("disabled", false);
-                    } else {
-                        $("#nextStep1").prop("disabled", true);
-                    }
                     collect_review_data();
+                    verify_ready();
                 }
             );
         }
@@ -454,6 +446,16 @@ function enableDrawing() {
             polyline: false,
             circle: false,
             circlemarker: false,
+            polygon: {
+                icon: new L.DivIcon({
+                    iconSize: new L.Point(8, 8),
+                    className: 'leaflet-div-icon leaflet-editing-icon'
+                }),
+                touchIcon: new L.DivIcon({
+                    iconSize: new L.Point(20, 20),
+                    className: 'leaflet-div-icon leaflet-editing-icon leaflet-touch-icon'
+                }),
+            }
         },
         edit: {
             featureGroup: drawnItems,
@@ -469,21 +471,13 @@ function enableDrawing() {
         }
         // Do whatever else you need to. (save to db; add to map etc)
         drawnItems.addLayer(layer);
-        if (drawnItems.getLayers().length > 0) {
-            $("#nextStep1").prop("disabled", false);
-        } else {
-            $("#nextStep1").prop("disabled", true);
-        }
         collect_review_data();
+        verify_ready();
     });
 
     map.on(L.Draw.Event.DELETED, function (e) {
-        if (drawnItems.getLayers().length > 0) {
-            $("#nextStep1").prop("disabled", false);
-        } else {
-            $("#nextStep1").prop("disabled", true);
-        }
         collect_review_data();
+        verify_ready();
     });
 
     map.on("draw:drawstart", function (e) {
@@ -554,63 +548,17 @@ function enableAdminFeature(which) {
                             feat_ids: highlightedIDs.join(),
                         }
                     );
-                    // if(highlightedIDs.length > 0){
-                    //   $("#btnstep2").prop("disabled", false);
-                    // }
-                    if (highlightedIDs.length > 0) {
-                        $("#nextStep1").prop("disabled", false);
-                    } else {
-                        $("#nextStep1").prop("disabled", true);
-                    }
 
                     map.addLayer(adminHighlightLayer);
                     adminHighlightLayer.setZIndex(
                         Object.keys(baseLayers).length + client_layers.length + 6
                     );
                     collect_review_data();
+                    verify_ready();
                 }
             },
         });
     });
-}
-
-function gotostep(which) {
-    $("[id^=step]").hide();
-    $("[id^=btnstep]").removeClass("active");
-    $("#step" + which).show();
-    $("#btnstep" + which).addClass("active");
-    $("#btnstep" + which).addClass("active");
-    switch (which) {
-        case 1:
-            $("[id^=btnstep]").prop("disabled", true);
-            break;
-        case 2:
-            $("#btnstep1").prop("disabled", false);
-            // also disable any drawing ability, remove drawing bar
-            // also disable any drawing ability, remove drawing bar
-            if (drawToolbar) {
-                drawToolbar.remove();
-            }
-            map.off("click");
-            break
-        case 3:
-            $("#btnstep2").prop("disabled", false);
-            collect_review_data();
-            if ($("#requestTypeSelect").val() === "monthly_analysis") {
-                // hide data review, show monthly review
-                $("#dataset_review").hide();
-                $("#monthly_rainfall_review").show();
-
-            } else {
-                $("#monthly_rainfall_review").hide();
-                $("#dataset_review").show();
-            }
-            break;
-    }
-}
-
-function enablestep3() {
-    $("#btnstep3").prop("disabled", false);
 }
 
 /**
@@ -734,31 +682,29 @@ function isComplete() {
         $(sDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
     }
-    $("#nextStep2").prop("disabled", !isReady);
+    return isReady;
+}
+
+function verify_ready() {
+    let ready = true;
+    if ($("#requestTypeSelect").val() === "datasets") {
+        ready = isComplete();
+    }
+    $("#btnRequest").prop("disabled",
+        !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
 }
 
 function collect_review_data() {
-    //get all data and fill review
-
-    $("#dataType").text($("#sourcemenu").val() + " - " + $("#sourcemenu option:selected").text());
-    $("#begintime").text(moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY'));
-    $("#endtime").text(moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY'));
-    $("#operationtype").text($("#operationmenu").val() + " - " + $("#operationmenu option:selected").text());
     if (highlightedIDs.length > 0) {
-        console.log("highlighted");
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
         $("#geometry").text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
     } else if (drawnItems.getLayers().length > 0) {
-        console.log("drawn");
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
     } else if (uploadLayer) {
-        console.log("uploaded");
         $("#geometry").text(JSON.stringify(uploadLayer.toGeoJSON()));
     } else {
         $("#geometry").text('{"type":"FeatureCollection","features":[]}');
-        console.log("nothing");
     }
-
 }
 
 function getEnsDataType() {
@@ -797,8 +743,8 @@ function sendRequest() {
         formData.append(
             "datatype", $("#sourcemenu").val()
         );
-        formData.append("begintime", $("#begintime").text()); // "01/01/2020");
-        formData.append("endtime", $("#endtime").text()); //"06/30/2020");
+        formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
+        formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
         formData.append("intervaltype", 0);
         formData.append("operationtype", $("#operationmenu").val());
         formData.append("dateType_Category", "default");
@@ -1224,12 +1170,11 @@ function openDataTypePanel(select_control) {
     if (select_control.value === "datasets") {
         $("#panel_monthly_rainfall").hide();
         $("#panel_dataset").show();
-        isComplete();
     } else {
         $("#panel_dataset").hide();
         $("#panel_monthly_rainfall").show();
-        $("#nextStep2").prop("disabled", false);
     }
+    verify_ready();
 }
 
 let climateModelInfo;

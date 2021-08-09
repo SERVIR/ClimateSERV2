@@ -298,11 +298,11 @@
                                     <div class="form-group panel-buffer">
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                               onchange="isComplete()">
+                                               onchange="verify_ready()">
                                         <div class="input-group-addon">to</div>
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                               onchange="isComplete()">
+                                               onchange="verify_ready()">
                                         <label id="compare-error" for="eDate_new_cooked"
                                                style="color:#da2020; display: none;">End date must be equal or greater
                                             than
@@ -329,48 +329,8 @@
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                <button id="btnRequest" onclick="sendRequest()">Send Request</button>
+                                <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
                             </div>
-                        </div>
-                        <div id="step2" style="display:none;">
-
-                        </div>
-                        <div id="step3" style="display:none;">
-                            <h2 class="step-marker">Review</h2>
-                            <p>Please review the parameters then click the Send Request at the bottom.</p>
-                            <div id="dataset_review">
-                                <div class="form-group panel-buffer">
-                                    <label for="dataType">Data Type</label>
-                                    <span class="form-control" id="dataType">0 - CHIRPS Rainfall</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="begintime">Start date</label>
-                                    <span class="form-control" id="begintime">01/01/2021</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="endtime">End date</label>
-                                    <span class="form-control" id="endtime">07/19/2021</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="operationtype">Operationtype</label>
-                                    <span class="form-control" id="operationtype">5 - Average</span>
-                                </div>
-                            </div>
-
-                            <div id="monthly_rainfall_review" style="display: none;">
-                                <div class="form-group panel-buffer">
-                                    <p style="text-align: justify; margin-top: 20px;">
-                                        Geometry is the only option for Monthly Rainfall Analysis.
-                                    </p>
-                                    <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
-                                        Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
-                                        data and current NMME Seasonal Forecast data.
-
-                                    </p>
-                                </div>
-                            </div>
-
-
                         </div>
                     </div>
 

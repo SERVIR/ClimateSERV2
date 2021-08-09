@@ -477,7 +477,7 @@ button.w-100.bread-crumb.active {
     position: absolute;
     width: 100%;
     text-align: center;
-    color: red;
+    color: #22d448;
     font-weight: 500;
 }
 
