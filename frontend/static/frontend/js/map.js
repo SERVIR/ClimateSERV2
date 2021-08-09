@@ -1,5 +1,5 @@
 /** Global Variables */
-let active_basemap = "OSM";
+let active_basemap = "Gsatellite";
 let map;
 let passedLayer;
 let overlayMaps = {};
@@ -225,7 +225,7 @@ function openLegend(which) {
  */
 function mapSetup() {
     map = L.map("servirmap", {
-        zoom: 5,
+        zoom: 3,
         fullscreenControl: true,
         timeDimension: true,
         timeDimensionControl: true,
@@ -236,7 +236,10 @@ function mapSetup() {
     map.addLayer(drawnItems);
     baseLayers = getCommonBaseLayers(map); // use baselayers.js to add, remove, or edit
     L.control.layers(baseLayers, overlayMaps).addTo(map);
-    L.control.sidebar("sidebar").addTo(map);
+    const sidebar = L.control.sidebar("sidebar").addTo(map);
+
+    sidebar.open('chart');
+
 
     //create the basemap thumbnails in the panel
     for (let key of Object.keys(baseLayers)) {
@@ -342,6 +345,11 @@ function clearAOISelections() {
     $("#nextStep1").prop("disabled", true);
 }
 
+function triggerUpload(e) {
+    e.preventDefault();
+    $("#upload_files").trigger('click');
+}
+
 /**
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
@@ -357,73 +365,77 @@ function enableUpload() {
     });
 
     targetEl.addEventListener("drop", function (e) {
-        e.preventDefault();
-        const reader = new FileReader();
-        reader.onloadend = function () {
-            try {
-                const data = JSON.parse(this.result);
-                uploadLayer.clearLayers();
-                uploadLayer.addData(data);
-                map.fitBounds(uploadLayer.getBounds());
-                if (uploadLayer.getLayers().length > 0) {
-                    $("#nextStep1").prop("disabled", false);
-                } else {
-                    $("#nextStep1").prop("disabled", true);
-                }
-                $("#upload_error").hide();
-            } catch (e) {
-                // When the section is built the url will need to add #pageanchorlocation
-                $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
-                $("#upload_error").show();
-            }
-        };
-        const files = e.target.files || e.dataTransfer.files;
-        for (let i = 0, file; (file = files[i]); i++) {
-            if (file.type === "application/json") {
-                reader.readAsText(file);
-            } else if (file.name.indexOf(".geojson") > -1) {
-                reader.readAsText(file);
-            } else if (file.type === "application/x-zip-compressed") {
-                // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
-                if (uploadLayer) {
-                    uploadLayer.clearLayers();
-                }
-                loadshp(
-                    {
-                        url: file,
-                        encoding: "UTF-8",
-                        EPSG: 4326,
-                    },
-                    function (data) {
-                        let URL =
-                                window.URL || window.webkitURL || window.mozURL || window.msURL,
-                            url = URL.createObjectURL(
-                                new Blob([JSON.stringify(data)], {type: "application/json"})
-                            );
-                        if (data.features.length > 10) {
-                            data.features = data.features.splice(0, 10);
-                        }
-                        uploadLayer.addData(data);
-                        map.fitBounds([
-                            [data.bbox[1], data.bbox[0]],
-                            [data.bbox[3], data.bbox[2]],
-                        ]);
-                        $(".dimmer").removeClass("active");
-                        $("#preview").addClass("disabled");
-                        $("#epsg").val("");
-                        $("#encoding").val("");
-                        $("#info").addClass("picInfo");
-                        $("#option").slideUp(500);
-                        if (uploadLayer.getLayers().length > 0) {
-                            $("#nextStep1").prop("disabled", false);
-                        } else {
-                            $("#nextStep1").prop("disabled", true);
-                        }
-                    }
-                );
-            }
-        }
+        handleFiles(e);
     });
+}
+
+function handleFiles(e) {
+    e.preventDefault();
+    const reader = new FileReader();
+    reader.onloadend = function () {
+        try {
+            const data = JSON.parse(this.result);
+            uploadLayer.clearLayers();
+            uploadLayer.addData(data);
+            map.fitBounds(uploadLayer.getBounds());
+            if (uploadLayer.getLayers().length > 0) {
+                $("#nextStep1").prop("disabled", false);
+            } else {
+                $("#nextStep1").prop("disabled", true);
+            }
+            $("#upload_error").hide();
+        } catch (e) {
+            // When the section is built the url will need to add #pageanchorlocation
+            $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+            $("#upload_error").show();
+        }
+    };
+    const files = e.target.files || e.dataTransfer.files || this.files;
+    for (let i = 0, file; (file = files[i]); i++) {
+        if (file.type === "application/json") {
+            reader.readAsText(file);
+        } else if (file.name.indexOf(".geojson") > -1) {
+            reader.readAsText(file);
+        } else if (file.type === "application/x-zip-compressed") {
+            // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
+            if (uploadLayer) {
+                uploadLayer.clearLayers();
+            }
+            loadshp(
+                {
+                    url: file,
+                    encoding: "UTF-8",
+                    EPSG: 4326,
+                },
+                function (data) {
+                    let URL =
+                            window.URL || window.webkitURL || window.mozURL || window.msURL,
+                        url = URL.createObjectURL(
+                            new Blob([JSON.stringify(data)], {type: "application/json"})
+                        );
+                    if (data.features.length > 10) {
+                        data.features = data.features.splice(0, 10);
+                    }
+                    uploadLayer.addData(data);
+                    map.fitBounds([
+                        [data.bbox[1], data.bbox[0]],
+                        [data.bbox[3], data.bbox[2]],
+                    ]);
+                    $(".dimmer").removeClass("active");
+                    $("#preview").addClass("disabled");
+                    $("#epsg").val("");
+                    $("#encoding").val("");
+                    $("#info").addClass("picInfo");
+                    $("#option").slideUp(500);
+                    if (uploadLayer.getLayers().length > 0) {
+                        $("#nextStep1").prop("disabled", false);
+                    } else {
+                        $("#nextStep1").prop("disabled", true);
+                    }
+                }
+            );
+        }
+    }
 }
 
 /**
@@ -767,6 +779,7 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
+    $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
         formData.append(
@@ -856,6 +869,7 @@ function pollForProgress(id, isClimate) {
                 getDataFromRequest(id, isClimate);
             } else {
                 console.log("Server Error");
+                $("#btnRequest").prop("disabled", false);
             }
         }); // this is the jobID to poll with and get data
 }
@@ -968,7 +982,7 @@ function getDataFromRequest(id, isClimate) {
                 });
                 inti_chart_dialog();
 
-                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis");
+                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
             } else {
                 const compiledData = [];
@@ -1012,6 +1026,7 @@ function getDataFromRequest(id, isClimate) {
                     ).units;
 
                     finalize_chart([{
+                        color: "#758055",
                         type: "line",
                         name: $("#operationmenu option:selected").text(),
                         data: compiledData.sort((a, b) => a[0] - b[0])
@@ -1020,105 +1035,121 @@ function getDataFromRequest(id, isClimate) {
                     }, $("#sourcemenu option:selected").text());
                 }
             }
+            $("#btnRequest").prop("disabled", false);
         });
 };
 
-function finalize_chart(compiled_series, units, xAxis_object, title) {
-    Highcharts.chart('chart_holder', {
-// fix title is Monthly Rainfall Analysis.
+function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) {
+    let chart_obj = {};
+    chart_obj.title = {
+        text: title
+    };
+
+    chart_obj.subtitle = {
+        text: 'Source: climateserv.servirglobal.net'
+    };
+    chart_obj.xAxis = xAxis_object;
+    chart_obj.yAxis = {
         title: {
-            text: title
-        },
+            text: units
+        }
+    };
 
-        subtitle: {
-            text: 'Source: climateserv.servirglobal.net'
-        },
-        xAxis: xAxis_object,
-        yAxis: {
-            title: {
-                text: units
-            }
-        },
+    chart_obj.legend = {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+    };
 
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle'
-        },
-
-        plotOptions: {
-            series: {
-                connectNulls: false,
-
-                marker: {
-                    radius: 3
-                },
-                lineWidth: 2,
+    chart_obj.plotOptions = {
+        series: {
+            connectNulls: false,
+            marker: {
+                radius: 3,
+                fillColor: "#758055",
                 states: {
                     hover: {
-                        lineWidth: 2
+                        fillColor: '#758055',
+                    },
+                    halo: {
+                        fillColor: '#758055',
                     }
                 },
-                threshold: null,
-                allowPointSelect: true,
-                point: {
-                    events: {
-                        select: function (e) {
-                            const full = new Date(e.target.x);
-                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+            },
+            lineWidth: 2,
+            states: {
+                hover: {
+                    lineWidth: 2
+                },
+                halo: {
+                    fillColor: '#758055',
+                }
+            },
+            threshold: null,
+            allowPointSelect: true,
+            point: {
+                events: {
+                    select: function (e) {
+                        const full = new Date(e.target.x);
+                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
 
-                            console.log(date);
-                        }
+                        console.log(date);
                     }
                 }
             }
-        },
-        exporting: {
-            chartOptions: {
-                chart: {
-                    events: {
-                        load: function () {
-                            console.log("exporting!!!");
-                            const width = this.chartWidth - 105;
-                            const height = this.chartHeight - 130;
-                            console.log(static_url + 'frontend/img/servir_logo_full_color_stacked.jpg');
-                            this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
-                            ).add();
-                        }
-                    }
-                }
-            }
-        },
-        chart: {
-            events: {
-                redraw: function (e) {
-                    img.translate(
-                        this.chartWidth - originalWidth,
-                        this.chartHeight - originalHeight
-                    );
-                }
-            }
-        },
-        series: compiled_series,
-        tooltip: {
-            pointFormat: "Value: {point.y:.2f} " + units
-        },
-        responsive: {
-            rules: [{
-                condition: {
-                    maxWidth: 500
-                },
-                chartOptions: {
-                    legend: {
-                        layout: 'horizontal',
-                        align: 'center',
-                        verticalAlign: 'bottom'
-                    }
-                }
-            }]
         }
+    };
+    if (isClimate) {
+        chart_obj.plotOptions.series.marker = {
+            radius: 3
+        };
+    }
 
-    }, function (chart) { // on complete
+    chart_obj.exporting = {
+        chartOptions: {
+            chart: {
+                events: {
+                    load: function () {
+                        const width = this.chartWidth - 105;
+                        const height = this.chartHeight - 130;
+                        this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                        ).add();
+                    }
+                }
+            }
+        }
+    };
+    chart_obj.chart = {
+        events: {
+            redraw: function (e) {
+                img.translate(
+                    this.chartWidth - originalWidth,
+                    this.chartHeight - originalHeight
+                );
+            }
+        }
+    };
+    chart_obj.series = compiled_series;
+    chart_obj.tooltip = {
+        pointFormat: "Value: {point.y:.2f} " + units,
+        borderColor: "#758055",
+    };
+    chart_obj.responsive = {
+        rules: [{
+            condition: {
+                maxWidth: 500
+            },
+            chartOptions: {
+                legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
+            }
+        }]
+    };
+
+    Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
@@ -1210,6 +1241,12 @@ $(function () {
         getClimateScenarioInfo();
     } catch (e) {
         console.log("ClimateScenarioInfo Failed");
+    }
+    try {
+        const inputElement = document.getElementById("upload_files");
+        inputElement.addEventListener("change", handleFiles, false);
+    } catch (e) {
+        console.log("upload handler Failed");
     }
 });
 

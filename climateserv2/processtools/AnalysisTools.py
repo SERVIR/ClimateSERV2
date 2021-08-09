@@ -1,17 +1,30 @@
 # Kris Stanton (Cris Squared)
 # 2017
-
-import CHIRPS.utils.geo.geoutils as geoutils
-import CHIRPS.utils.processtools.dateprocessor as dproc
-import CHIRPS.utils.configuration.parameters as params
-import CHIRPS.utils.processtools.uutools as uu
-import CHIRPS.utils.file.dateutils as dateutils
-import CHIRPS.utils.geo.clippedmaskgenerator as mg
-import CHIRPS.utils.geo.shapefile.readShapesfromFiles as sf
-import CHIRPS.utils.file.MaskTempStorage  as mst
-import CHIRPS.utils.file.npmemmapstorage as rp
-import CHIRPS.utils.file.ExtractTifFromH5 as extractTif
 import numpy as np
+try:
+    import climateserv2.geoutils as geoutils
+    import climateserv2.processtools.dateprocessor as dproc
+    import climateserv2.parameters as params
+    import climateserv2.processtools.uutools as uu
+    import climateserv2.file.dateutils as dateutils
+    import climateserv2.geo.clippedmaskgenerator as mg
+    import climateserv2.geo.shapefile.readShapesfromFiles as sf
+    import climateserv2.file.MaskTempStorage  as mst
+    import climateserv2.file.npmemmapstorage as rp
+    import climateserv2.file.ExtractTifFromH5 as extractTif
+
+except:
+    import geoutils as geoutils
+    import processtools.dateprocessor as dproc
+    import configuration.parameters as params
+    import processtools.uutools as uu
+    import file.dateutils as dateutils
+    import geo.clippedmaskgenerator as mg
+    import geo.shapefile.readShapesfromFiles as sf
+    import file.MaskTempStorage  as mst
+    import file.npmemmapstorage as rp
+    import file.ExtractTifFromH5 as extractTif
+
 #import CHIRPS.utils.file.ExtractTifFromH5 as extractTif
 import time
 

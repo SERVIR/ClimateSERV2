@@ -77,6 +77,7 @@ class ZMQCHIRPSHeadProcessor():
     dj_OperationName = "download"  # Needed by   # "if results['value'][opname] != missingValue:"
     
     def __init__(self, name, inputconn, outputconn, listenconn):
+        print('from init')
         self.name = name
         self.inputconn = inputconn
         self.outputconn = outputconn
@@ -96,6 +97,7 @@ class ZMQCHIRPSHeadProcessor():
         self.outputreceiver.connect(self.outputconn)
         self.listenreceiver = context.socket(zmq.PULL)
         self.listenreceiver.connect(self.listeningconn)
+        print('from begin watch')
         self.logger.info("Processor ("+self.name+")  Connected and Ready")
         self.__watchAgain__()
         
@@ -105,7 +107,7 @@ class ZMQCHIRPSHeadProcessor():
             request = json.loads(self.inputreceiver.recv())
             self.process_start_time = time.time()
             self.logger.info("Processing request "+request['uniqueid'])
-            self.processWork(request)
+            # self.processWork(request)
             self.total_task_count = 100.0
             self.finished_task_count = 1.0
             self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.0
@@ -567,7 +569,6 @@ class ZMQCHIRPSHeadProcessor():
         
     def __updateProgressDb__(self,uniqueid, progress):
         conn = bdp.BDDbConnector()
-        self.logger.info("before connecting to db")
         conn.setProgress(uniqueid, progress)
         conn.close()
         

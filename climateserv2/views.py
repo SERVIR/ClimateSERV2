@@ -3,11 +3,10 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
 import climateserv2.db.bddbprocessing as bdp
-from . import parameters as params
+from . import parameters as params, geoutils as decodeGeoJSON
 from .processtools import uutools as uutools
-from . import geoutils as decodeGeoJSON
 import zmq
-import dbm
+
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
 logger = logging.getLogger(__name__)
@@ -141,6 +140,90 @@ def getDataRequestProgress(request):
     except (Exception, OSError) as e :
         logger.warn("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return processCallBack(request, json.dumps([-1]), "application/json")
+# def read_All_Climate_Capabilities(dataTypeNumberList):
+def read_DataType_Capabilities_For(dataTypeNumberList):
+    '''
+    Gets the capabilities from the bddb storage for a given list of DataType Numbers
+    :param request: list of data type numbers
+    :rtype: List of objects
+    returnList : (List)
+    returnList[n].dataTypeNumber : (int) Current datatype number
+    returnList[n].current_Capabilities : (string) (JSON Stringified Object) Current capabilities object, intention is that they are stored as JSON strings
+    '''
+    retList = []
+
+    try:
+        # Create a connection to the bddb
+        conn = bdp.BDDbConnector_Capabilities()
+
+        # try and get data
+        try:
+            for currentDataTypeNumber in dataTypeNumberList:
+                currentValue = conn.get_Capabilities(currentDataTypeNumber)
+                appendObj = {
+                    "dataTypeNumber": currentDataTypeNumber,
+                    "current_Capabilities": currentValue
+                }
+                retList.append(appendObj)
+        except Exception as e:
+            # Catch an error?
+            # Error here indicates trouble accessing data or possibly getting an individual capabilities item
+            logger.warn(
+                "Error here indicates trouble accessing data or possibly getting an individual capabilities item: " + str(
+                    e))
+            pass
+
+        # Close the bddb connection
+        conn.close()
+    except Exception as e:
+        # Catch an error?
+        # Error here indicates trouble connecting to the BD Database
+        # If trouble connect
+        logger.warn("Error here indicates trouble connecting to the BD Database: " + str(e))
+        pass
+    logger.warn("No error was found, look some place else")
+    # return the list!
+    return retList
+
+# ks refactor 2015 // New API Hook getClimateScenarioInfo
+# Note: Each individual capabilities entry is already wrapped as a JSON String
+#        This means that those elements need to be individually unwrapped in client code.
+#        Here is an example in JavaScript
+#    // JavaScript code that sends the api return into an object called 'apiReturnData'
+#    var testCapabilities_JSONString = apiReturnData.climate_DataTypeCapabilities[1].current_Capabilities
+#    testCapabilities_Unwrapped = JSON.parse(testCapabilities_JSONString)
+#    // At this point, 'testCapabilities_Unwrapped' should be a fully unwrapped JavaScript object.
+@csrf_exempt
+def getClimateScenarioInfo(request):
+    '''
+    Get a list of all climate change scenario info (capabilities).
+    :param request: in coming request, but don't need anything from the request.
+    returns an object
+    '''
+
+    # Error Tracking
+    isError = False
+
+    # Get list of datatype numbers that have the category of 'ClimateModel'
+    climateModel_DataTypeNumbers = params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
+
+    # Get all info from the Capabilities Data for each 'ClimateModel' datatype number
+    climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
+
+    # 'data_category':'ClimateModel'
+    climate_DatatypeMap = params.get_Climate_DatatypeMap()
+
+    api_ReturnObject = {
+        "RequestName": "getClimateScenarioInfo",
+        "climate_DatatypeMap": climate_DatatypeMap,
+        "climate_DataTypeCapabilities": climateModel_DataType_Capabilities_List,
+        "isError": isError
+    }
+
+    # ip = get_client_ip(request)
+    # return processCallBack(request,json.dumps(params.ClientSide_ClimateChangeScenario_Specs),"application/json")
+    return processCallBack(request, json.dumps(api_ReturnObject), "application/javascript")
+    # TODO!! Change the above return statement to return the proper object that the client can use to determine which options are available specifically for climate change scenario types.
 
 @csrf_exempt
 def submitDataRequest(request):
@@ -317,7 +400,7 @@ def submitDataRequest(request):
         ##logger.info("submitting ",dictionary)
         context = zmq.Context()
         sender = context.socket(zmq.PUSH)
-        sender.connect("inproc://D:/tmp") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
+        sender.connect("inproc:///D:/tmp/servir/Q1/input") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
         sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")

@@ -32,7 +32,7 @@ urlpatterns = [
     url(r'chirps/getDataFromRequest/', getDataFromRequest),
     url(r'chirps/getFeatureLayers/', getFeatureLayers),
     # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
-    # url(r'^/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
+    url('/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
     # url(r'^/chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
     # url(r'^/chirps/getFileForJobID/', getFileForJobID),
     # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),

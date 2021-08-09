@@ -3,7 +3,15 @@ Created on Jun 4, 2014
 
 @author: jeburks
 '''
-import CHIRPS.utils.configuration.parameters as param
+import os
+import sys
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+try:
+    import climateserv2.parameters as param
+except:
+    from ... import parameters as param
 from osgeo import ogr
 
 
