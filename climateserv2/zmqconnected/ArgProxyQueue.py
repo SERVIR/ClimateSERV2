@@ -4,6 +4,9 @@ import sys
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 import zmq
 try:
     import climateserv2.locallog.locallogging as llog
@@ -21,6 +24,7 @@ class ARGProxyQueue:
         self.location2 = location2
         
         self.__setup__()
+        self.logger.info('setup complete')
         
     def __setup__(self):
         
@@ -30,9 +34,8 @@ class ARGProxyQueue:
         inputsocket.bind(self.location1)
         outputsocket = context.socket(zmq.PUSH)
         outputsocket.bind(self.location2)
-         
         zmq.device(zmq.QUEUE, inputsocket, outputsocket)
-    
+
 if __name__ == "__main__":
     location1 = sys.argv[1]
     location2 = sys.argv[2]

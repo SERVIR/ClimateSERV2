@@ -5,8 +5,15 @@ Created on Jun 3, 2014
 Modified starting from Sept 2015
 @author: Kris Stanton
 '''
-
-from .processtools import dateIndexTools as dit
+import sys
+import os
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+try:
+    from climateserv2.processtools import dateIndexTools as dit
+except:
+    from processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
 

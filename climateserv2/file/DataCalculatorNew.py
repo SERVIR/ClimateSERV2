@@ -15,11 +15,9 @@ import climateserv2.file.ExtractTifFromH5 as extractTif
 
 
 # KS Note 2015 : All these added for download job types only
-import os
 import sys
-import datetime
 import climateserv2.file.npmemmapstorage as rp
-import climateserv2.geo.geoutils as geoutils
+import climateserv2.geoutils as geoutils
 
 from osgeo.gdalconst import *
 from osgeo import gdal #, gdalnumeric, ogr, osr
