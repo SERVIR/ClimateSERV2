@@ -116,14 +116,6 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     display: none;
 }
 
-.help-image{
-    background-size: cover;
-    min-height: 200px;
-    background-position: center;
-    border-radius: 8px;
-    border: 4px solid #758055;
-}
-
 .highlight {
     background: #ffffff;
 }
@@ -136,17 +128,17 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     background: #eee;
 }
 
-.help-tabs{
-    padding:5px;
+.help-tabs {
+    padding: 5px;
     cursor: pointer;
     color: #75805594;
 }
 
-.help-tabs:hover{
+.help-tabs:hover {
     color: #758055;
 }
 
-.help-tabs.active{
+.help-tabs.active {
     /*border: 1px solid #bdd12f;*/
     /*border-bottom: 0;*/
     /*border-top-left-radius: .25rem;*/
@@ -155,15 +147,18 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     font-weight: bold;
 }
 
-.tab-holder{
+.tab-holder {
     margin-bottom: 0;
     padding-left: 0;
     text-align: center;
 }
 
-.noscroll { position: fixed; overflow-y:scroll }
+.noscroll {
+    position: fixed;
+    overflow-y: scroll
+}
 
-.data-title{
+.data-title {
     font-size: 32px;
     line-height: 36px;
     font-weight: 700;
@@ -171,21 +166,13 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     padding: 0 0 0 1.25rem;
 }
 
-.summary{
+.summary {
     color: #616d72;
     font-size: 15px;
     line-height: 24px;
     font-weight: 400;
 }
 
-.help-bottom{
+.help-bottom {
     margin-bottom: 100px;
-}
-@media only screen and (max-width: 991px) {
-    .order-me {
-        -webkit-box-ordinal-group: 0;
-        -webkit-order: -1;
-        -ms-flex-order: -1;
-        order: -1;
-    }
 }

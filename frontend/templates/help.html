@@ -54,6 +54,10 @@
                                 <div class="summary">
                                     {{ dataset.summary|slice:"0:500" }}...
                                 </div>
+                                <button onclick="getMetaData('{{ dataset.metadata_id }}');"
+                                        style="margin-top:20px;">
+                                    Metadata
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -67,6 +71,11 @@
                                 <div class="summary">
                                     {{ dataset.summary|slice:"0:500" }}...
                                 </div>
+                                <button onclick="getMetaData('{{ dataset.metadata_id }}');"
+                                        style="margin-top:20px;">
+                                    Metadata
+                                </button>
+
                             </div>
                         </div>
                     </div>

@@ -113,12 +113,12 @@
                                                                    class="fas fa-list legend-btn"
                                                                    onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
                                                                    style="float: left; margin: 0 0 15px 15px;">
-                                                                    Legend
+
                                                                 </i>
                                                                 <i class="fas fa-cog settings-btn"
                                                                    onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
-                                                                   style="float: right; margin: 0 15px 15px 0;">
-                                                                    Settings
+                                                                   style="float: left; margin: 0 0 15px 15px;">
+
                                                                 </i>
                                                             </div>
                                                         </div>
@@ -205,12 +205,13 @@
                             >
                                 <div class="acontainer">
                                     <div class="drop-container" id="drop-container">
-                                        <div class="drop-message">
+                                        <div class="drop-message" onclick="triggerUpload(event)">
                                             <div class="upload-icon"></div>
                                             Drag &amp; Drop json, geojson, or zipped shapefile here
                                             or click to select file
                                         </div>
-                                        <input class="file-input" type="file" multiple=""/>
+                                        <input id="upload_files" class="upload_files" type="file" multiple=""
+                                               style="display: none;"/>
                                     </div>
                                     <div class="file-display-container"></div>
                                 </div>
@@ -375,7 +376,7 @@
                                 <label for="geometry">Geometry</label>
                                 <span class="form-control" id="geometry" style="height: unset; word-break: break-all;">features: 201</span>
                             </div>
-                            <button onclick="sendRequest()">Send Request</button>
+                            <button id="btnRequest" onclick="sendRequest()">Send Request</button>
                         </div>
                     </div>
 
