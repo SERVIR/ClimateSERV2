@@ -172,7 +172,8 @@ leaflet-bar leaflet-bar-horizontal leaflet-bar-timecontrol leaflet-control {
 
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled,
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
-    background-color: #fbc8c8;
+    background-color: #909d6b;
+    opacity: .5;
 }
 
 body.dragging,
