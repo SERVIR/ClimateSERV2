@@ -154,7 +154,7 @@ rect.highcharts-focus-border {
 }
 
 .fullscreen-icon {
-    background-image: url(images/icon-fullscreen.png);
+    background-image: url(images/icon-fullscreen.png) !important;
 }
 
 .leaflet-bar-timecontrol {
