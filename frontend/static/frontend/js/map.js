@@ -283,22 +283,104 @@ function buildStyles() {
         });
 }
 
+function apply_style_click(which, active_layer, bypass_auto_on) {
+    let was_removed = false;
+    if (map.hasLayer(overlayMaps[which])) {
+        was_removed = true;
+        map.removeLayer(overlayMaps[which]);
+    }
+    overlayMaps[which] = L.timeDimension.layer.wms(
+        L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+            layers: active_layer.layers,
+            format: "image/png",
+            transparent: true,
+            colorscalerange:
+                document.getElementById("range-min").value +
+                "," +
+                document.getElementById("range-max").value,
+            abovemaxcolor: "transparent",
+            belowmincolor: "transparent",
+            numcolorbands: 100,
+            styles: $("#style_table").val(),
+        }),
+        {
+            updateTimeDimension: true,
+        }
+    );
+    if (!bypass_auto_on || was_removed) {
+        map.addLayer(overlayMaps[which]);
+    }
+    if (!bypass_auto_on) {
+        document.getElementById(which.replace("TimeLayer", "")).checked = true;
+    }
+    active_layer.styles = $("#style_table").val();
+    active_layer.colorrange = document.getElementById("range-min").value +
+        "," +
+        document.getElementById("range-max").value
+    overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
+    overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
+}
+
+function apply_settings(which, active_layer, is_multi, multi_ids) {
+    $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+
+    const slider = document.getElementById("opacityctrl");
+    slider.value = overlayMaps[which].options.opacity;
+    slider.oninput = function () {
+        if (is_multi) {
+            multi_ids.forEach(e => {
+                overlayMaps[e + "TimeLayer"].setOpacity(this.value);
+            });
+        } else {
+            overlayMaps[which].setOpacity(this.value);
+        }
+    };
+
+    const applyStylebtn = document.getElementById("applyStylebtn");
+
+    applyStylebtn.onclick = function () {
+        if (is_multi) {
+            // loop
+            multi_ids.forEach(e => {
+                apply_style_click(e + "TimeLayer", getLayer(multi_ids[0]), true);
+            })
+        } else {
+            apply_style_click(which, active_layer);
+        }
+    };
+    // Update min/max
+    document.getElementById("range-min").value =
+        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
+    document.getElementById("range-max").value =
+        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+}
+
 /**
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
 function openSettings(which) {
-    const active_layer = getLayer(which);
+    let active_layer = getLayer(which);
+    let multi = false;
+    const multi_ids = [];
+    if (!active_layer) {
+        let id = which.replace("TimeLayer", "") + "ens";
+        multi = true;
+        $("[id^=" + id + "]").each(function () {
+            multi_ids.push(this.id);
+        });
+    }
+
 
     let settingsHtml = "";
-    if (active_layer.dataset === "model") {
-        // need to get available ensembles then
-        // add checkboxes for each to enable turning on and off
-        // will likely have to adjust the apply button as well since
-        // it currently works on overlayMaps[which]
-
-        settingsHtml += "Get the Ens info to build the checkboxes";
-    }
+    // if (active_layer.dataset === "model") {
+    //     // all ensembles are adjusted by single setting
+    //     // if setting changes, they all change so dialog
+    //     // should be the same.  The hooks will have to be
+    //     // expanded to make all ensemble layers react in sync
+    //
+    //     //settingsHtml += "Get the Ens info to build the checkboxes";
+    // }
 
     settingsHtml += baseSettingsHtml();
     let dialog = $("#dialog");
@@ -321,52 +403,13 @@ function openSettings(which) {
         );
     });
 
-    $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+    if (multi) {
+        active_layer = getLayer(multi_ids[0]);
+        apply_settings(multi_ids[0] + "TimeLayer", active_layer, true, multi_ids);
 
-    const slider = document.getElementById("opacityctrl");
-    slider.value = overlayMaps[which].options.opacity;
-    slider.oninput = function () {
-        overlayMaps[which].setOpacity(this.value);
-    };
-
-    const applyStylebtn = document.getElementById("applyStylebtn");
-
-    applyStylebtn.onclick = function () {
-        if (map.hasLayer(overlayMaps[which])) {
-            map.removeLayer(overlayMaps[which]);
-        }
-        overlayMaps[which] = L.timeDimension.layer.wms(
-            L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
-                layers: active_layer.layers,
-                format: "image/png",
-                transparent: true,
-                colorscalerange:
-                    document.getElementById("range-min").value +
-                    "," +
-                    document.getElementById("range-max").value,
-                abovemaxcolor: "transparent",
-                belowmincolor: "transparent",
-                numcolorbands: 100,
-                styles: $("#style_table").val(),
-            }),
-            {
-                updateTimeDimension: true,
-            }
-        );
-        map.addLayer(overlayMaps[which]);
-        document.getElementById(which.replace("TimeLayer", "")).checked = true;
-        active_layer.styles = $("#style_table").val();
-        active_layer.colorrange = document.getElementById("range-min").value +
-            "," +
-            document.getElementById("range-max").value
-        overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
-        overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
-    };
-    // Update min/max
-    document.getElementById("range-min").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
-    document.getElementById("range-max").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+    } else {
+        apply_settings(which, active_layer);
+    }
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
