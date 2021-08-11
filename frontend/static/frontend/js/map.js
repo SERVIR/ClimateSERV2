@@ -825,11 +825,25 @@ function sortableLayerSetup() {
 
 function adjustLayerIndex() {
     let count = 10;
+
     for (let i = $("ol.layers li").length; i > 0; i--) {
-        overlayMaps[
+        console.log($("ol.layers li")[i - 1].id.replace("_node", "TimeLayer"));
+        if (overlayMaps[
             $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
-            ].setZIndex(count);
-        count++;
+            ]) {
+            overlayMaps[
+                $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+                ].setZIndex(count);
+            count++;
+        } else {
+            let ensid = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
+            for (let j = 0; j < $("[id^=" + ensid + "]").length; j++) {
+                overlayMaps[
+                $("[id^=" + ensid + "]")[j].id + "TimeLayer"
+                    ].setZIndex(count);
+                count++;
+            }
+        }
     }
 }
 

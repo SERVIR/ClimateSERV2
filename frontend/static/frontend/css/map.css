@@ -301,3 +301,13 @@ ol {
 .highcharts-data-table tr:hover {
     background: #f1f7ff;
 }
+
+.ens-holder {
+    padding-left: 20px;
+    display: none;
+}
+
+.ens-holder.checked {
+    padding-left: 20px;
+    display: block;
+}

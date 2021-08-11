@@ -36,20 +36,38 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
-        let client_layers = []; //JSON.parse('{{ data_layers | safe }}');
+        let client_layers = [];
         {% for layer in data_layers %}
-            client_layers.push({
-                title: "{{ layer.title }}",
-                url: "{{ layer.url }}",
-                attribution: "{{ layer.attribution }}",
-                layers: "{{ layer.layers }}",
-                styles: "{{ layer.default_style }}",
-                colorrange: "{{ layer.default_color_range }}",
-                id: "{{ layer.ui_id }}",
-                dataset: "{{ layer.dataset_type }}",
-                app_id: "{{ layer.api_id }}",
-                units: "{{ layer.units }}"
-            })
+
+            {% if layer.isMultiEnsemble %}
+                {% for enslayer in layer.datalayer.all %}
+                    client_layers.push({
+                        title: "{{ enslayer.title }}",
+                        url: "{{ enslayer.url }}",
+                        attribution: "{{ enslayer.attribution }}",
+                        layers: "{{ enslayer.layers }}",
+                        styles: "{{ enslayer.default_style }}",
+                        colorrange: "{{ enslayer.default_color_range }}",
+                        id: "{{ enslayer.ui_id }}",
+                        dataset: "{{ enslayer.dataset_type }}",
+                        app_id: "{{ enslayer.api_id }}",
+                        units: "{{ enslayer.units }}"
+                    })
+                {% endfor %}
+            {% else %}
+                client_layers.push({
+                    title: "{{ layer.title }}",
+                    url: "{{ layer.url }}",
+                    attribution: "{{ layer.attribution }}",
+                    layers: "{{ layer.layers }}",
+                    styles: "{{ layer.default_style }}",
+                    colorrange: "{{ layer.default_color_range }}",
+                    id: "{{ layer.ui_id }}",
+                    dataset: "{{ layer.dataset_type }}",
+                    app_id: "{{ layer.api_id }}",
+                    units: "{{ layer.units }}"
+                })
+            {% endif %}
         {% endfor %}
 
     </script>
@@ -100,7 +118,43 @@
                                                     <div class="rst__moveHandle"></div>
                                                     <div class="rst__rowContents ignore-elements">
                                                         <div class="rst__rowLabel">
-                                  <span class="rst__rowTitle">
+                                                            {% if layer.isMultiEnsemble %}
+                                                                <span class="rst__rowTitle">
+                                      <input type="checkbox"
+                                             id="{{ layer.ui_id }}"
+                                             name="{{ layer.ui_id }}"
+                                             onchange="$('#ens-{{ layer.ui_id }}').toggleClass('checked')"/>
+                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
+                                      <br/>
+                                  </span>
+                                                                <div class="ens-holder" id="ens-{{ layer.ui_id }}">
+                                                                    {% for enslayer in layer.datalayer.all %}
+                                                                        <input type="checkbox"
+                                                                               id="{{ enslayer.ui_id }}"
+                                                                               name="{{ enslayer.ui_id }}"
+                                                                               onchange="toggleLayer('{{ enslayer.ui_id }}TimeLayer')"/>
+                                                                        <label for="{{ enslayer.ui_id }}"
+                                                                               title="{{ enslayer.title }}">{{ enslayer.title }}</label>
+                                                                        <br/>
+                                                                    {% endfor %}
+                                                                    <div>
+                                                                        <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                           class="fas fa-list legend-btn"
+                                                                           onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
+                                                                           style="float: left; margin: 0 0 15px 15px;">
+
+                                                                        </i>
+                                                                        <i class="fas fa-cog settings-btn"
+                                                                           onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
+                                                                           style="float: left; margin: 0 0 15px 15px;">
+
+                                                                        </i>
+                                                                    </div>
+                                                                </div>
+
+
+                                                            {% else %}
+                                                                <span class="rst__rowTitle">
                                       <input type="checkbox"
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
@@ -108,19 +162,21 @@
                                       <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
                                       <br/>
                                   </span>
-                                                            <div>
-                                                                <i id="legend_{{ layer.ui_id }}TimeLayer "
-                                                                   class="fas fa-list legend-btn"
-                                                                   onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
-                                                                   style="float: left; margin: 0 0 15px 15px;">
+                                                                <div>
+                                                                    <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                       class="fas fa-list legend-btn"
+                                                                       onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
+                                                                       style="float: left; margin: 0 0 15px 15px;">
 
-                                                                </i>
-                                                                <i class="fas fa-cog settings-btn"
-                                                                   onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
-                                                                   style="float: left; margin: 0 0 15px 15px;">
+                                                                    </i>
+                                                                    <i class="fas fa-cog settings-btn"
+                                                                       onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
+                                                                       style="float: left; margin: 0 0 15px 15px;">
 
-                                                                </i>
-                                                            </div>
+                                                                    </i>
+                                                                </div>
+                                                            {% endif %}
+
                                                         </div>
                                                         <div class="rst__rowToolbar"></div>
                                                     </div>
