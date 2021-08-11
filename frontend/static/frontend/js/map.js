@@ -385,8 +385,8 @@ function baseSettingsHtml() {
  * @param {string} which - Name of layer to open legend for
  */
 function openLegend(which) {
-    //fix this, it's not getting the new style if the user changes, it's getting the default
-    const active_layer = getLayer(which);
+    let id = which.replace("TimeLayer", "") + "ens";
+    const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
         active_layer.url +
         "&REQUEST=GetLegendGraphic&LAYER=" +
@@ -827,7 +827,6 @@ function adjustLayerIndex() {
     let count = 10;
 
     for (let i = $("ol.layers li").length; i > 0; i--) {
-        console.log($("ol.layers li")[i - 1].id.replace("_node", "TimeLayer"));
         if (overlayMaps[
             $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
             ]) {
@@ -836,10 +835,10 @@ function adjustLayerIndex() {
                 ].setZIndex(count);
             count++;
         } else {
-            let ensid = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
-            for (let j = 0; j < $("[id^=" + ensid + "]").length; j++) {
+            let id = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
+            for (let j = 0; j < $("[id^=" + id + "]").length; j++) {
                 overlayMaps[
-                $("[id^=" + ensid + "]")[j].id + "TimeLayer"
+                $("[id^=" + id + "]")[j].id + "TimeLayer"
                     ].setZIndex(count);
                 count++;
             }
