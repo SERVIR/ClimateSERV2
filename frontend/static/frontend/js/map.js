@@ -905,8 +905,9 @@ function initMap() {
 }
 
 function isComplete() {
-    //sDate_new_cooked
-    //eDate_new_cooked
+    // what if ensemble data with forecast dates
+    // this will have to check those fields,
+    // or assign dates to these when selected (think this is better)
     let isReady = false;
     sDate_new_cooked = document.getElementById("sDate_new_cooked");
     eDate_new_cooked = document.getElementById("eDate_new_cooked");
@@ -1081,6 +1082,40 @@ function pollForProgress(id, isClimate) {
                 $("#btnRequest").prop("disabled", false);
             }
         }); // this is the jobID to poll with and get data
+}
+
+function handleSourceSelected(which) {
+    which = which.toString();
+    var layer = client_layers.find(
+        (item) => item.app_id === which
+    )
+    if (layer) {
+        $("#ensemble_builder").hide();
+        //show date range controls
+    } else {
+        // open and set ensemble section
+        $("#ensemble_builder").show();
+        //hide date range controls
+
+
+        $('#ensemblemenu').find('option').remove();
+        // load the ensemble selection tools
+
+        let id = which + "ens";
+
+        $("[id^=" + id + "]").each(function (index, item) {
+            const temp = getLayer(item.id);
+            $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
+        });
+
+        // need date dropdowns that will apply selections to the date
+        // range controls (which will be hidden, but still accessible)
+        // possibly need to fetch the ens available dates
+        // know the variables which are layers from the wms getcapabilities
+
+        // also need to get available run dates for selection
+
+    }
 }
 
 function inti_chart_dialog() {
@@ -1465,6 +1500,7 @@ $(function () {
     } catch (e) {
         console.log("aoiOptionToggle Failed");
     }
+    $('#sourcemenu').change();
 });
 
 (function ($) {

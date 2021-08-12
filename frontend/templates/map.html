@@ -336,10 +336,20 @@
                                 <div id="panel_dataset">
                                     <div class="form-group panel-buffer">
                                         <label for="sourcemenu">Data Source</label>
-                                        <select name="sourcemenu" class="form-control" id="sourcemenu">
+                                        <select name="sourcemenu" class="form-control" id="sourcemenu"
+                                                onchange="handleSourceSelected(this.value)">
                                             {% for layer in data_layers %}
-                                                <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                {% if layer.isMultiEnsemble %}
+                                                    <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
+                                                {% else %}
+                                                    <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                {% endif %}
                                             {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div id="ensemble_builder">
+                                        <label for="ensemblemenu">Select a model ensemble</label>
+                                        <select name="ensemblemenu" class="form-control" id="ensemblemenu">
                                         </select>
                                     </div>
                                     <div class="form-group panel-buffer">

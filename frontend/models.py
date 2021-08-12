@@ -12,7 +12,7 @@ class DatasetType(models.Model):
 class DataSet(models.Model):
     """Model representing a dataset for the entire application"""
     short_name = models.CharField(max_length=200, help_text='Enter a short name to identify the dataset',
-                                  default="Enter-Name")
+                                  default="")
     heading = models.CharField(max_length=200, help_text='Enter heading to display on home page when featured')
     feature_subtext = models.TextField(help_text="Enter subtext to display on home page when featured", default="")
     summary = models.TextField(help_text="Enter summary to display in help center card", default="")
@@ -26,7 +26,10 @@ class DataSet(models.Model):
     featured = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.short_name}"
+        if self.short_name:
+            return f"{self.short_name}"
+        else:
+            return "unnamed"
 
 
 class DataLayer(models.Model):
