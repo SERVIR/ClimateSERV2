@@ -110,7 +110,8 @@
 
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
-                                <li id="{{ layer.ui_id }}_node">
+                                <li id="{{ layer.ui_id }}_node"
+                                    style="display: {% if layer.hasVisualization %} block {% else %} none {% endif %}">
                                     <div class="rst__nodeContent" style="left: 44px">
                                         <div style="height: 100%">
                                             <div class="rst__rowWrapper">
@@ -120,13 +121,14 @@
                                                         <div class="rst__rowLabel">
                                                             {% if layer.isMultiEnsemble %}
                                                                 <span class="rst__rowTitle">
-                                      <input type="checkbox"
-                                             id="{{ layer.ui_id }}"
-                                             name="{{ layer.ui_id }}"
-                                             onchange="$('#ens-{{ layer.ui_id }}').toggleClass('checked')"/>
-                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
-                                      <br/>
-                                  </span>
+                                                                    <input type="checkbox"
+                                                                           id="{{ layer.ui_id }}"
+                                                                           name="{{ layer.ui_id }}"
+                                                                           onchange="$('#ens-{{ layer.ui_id }}').toggleClass('checked')"/>
+                                                                      <label for="{{ layer.ui_id }}"
+                                                                             title="{{ layer.title }}">{{ layer.title }}</label>
+                                                                      <br/>
+                                                                </span>
                                                                 <div class="ens-holder" id="ens-{{ layer.ui_id }}">
                                                                     {% for enslayer in layer.datalayer.all %}
                                                                         <input type="checkbox"

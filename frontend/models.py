@@ -48,7 +48,8 @@ class DataLayer(models.Model):
     dataset_type = models.ForeignKey(DatasetType, on_delete=models.CASCADE, related_name="datatype")
     dataset_id = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="dataset")
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
-    isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the maodel ensembles')
+    isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
+    hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
 
     def __str__(self):
         return f"{self.title}"
@@ -68,3 +69,7 @@ class EnsembleLayer(models.Model):
     ui_id = models.CharField(max_length=200, help_text='Please use lowercase master title + ens + number. IE: nmmeens1')
     master_layer = models.ForeignKey(DataLayer, on_delete=models.CASCADE, related_name="datalayer")
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
+
+    def __str__(self):
+        name = self.master_layer.title + "_" + self.title
+        return f"{name}"
