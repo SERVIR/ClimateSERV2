@@ -348,9 +348,43 @@
                                         </select>
                                     </div>
                                     <div id="ensemble_builder">
-                                        <label for="ensemblemenu">Select a model ensemble</label>
-                                        <select name="ensemblemenu" class="form-control" id="ensemblemenu">
-                                        </select>
+                                        <div class="form-group panel-buffer">
+                                            <label for="model_run_menu">Select a model run</label>
+                                            <select name="model_run_menu" class="form-control" id="model_run_menu">
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblemenu">Select a model ensemble</label>
+                                            <select name="ensemblemenu" class="form-control" id="ensemblemenu">
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblevarmenu">Select a variable</label>
+                                            <select name="ensemblevarmenu" class="form-control" id="ensemblevarmenu">
+                                            </select>
+                                        </div>
+                                        <h2 class="text-center">Select Forecast Range</h2>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecastfrommenu">From date</label>
+                                            <select name="forecastfrommenu"
+                                                    id="forecastfrommenu"
+                                                    class="form-control"
+                                                    onchange="syncDates()"
+                                            >
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecasttomenu">From date</label>
+                                            <select name="forecasttomenu"
+                                                    id="forecasttomenu"
+                                                    class="form-control"
+                                                    onchange="syncDates()"
+                                            >
+                                            </select>
+                                        </div>
+
                                     </div>
                                     <div class="form-group panel-buffer">
                                         <label for="operationmenu">Calculation</label>
@@ -361,7 +395,7 @@
                                             <option value="6">Download Raw Data</option>
                                         </select>
                                     </div>
-                                    <div class="form-group panel-buffer">
+                                    <div class="form-group panel-buffer" id="non-multi-ensemble-dates">
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
                                                onchange="verify_ready()">

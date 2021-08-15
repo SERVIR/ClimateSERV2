@@ -992,9 +992,24 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-        formData.append(
-            "datatype", $("#sourcemenu").val()
-        );
+
+        //here i will have to work out the nmme stuff a bit,
+        // dates should already be synced to b&etime
+        // likely i just have to calculate the datatype
+        // by adding $("#ensemblevarmenu")[0].selectedIndex
+        // to $("#ensemblemenu").val()
+        // but somehow i need to know if it's a multi ensemble
+        // could check if  $("#ensemble_builder").is(":visible");
+        if ($("#ensemble_builder").is(":visible")) {
+            formData.append(
+                "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
+            );
+        } else {
+            formData.append(
+                "datatype", $("#sourcemenu").val()
+            );
+        }
+
         formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
         formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
         formData.append("intervaltype", 0);
@@ -1084,6 +1099,8 @@ function pollForProgress(id, isClimate) {
         }); // this is the jobID to poll with and get data
 }
 
+var workhere;
+
 function handleSourceSelected(which) {
     which = which.toString();
     var layer = client_layers.find(
@@ -1091,14 +1108,18 @@ function handleSourceSelected(which) {
     )
     if (layer) {
         $("#ensemble_builder").hide();
+        $("#non-multi-ensemble-dates").show();
         //show date range controls
     } else {
         // open and set ensemble section
         $("#ensemble_builder").show();
+        $("#non-multi-ensemble-dates").hide();
         //hide date range controls
 
-
+        $('#model_run_menu').find('option').remove();
         $('#ensemblemenu').find('option').remove();
+        $("#forecastfrommenu").find('option').remove();
+        $("#forecasttomenu").find('option').remove();
         // load the ensemble selection tools
 
         let id = which + "ens";
@@ -1108,14 +1129,75 @@ function handleSourceSelected(which) {
             $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
         });
 
-        // need date dropdowns that will apply selections to the date
-        // range controls (which will be hidden, but still accessible)
-        // possibly need to fetch the ens available dates
-        // know the variables which are layers from the wms getcapabilities
+        //this will have to change when we get real data, but for now i will hardcode nmme fetch
 
-        // also need to get available run dates for selection
+        fetch(
+            api_url + "/chirps/getClimateScenarioInfo/" +
+            id,
+            {
+                crossDomain: true,
+                method: "GET",
+            }
+        )
+            .then((response) => response.json())
+            .then((data) => {
+                workhere = data;
+                const cc = JSON.parse(data.climate_DataTypeCapabilities[0].current_Capabilities);
+                cc.startDateTime;
 
+                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replace("_", "/").substr(0, cc.startDateTime.lastIndexOf("_")) + '</option>');
+
+                // create date dropdowns
+                mformat = cc.date_FormatString_For_ForecastRange.replace("%Y", "YYYY").replace("%m", "MM").replace("%d", "DD")
+                let sdate = moment(cc.startDateTime, mformat);
+                let edate = moment(cc.endDateTime, mformat);
+                let count = 1;
+
+                $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+                $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+
+                do {
+                    console.log("f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD'));
+
+                    $("#forecastfrommenu")
+                        .append
+                        (
+                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    $("#forecasttomenu")
+                        .append
+                        (
+                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    count++;
+                    sdate.add(1, "days");
+                } while (sdate < edate)
+
+                cc.endDateTime;
+                cc.date_FormatString_For_ForecastRange;
+                cc.number_Of_ForecastDays;
+
+                data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
+                    // add variable with label to select
+
+                    $("#ensemblevarmenu")
+                        .append(
+                            '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
+                });
+
+                // need date dropdowns that will apply selections to the date
+                // range controls (which will be hidden, but still accessible)
+                // possibly need to fetch the ens available dates
+                // know the variables which are layers from the wms getcapabilities
+
+                // also need to get available run dates for selection
+
+            });
     }
+    $("#btnRequest").prop("disabled", false);
+}
+
+function syncDates() {
+    $("#sDate_new_cooked").val($("#forecastfrommenu").val());
+    $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
 function inti_chart_dialog() {
@@ -1264,10 +1346,13 @@ function getDataFromRequest(id, isClimate) {
                     });
                     from_compiled = compiledData;
                     inti_chart_dialog();
-
-                    const units = client_layers.find(
+//Need to fix this for multi ensemble
+                    let layer = client_layers.find(
                         (item) => item.app_id === $("#sourcemenu").val()
-                    ).units;
+                    ) || client_layers.find(
+                        (item) => item.app_id === $("#ensemblemenu").val()
+                    );
+                    const units = layer.units;
 
                     finalize_chart([{
                         color: "#758055",
