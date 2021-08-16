@@ -64,28 +64,295 @@ function getLayer(which) {
  * styleOptions array, which will be used to load the styles dropdown box
  */
 function buildStyles() {
-    $.get(client_layers[0].url + "&request=GetCapabilities", function (xml) {
-        const jsonObj = $.xml2json(xml);
-        const styles =
-            jsonObj["#document"]
-                .WMS_Capabilities
-                .Capability
-                .Layer
-                .Layer
-                .Layer
-                .Style
-                .sort(function (a, b) {
+
+    fetch(
+        client_layers[0].url + "&request=GetCapabilities",
+        {
+            crossDomain: true,
+            method: "GET",
+        }
+    )
+        .then((response) => response.text())
+        .then((xml) => {
+            try {
+                const jsonObj = $.xml2json(xml);
+                const styles =
+                    jsonObj
+                        .WMS_Capabilities
+                        .Capability
+                        .Layer
+                        .Layer
+                        .Layer
+                        .Style
+                        .sort(function (a, b) {
+                            const x = a.Name;
+                            const y = b.Name;
+                            return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+                        });
+                for (let i = 0; i < styles.length; i++) {
+                    styleOptions.push({
+                        val: styles[i].Name,
+                        text: styles[i].Name,
+                    });
+                }
+            } catch (e) {
+                const backup = [
+                    {
+                        "Name": "boxfill/apcp_surface",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-spd10m-thresh50",
+                    },
+                    {
+                        "Name": "boxfill/avg_temp",
+                    },
+                    {
+                        "Name": "boxfill/ncview",
+                    },
+                    {
+                        "Name": "boxfill/rel_humid",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-uphlcy25-thresh100",
+                    },
+                    {
+                        "Name": "boxfill/tmp_2maboveground",
+                    },
+                    {
+                        "Name": "boxfill/evap",
+                    },
+                    {
+                        "Name": "boxfill/baseflow",
+                    },
+                    {
+                        "Name": "boxfill/crimsonyellowgreen",
+                    },
+                    {
+                        "Name": "boxfill/alg",
+                    },
+                    {
+                        "Name": "boxfill/dpt_2maboveground",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-lfa-max-thresh5",
+                    },
+                    {
+                        "Name": "boxfill/albedo",
+                    },
+                    {
+                        "Name": "boxfill/par",
+                    },
+                    {
+                        "Name": "boxfill/sst_36",
+                    },
+                    {
+                        "Name": "boxfill/prob_refc_thresh50",
+                    },
+                    {
+                        "Name": "boxfill/cdi",
+                    },
+                    {
+                        "Name": "boxfill/prob_spd10m_thresh40",
+                    },
+                    {
+                        "Name": "boxfill/prob_tcolg_thresh40",
+                    },
+                    {
+                        "Name": "boxfill/rainbow",
+                    },
+                    {
+                        "Name": "boxfill/occam",
+                    },
+                    {
+                        "Name": "boxfill/pm25_india_ramp",
+                    },
+                    {
+                        "Name": "boxfill/pm25",
+                    },
+                    {
+                        "Name": "boxfill/prob_lfa_thresh5",
+                    },
+                    {
+                        "Name": "boxfill/pm25_india",
+                    },
+                    {
+                        "Name": "boxfill/alg2",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-spd10m-thresh40",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-refc-thresh50",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-tcolg-thresh30",
+                    },
+                    {
+                        "Name": "boxfill/enspmm-prec1h",
+                    },
+                    {
+                        "Name": "boxfill/crimsonyellowred",
+                    },
+                    {
+                        "Name": "boxfill/occam_pastel-30"
+                    },
+                    {
+                        "Name": "boxfill/ensprob-uphlcy25-thresh200",
+                    },
+                    {
+                        "Name": "boxfill/prob_spd10m_thresh50",
+                    },
+                    {
+                        "Name": "boxfill/prob_tcolg_thresh30",
+                    },
+                    {
+                        "Name": "boxfill/cape_surface",
+                    },
+                    {
+                        "Name": "boxfill/grace",
+                    },
+                    {
+                        "Name": "boxfill/crimsonyellowblue",
+                    },
+                    {
+                        "Name": "boxfill/dryspells",
+                    },
+                    {
+                        "Name": "boxfill/temp",
+                    },
+                    {
+                        "Name": "boxfill/crimsonbluegreen",
+                    },
+                    {
+                        "Name": "boxfill/redblue",
+                    },
+                    {
+                        "Name": "boxfill/avg_temp_rev",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-tcolg-thresh40",
+                    },
+                    {
+                        "Name": "boxfill/blueyellowcrimson",
+                    },
+                    {
+                        "Name": "boxfill/greyscale",
+                    },
+                    {
+                        "Name": "boxfill/pm25ramp",
+                    },
+                    {
+                        "Name": "boxfill/net_short_long",
+                    },
+                    {
+                        "Name": "boxfill/cwg",
+                    },
+                    {
+                        "Name": "boxfill/enspmm-prectot",
+                    },
+                    {
+                        "Name": "boxfill/enspmm-refc",
+                    },
+                    {
+                        "Name": "boxfill/crimsonbluewhite",
+                    },
+                    {
+                        "Name": "boxfill/ensprob-lfa-max-thresh0.07",
+                    },
+                    {
+                        "Name": "boxfill/prec_rainf",
+                    },
+                    {
+                        "Name": "boxfill/ferret",
+                    }
+                ].sort(function (a, b) {
                     const x = a.Name;
                     const y = b.Name;
                     return ((x < y) ? -1 : ((x > y) ? 1 : 0));
                 });
-        for (let i = 0; i < styles.length; i++) {
-            styleOptions.push({
-                val: styles[i].Name,
-                text: styles[i].Name,
-            });
+                for (let i = 0; i < backup.length; i++) {
+                    styleOptions.push({
+                        val: backup[i].Name,
+                        text: backup[i].Name,
+                    });
+                }
+            }
+        })
+        .catch(function (error) {
+            console.log('request failed', error)
+        });
+}
+
+function apply_style_click(which, active_layer, bypass_auto_on) {
+    let was_removed = false;
+    if (map.hasLayer(overlayMaps[which])) {
+        was_removed = true;
+        map.removeLayer(overlayMaps[which]);
+    }
+    overlayMaps[which] = L.timeDimension.layer.wms(
+        L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+            layers: active_layer.layers,
+            format: "image/png",
+            transparent: true,
+            colorscalerange:
+                document.getElementById("range-min").value +
+                "," +
+                document.getElementById("range-max").value,
+            abovemaxcolor: "transparent",
+            belowmincolor: "transparent",
+            numcolorbands: 100,
+            styles: $("#style_table").val(),
+        }),
+        {
+            updateTimeDimension: true,
         }
-    });
+    );
+    if (!bypass_auto_on || was_removed) {
+        map.addLayer(overlayMaps[which]);
+    }
+    if (!bypass_auto_on) {
+        document.getElementById(which.replace("TimeLayer", "")).checked = true;
+    }
+    active_layer.styles = $("#style_table").val();
+    active_layer.colorrange = document.getElementById("range-min").value +
+        "," +
+        document.getElementById("range-max").value
+    overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
+    overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
+}
+
+function apply_settings(which, active_layer, is_multi, multi_ids) {
+    $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+
+    const slider = document.getElementById("opacityctrl");
+    slider.value = overlayMaps[which].options.opacity;
+    slider.oninput = function () {
+        if (is_multi) {
+            multi_ids.forEach(e => {
+                overlayMaps[e + "TimeLayer"].setOpacity(this.value);
+            });
+        } else {
+            overlayMaps[which].setOpacity(this.value);
+        }
+    };
+
+    const applyStylebtn = document.getElementById("applyStylebtn");
+
+    applyStylebtn.onclick = function () {
+        if (is_multi) {
+            // loop
+            multi_ids.forEach(e => {
+                apply_style_click(e + "TimeLayer", getLayer(multi_ids[0]), true);
+            })
+        } else {
+            apply_style_click(which, active_layer);
+        }
+    };
+    // Update min/max
+    document.getElementById("range-min").value =
+        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
+    document.getElementById("range-max").value =
+        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
 }
 
 /**
@@ -93,17 +360,27 @@ function buildStyles() {
  * @param {string} which - Name of layer to open settings for
  */
 function openSettings(which) {
-    const active_layer = getLayer(which);
+    let active_layer = getLayer(which);
+    let multi = false;
+    const multi_ids = [];
+    if (!active_layer) {
+        let id = which.replace("TimeLayer", "") + "ens";
+        multi = true;
+        $("[id^=" + id + "]").each(function () {
+            multi_ids.push(this.id);
+        });
+    }
+
 
     let settingsHtml = "";
-    if (active_layer.dataset === "model") {
-        // need to get available ensembles then
-        // add checkboxes for each to enable turning on and off
-        // will likely have to adjust the apply button as well since
-        // it currently works on overlayMaps[which]
-
-        settingsHtml += "Get the Ens info to build the checkboxes";
-    }
+    // if (active_layer.dataset === "model") {
+    //     // all ensembles are adjusted by single setting
+    //     // if setting changes, they all change so dialog
+    //     // should be the same.  The hooks will have to be
+    //     // expanded to make all ensemble layers react in sync
+    //
+    //     //settingsHtml += "Get the Ens info to build the checkboxes";
+    // }
 
     settingsHtml += baseSettingsHtml();
     let dialog = $("#dialog");
@@ -126,52 +403,13 @@ function openSettings(which) {
         );
     });
 
-    $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+    if (multi) {
+        active_layer = getLayer(multi_ids[0]);
+        apply_settings(multi_ids[0] + "TimeLayer", active_layer, true, multi_ids);
 
-    const slider = document.getElementById("opacityctrl");
-    slider.value = overlayMaps[which].options.opacity;
-    slider.oninput = function () {
-        overlayMaps[which].setOpacity(this.value);
-    };
-
-    const applyStylebtn = document.getElementById("applyStylebtn");
-
-    applyStylebtn.onclick = function () {
-        if (map.hasLayer(overlayMaps[which])) {
-            map.removeLayer(overlayMaps[which]);
-        }
-        overlayMaps[which] = L.timeDimension.layer.wms(
-            L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
-                layers: active_layer.layers,
-                format: "image/png",
-                transparent: true,
-                colorscalerange:
-                    document.getElementById("range-min").value +
-                    "," +
-                    document.getElementById("range-max").value,
-                abovemaxcolor: "transparent",
-                belowmincolor: "transparent",
-                numcolorbands: 100,
-                styles: $("#style_table").val(),
-            }),
-            {
-                updateTimeDimension: true,
-            }
-        );
-        map.addLayer(overlayMaps[which]);
-        document.getElementById(which.replace("TimeLayer", "")).checked = true;
-        active_layer.styles = $("#style_table").val();
-        active_layer.colorrange = document.getElementById("range-min").value +
-            "," +
-            document.getElementById("range-max").value
-        overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
-        overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
-    };
-    // Update min/max
-    document.getElementById("range-min").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
-    document.getElementById("range-max").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+    } else {
+        apply_settings(which, active_layer);
+    }
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
@@ -190,8 +428,8 @@ function baseSettingsHtml() {
  * @param {string} which - Name of layer to open legend for
  */
 function openLegend(which) {
-    //fix this, it's not getting the new style if the user changes, it's getting the default
-    const active_layer = getLayer(which);
+    let id = which.replace("TimeLayer", "") + "ens";
+    const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
         active_layer.url +
         "&REQUEST=GetLegendGraphic&LAYER=" +
@@ -307,6 +545,8 @@ function onlyUnique(value, index, self) {
  * @param {string} which - name of selection method to activate
  */
 function selectAOI(which) {
+    $("[id^=btnAOI]").removeClass("active");
+    $("#btnAOI" + which).addClass("active");
     $(".selectAOI").hide();
     $("#" + which + "AOI").show();
 
@@ -340,9 +580,11 @@ function clearAOISelections() {
         drawnItems.clearLayers();
     }
     if (uploadLayer) {
+        uploadLayer.clearLayers();
         uploadLayer.remove();
     }
-    $("#nextStep1").prop("disabled", true);
+    collect_review_data();
+    verify_ready();
 }
 
 function triggerUpload(e) {
@@ -378,12 +620,9 @@ function handleFiles(e) {
             uploadLayer.clearLayers();
             uploadLayer.addData(data);
             map.fitBounds(uploadLayer.getBounds());
-            if (uploadLayer.getLayers().length > 0) {
-                $("#nextStep1").prop("disabled", false);
-            } else {
-                $("#nextStep1").prop("disabled", true);
-            }
             $("#upload_error").hide();
+            collect_review_data();
+            verify_ready();
         } catch (e) {
             // When the section is built the url will need to add #pageanchorlocation
             $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
@@ -427,11 +666,8 @@ function handleFiles(e) {
                     $("#encoding").val("");
                     $("#info").addClass("picInfo");
                     $("#option").slideUp(500);
-                    if (uploadLayer.getLayers().length > 0) {
-                        $("#nextStep1").prop("disabled", false);
-                    } else {
-                        $("#nextStep1").prop("disabled", true);
-                    }
+                    collect_review_data();
+                    verify_ready();
                 }
             );
         }
@@ -448,6 +684,16 @@ function enableDrawing() {
             polyline: false,
             circle: false,
             circlemarker: false,
+            polygon: {
+                icon: new L.DivIcon({
+                    iconSize: new L.Point(8, 8),
+                    className: 'leaflet-div-icon leaflet-editing-icon'
+                }),
+                touchIcon: new L.DivIcon({
+                    iconSize: new L.Point(20, 20),
+                    className: 'leaflet-div-icon leaflet-editing-icon leaflet-touch-icon'
+                }),
+            }
         },
         edit: {
             featureGroup: drawnItems,
@@ -463,19 +709,13 @@ function enableDrawing() {
         }
         // Do whatever else you need to. (save to db; add to map etc)
         drawnItems.addLayer(layer);
-        if (drawnItems.getLayers().length > 0) {
-            $("#nextStep1").prop("disabled", false);
-        } else {
-            $("#nextStep1").prop("disabled", true);
-        }
+        collect_review_data();
+        verify_ready();
     });
 
     map.on(L.Draw.Event.DELETED, function (e) {
-        if (drawnItems.getLayers().length > 0) {
-            $("#nextStep1").prop("disabled", false);
-        } else {
-            $("#nextStep1").prop("disabled", true);
-        }
+        collect_review_data();
+        verify_ready();
     });
 
     map.on("draw:drawstart", function (e) {
@@ -488,6 +728,8 @@ function enableDrawing() {
  * @param {string} which - name of admin layer to activate
  */
 function enableAdminFeature(which) {
+    $("[id^=btnAdminFeat]").removeClass("active");
+    $("#btnAdminFeat" + which).addClass("active");
     clearAOISelections();
     adminLayer = L.tileLayer.wms(
         admin_layer_url,
@@ -544,62 +786,17 @@ function enableAdminFeature(which) {
                             feat_ids: highlightedIDs.join(),
                         }
                     );
-                    // if(highlightedIDs.length > 0){
-                    //   $("#btnstep2").prop("disabled", false);
-                    // }
-                    if (highlightedIDs.length > 0) {
-                        $("#nextStep1").prop("disabled", false);
-                    } else {
-                        $("#nextStep1").prop("disabled", true);
-                    }
 
                     map.addLayer(adminHighlightLayer);
                     adminHighlightLayer.setZIndex(
                         Object.keys(baseLayers).length + client_layers.length + 6
                     );
+                    collect_review_data();
+                    verify_ready();
                 }
             },
         });
     });
-}
-
-function gotostep(which) {
-    $("[id^=step]").hide();
-    $("[id^=btnstep]").removeClass("active");
-    $("#step" + which).show();
-    $("#btnstep" + which).addClass("active");
-    $("#btnstep" + which).addClass("active");
-    switch (which) {
-        case 1:
-            $("[id^=btnstep]").prop("disabled", true);
-            break;
-        case 2:
-            $("#btnstep1").prop("disabled", false);
-            // also disable any drawing ability, remove drawing bar
-            // also disable any drawing ability, remove drawing bar
-            if (drawToolbar) {
-                drawToolbar.remove();
-            }
-            map.off("click");
-            break
-        case 3:
-            $("#btnstep2").prop("disabled", false);
-            collect_review_data();
-            if ($("#requestTypeSelect").val() === "monthly_analysis") {
-                // hide data review, show monthly review
-                $("#dataset_review").hide();
-                $("#monthly_rainfall_review").show();
-
-            } else {
-                $("#monthly_rainfall_review").hide();
-                $("#dataset_review").show();
-            }
-            break;
-    }
-}
-
-function enablestep3() {
-    $("#btnstep3").prop("disabled", false);
 }
 
 /**
@@ -671,11 +868,24 @@ function sortableLayerSetup() {
 
 function adjustLayerIndex() {
     let count = 10;
+
     for (let i = $("ol.layers li").length; i > 0; i--) {
-        overlayMaps[
+        if (overlayMaps[
             $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
-            ].setZIndex(count);
-        count++;
+            ]) {
+            overlayMaps[
+                $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+                ].setZIndex(count);
+            count++;
+        } else {
+            let id = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
+            for (let j = 0; j < $("[id^=" + id + "]").length; j++) {
+                overlayMaps[
+                $("[id^=" + id + "]")[j].id + "TimeLayer"
+                    ].setZIndex(count);
+                count++;
+            }
+        }
     }
 }
 
@@ -695,8 +905,9 @@ function initMap() {
 }
 
 function isComplete() {
-    //sDate_new_cooked
-    //eDate_new_cooked
+    // what if ensemble data with forecast dates
+    // this will have to check those fields,
+    // or assign dates to these when selected (think this is better)
     let isReady = false;
     sDate_new_cooked = document.getElementById("sDate_new_cooked");
     eDate_new_cooked = document.getElementById("eDate_new_cooked");
@@ -723,30 +934,29 @@ function isComplete() {
         $(sDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
     }
-    $("#nextStep2").prop("disabled", !isReady);
+    return isReady;
+}
+
+function verify_ready() {
+    let ready = true;
+    if ($("#requestTypeSelect").val() === "datasets") {
+        ready = isComplete();
+    }
+    $("#btnRequest").prop("disabled",
+        !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
 }
 
 function collect_review_data() {
-    //get all data and fill review
-
-    $("#dataType").text($("#sourcemenu").val() + " - " + $("#sourcemenu option:selected").text());
-    $("#begintime").text(moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY'));
-    $("#endtime").text(moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY'));
-    $("#operationtype").text($("#operationmenu").val() + " - " + $("#operationmenu option:selected").text());
     if (highlightedIDs.length > 0) {
-        console.log("highlighted");
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
         $("#geometry").text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
     } else if (drawnItems.getLayers().length > 0) {
-        console.log("drawn");
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
     } else if (uploadLayer) {
-        console.log("uploaded");
         $("#geometry").text(JSON.stringify(uploadLayer.toGeoJSON()));
     } else {
-        console.log("nothing");
+        $("#geometry").text('{"type":"FeatureCollection","features":[]}');
     }
-
 }
 
 function getEnsDataType() {
@@ -782,11 +992,26 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-        formData.append(
-            "datatype", $("#sourcemenu").val()
-        );
-        formData.append("begintime", $("#begintime").text()); // "01/01/2020");
-        formData.append("endtime", $("#endtime").text()); //"06/30/2020");
+
+        //here i will have to work out the nmme stuff a bit,
+        // dates should already be synced to b&etime
+        // likely i just have to calculate the datatype
+        // by adding $("#ensemblevarmenu")[0].selectedIndex
+        // to $("#ensemblemenu").val()
+        // but somehow i need to know if it's a multi ensemble
+        // could check if  $("#ensemble_builder").is(":visible");
+        if ($("#ensemble_builder").is(":visible")) {
+            formData.append(
+                "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
+            );
+        } else {
+            formData.append(
+                "datatype", $("#sourcemenu").val()
+            );
+        }
+
+        formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
+        formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
         formData.append("intervaltype", 0);
         formData.append("operationtype", $("#operationmenu").val());
         formData.append("dateType_Category", "default");
@@ -874,6 +1099,107 @@ function pollForProgress(id, isClimate) {
         }); // this is the jobID to poll with and get data
 }
 
+var workhere;
+
+function handleSourceSelected(which) {
+    which = which.toString();
+    var layer = client_layers.find(
+        (item) => item.app_id === which
+    )
+    if (layer) {
+        $("#ensemble_builder").hide();
+        $("#non-multi-ensemble-dates").show();
+        //show date range controls
+    } else {
+        // open and set ensemble section
+        $("#ensemble_builder").show();
+        $("#non-multi-ensemble-dates").hide();
+        //hide date range controls
+
+        $('#model_run_menu').find('option').remove();
+        $('#ensemblemenu').find('option').remove();
+        $("#forecastfrommenu").find('option').remove();
+        $("#forecasttomenu").find('option').remove();
+        // load the ensemble selection tools
+
+        let id = which + "ens";
+
+        $("[id^=" + id + "]").each(function (index, item) {
+            const temp = getLayer(item.id);
+            $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
+        });
+
+        //this will have to change when we get real data, but for now i will hardcode nmme fetch
+
+        fetch(
+            api_url + "/chirps/getClimateScenarioInfo/" +
+            id,
+            {
+                crossDomain: true,
+                method: "GET",
+            }
+        )
+            .then((response) => response.json())
+            .then((data) => {
+                workhere = data;
+                const cc = JSON.parse(data.climate_DataTypeCapabilities[0].current_Capabilities);
+                cc.startDateTime;
+
+                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replace("_", "/").substr(0, cc.startDateTime.lastIndexOf("_")) + '</option>');
+
+                // create date dropdowns
+                mformat = cc.date_FormatString_For_ForecastRange.replace("%Y", "YYYY").replace("%m", "MM").replace("%d", "DD")
+                let sdate = moment(cc.startDateTime, mformat);
+                let edate = moment(cc.endDateTime, mformat);
+                let count = 1;
+
+                $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+                $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+
+                do {
+                    console.log("f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD'));
+
+                    $("#forecastfrommenu")
+                        .append
+                        (
+                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    $("#forecasttomenu")
+                        .append
+                        (
+                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    count++;
+                    sdate.add(1, "days");
+                } while (sdate < edate)
+
+                cc.endDateTime;
+                cc.date_FormatString_For_ForecastRange;
+                cc.number_Of_ForecastDays;
+
+                data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
+                    // add variable with label to select
+
+                    $("#ensemblevarmenu")
+                        .append(
+                            '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
+                });
+
+                // need date dropdowns that will apply selections to the date
+                // range controls (which will be hidden, but still accessible)
+                // possibly need to fetch the ens available dates
+                // know the variables which are layers from the wms getcapabilities
+
+                // also need to get available run dates for selection
+
+            });
+    }
+    $("#btnRequest").prop("disabled", false);
+}
+
+function syncDates() {
+    $("#sDate_new_cooked").val($("#forecastfrommenu").val());
+    $("#eDate_new_cooked").val($("#forecasttomenu").val());
+}
+
 function inti_chart_dialog() {
     $("#dialog").html(
         '<div id="chart_holder"></p>'
@@ -884,14 +1210,14 @@ function inti_chart_dialog() {
     $("#dialog").dialog({
         title: "Statistical Query",
         resizable: {handles: "se"},
-        width: $(window).width() - 100,
+        width: $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
             window.dispatchEvent(new Event('resize'));
         },
         position: {
-            my: "center",
-            at: "center",
+            my: "right",
+            at: "right-25",
             of: window
         }
     });
@@ -1020,10 +1346,13 @@ function getDataFromRequest(id, isClimate) {
                     });
                     from_compiled = compiledData;
                     inti_chart_dialog();
-
-                    const units = client_layers.find(
+//Need to fix this for multi ensemble
+                    let layer = client_layers.find(
                         (item) => item.app_id === $("#sourcemenu").val()
-                    ).units;
+                    ) || client_layers.find(
+                        (item) => item.app_id === $("#ensemblemenu").val()
+                    );
+                    const units = layer.units;
 
                     finalize_chart([{
                         color: "#758055",
@@ -1212,12 +1541,11 @@ function openDataTypePanel(select_control) {
     if (select_control.value === "datasets") {
         $("#panel_monthly_rainfall").hide();
         $("#panel_dataset").show();
-        isComplete();
     } else {
         $("#panel_dataset").hide();
         $("#panel_monthly_rainfall").show();
-        $("#nextStep2").prop("disabled", false);
     }
+    verify_ready();
 }
 
 let climateModelInfo;
@@ -1248,6 +1576,16 @@ $(function () {
     } catch (e) {
         console.log("upload handler Failed");
     }
+    try {
+        $(".collapse").on('show.bs.collapse', function () {
+            $("#aoiOptionToggle").removeClass("fa-angle-down").addClass("fa-angle-up");
+        }).on('hide.bs.collapse', function () {
+            $("#aoiOptionToggle").removeClass("fa-angle-up").addClass("fa-angle-down");
+        });
+    } catch (e) {
+        console.log("aoiOptionToggle Failed");
+    }
+    $('#sourcemenu').change();
 });
 
 (function ($) {

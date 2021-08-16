@@ -14,11 +14,11 @@ try:
     import climateserv2.parameters as params
     import climateserv2.locallog.locallogging as llog
 except:
-    from .. import parameters as params
+    import parameters as params
     import locallog.locallogging as llog
+logger = llog.getNamedLogger("request_processor")
 
 def setupBSDDB():
-    logger = llog.getNamedLogger("request_processor")
     logger.info("Creating db")
     bddb = BDDbConnector()
     try:
@@ -36,6 +36,8 @@ def setupBSDDB():
 
 
 class BDDbConnector:
+    logger = llog.getNamedLogger("request_processor")
+
     db = None
 
     def __init__(self):
@@ -43,20 +45,17 @@ class BDDbConnector:
 
     def __openHash__(self):
 
-        return dbm.open(params.newdbfilepath, 'n')
+        return dbm.open(params.newdbfilepath, 'c')
 
     def setProgress(self, uid, progess):
         uid = str(uid)
         ##need to deal with key does not exist
         self.db[uid] = str(progess)
 
+
     def getProgress(self, uid):
         uid = str(uid)
-        for k in self.db.keys():
-            if self.db[k] == uid:
-                value = float(self.db[k])
-                return value
-        return -1
+        return self.db.get(uid)
 
     def deleteProgress(self, uid):
         uid = str(uid)
@@ -165,17 +164,9 @@ class BDDbConnector_RequestLog:
 
         # Get the full path to the expected DB location
         expectedFullFilePath = self._get_DB_FullPath_ForFilename(theFileName)
+        logger.info(expectedFullFilePath)
 
-        # Scoping
-        ret_DB = None
-
-        # Check if the DB exists, create it if it does not.
-        isExist = self._does_DB_Exist(theFileName)
-        if (isExist == False):
-            # Create a new DB
-            ret_DB = self._create_New_DB(expectedFullFilePath)
-        else:
-            ret_DB = dbm.open(expectedFullFilePath, 'c')
+        ret_DB = dbm.open(expectedFullFilePath, 'c')
 
         return ret_DB
 
@@ -198,6 +189,7 @@ class BDDbConnector_RequestLog:
 
     # Using only the filename, check to see if the DB exists (assumption is that all of them are stored in the same folder defined above)
     def _does_DB_Exist(self, theFileName):
+
         # Only checks to see if the file exists
         expectedFullFilePath = self._get_DB_FullPath_ForFilename(theFileName)
         try:
@@ -354,6 +346,7 @@ class BDDbConnector_RequestLog:
     # Expected format of data is string (actually expecting a JSON string, but not enforcing that)
     # Data can be anything object format however this process usually converts it to JSON string
     def add_Request(self, requestData, skip_JSON_Object_Conversion=False):
+
         # Get the current Date Time
         currentDateTime = self._get_CurrentDateTime()
 
@@ -377,6 +370,7 @@ class BDDbConnector_RequestLog:
 
         # Add new data!
         self.db_ForWriting_NewRequests[theKey] = theValue
+        print(self.db_ForWriting_NewRequests[theKey])
 
     # Convert the list of log entries into a simple list of csv-ready strings??
     def convert_ListOfLogEntryObjects_To_CSV_StringList(self, logEntryObjects):

@@ -7,6 +7,7 @@ Created on Jan 30, 2015
 import os
 import sys
 import time
+import calendar
 import zmq
 import json
 from copy import deepcopy
@@ -20,6 +21,8 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 try:
     import climateserv2.geoutils as geoutils
     import climateserv2.processtools.dateprocessor as dproc
+    from climateserv2.file.TDSExtraction import get_aggregated_values as GetTDSData
+
     import climateserv2.parameters as params
     import climateserv2.file.npmemmapstorage as rp
     import climateserv2.geo.clippedmaskgenerator as mg
@@ -37,6 +40,7 @@ try:
 except:
     import geoutils as geoutils
     import processtools.dateprocessor as dproc
+    import file.TDSExtraction as GetTDSData
     import parameters as params
     import file.npmemmapstorage as rp
     import geo.clippedmaskgenerator as mg
@@ -106,9 +110,10 @@ class ZMQCHIRPSHeadProcessor():
             self.process_start_time = time.time()
             self.logger.info("Processing request "+request['uniqueid'])
             self.processWork(request)
-            self.total_task_count = 100.0
-            self.finished_task_count = 1.0
-            self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.0
+            # self.total_task_count = 100.0
+            # self.finished_task_count = 1.0
+            # self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.0
+            # self.logger.info(self.progress)
             self.__processProgress__(self.progress)
             time_total = time.time()-self.process_start_time
             self.logger.info("Total time: "+str(time_total))
@@ -136,11 +141,11 @@ class ZMQCHIRPSHeadProcessor():
     def postProcessWork_ForDownloadTypes(self, request):
         if (self.isDownloadJob == True ):
             if (self.dj_OperationName == "download"):
+
                 theJobID = None
                 try:
                     self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Post_Processing a Download Data Job. " + str(request['uniqueid']))
                     theJobID = request['uniqueid']
-                    
                     # Zip the files
                     zipFilePath, errorMessage = extractTif.zip_Extracted_Tif_Files_Controller(theJobID)
                     if (errorMessage == None):
@@ -163,9 +168,6 @@ class ZMQCHIRPSHeadProcessor():
     
         
     def processWork(self,request):
-        #self.logger.info("Process Work"+str(request))
-        #self.logger.info("("+self.name+"):processWork: Process Work: "+str(request))
-        ###Break into Chunks
         self.request = request
         
         # ks notes // Generate a list of work to be done (each item represents a time interval)
@@ -176,49 +178,19 @@ class ZMQCHIRPSHeadProcessor():
         
         # ks notes // Dispatch that list of work through the output receiver (to be picked up by workers)
         if (error == None):
-            #self.logger.info("(" + self.name + "):processWork: error == None passed. ")
 
-            #self.logger.info(workarray) # WAAY TOO MUCH OUTPUT...
-
-            #self.total_task_count = len(workarray)
             self.worklist_length = len(workarray)
             self.total_task_count = len(workarray)
-            # try:
-            #     if (workarray[0]['derived_product'] == True):
-            #         self.total_task_count = len(workarray) - 1
-            # except:
-            #     pass
-
             self.__updateProgress__()
-
-            self.logger.info("(" + self.name + "):processWork: About to do 'for item in workarray' ")
             workingArray_guid_index_list = []
             for item in workarray:
-                self.workToBeDone[item['workid']] = item
+                self.workToBeDone[item['workid']]= item
                 workingArray_guid_index_list.append(item['workid'])
             workingArray = deepcopy(self.workToBeDone)
-
             self.logger.info("(" + self.name + "):processWork: About to call __watchForResults_and_keepSending__ ")
-            #self.logger.info("(" + self.name + "):processWork: DEBUG: workingArray " + str(workingArray))
             self.__watchForResults_and_keepSending__(workingArray, workingArray_guid_index_list)
-
-            # ks notes // Not sure why deepcopy here, but a copy is made of the work list here and that copy is sent (as json string)
-
-            # Original Code, Send ALL the work items to the queue and THEN start listening for processed items.
-            # The problem we are running into is that too many items are sent out before any can be processed back in.
-            # Maybe it is a memory issue?
-            # self.logger.info("(" + self.name + "):processWork: About to do 'for item in workingArray' (len(workingArray)): " + str(len(workingArray)))
-            # item_counter = 0
-            # for item in workingArray:
-            #     self.outputreceiver.send_string(json.dumps(workingArray[item]))
-            #     self.logger.info("(" + self.name + "):processWork: outputreceiver.send for item " + str(item_counter) + " of " + str(len(workingArray)))
-            #     item_counter = item_counter + 1
-
-            # Originally, this was at the end
-            #self.logger.info("(" + self.name + "):processWork: About to call __watchForResults__ ")
-            #self.__watchForResults__()
         else:
-            self.logger.warn("Got an error processing request: "+str(error))
+            self.logger.warning("Got an error processing request: "+str(error))
             
             # ks refactor 2015 - Write Error to log, (also try and get the job id from the request)
             theJobID = ""
@@ -250,7 +222,7 @@ class ZMQCHIRPSHeadProcessor():
             self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: About to do 'for item in workingArray' (len(workingArray)): " + str(len(workingArray)))
             item_counter = 0
             for item in workingArray:
-                self.outputreceiver.send_string(json.dumps(workingArray[item]))
+                self.outputreceiver.send_string(json.dumps(str(workingArray[item])))
                 self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(item_counter) + " of " + str(len(workingArray)))
                 item_counter = item_counter + 1
 
@@ -329,85 +301,17 @@ class ZMQCHIRPSHeadProcessor():
                             current_workingArray_index = current_workingArray_index + 1
 
         self.__finishJob__()
-
-        # # Debug reporting
-        # self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: message_chunkSize : " + str(message_chunkSize))
-        # self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: len(workingArray) : " + str(len(workingArray)))
-        # self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: number_of_progress_thresholds : " + str(number_of_progress_thresholds))
-
-        #
-        #
-        #
-        # current_workingArray_index = 0
-        # finished_sending_workingArray_data = False
-        #
-        # for i in range(0, 1000):
-        #     if (current_workingArray_index >= len(workingArray)):
-        #         # Don't try and send this index as it does not exist!!!, just set the 'done' flag to true.
-        #         finished_sending_workingArray_data = True
-        #     else:
-        #         current_workid_index = workingArray_guid_index_list[current_workingArray_index]
-        #         self.outputreceiver.send_string(json.dumps(workingArray[current_workid_index])) # (workingArray[current_workingArray_index]))
-        #         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(current_workingArray_index) + " of " + str(len(workingArray)))
-        #         current_workingArray_index = current_workingArray_index + 1
-        #
-        # # Keep track of progress, if it changes, send a few more.  (set to 5 at this point)
-        # number_of_worklist_items_to_send_in_each_batch = 5
-        # last_current_progress = self.progress
-        #
-        #
-        # while (self.progress < 100):
-        #     # Normal receiving operation.
-        #     results = json.loads(self.listenreceiver.recv())
-        #     self.processFinishedData(results)
-        #     self.logger.info("("+self.name+"):__watchForResults_and_keepSending__: self.progress: " + str(self.progress))
-        #
-        #     # Send more stuff down the queue..
-        #     if(finished_sending_workingArray_data == True):
-        #         # Done sending worklist items, do nothing
-        #         pass
-        #     else:
-        #         # We are not done sending items... check to see if the last_current_progress changed..
-        #         if(last_current_progress != self.progress):
-        #             # progress has changed...
-        #             # Set the next progress to check
-        #             last_current_progress = self.progress
-        #
-        #             # Send more workingArray items to be processed.
-        #             for i in range(0, number_of_worklist_items_to_send_in_each_batch):
-        #                 if (current_workingArray_index >= len(workingArray)):
-        #                     # Don't try and send this index as it does not exist!!!, just set the 'done' flag to true.
-        #                     finished_sending_workingArray_data = True
-        #                 else:
-        #                     current_workid_index = workingArray_guid_index_list[current_workingArray_index]
-        #                     self.outputreceiver.send_string(json.dumps(workingArray[current_workid_index])) #(workingArray[current_workingArray_index]))
-        #                     self.logger.info(
-        #                         "(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(
-        #                             current_workingArray_index) + " of " + str(len(workingArray)))
-        #                     current_workingArray_index = current_workingArray_index + 1
-        #
-        #
-        # self.__finishJob__()
-        #
-        #
-        # # Original chunk of code where we were sending items
-        # # self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: About to do 'for item in workingArray' (len(workingArray)): " + str(len(workingArray)))
-        # # item_counter = 0
-        # # for item in workingArray:
-        # #     self.outputreceiver.send_string(json.dumps(workingArray[item]))
-        # #     self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(item_counter) + " of " + str(len(workingArray)))
-        # #     item_counter = item_counter + 1
-        #
-        # # END OF __WATCHFORRESULTS_AND_KEEPSENDING__
-
-
     # Original 'watchForResults' function
     # This is the part of the code that listens for workers to be done with their processing.
     # Once finished, it fires off the __finishJob__ method which completes the job.
     def __watchForResults__(self):
         # Normal existing code pipeline.
-        while (self.progress < 100):
-            results = json.loads(self.listenreceiver.recv())
+        while (self.progress < 100.0):
+
+            try:
+                results = json.loads(self.listenreceiver.recv())
+            except:
+                self.logger.info("**************************")
             self.processFinishedData(results)
             self.logger.info("("+self.name+"):__watchForResults__: self.progress: " + str(self.progress))
         self.__finishJob__()
@@ -435,68 +339,21 @@ class ZMQCHIRPSHeadProcessor():
         #self.logger.info("Process Finished Work "+str(self.request))
         #Need to process the data
         self.finished_task_count = self.finished_task_count +1
-        
-        self.workToBeDone.pop(results['workid'],None)
-
+        #self.workToBeDone.pop(results['workid'],None)
         missingValue = None
         if (self.derived_product == True):
             current_data_type = results['datatype']
             missingValue = params.dataTypes[current_data_type]['fillValue']  # Now it's dynamic (passed in from the worker)
         else:
             missingValue = params.dataTypes[self.request['datatype']]['fillValue']
-
-
-        # Original Line, before the MonthlyRainfallAnalysis type was setup.
-        # missingValue = params.dataTypes[self.request['datatype']]['fillValue']
-
-        #self.logger.info("Request:"+str(self.request))
-        #self.logger.info("Results:"+str(results))
-        
-        
-        # Another override
-        #self.logger.info("HeadProcessor:processFinishedData:DEBUG: str(results) :  "+str(results))
-        opname = ""
         if (self.isDownloadJob == True):
             # For Download Jobs.
-            opname = self.dj_OperationName #self.mathop.getName()
-            
             # Need to figure out why we use 'self.finished_items' and what happens if I just skip it..
             if results['value'] != missingValue:
                 self.finished_items.append(results)
-            
-            #self.__updateProgress__()
         else:
-
-            if (self.derived_product == True):
-                # There is an issue here, the opname can be dynamic.. the system can't handle that the way it's built now without a lot more pipes being installed and possibly making things inefficient to the point where it just doesn't work right (without a good bit of thinking and planning anyways..)
-                # # at least for this MonthlyRainfallAnalysis type of derived product, the opname will ALWAYS be average (or avg)
-                opname = "avg" #"MonthlyAnalysis"  # self.derived_opname = "Unset"
-            else:
-                # For Normal Types of requests. (where there is only one type of operation.)
-                # For math operator type stats functions.
-                opname = self.mathop.getName()
-
-            # # KS Refactor 2017 - May - Pre-existing code (Before Derived Product types existed)
-            # # For math operator type stats functions.
-            # opname = self.mathop.getName()
-
-            if results['value'][opname] != missingValue:
-                self.finished_items.append(results)
-            #self.__updateProgress__()
-            
+            self.finished_items.append(results)
         self.__updateProgress__()
-        
-        #self.logger.info("Opname"+opname)
-        
-        # This part of the code checks the value that the current operation returned, if it is different than the missing value, it is counted as a finished item.
-        # This only applies to non-download jobs.. so here is the conditional.
-        
-        # Commenting old code (this was moved into the conditional above when 'download' jobs were added.)
-        #if results['value'][opname] != missingValue:
-        #    #self.logger.info("Adding data")
-        #    self.finished_items.append(results)
-        #self.__updateProgress__()
-        ##self.logger.info("Progress :"+str(self.progress))
             
     def __sortData__(self,array):
         newlist = sorted(array, key=itemgetter('epochTime'))
@@ -542,9 +399,9 @@ class ZMQCHIRPSHeadProcessor():
 
     def __cleanup__(self):
         # self.logger.info("Cleanup")
-        self.total_task_count = 0;
-        self.worklist_length = 0;
-        self.finished_task_count = 0;
+        self.total_task_count = 0
+        self.worklist_length = 0
+        self.finished_task_count = 0
         self.current_work_dict = None
         self.finished_items = []
         # Extra stuff for derived product types.
@@ -555,7 +412,7 @@ class ZMQCHIRPSHeadProcessor():
 
     def __writeResults__(self,uniqueid,results):
         filename = params.getResultsFilename(uniqueid)
-        f = open(filename, 'w')
+        f = open(filename, 'w+')
         json.dump(results,f)
         f.close()
         f = None
@@ -567,7 +424,6 @@ class ZMQCHIRPSHeadProcessor():
         
     def __updateProgressDb__(self,uniqueid, progress):
         conn = bdp.BDDbConnector()
-        self.logger.info("before connecting to db")
         conn.setProgress(uniqueid, progress)
         conn.close()
         
@@ -622,16 +478,18 @@ class ZMQCHIRPSHeadProcessor():
             #
             # self.logger.info(
             #     "TODO, FINISH THE custom_job_type PART OF THIS PREPROCESS_INCOMING_REQUEST PIPELINE....remove the return statement before finishing.")
-
-            custom_job_type = request['custom_job_type']
-            if (custom_job_type == "MonthlyGEFSRainfallAnalysis"):
-                return True
+            if 'custom_job_type' in request:
+                custom_job_type = request['custom_job_type']
+                if (custom_job_type == "MonthlyGEFSRainfallAnalysis"):
+                    return True
+                else:
+                    return False #None
             else:
-                return False #None
+                return False
 
         except Exception as e:
             uniqueid = request['uniqueid']
-            self.logger.warn("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
+            self.logger.warning("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
                 uniqueid) + " Exception Error Message: " + str(e))
             return e, False  # REMOVE THIS RETURN PATH, POSSIBLE EXISTING BEHAVIOR SHOULD HAPPEN HERE.
 
@@ -648,16 +506,19 @@ class ZMQCHIRPSHeadProcessor():
             #
             # self.logger.info(
             #     "TODO, FINISH THE custom_job_type PART OF THIS PREPROCESS_INCOMING_REQUEST PIPELINE....remove the return statement before finishing.")
-
-            custom_job_type = request['custom_job_type']
-            if (custom_job_type == "MonthlyRainfallAnalysis"):
-                return True
+            self.logger.info(request)
+            if 'custom_job_type' in request:
+                custom_job_type = request['custom_job_type']
+                if (custom_job_type == "MonthlyRainfallAnalysis"):
+                    return True
+                else:
+                    return False
             else:
                 return False #None
 
         except Exception as e:
             uniqueid = request['uniqueid']
-            self.logger.warn("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
+            self.logger.warning("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
                 uniqueid) + " Exception Error Message: " + str(e))
             return e, False  # REMOVE THIS RETURN PATH, POSSIBLE EXISTING BEHAVIOR SHOULD HAPPEN HERE.
 
@@ -692,28 +553,15 @@ class ZMQCHIRPSHeadProcessor():
                 self.dj_OperationName = "NotDLoad"
                 self.derived_opname = "MonthlyRainfallAnalysis"
 
-                # HERE IS WHAT WE ACTUALLY NEED TO RETURN...
-                # Some processing of all the input params (logging things along the way)
-                # # Geometry one is a little complex but the example below does work.
-                # Then A bunch of stuff to setup a worklist
-                # return None, worklist
-
-                #worklist = []
                 worklist = analysisTools.get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, request)
-                # if (params.DEBUG_LIVE == True):
-                #     self.logger.debug(
-                #         "(" + self.name + "):__preProcessIncomingRequest__ : (MonthlyRainfallAnalysis_Type): worklist array value: " + str(worklist))
+
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : (MonthlyRainfallAnalysis_Type): worklist length array value: " + str(len(worklist)))
                 # With these two lines here, everything just goes into the ether.
 
-                #not_finished_yet = "TODO! NOT FINISHED YET!"
-                #return not_finished_yet, None
-
-                # Sets off the job task runners.
                 return None, worklist
 
             except Exception as e:
-                self.logger.warn("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
+                self.logger.warning("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
                     uniqueid) + " Exception Error Message: " + str(e))
                 return e, None
         elif (is_job_type__MonthlyGEFSRainfallAnalysis == True):
@@ -759,7 +607,7 @@ class ZMQCHIRPSHeadProcessor():
                 return None, worklist
 
             except Exception as e:
-                self.logger.warn("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
+                self.logger.warning("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
                     uniqueid) + " Exception Error Message: " + str(e))
                 return e, None
         else:
@@ -789,19 +637,14 @@ class ZMQCHIRPSHeadProcessor():
             self.__insertProgressDb__(uniqueid)
             self.__write_JobStarted_To_DB__(uniqueid, str(request))  # Log when Job has started. 
             
-            #self.logger.info("Processing Request: "+uniqueid)
             self.logger.info("("+self.name+"):__preProcessIncomingRequest__: uniqueid: "+str(uniqueid))
             
             datatype = request['datatype']
             begintime = request['begintime']
             endtime = request['endtime']
             intervaltype = request['intervaltype']
-            
-            # KS Refactor 2015 // Dirty override for download operations type.
-            operationtype = request['operationtype']    # Original line (just get the operation param)
-            # KS Refactor 2015 // Dirty override for download operations type.
-            #self.mathop = pMath.mathOperations(operationtype,1,params.dataTypes[datatype]['fillValue'],None)
-            #self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: About to do the DIRTY OVERRIDE! operationtype value: "+ str(operationtype))
+            operationtype = request['operationtype']
+
             if(params.parameters[operationtype][1] == 'download'):
                 # If this is a download dataset request, set the self.mathop prop to 0 (or 'max' operator.. this is just so I don't have to refactor a ton of code just to get this feature working at this time... note:  Refactor of this IS needed!)
                 self.mathop = pMath.mathOperations(0,1,params.dataTypes[datatype]['fillValue'],None)
@@ -814,15 +657,10 @@ class ZMQCHIRPSHeadProcessor():
                 self.mathop = pMath.mathOperations(operationtype,1,params.dataTypes[datatype]['fillValue'],None) 
                 self.isDownloadJob = False
                 self.dj_OperationName = "NotDLoad"
-            
+
             #self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: MADE IT PASSED THE DIRTY OVERRIDE! requestID: "+uniqueid)
-            
+
             size = params.getGridDimension(int(datatype))
-            dates = dproc.getListOfTimes(begintime, endtime,intervaltype)
-            
-            if (intervaltype == 0):
-                dates = params.dataTypes[datatype]['indexer'].cullDateList(dates)
-                
             # KS Developer Note: The issue here is that I need to only cut simple rectangle shaped images out of the data.
             # All I really need is the largest bounding box that encompases all points (regardless of how complex the original polygon was)
             # Seems simple right? :)
@@ -832,74 +670,39 @@ class ZMQCHIRPSHeadProcessor():
             polygon_Str_ToPass = None
             dataTypeCategory = params.dataTypes[datatype]['data_category'] #  == 'ClimateModel'
                 
-            geotransform, wkt = rp.getSpatialReference(int(datatype))
-            
+
             # User Drawn Polygon
             if ('geometry' in request):
-                
+
                 if(params.DEBUG_LIVE == True):
                     self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: GEOMETRY FOUND (POLYGON DRAWN BY USER)")
-                
-                
-                # Get the polygon string
                 polygonstring = request['geometry']
-                
-                # Process input polygon string
-                geometry = geoutils.decodeGeoJSON(polygonstring)
-                #geometry = geoutils.decodeGeoJSON(polygon_Str_ToPass)
+                dataset_name=params.aggregatedDataTypes[int(datatype)]['name']+".nc4"
+                variable_name=params.aggregatedDataTypes[int(datatype)]['variable']
+                coordinates=json.loads(polygonstring)["features"][0]["geometry"]["coordinates"]
+
+                if(params.DEBUG_LIVE == True):
+                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
+                dates, operation, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, coordinates, request['uniqueid'], params.parameters[request['operationtype']][1])
                 
                 if(params.DEBUG_LIVE == True):
                     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
-                
-                
-                # Needed for download types
-                #polygon_Str_ToPass = polygonstring 
-                
-                # IMPORTANT BEFORE RELEASING ALL DATA DOWNLOADS
-                # running the below if statement part breaks the mask generation... 
-                # Latest test shows that CHIRPS dataset actually produces a working image
-                # and that seasonal forecasts do as well...
-                # Lets see if there is a way to keep the mask on file downloads..
-                
-                #if(self.dj_OperationName == "download"):
-                if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
-                    polygon_Str_ToPass = extractTif.get_ClimateDataFiltered_PolygonString_FromSingleGeometry(geometry)
-                    
-                    if(params.DEBUG_LIVE == True):
-                        self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygon_Str_ToPass (request['geometry']) value: " + str(polygon_Str_ToPass))
-                    
-                    geometry = geoutils.decodeGeoJSON(polygon_Str_ToPass)
-                    bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
-                else:
-                    polygon_Str_ToPass = polygonstring 
-                    bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
-                
-                
-                # ks refactor // Getting geometry and bounds info.
-                #geometry_ToPass = geometry
-                
-                if(params.DEBUG_LIVE == True):
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : (user defined polygon) geometry value: " + str(geometry))
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : bounds value: " + str(bounds))
-            
+
             
             # User Selected a Feature
             elif ('layerid' in request):
-                
+                geotransform, wkt = rp.getSpatialReference(int(datatype))
+
                 if(params.DEBUG_LIVE == True):
                     self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: LAYERID FOUND (FEATURE SELECTED BY USER)")
                 
                 layerid = request['layerid']
                 featureids = request['featureids']
                 geometries  = sf.getPolygons(layerid, featureids)
-                
+
                 if(params.DEBUG_LIVE == True):
                     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : (FeatureSelection) geometries value: " + str(geometries))
-                
-                
-                
-                
+
                 # For Download data types, convert all of the geometries into a bounding box that covers the whole map.
                 # RIGHT HERE!!
                 #if(self.dj_OperationName == "download"):
@@ -907,69 +710,41 @@ class ZMQCHIRPSHeadProcessor():
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
                     polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
                     polygon_Str_ToPass = polygonstring
-                    geometry = geoutils.decodeGeoJSON(polygonstring)
-                    bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
-                
+                    #geometry = geoutils.decodeGeoJSON(polygonstring)
+                    #bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
+
                 else:
-                    
+
                     bounds,mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
-                
-                
-            
-        #Break up date
-        #Check for cached polygon
-            #if no cached polygon exists rasterize polygon
-            clippedmask = mask[bounds[2]:bounds[3],bounds[0]:bounds[1]]
-            #self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'mask': " + str(mask))
-            #self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'clippedmask': " + str(clippedmask))
-            
+
 
             current_mask_and_storage_uuid = uniqueid
-            #self.__writeMask__(uniqueid,clippedmask,bounds)
-            self.__writeMask__(current_mask_and_storage_uuid, clippedmask, bounds)
-            
-            del mask
-            del clippedmask
+
             worklist =[]
-            for date in dates:
+            for dateIndex in range(len(dates)):
                 workid = uu.getUUID()
-                #workdict = {'uid':uniqueid,'workid':workid,'bounds':bounds,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype}
-                workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':current_mask_and_storage_uuid, 'workid':workid,'bounds':bounds,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':polygon_Str_ToPass, 'derived_product': False} #'geometryToClip':geometry_ToPass}
+                gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
+                workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':current_mask_and_storage_uuid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':polygon_Str_ToPass, 'derived_product': False} #'geometryToClip':geometry_ToPass}
+                workdict['year'] = int(dates[dateIndex][0:4])
+                workdict['month'] = int(dates[dateIndex][5:7])
+                workdict['day'] = int(dates[dateIndex][8:10])
+                workdict['epochTime'] = gmt_midnight
+                workdict['value'] = {operation: values[dateIndex]}
                 if (intervaltype == 0):
-                    workdict['year'] = date[2]
-                    workdict['month'] = date[1]
-                    workdict['day'] = date[0]
-                    dateObject = dateutils.createDateFromYearMonthDay(date[2], date[1], date[0])
-                    workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
-                    workdict['epochTime'] = dateObject.strftime("%s")
-                    worklist.extend([workdict])
+                    dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
                 elif (intervaltype == 1):
-                    workdict['year'] = date[1]
-                    workdict['month'] = date[0]
-                    dateObject = dateutils.createDateFromYearMonth(date[1], date[0])
-                    workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
-                    workdict['epochTime'] = dateObject.strftime("%s")
-                    worklist.extend([workdict])
+                    dateObject = dateutils.createDateFromYearMonth(workdict['year'], workdict['month'] )
                 elif (intervaltype == 2):
-                    workdict['year'] = date
-                    dateObject = dateutils.createDateFromYear(date)
-                    workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
-                    workdict['epochTime'] = dateObject.strftime("%s")
-                    worklist.extend([workdict])
-            # ks Refactor // Understanding how the work is distributed among worker threads.
-            # # if(params.DEBUG_LIVE == True):
-            # #     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : worklist array value: " + str(worklist))
-            # self.logger.info(
-            #     "(" + self.name + "):__preProcessIncomingRequest__ : worklist array value: " + str(worklist))
+                    dateObject = dateutils.createDateFromYear(workdict['year'])
+                workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+                worklist.extend([workdict])
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['intervaltype']: " + str(intervaltype))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : dates: " + str(dates))
-
-            
             return None, worklist
         except Exception as e:
-            self.logger.warn("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))
+            self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))
             return e,None
         
     def __processProgress__(self, progress):
@@ -1006,7 +781,6 @@ class ZMQCHIRPSHeadProcessor():
         self.logger.info("Errors  ",errors)
         
 if __name__ == "__main__":
-    print('from zmqhirps:')
     name = sys.argv[1]
     inputconn = sys.argv[2]
     outputconn = sys.argv[3]

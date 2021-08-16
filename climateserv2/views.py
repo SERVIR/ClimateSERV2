@@ -3,13 +3,14 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
 import climateserv2.db.bddbprocessing as bdp
-from . import parameters as params, geoutils as decodeGeoJSON
+from . import parameters as params
+from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
 import zmq
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("request_processor")
 
 def readResults(uid):
     '''
@@ -31,8 +32,10 @@ def readProgress(uid):
     :rtype: the progress associated with the unique id.
     '''
     conn = bdp.BDDbConnector()
-
-    value = conn.getProgress(uid)
+    try:
+        value = conn.getProgress(uid)
+    except Exception as e:
+        print(str(e))
     conn.close()
     return value
 
@@ -104,7 +107,7 @@ def getDataFromRequest(request):
         jsonresults = readResults(requestid)
         return processCallBack(request, json.dumps(jsonresults), "application/json")
     except Exception as e:
-        logger.warn("problem getting request data for id: " + str(request))
+        logger.warning("problem getting request data for id: " + str(request))
         return processCallBack(request, "need to send id", "application/json")
 
 def intTryParse(value):
@@ -132,13 +135,13 @@ def getDataRequestProgress(request):
         progress = readProgress(requestid)
         logger.debug("Progress =" + str(progress))
         if (progress == -1.0):
-            logger.warn("Problem with getDataRequestProgress: " + str(request))
+            logger.warning("Problem with getDataRequestProgress: " + str(request))
             return processCallBack(request, json.dumps([-1]), "application/json")
         else:
-            return processCallBack(request, json.dumps([progress]), "application/json")
+            return processCallBack(request, json.dumps([float(progress)]), "application/json")
         ## return processCallBack(request,json.dumps([jsonresults['progress']]),"application/json")
     except (Exception, OSError) as e :
-        logger.warn("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
+        logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return processCallBack(request, json.dumps([-1]), "application/json")
 # def read_All_Climate_Capabilities(dataTypeNumberList):
 def read_DataType_Capabilities_For(dataTypeNumberList):
@@ -232,7 +235,6 @@ def submitDataRequest(request):
     :param request: actual request that contains the data needed to put together the request for
     processing
     '''
-    print("from submit")
     logger.debug("Submitting Data Request")
     error = []
     polygonstring = None
@@ -244,29 +246,29 @@ def submitDataRequest(request):
 
     if request.method == 'POST':
         # Get datatype
-        print("from post")
+
         try:
             logger.debug("looking at getting datatype" + str(request))
             datatype = int(request.POST["datatype"])
         except KeyError:
-            logger.warn("issue with datatype" + str(request))
+            logger.warning("issue with datatype" + str(request))
             error.append("Datatype not supported")
         # Get begin and end times
         try:
             begintime = request.POST["begintime"]
         except KeyError:
-            logger.warn("issue with begintime" + str(request))
+            logger.warning("issue with begintime" + str(request))
             error.append("Error with begintime")
         try:
             endtime = request.POST["endtime"]
         except KeyError:
-            logger.warn("issue with endtime" + str(request))
+            logger.warning("issue with endtime" + str(request))
             error.append("Error with endtime")
         # Get interval type
         try:
             intervaltype = int(request.POST["intervaltype"])
         except KeyError:
-            logger.warn("issue with intervaltype" + str(request))
+            logger.warning("issue with intervaltype" + str(request))
             error.append("Error with intervaltype")
         # Get geometry from parameter
         # Or extract from shapefile
@@ -289,27 +291,26 @@ def submitDataRequest(request):
                 logger.debug("submitDataRequest: Loaded feature ids, featureids: " + str(featureids))
 
             except KeyError:
-                logger.warn("issue with finding geometry")
+                logger.warning("issue with finding geometry")
                 error.append("Error with finding geometry: layerid:" + str(layerid) + " featureid: " + str(featureids))
 
         else:
-            print('in elseee')
             try:
                 polygonstring = request.POST["geometry"]
-                geometry = decodeGeoJSON(polygonstring);
+                #geometry = decodeGeoJSON(polygonstring);
             # create geometry
             except KeyError:
-                logger.warn("Problem with geometry")
+                logger.warning("Problem with geometry")
                 error.append("problem decoding geometry " + polygonstring)
 
             if geometry is None:
-                logger.warn("Problem in that the geometry is a problem")
+                logger.warning("Problem in that the geometry is a problem")
             else:
-                logger.warn(geometry)
+                logger.warning(geometry)
         try:
             operationtype = int(request.POST["operationtype"])
         except KeyError:
-            logger.warn("issue with operationtype" + str(request))
+            logger.warning("issue with operationtype" + str(request))
             error.append("Error with operationtype")
 
     if request.method == 'GET':
@@ -318,24 +319,24 @@ def submitDataRequest(request):
             logger.debug("looking at getting datatype" + str(request))
             datatype = int(request.GET["datatype"])
         except KeyError:
-            logger.warn("issue with datatype" + str(request))
+            logger.warning("issue with datatype" + str(request))
             error.append("Datatype not supported")
         # Get begin and end times
         try:
             begintime = request.GET["begintime"]
         except KeyError:
-            logger.warn("issue with begintime" + str(request))
+            logger.warning("issue with begintime" + str(request))
             error.append("Error with begintime")
         try:
             endtime = request.GET["endtime"]
         except KeyError:
-            logger.warn("issue with endtime" + str(request))
+            logger.warning("issue with endtime" + str(request))
             error.append("Error with endtime")
         # Get interval type
         try:
             intervaltype = int(request.GET["intervaltype"])
         except KeyError:
-            logger.warn("issue with intervaltype" + str(request))
+            logger.warning("issue with intervaltype" + str(request))
             error.append("Error with intervaltype")
         # Get geometry from parameter
         # Or extract from shapefile
@@ -357,7 +358,7 @@ def submitDataRequest(request):
                 logger.debug("submitDataRequest: Loaded feature ids, featureids: " + str(featureids))
 
             except KeyError:
-                logger.warn("issue with finding geometry")
+                logger.warning("issue with finding geometry")
                 error.append("Error with finding geometry: layerid:" + str(layerid) + " featureid: " + str(featureids))
 
         else:
@@ -366,17 +367,17 @@ def submitDataRequest(request):
                 geometry = decodeGeoJSON(polygonstring);
             # create geometry
             except KeyError:
-                logger.warn("Problem with geometry")
+                logger.warning("Problem with geometry")
                 error.append("problem decoding geometry ")
 
             if geometry is None:
-                logger.warn("Problem in that the geometry is a problem")
+                logger.warning("Problem in that the geometry is a problem")
             else:
-                logger.warn(geometry)
+                logger.warning(geometry)
         try:
             operationtype = int(request.GET["operationtype"])
         except KeyError:
-            logger.warn("issue with operationtype" + str(request))
+            logger.warning("issue with operationtype" + str(request))
             error.append("Error with operationtype")
 
     uniqueid = uutools.getUUID()
@@ -400,7 +401,7 @@ def submitDataRequest(request):
         ##logger.info("submitting ",dictionary)
         context = zmq.Context()
         sender = context.socket(zmq.PUSH)
-        sender.connect("inproc:///D:/tmp/servir/Q1/input") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
+        sender.connect("ipc:///home/tethys/tmp/servir/Q1/input") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
         sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
@@ -445,7 +446,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
             seasonal_start_date = seasonal_start_date[0:10]
             seasonal_end_date = seasonal_end_date[0:10]
         except KeyError:
-            logger.warn(
+            logger.warning(
                 "issue with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
             error.append(
                 "Error with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
@@ -470,7 +471,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 logger.debug("getMonthlyRainfallAnalysis: Loaded feature ids, featureids: " + str(featureids))
 
             except KeyError:
-                logger.warn("issue with finding geometry")
+                logger.warning("issue with finding geometry")
                 error.append("Error with finding geometry: layerid:" + str(layerid) + " featureid: " + str(featureids))
 
         else:
@@ -479,7 +480,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 geometry = decodeGeoJSON(polygonstring);
             # create geometry
             except KeyError:
-                logger.warn("Problem with geometry")
+                logger.warning("Problem with geometry")
                 try:
                     error.append("problem decoding geometry " + polygonstring)
                 except:
@@ -489,9 +490,9 @@ def submitMonthlyRainfallAnalysisRequest(request):
                         "problem decoding geometry.  Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
 
             if geometry is None:
-                logger.warn("Problem in that the geometry is a problem")
+                logger.warning("Problem in that the geometry is a problem")
             else:
-                logger.warn(geometry)
+                logger.warning(geometry)
 
         uniqueid = uutools.getUUID()
         logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
@@ -561,7 +562,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 geometry = decodeGeoJSON(polygonstring);
             # create geometry
             except KeyError:
-                logger.warn("Problem with geometry")
+                logger.warning("Problem with geometry")
                 try:
                     error.append("problem decoding geometry " + polygonstring)
                 except:
@@ -571,9 +572,9 @@ def submitMonthlyRainfallAnalysisRequest(request):
                         "problem decoding geometry.  Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
 
             if geometry is None:
-                logger.warn("Problem in that the geometry is a problem")
+                logger.warning("Problem in that the geometry is a problem")
             else:
-                logger.warn(geometry)
+                logger.warning(geometry)
 
         uniqueid = uutools.getUUID()
         logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
@@ -594,7 +595,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
             ##logger.info("submitting ",dictionary)
             context = zmq.Context()
             sender = context.socket(zmq.PUSH)
-            sender.connect("ipc:///tmp/servir/Q1/input")
+            sender.connect("ipc:///home/tethys/tmp/servir/Q1/input")
             sender.send_string(json.dumps(dictionary))
 
             return processCallBack(request, json.dumps([uniqueid]), "application/json")

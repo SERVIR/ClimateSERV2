@@ -3,10 +3,10 @@
 HEADWORKERS=3
 WORKERSPERHEAD=8
 
-python="C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe"
+python="/home/tethys/miniconda/envs/ClimateSERV2/bin/python"
 echo python
-rootdir=D:\\ClimateSERV2\\climateserv2\\
-BASEIPCDIR="inproc://D:/tmp/servir/"
+rootdir=/home/tethys/ClimateSERV2/climateserv2/
+BASEIPCDIR="ipc:///home/tethys/tmp/servir/"
 MAINQUEUEINPUT=${BASEIPCDIR}Q1/input
 MAINQUEUEOUTPUT=${BASEIPCDIR}Q1/output
 PIDNAME=/tmp/pid
@@ -15,14 +15,14 @@ export PYTHONPATH=${PYTHONPATH}:${rootdir}
 
 launch() {
 	echo 'python: ' + $python
-	"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" db/bddbprocessing.py
-	"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/Q1 input
+	python db/bddbprocessing.py
+	python file/fileutils.py /home/tethys/tmp/servir/Q1 input
 	
-	"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/Q1 output
+	python file/fileutils.py /home/tethys/tmp/servir/Q1 output
 	
 	echo "starting the Head Workers"
 	##################Start Input Queue########################################
-	"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" zmqconnected/ArgProxyQueue.py ${MAINQUEUEINPUT} ${MAINQUEUEOUTPUT} &
+	python zmqconnected/ArgProxyQueue.py ${MAINQUEUEINPUT} ${MAINQUEUEOUTPUT} &
 	echo $! > ${PIDNAME}
 	
 	##################Start Head Workers and subordinate workers###############
@@ -32,31 +32,31 @@ launch() {
 		
 		HEADNAME=HEAD${i}
 		echo "Starting Head Worker Named:" $HEADNAME
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/${HEADNAME} q1in
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/${HEADNAME} q1out
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/${HEADNAME} q2in
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/fileutils.py D:/tmp/servir/${HEADNAME} q2out
+		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q1in
+		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q1out
+		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q2in
+		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q2out
 		HEADQUEUEONEINPUT=${BASEIPCDIR}${HEADNAME}'/q1in'
 		HEADQUEUEONEOUTPUT=${BASEIPCDIR}${HEADNAME}'/q1out'
 		HEADQUEUETWOINPUT=${BASEIPCDIR}${HEADNAME}'/q2in'
 		HEADQUEUETWOOUTPUT=${BASEIPCDIR}${HEADNAME}'/q2out'
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" zmqconnected/ZMQCHIRPSHeadProcessor.py ${HEADNAME} ${MAINQUEUEOUTPUT} ${HEADQUEUEONEINPUT} ${HEADQUEUETWOOUTPUT} &
+		python zmqconnected/ZMQCHIRPSHeadProcessor.py ${HEADNAME} ${MAINQUEUEOUTPUT} ${HEADQUEUEONEINPUT} ${HEADQUEUETWOOUTPUT} &
 		echo $! >> ${PIDNAME}
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" zmqconnected/ArgProxyQueue.py ${HEADQUEUEONEINPUT} ${HEADQUEUEONEOUTPUT} &
+		python zmqconnected/ArgProxyQueue.py ${HEADQUEUEONEINPUT} ${HEADQUEUEONEOUTPUT} &
 		value=$!
 		echo ${value} >> ${PIDNAME}
 		for  j in $(seq 1 $WORKERSPERHEAD);
 		do
 			WORKERNAME=W${j}${HEADNAME}
 			echo "Starting Worker: $WORKERNAME"
-			"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" zmqconnected/ZMQCHIRPSDataWorker.py ${WORKERNAME} ${HEADQUEUEONEOUTPUT} ${HEADQUEUETWOINPUT}  &
+			python zmqconnected/ZMQCHIRPSDataWorker.py ${WORKERNAME} ${HEADQUEUEONEOUTPUT} ${HEADQUEUETWOINPUT}  &
 			echo $! >> ${PIDNAME}
 		done
-		"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" zmqconnected/ArgProxyQueue.py ${HEADQUEUETWOINPUT} ${HEADQUEUETWOOUTPUT} &
+		python zmqconnected/ArgProxyQueue.py ${HEADQUEUETWOINPUT} ${HEADQUEUETWOOUTPUT} &
 		echo $! >> ${PIDNAME}
 		
 	done
-	"C:\\ProgramData\\Anaconda3\\envs\\ClimateSERV2\\python.exe" file/filePermissions.py /tmp/servir/Q1/input
+	python file/filePermissions.py /home/tethys/tmp/servir/Q1/input
 }
 
 start() {

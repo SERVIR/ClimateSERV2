@@ -77,12 +77,12 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
     endtime = chirps_dateRange_lateMonth + "/" + chirps_dateRange_lateDay + "/" + chirps_dateRange_lateYear
     intervaltype = 0    # Daily
     operationtype = 5   # 5 == average, 0 == max, 1 == min
-
     size = params.getGridDimension(int(datatype))
     dates = dproc.getListOfTimes(begintime, endtime, intervaltype)
 
     if (intervaltype == 0):
         dates = params.dataTypes[datatype]['indexer'].cullDateList(dates)
+
 
     # PROCESS GEOMETRY STUFF NOW
     geotransform, wkt = rp.getSpatialReference(int(datatype))
@@ -90,6 +90,7 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
     #bounds = None
     #mask = None
     polygon_Str_ToPass = None
+
     if ('geometry' in request):
         # Get the polygon string
         polygonstring = request['geometry']
@@ -398,9 +399,9 @@ def get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, r
     worklist = []
     datatype_uuid_for_CHIRPS = uu.getUUID()
     datatype_uuid_for_SeasonalForecast = uu.getUUID()
-
     # (A) Process incoming params
     worklist_CHIRPS             = _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
+
     worklist_SeasonalForecast   = _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
     worklist = worklist + worklist_CHIRPS
     worklist = worklist + worklist_SeasonalForecast

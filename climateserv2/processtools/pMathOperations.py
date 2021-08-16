@@ -5,8 +5,12 @@ Created on Mar 4, 2015
 '''
 import numpy as np
 import sys
+from climateserv2.locallog import locallogging as llog
+
 
 class mathOperations(object):
+    logger = llog.getNamedLogger("request_processor")
+
     mathOperation = None
     operator = None
     intervals = 0

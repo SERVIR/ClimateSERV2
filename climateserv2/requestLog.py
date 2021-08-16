@@ -29,6 +29,7 @@ class requestLog:
                   'iso_DateTime':currentDateTime_Str,
                   'request_Data':dataToLog
                   }
+        self.logger.info(logObj)
         
         requestLog_Connection = None
         isConnected = False
@@ -45,6 +46,7 @@ class requestLog:
         # Submit the request and close the connection
         if(isConnected == True):
             try:
+
                 requestLog_Connection.add_Request(logObj, False)
                 #requestLog_Connection.add_Request(logObj)
                 requestLog_Connection.close()
@@ -124,6 +126,7 @@ class requestLog:
                       "client_ip":theServerSide_Request['IPMapping'],
                       "API_URL_Path":theServerSide_Request['jobID_Info']
                       }
+
         except:
             retObj = "SERVER SIDE ERROR in decode_ServerSideRequest_For_Logging()"
         return retObj
@@ -133,7 +136,7 @@ class requestLog:
         theIP = "0.0.0.0"
         jobID_Info = "Server:JobID: " + str(theJobID)
         jobStatus_Note = "Status: " + str(server_OneWord_JobStatusNote)
-        additional_Note = "AdditionalNotes: " + str(server_AdditionalNotes_String) 
+        additional_Note = "AdditionalNotes: " + str(server_AdditionalNotes_String)
         
         retObj = {
                   "jobID_Info":jobID_Info,  # Hold the JobID info

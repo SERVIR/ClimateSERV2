@@ -55,6 +55,8 @@ shapefilepath = params.shapefilepath
 # profileClientLocation = None
 parameters = params.parameters
 dataTypes = params.dataTypes
+aggregatedDataTypes = params.aggregatedDataTypes
+
 dataTypeInfo = params.dataTypeInfo
 shapefileName = params.shapefileName
 operationTypes = params.operationTypes

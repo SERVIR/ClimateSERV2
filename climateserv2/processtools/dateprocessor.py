@@ -70,21 +70,22 @@ def getListOfMonths(beginmonthyear,endmonthyear):
     :param endmonthyear:
     '''
     years = getListOfYears(beginmonthyear[1],endmonthyear[1])
-    firstyear = years.pop(0)
-    
+    firstyear = list(years).pop(0)
+
+
     output = []
     if (len(years)==0):
         item = createListMonthPlusYear(beginmonthyear[0],endmonthyear[0],firstyear)
         output.extend(item)
         return output
     else:
-        lastyear = years.pop()
+        lastyear = list(years).pop()
         item = createListMonthPlusYear(beginmonthyear[0],12,firstyear)
         output.extend(item)
         for x in years:
             item2 = createListMonthPlusYear(1,12,x)
             output.extend(item2)
-        item3 = createListMonthPlusYear(1,endmonthyear[0],lastyear) 
+        item3 = createListMonthPlusYear(1,endmonthyear[0],lastyear)
         output.extend(item3)
         return output
     
@@ -95,9 +96,13 @@ def getListOfDays(begindaymonthyear,enddaymonthyear):
     :param enddaymonthyear:
     '''
     days=[]
-    listofmonths = getListOfMonths([begindaymonthyear[1],begindaymonthyear[2]],[enddaymonthyear[1],enddaymonthyear[2]])
-    
-    firstmonth = listofmonths.pop(0)
+    try:
+        listofmonths = getListOfMonths([begindaymonthyear[1],begindaymonthyear[2]],[enddaymonthyear[1],enddaymonthyear[2]])
+
+        firstmonth = list(listofmonths).pop(0)
+    except:
+        print("from pofpdo")
+        print(listofmonths)
     if (len(listofmonths) ==0) :
         lastmonth = firstmonth                
     else:                        
@@ -135,7 +140,6 @@ def breakApartDate(datestring,intervaltype):
 
 def getListOfTimes(beginstring,endstring,intervaltype):
     '''
-    
     :param beginstring:
     :param endstring:
     :param intervaltype:
@@ -148,6 +152,7 @@ def getListOfTimes(beginstring,endstring,intervaltype):
         return getListOfMonths(startDate,endDate)
     elif (intervaltype ==2):
         return getListOfYears(startDate[0],endDate[0])
+
 
 
 

@@ -13,24 +13,24 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 try:
     from climateserv2.processtools import dateIndexTools as dit
 except:
-    from processtools import dateIndexTools as dit
+    from .processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
 
 logToConsole = True
 serviringestroot = '''/data/data/cserv/pythonCode/serviringest/'''
-maskstorage = '''D:/tmp/'''# '''/data/data/mask/'''
-dbfilepath = '''D:/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
-newdbfilepath = '''D:/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
-capabilities_db_filepath = '''D:/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
-requestLog_db_basepath = '''D:/tmp/''' #'''/data/data/db/requestLog/'''
-zipFile_MediumTermStorage_Path = '''/data/data/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-zipFile_ScratchWorkspace_Path = '''/data/data/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+maskstorage = '''/home/tethys/tmp/'''# '''/data/data/mask/'''
+dbfilepath = '''/home/tethys/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
+newdbfilepath = '''/home/tethys/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
+capabilities_db_filepath = '''/home/tethys/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
+requestLog_db_basepath = '''/home/tethys/tmp/''' #'''/data/data/db/requestLog/'''
+zipFile_MediumTermStorage_Path = '''/home/tethys/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+zipFile_ScratchWorkspace_Path = '''/home/tethys/tmp//zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 # zipFile_MediumTermStorage_Path = '''/data2/data2/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 # zipFile_ScratchWorkspace_Path = '''/data2/data2/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-logfilepath = '''D:/tmp/'''#'''/data/data/logs/'''
-workpath = '''D:/tmp/'''#'''/data/data/work'''
-shapefilepath = '''D:/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
+logfilepath = '''/home/tethys/tmp/'''#'''/data/data/logs/'''
+workpath = '''/home/tethys/mp/'''#'''/data/data/work'''
+shapefilepath = '''/home/tethys/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
 ageInDaysToPurgeData = 7
 
 # parameters = ([0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"],[5,'avg','Average'])
@@ -66,12 +66,18 @@ def get_ClimateChangeParam__indexer():
 def get_ClimateChangeParam__number_Of_ForecastDays():
     return 180
 
+aggregatedDataTypes = [
+    {'number': 0,
+     'name': 'ucsb-chirps_global_0.05deg_daily',
+     'variable':'precipitation_amount'
+     }
+    ]
 
 dataTypes = [
     {'number': 0,
      'name': 'Chirps', 'description': 'Global CHIRPS Dataset ',
      'size': [7200, 2000],
-     'directory': '/data/data/image/processed/chirps/',
+     'directory': '/home/tethys/tmp/chirps/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),
      'inputDataLocation': '/data/data/image/input/chirps/global/',
@@ -590,5 +596,5 @@ intervals = [
     {'name': 'year', 'pattern': '%Y'}
 ]
 
-resultsdir = '''/data/data/results/'''
+resultsdir = '''/home/tethys/tmp/'''
 
