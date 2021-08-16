@@ -110,6 +110,11 @@ body {
     color: #ffffff;
 }
 
+ul.leaflet-draw-actions.leaflet-draw-actions-top li a,
+ul.leaflet-draw-actions.leaflet-draw-actions-bottom li a {
+    color: white;
+}
+
 .leaflet-bar a {
     background-color: #909d6b94; /*rgba(0, 60, 136, 0.5);*/
     border-bottom: 1px solid #ccc;
@@ -148,8 +153,8 @@ rect.highcharts-focus-border {
     display: none;
 }
 
-.fullscreen-icon {
-    background-image: url(images/icon-fullscreen.png);
+.fullscreen-icon, .leaflet-retina.fullscreen-icon {
+    background-image: url(images/icon-fullscreen.png) !important;
 }
 
 .leaflet-bar-timecontrol {
@@ -163,6 +168,12 @@ rect.highcharts-focus-border {
 .leaflet-control-zoom.leaflet-bar.leaflet-control,
 leaflet-bar leaflet-bar-horizontal leaflet-bar-timecontrol leaflet-control {
     background-color: rgba(255, 255, 255, 0.4);
+}
+
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-edit.leaflet-disabled,
+.leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
+    background-color: #909d6b;
+    opacity: .5;
 }
 
 body.dragging,
@@ -289,4 +300,14 @@ ol {
 
 .highcharts-data-table tr:hover {
     background: #f1f7ff;
+}
+
+.ens-holder {
+    padding-left: 20px;
+    display: none;
+}
+
+.ens-holder.checked {
+    padding-left: 20px;
+    display: block;
 }

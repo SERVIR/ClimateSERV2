@@ -396,7 +396,7 @@ body {
 
 .step-marker {
     font-size: 26px;
-    text-align: center;
+    /*text-align: center;*/
     font-weight: 500;
 }
 
@@ -409,7 +409,7 @@ body {
 }
 
 .bread-crumb {
-    text-decoration: underline;
+    /*text-decoration: underline;*/
     background-color: unset;
     color: #758055;
 }
@@ -477,7 +477,7 @@ button.w-100.bread-crumb.active {
     position: absolute;
     width: 100%;
     text-align: center;
-    color: red;
+    color: #22d448;
     font-weight: 500;
 }
 

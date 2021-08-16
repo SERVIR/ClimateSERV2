@@ -36,20 +36,38 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
-        let client_layers = []; //JSON.parse('{{ data_layers | safe }}');
+        let client_layers = [];
         {% for layer in data_layers %}
-            client_layers.push({
-                title: "{{ layer.title }}",
-                url: "{{ layer.url }}",
-                attribution: "{{ layer.attribution }}",
-                layers: "{{ layer.layers }}",
-                styles: "{{ layer.default_style }}",
-                colorrange: "{{ layer.default_color_range }}",
-                id: "{{ layer.ui_id }}",
-                dataset: "{{ layer.dataset_type }}",
-                app_id: "{{ layer.api_id }}",
-                units: "{{ layer.units }}"
-            })
+
+            {% if layer.isMultiEnsemble %}
+                {% for enslayer in layer.datalayer.all %}
+                    client_layers.push({
+                        title: "{{ enslayer.title }}",
+                        url: "{{ enslayer.url }}",
+                        attribution: "{{ enslayer.attribution }}",
+                        layers: "{{ enslayer.layers }}",
+                        styles: "{{ enslayer.default_style }}",
+                        colorrange: "{{ enslayer.default_color_range }}",
+                        id: "{{ enslayer.ui_id }}",
+                        dataset: "{{ enslayer.dataset_type }}",
+                        app_id: "{{ enslayer.api_id }}",
+                        units: "{{ enslayer.units }}"
+                    })
+                {% endfor %}
+            {% else %}
+                client_layers.push({
+                    title: "{{ layer.title }}",
+                    url: "{{ layer.url }}",
+                    attribution: "{{ layer.attribution }}",
+                    layers: "{{ layer.layers }}",
+                    styles: "{{ layer.default_style }}",
+                    colorrange: "{{ layer.default_color_range }}",
+                    id: "{{ layer.ui_id }}",
+                    dataset: "{{ layer.dataset_type }}",
+                    app_id: "{{ layer.api_id }}",
+                    units: "{{ layer.units }}"
+                })
+            {% endif %}
         {% endfor %}
 
     </script>
@@ -73,11 +91,11 @@
                             <a href="#basemap" role="tab"><i class="fas fa-map"></i></a>
                         </li>
                     </ul>
-                    <ul role="tablist">
-                        <li>
-                            <a href="#settings" role="tab"><i class="fas fa-cog"></i></a>
-                        </li>
-                    </ul>
+                    {#                    <ul role="tablist">#}
+                    {#                        <li>#}
+                    {#                            <a href="#settings" role="tab"><i class="fas fa-cog"></i></a>#}
+                    {#                        </li>#}
+                    {#                    </ul>#}
                 </div>
 
                 <!-- Tab panes -->
@@ -92,7 +110,8 @@
 
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
-                                <li id="{{ layer.ui_id }}_node">
+                                <li id="{{ layer.ui_id }}_node"
+                                    style="display: {% if layer.hasVisualization %} block {% else %} none {% endif %}">
                                     <div class="rst__nodeContent" style="left: 44px">
                                         <div style="height: 100%">
                                             <div class="rst__rowWrapper">
@@ -100,7 +119,44 @@
                                                     <div class="rst__moveHandle"></div>
                                                     <div class="rst__rowContents ignore-elements">
                                                         <div class="rst__rowLabel">
-                                  <span class="rst__rowTitle">
+                                                            {% if layer.isMultiEnsemble %}
+                                                                <span class="rst__rowTitle">
+                                                                    <input type="checkbox"
+                                                                           id="{{ layer.ui_id }}"
+                                                                           name="{{ layer.ui_id }}"
+                                                                           onchange="$('#ens-{{ layer.ui_id }}').toggleClass('checked')"/>
+                                                                      <label for="{{ layer.ui_id }}"
+                                                                             title="{{ layer.title }}">{{ layer.title }}</label>
+                                                                      <br/>
+                                                                </span>
+                                                                <div class="ens-holder" id="ens-{{ layer.ui_id }}">
+                                                                    {% for enslayer in layer.datalayer.all %}
+                                                                        <input type="checkbox"
+                                                                               id="{{ enslayer.ui_id }}"
+                                                                               name="{{ enslayer.ui_id }}"
+                                                                               onchange="toggleLayer('{{ enslayer.ui_id }}TimeLayer')"/>
+                                                                        <label for="{{ enslayer.ui_id }}"
+                                                                               title="{{ enslayer.title }}">{{ enslayer.title }}</label>
+                                                                        <br/>
+                                                                    {% endfor %}
+                                                                    <div>
+                                                                        <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                           class="fas fa-list legend-btn"
+                                                                           onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
+                                                                           style="float: left; margin: 0 0 15px 15px;">
+
+                                                                        </i>
+                                                                        <i class="fas fa-cog settings-btn"
+                                                                           onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
+                                                                           style="float: left; margin: 0 0 15px 15px;">
+
+                                                                        </i>
+                                                                    </div>
+                                                                </div>
+
+
+                                                            {% else %}
+                                                                <span class="rst__rowTitle">
                                       <input type="checkbox"
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
@@ -108,19 +164,21 @@
                                       <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
                                       <br/>
                                   </span>
-                                                            <div>
-                                                                <i id="legend_{{ layer.ui_id }}TimeLayer "
-                                                                   class="fas fa-list legend-btn"
-                                                                   onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
-                                                                   style="float: left; margin: 0 0 15px 15px;">
+                                                                <div>
+                                                                    <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                       class="fas fa-list legend-btn"
+                                                                       onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
+                                                                       style="float: left; margin: 0 0 15px 15px;">
 
-                                                                </i>
-                                                                <i class="fas fa-cog settings-btn"
-                                                                   onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
-                                                                   style="float: left; margin: 0 0 15px 15px;">
+                                                                    </i>
+                                                                    <i class="fas fa-cog settings-btn"
+                                                                       onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
+                                                                       style="float: left; margin: 0 0 15px 15px;">
 
-                                                                </i>
-                                                            </div>
+                                                                    </i>
+                                                                </div>
+                                                            {% endif %}
+
                                                         </div>
                                                         <div class="rst__rowToolbar"></div>
                                                     </div>
@@ -140,64 +198,61 @@
                               <i class="fas fa-caret-left"></i>
                             </span>
                         </h1>
-                        <div class="btn-group d-flex">
-                            <button id="btnstep1" class="w-100 bread-crumb active" onclick="gotostep(1)" disabled="">
-                                Set AOI
+                        <div id="step1 card-header">
+                            <h2 class="step-marker">Set Area of Interest</h2>
+                            <button
+                                    type="button"
+                                    class="bread-crumb"
+                                    data-toggle="collapse"
+                                    data-target="#aoiOptions">
+                                About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
-                            <button id="btnstep2" class="w-100 bread-crumb" onclick="gotostep(2)" disabled="">
-                                Set Data
-                            </button>
-                            <button id="btnstep3" class="w-100 bread-crumb" onclick="gotostep(3)" disabled="">
-                                Review
-                            </button>
-                        </div>
-
-                        <div id="step1">
-                            <h2 class="step-marker">Set AOI</h2>
-                            <p>
-                                Choose how you would like to define your area of interest
-                                (AOI)
-                            </p>
-                            <ul class="step-list">
-                                <li>
-                                    <span class="bold">Draw:</span> Enables drawing on the map.
-                                    You must make a closed polygon to define your AOI.
-                                </li>
-                                <li>
-                                    <span class="bold">Upload:</span> Enables either drag and
-                                    drop or click to upload a json file with your defined AOI
-                                </li>
-                                <li>
-                                    <span class="bold">Select:</span> Adds administrative
-                                    boundaries at different levels for you to choose your AOI.
-                                </li>
-                            </ul>
+                            <div id="aoiOptions" class="collapse" style="padding: 0 10px 20px 20px;">
+                                <p>
+                                    Choose how you would like to define your area of interest
+                                    (AOI)
+                                </p>
+                                <ul class="step-list">
+                                    <li>
+                                        <span class="bold">Draw:</span> Enables drawing on the map.
+                                        You must make a closed polygon to define your AOI.
+                                    </li>
+                                    <li>
+                                        <span class="bold">Upload:</span> Enables either drag and
+                                        drop or click to upload a json file with your defined AOI
+                                    </li>
+                                    <li>
+                                        <span class="bold">Select:</span> Adds administrative
+                                        boundaries at different levels for you to choose your AOI.
+                                    </li>
+                                </ul>
+                            </div>
                             <div class="btn-group d-flex">
-                                <button class="tablinks w-100" onclick="selectAOI('draw')">
+                                <button id="btnAOIdraw" class="tablinks w-100" onclick="selectAOI('draw')">
                                     Draw
                                 </button>
-                                <button class="tablinks w-100" onclick="selectAOI('upload')">
+                                <button id="btnAOIupload" class="tablinks w-100" onclick="selectAOI('upload')">
                                     Upload
                                 </button>
-                                <button class="tablinks w-100" onclick="selectAOI('select')">
+                                <button id="btnAOIselect" class="tablinks w-100" onclick="selectAOI('select')">
                                     Select
                                 </button>
                             </div>
-                            <div class="tab-content selectAOI"
-                                 id="drawAOI"
-                                 style="display: none"
-                            >
-                                <span class="draw-info">
-                                    Enabled
-                                </span>
-                                <span class="draw-info bottom">
-                                    Follow this example to draw
-                                </span>
-                                <img src="{% static 'frontend/img/draw_demo.gif' %}"
-                                     alt="Draw on map"
-                                     style="max-height: 100%; max-width: 100%"
-                                />
-                            </div>
+                            {#                            <div class="tab-content selectAOI"#}
+                            {#                                 id="drawAOI"#}
+                            {#                                 style="display: none"#}
+                            {#                            >#}
+                            {#                                <span class="draw-info">#}
+                            {#                                    Enabled#}
+                            {#                                </span>#}
+                            {#                                <span class="draw-info bottom">#}
+                            {#                                    Follow this example to draw#}
+                            {#                                </span>#}
+                            {#                                <img src="{% static 'frontend/img/draw_demo.gif' %}"#}
+                            {#                                     alt="Draw on map"#}
+                            {#                                     style="max-height: 100%; max-width: 100%"#}
+                            {#                                />#}
+                            {#                            </div>#}
 
                             <div class="tab-content selectAOI"
                                  id="uploadAOI"
@@ -241,18 +296,21 @@
                                 </p>
                                 <div class="btn-group d-flex">
                                     <button
+                                            id="btnAdminFeatcountry"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('country')"
                                     >
                                         Country
                                     </button>
                                     <button
+                                            id="btnAdminFeatadmin_1_earth"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('admin_1_earth')"
                                     >
                                         Admin #1
                                     </button>
                                     <button
+                                            id="btnAdminFeatadmin_2_af"
                                             class="tablinks w-100"
                                             onclick="enableAdminFeature('admin_2_af')"
                                     >
@@ -260,20 +318,15 @@
                                     </button>
                                 </div>
                             </div>
-
-                            <div style="
-                                    width: calc(100% - 10px);
-                                    position: relative;
-                                    margin-top: 20px;">
-                                <button id="nextStep1" onclick="gotostep(2)" disabled=""
-                                        style="position: absolute; right: 0">
-                                    Next
-                                </button>
+                            <div class="form-group panel-buffer">
+                                <label for="geometry">Geometry</label>
+                                <span class="form-control" id="geometry"
+                                      style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">
+                                    {"type":"FeatureCollection","features":[]}
+                                </span>
                             </div>
-                        </div>
-                        <div id="step2" style="display:none;">
                             <form id="query-form" onsubmit="return false;">
-                                <h2 class="step-marker">Set Data</h2>
+                                <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
                                     <label for="requestTypeSelect">Type</label>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
@@ -285,11 +338,55 @@
                                 <div id="panel_dataset">
                                     <div class="form-group panel-buffer">
                                         <label for="sourcemenu">Data Source</label>
-                                        <select name="sourcemenu" class="form-control" id="sourcemenu">
+                                        <select name="sourcemenu" class="form-control" id="sourcemenu"
+                                                onchange="handleSourceSelected(this.value)">
                                             {% for layer in data_layers %}
-                                                <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                {% if layer.isMultiEnsemble %}
+                                                    <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
+                                                {% else %}
+                                                    <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                {% endif %}
                                             {% endfor %}
                                         </select>
+                                    </div>
+                                    <div id="ensemble_builder">
+                                        <div class="form-group panel-buffer">
+                                            <label for="model_run_menu">Select a model run</label>
+                                            <select name="model_run_menu" class="form-control" id="model_run_menu">
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblemenu">Select a model ensemble</label>
+                                            <select name="ensemblemenu" class="form-control" id="ensemblemenu">
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblevarmenu">Select a variable</label>
+                                            <select name="ensemblevarmenu" class="form-control" id="ensemblevarmenu">
+                                            </select>
+                                        </div>
+                                        <h2 class="text-center">Select Forecast Range</h2>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecastfrommenu">From date</label>
+                                            <select name="forecastfrommenu"
+                                                    id="forecastfrommenu"
+                                                    class="form-control"
+                                                    onchange="syncDates()"
+                                            >
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecasttomenu">From date</label>
+                                            <select name="forecasttomenu"
+                                                    id="forecasttomenu"
+                                                    class="form-control"
+                                                    onchange="syncDates()"
+                                            >
+                                            </select>
+                                        </div>
+
                                     </div>
                                     <div class="form-group panel-buffer">
                                         <label for="operationmenu">Calculation</label>
@@ -300,14 +397,14 @@
                                             <option value="6">Download Raw Data</option>
                                         </select>
                                     </div>
-                                    <div class="form-group panel-buffer">
+                                    <div class="form-group panel-buffer" id="non-multi-ensemble-dates">
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                               onchange="isComplete()">
+                                               onchange="verify_ready()">
                                         <div class="input-group-addon">to</div>
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                               onchange="isComplete()">
+                                               onchange="verify_ready()">
                                         <label id="compare-error" for="eDate_new_cooked"
                                                style="color:#da2020; display: none;">End date must be equal or greater
                                             than
@@ -327,56 +424,15 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div style="
+
+                            </form>
+
+                            <div style="
                                     width: calc(100% - 10px);
                                     position: relative;
                                     margin-top: 20px;">
-                                    <button id="nextStep2" onclick="gotostep(3)" disabled=""
-                                            style="position: absolute; right: 0">
-                                        Next
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                        <div id="step3" style="display:none;">
-                            <h2 class="step-marker">Review</h2>
-                            <p>Please review the parameters then click the Send Request at the bottom.</p>
-                            <div id="dataset_review">
-                                <div class="form-group panel-buffer">
-                                    <label for="dataType">Data Type</label>
-                                    <span class="form-control" id="dataType">0 - CHIRPS Rainfall</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="begintime">Start date</label>
-                                    <span class="form-control" id="begintime">01/01/2021</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="endtime">End date</label>
-                                    <span class="form-control" id="endtime">07/19/2021</span>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="operationtype">Operationtype</label>
-                                    <span class="form-control" id="operationtype">5 - Average</span>
-                                </div>
+                                <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
                             </div>
-
-                            <div id="monthly_rainfall_review" style="display: none;">
-                                <div class="form-group panel-buffer">
-                                    <p style="text-align: justify; margin-top: 20px;">
-                                        Geometry is the only option for Monthly Rainfall Analysis.
-                                    </p>
-                                    <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
-                                        Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
-                                        data and current NMME Seasonal Forecast data.
-
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="form-group panel-buffer">
-                                <label for="geometry">Geometry</label>
-                                <span class="form-control" id="geometry" style="height: unset; word-break: break-all;">features: 201</span>
-                            </div>
-                            <button id="btnRequest" onclick="sendRequest()">Send Request</button>
                         </div>
                     </div>
 
@@ -389,16 +445,16 @@
                         </h1>
                     </div>
 
-                    <div class="sidebar-pane" id="settings">
-                        <h1 class="sidebar-header">
-                            Settings
-                            <span class="sidebar-close">
-                              <i class="fas fa-caret-left"></i>
-                            </span>
-                        </h1>
-                        <p>Currently no settings here, likely will remove as
-                            settings have been moved to each layer</p>
-                    </div>
+                    {#                    <div class="sidebar-pane" id="settings">#}
+                    {#                        <h1 class="sidebar-header">#}
+                    {#                            Settings#}
+                    {#                            <span class="sidebar-close">#}
+                    {#                              <i class="fas fa-caret-left"></i>#}
+                    {#                            </span>#}
+                    {#                        </h1>#}
+                    {#                        <p>Currently no settings here, likely will remove as#}
+                    {#                            settings have been moved to each layer</p>#}
+                    {#                    </div>#}
                 </div>
             </div>
 
