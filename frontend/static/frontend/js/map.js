@@ -11,7 +11,7 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url = "https://climateserv.servirglobal.net"; //"http://127.0.0.1:8000/"; //
+const api_url = "https://climateserv.servirglobal.net"; // "http://192.168.1.132:8003"; //"http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 
 /**
@@ -63,19 +63,24 @@ function getLayer(which) {
  * Retrieves the current TDS styles available and stores them in the
  * styleOptions array, which will be used to load the styles dropdown box
  */
-function buildStyles() {
 
-    fetch(
-        client_layers[0].url + "&request=GetCapabilities",
-        {
-            crossDomain: true,
-            method: "GET",
-        }
-    )
-        .then((response) => response.text())
-        .then((xml) => {
+var seeme;
+
+function buildStyles() {
+    $.ajax({
+        url: client_layers[0].url + "&request=GetCapabilities",
+        type: "GET",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
             try {
-                const jsonObj = $.xml2json(xml);
+                const jsonObj = ($.xml2json(data))["#document"];
+                seeme = jsonObj;
                 const styles =
                     jsonObj
                         .WMS_Capabilities
@@ -96,6 +101,7 @@ function buildStyles() {
                     });
                 }
             } catch (e) {
+                console.log("caught");
                 const backup = [
                     {
                         "Name": "boxfill/apcp_surface",
@@ -277,10 +283,8 @@ function buildStyles() {
                     });
                 }
             }
-        })
-        .catch(function (error) {
-            console.log('request failed', error)
-        });
+        }
+    });
 }
 
 function apply_style_click(which, active_layer, bypass_auto_on) {
@@ -1024,19 +1028,24 @@ function sendRequest() {
         } else if (uploadLayer) {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
-
-        fetch(
-            api_url + "/chirps/submitDataRequest/",
-            {
-                crossDomain: true,
-                method: "POST",
-                body: formData,
+        $.ajax({
+            url: api_url + "/chirps/submitDataRequest/",
+            type: "POST",
+            processData: false,
+            contentType: false,
+            async: true,
+            crossDomain: true,
+            data: formData
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                handle_initial_request_data(JSON.parse(data), false);
             }
-        )
-            .then((response) => response.json())
-            .then((data) => {
-                handle_initial_request_data(data, false);
-            });
+        });
+
     } else {
         // this is climatology
         // this looks like it currently needs to be a get request not a post so we'll have to do it a bit different
@@ -1061,9 +1070,21 @@ function sendRequest() {
         url += "&seasonal_end_date=" + csi.endDateTime;
         url += geometry_params;
 
-        fetch(url)
-            .then(response => response.json())
-            .then(data => handle_initial_request_data(data, true));
+
+        $.ajax({
+            url: url,
+            type: "GET",
+            async: true,
+            crossDomain: true
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                handle_initial_request_data(JSON.parse(data), true);
+            }
+        });
 
 
     }
@@ -1076,17 +1097,19 @@ function updateProgress(val) {
 }
 
 function pollForProgress(id, isClimate) {
-    fetch(
-        api_url + "/chirps/getDataRequestProgress/?id=" +
-        id,
-        {
-            crossDomain: true,
-            method: "GET",
-        }
-    )
-        .then((response) => response.json())
-        .then((data) => {
-            const val = data[0];
+    $.ajax({
+        url: api_url + "/chirps/getDataRequestProgress/?id=" +
+            id,
+        type: "GET",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
+            const val = JSON.parse(data)[0];
             if (val !== -1 && val !== 100) {
                 updateProgress(val);
                 pollForProgress(id, isClimate);
@@ -1096,7 +1119,8 @@ function pollForProgress(id, isClimate) {
                 console.log("Server Error");
                 $("#btnRequest").prop("disabled", false);
             }
-        }); // this is the jobID to poll with and get data
+        }
+    });
 }
 
 var workhere;
@@ -1131,16 +1155,20 @@ function handleSourceSelected(which) {
 
         //this will have to change when we get real data, but for now i will hardcode nmme fetch
 
-        fetch(
-            api_url + "/chirps/getClimateScenarioInfo/" +
-            id,
-            {
-                crossDomain: true,
-                method: "GET",
-            }
-        )
-            .then((response) => response.json())
-            .then((data) => {
+
+        $.ajax({
+            url: api_url + "/chirps/getClimateScenarioInfo/" +
+                id,
+            type: "GET",
+            async: true,
+            crossDomain: true
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (sdata, _textStatus, _jqXHR) {
+            if (sdata.errMsg) {
+                console.info(sdata.errMsg);
+            } else {
+                const data = JSON.parse(sdata);
                 workhere = data;
                 const cc = JSON.parse(data.climate_DataTypeCapabilities[0].current_Capabilities);
                 cc.startDateTime;
@@ -1189,8 +1217,8 @@ function handleSourceSelected(which) {
                 // know the variables which are layers from the wms getcapabilities
 
                 // also need to get available run dates for selection
-
-            });
+            }
+        });
     }
     $("#btnRequest").prop("disabled", false);
 }
@@ -1236,7 +1264,7 @@ function getIndex(which) {
     }
 }
 
-var test_obj;
+
 var rainfall_data;
 var from_compiled;
 
@@ -1259,18 +1287,21 @@ function getDataFromRequest(id, isClimate) {
             of: window
         }
     });
-    fetch(
-        api_url + "/chirps/getDataFromRequest/?id=" +
-        id,
-        {
-            crossDomain: true,
-            method: "GET",
-        }
-    )
-        .then((response) => response.json())
-        .then((data) => {
+
+    $.ajax({
+        url: api_url + "/chirps/getDataFromRequest/?id=" +
+            id,
+        type: "GET",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
             if (isClimate) {
-                test_obj = build_MonthlyRainFall_Analysis_Graphable_Object(data);
+                const graph_obj = build_MonthlyRainFall_Analysis_Graphable_Object(JSON.parse(data));
                 // i will have to make an array of objects that look like
                 /*
                 seriesOptions[i] = {
@@ -1299,7 +1330,7 @@ function getDataFromRequest(id, isClimate) {
                 const xaxis = {
                     categories: []
                 }
-                test_obj.forEach(o => {
+                graph_obj.forEach(o => {
                     if (!xaxis.categories.includes(o.Month_Year)) {
                         xaxis.categories.push(o.Month_Year);
                     }
@@ -1318,7 +1349,7 @@ function getDataFromRequest(id, isClimate) {
                 } else {
                     let min = 9999;
                     let max = -9999;
-                    data.data.forEach((d) => {
+                    JSON.parse(data).data.forEach((d) => {
                         let val = 0;
 
                         val =
@@ -1365,7 +1396,8 @@ function getDataFromRequest(id, isClimate) {
                 }
             }
             $("#btnRequest").prop("disabled", false);
-        });
+        }
+    });
 };
 
 function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) {
@@ -1551,9 +1583,21 @@ function openDataTypePanel(select_control) {
 let climateModelInfo;
 
 function getClimateScenarioInfo() {
-    fetch('https://climateserv.servirglobal.net/chirps/getClimateScenarioInfo/')
-        .then(response => response.json())
-        .then(data => climateModelInfo = data);
+
+    $.ajax({
+        url: "https://climateserv.servirglobal.net/chirps/getClimateScenarioInfo/",
+        type: "GET",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
+            climateModelInfo = JSON.parse(data);
+        }
+    });
 }
 
 let img, originalWidth, originalHeight;
