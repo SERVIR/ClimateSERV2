@@ -1,41 +1,36 @@
-'''
-Created on Feb 10, 2015
-@author: jeburks
-'''
 import sys
 import os
 import datetime
 import json
+import dbm
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
-import dbm #bsddb(not supported in py3)
 try:
     import climateserv2.parameters as params
     import climateserv2.locallog.locallogging as llog
 except:
-    import parameters as params
+    from .. import parameters as params
     import locallog.locallogging as llog
 logger = llog.getNamedLogger("request_processor")
 
-def setupBSDDB():
+def setupDBMDB():
     logger.info("Creating db")
-    bddb = BDDbConnector()
+    dbmDb = DBMConnector()
     try:
         os.chmod(params.newdbfilepath, 0o0777)
     except:
         pass
-        # KS Refactor 2015 - Adding a second BDDB for storing API capabilities JSON Strings // key vals are, datatypeNumber:JSONString
-    # logger = llog.getNamedLogger("")
+    # Adding a second DBM DB for storing API capabilities JSON Strings // key vals are, datatypeNumber:JSONString
     logger.info("Creating capabilities db")
-    bddb_Capabilities = BDDbConnector_Capabilities()
+    dbm_Capabilities = DBMConnector_Capabilities()
     try:
         os.chmod(params.capabilities_db_filepath, 0o0777)
     except:
         pass
 
 
-class BDDbConnector:
+class DBMConnector:
     logger = llog.getNamedLogger("request_processor")
 
     db = None
@@ -52,7 +47,6 @@ class BDDbConnector:
         ##need to deal with key does not exist
         self.db[uid] = str(progess)
 
-
     def getProgress(self, uid):
         uid = str(uid)
         return self.db.get(uid)
@@ -65,8 +59,8 @@ class BDDbConnector:
         self.db.close()
 
 
-# KS Refactor 2015 - Added a database to store capabilities for datatypes
-class BDDbConnector_Capabilities:
+# Added a database to store capabilities for datatypes
+class DBMConnector_Capabilities:
     db = None
 
     def __init__(self):
@@ -96,33 +90,14 @@ class BDDbConnector_Capabilities:
     def close(self):
         self.db.close()
 
-    # KS Refactor 2015 - Added a database to store and retrieve request log records
-
-
+#  Added a database to store and retrieve request log records
 # Make a daily DB Request Log (Check the date, if the database does not exist, create it.
-class BDDbConnector_RequestLog:
-    '''
-    In short, this class manages storage of daily logs in a set of BDDb flat files
-    The way this is currently used:
-        Input
-            Each time a request is made (from the web facing API), the most recent database is retrieved and a new entry is made into it
-            We are using the UTC time to determine when a new db is created or if an existing db is used.
-            Currently, this is configured to create a new db each day (as long as there is at least one new request made on that day)
-        Output
-            Use 'get_JSON_RequestLogs_ForDatetimeRange' and pass in 2 datetime objects'
-            Request data by sending in 2 datetime
-    '''
-    # TODO! : Max results per request and paging.
-    # # TODO, Add this setting: max_Number_Of_Results = 100000 
-    # # TODO, after adding max results setting, also add a bool return as part of the data structure which tells the API that the max number was it and report what the last entry was (so requester can pass that last entry date back in as a 'second page' request)
-
+class DBMConnector_RequestLog:
     db_Log_Interval = "days"  # For now, only days are supported.. meaning each database represents 1 day of logs
     db_BaseFileName_DateFormat = "%Y_%m_%d"  # Year, Month, Day
     db_KeyStorage_Format = "%Y_%m_%d_%H_%M_%S_%f"  # Year, Month, Day, Hours, Minutes, Seconds, Microseconds
-    # Maybe should use a UUID for this instead?
     db_FileName_Extension = ".db"
     db_BasePath = params.requestLog_db_basepath  # ex: '/PathToRequestLogDBs/' with slashes on both ends
-    # db = None
     current_DateTime = None
     db_ForWriting_NewRequests = None
     earliest_Possible_DateTime = None
@@ -131,12 +106,9 @@ class BDDbConnector_RequestLog:
     def __init__(self):
         try:
             # Set the earliest possible datetime (This date is around the time this class was first created.)
-            # This is an optimization that should cut down on the processing in case someone passes in a datetime search that starts at a much earlier date than this one.
             earliest_Possible_DateTime_String = "2015_09_30"
             self.earliest_Possible_DateTime = datetime.datetime.strptime(earliest_Possible_DateTime_String,
                                                                          self.db_BaseFileName_DateFormat)
-            # datetime.datetime.strptime("2015_09_30", "%Y_%m_%d")
-
             # Set the current DateTime
             self.current_DateTime = self._get_CurrentDateTime()
 
@@ -145,33 +117,19 @@ class BDDbConnector_RequestLog:
 
             # Get the DB (if it does not exist, it gets created)
             self.db_ForWriting_NewRequests = self._openHash_(expectedFileName)
-
-        # Clean up all these old notes!!
-        # self.db_BasePath = params.requestLog_db_basepath
-
-        # If DB does not exist, create it.
-        #  or creates (if not found) the most current DB for today.
-
-        # expected_FullPath = self._get_DB_FullPath_ForFilename(expectedFileName)
-
-        # self.db = self.__openHash__()
         except:
             pass
 
     # Open a given db by filename (if it does not exist, create it)
-    # def __openHash__(self, theFileName):
     def _openHash_(self, theFileName):
 
         # Get the full path to the expected DB location
         expectedFullFilePath = self._get_DB_FullPath_ForFilename(theFileName)
         logger.info(expectedFullFilePath)
-
         ret_DB = dbm.open(expectedFullFilePath, 'c')
-
         return ret_DB
 
     # Return the DB if it exists, if not, just return None
-    # def __openHash__OnlyOnExist(self, theFileName):
     def _openHash_OnlyOnExist(self, theFileName):
         expectedFullFilePath = self._get_DB_FullPath_ForFilename(theFileName)
         ret_DB = None
@@ -181,7 +139,6 @@ class BDDbConnector_RequestLog:
         return ret_DB
 
     # Create a new DB
-    # def _create_DB_ForFileName(self, theFileName):
     def _create_New_DB(self, fullPathToNewDB):
         ret_DB = dbm.open(fullPathToNewDB, 'c')
         os.chmod(fullPathToNewDB, 0o0777)
@@ -189,7 +146,6 @@ class BDDbConnector_RequestLog:
 
     # Using only the filename, check to see if the DB exists (assumption is that all of them are stored in the same folder defined above)
     def _does_DB_Exist(self, theFileName):
-
         # Only checks to see if the file exists
         expectedFullFilePath = self._get_DB_FullPath_ForFilename(theFileName)
         try:
@@ -223,7 +179,7 @@ class BDDbConnector_RequestLog:
         except:
             pass
 
-    # Returns all data as list of objects, an individual object has these props,  'key':theKeyFromBDDB  and 'value':theValeFromBDDB's Matching key 
+    # Returns all data as list of objects, an individual object has these props,  'key':theKeyFromDBM  and 'value':theValeFromDBM's Matching key
     def get_All_Data_From_DB_ForFile(self, theFileName):
         retData = []
 
@@ -253,7 +209,6 @@ class BDDbConnector_RequestLog:
 
     # Get Request logs data for datetime range (UTC time)
     # Returns a list
-    # I am wondering if this function will consume too much processing load, just to get data!!
     def get_RequestLogs_ForDatetimeRange(self, earliest_UTC_DateTime, latest_UTC_DateTime):
 
         # First, validate that the search range
@@ -268,9 +223,7 @@ class BDDbConnector_RequestLog:
             # set the end of the range to the last possible log date (Today's date)
             latest_UTC_DateTime = rightNow
 
-        # Next, Create a list of strings that represent log file names (1 for each day) using the range
-
-        # Interval setup stuff
+        # Interval setup
         intervalString = "1 days"
         intervalValue = int(intervalString.split(" ")[0])
         intervalType = intervalString.split(" ")[1]
@@ -303,7 +256,6 @@ class BDDbConnector_RequestLog:
         # Optimization, do 2 sets of compares, if the list only contains a single file, check each log entry against both datetimes in the range, if the list has 2 or more items, then the compare is done by looking at the earliest date for the first file and the latest date for the last file, if the current log file in the list is not the first or last item, don't compare anything, just grab all the logs
         # Optimization, only do compares on the first and last file in the list
         logEntriesToReturn = []
-        # TODO!! Iterate through the list (in the optmized way), 'db_FileNames_List', open each db one at a time, grab all their entries and iterate through them or dump them as needed.
 
         # Only proceed if the list of files is not empty
         if (len(db_FileNames_List) > 0):
@@ -326,20 +278,6 @@ class BDDbConnector_RequestLog:
                 except:
                     # Possible that the file does not exist?
                     pass
-                # Actually, doing the simple way is probably fastest, but we can only get search granules down to a single day (rather than hours, mins and seconds).. that is probably ok for the first version!
-                # IMPORTANT OPTIMIZATION!!    START
-
-                # If we only have 1 item in the list, do the double compare for each data item in the list
-
-                # Else If, we are on the first item in the list, only compare entries to make sure they come after the earliest datetime
-
-                # Else If, we are on the last item in the list, only compare entries to make sure they come before the latest datetime
-
-                # Else, just dump everything in this data right to the return log entries.
-
-                # STILL WORKING ON THIS PART (DO THE OPTIMIZATIONS... THEN ADD THE INPUT PIPELINE.... THEN DO SOME TEST REQUESTS!!)
-
-                # IMPORTANT OPTIMIZATION!!    END
 
         return logEntriesToReturn
 
@@ -355,36 +293,15 @@ class BDDbConnector_RequestLog:
         theKey = currentDateTime.strftime(formatString)
 
         # convert the value into a json string or regular string 
-        # NOTE (ks): I'm not sure if these DBs can handle complex non string objects.. so str()
         theValue = str(requestData)
         if (skip_JSON_Object_Conversion == True):
             theValue = str(requestData)
         else:
             theValue = json.dumps(requestData)
-
-        # Debug time!
-        # print("currentDateTime: " + str(currentDateTime))
-        # print("formatString: " + str(formatString))
-        # print("theKey: " + str(theKey))
-        # print("theValue: " + str(theValue))
-
         # Add new data!
         self.db_ForWriting_NewRequests[theKey] = theValue
         print(self.db_ForWriting_NewRequests[theKey])
 
-    # Convert the list of log entries into a simple list of csv-ready strings??
-    def convert_ListOfLogEntryObjects_To_CSV_StringList(self, logEntryObjects):
-        return "Sorry, this method is not finished!!!"
-
-    # Some old notes when building this class.... CLEAN UP!!
-    # Access,
-    # Get All Records between certain dates and times
-    # Store Keys as datetime strings (YYYY_MM_DD_HH_MM_SS_SSS)
-    # Translate a datetime range to a que of calls (to access all the correct db's)
-    # Need a folder to store ALL these logs
-    # Maybe purge logs after a certain number of days??
-    # Need method to create a new DB if one does not already exist.
-
 
 if __name__ == '__main__':
-    setupBSDDB()
+    setupDBMDB()

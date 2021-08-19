@@ -27,7 +27,7 @@ try:
     import climateserv2.file.npmemmapstorage as rp
     import climateserv2.geo.clippedmaskgenerator as mg
     import climateserv2.file.dateutils as dateutils
-    import climateserv2.db.bddbprocessing as bdp
+    import climateserv2.db.DBMDbprocessing as dbmDb
     import climateserv2.locallog.locallogging as llog
     import climateserv2.processtools.uutools as uu
     import climateserv2.file.MaskTempStorage  as mst
@@ -45,7 +45,7 @@ except:
     import file.npmemmapstorage as rp
     import geo.clippedmaskgenerator as mg
     import file.dateutils as dateutils
-    import db.bddbprocessing as bdp
+    import db.DBMDbprocessing as dbmDb
     import locallog.locallogging as llog
     import processtools.uutools as uu
     import file.MaskTempStorage  as mst
@@ -75,6 +75,7 @@ class ZMQCHIRPSHeadProcessor():
     progress = 0
     process_start_time =0
     mathop = None
+    zipFilePath=None
     
     # KS Refactor 2015  # Some items related to download data jobs
     isDownloadJob = False
@@ -110,10 +111,6 @@ class ZMQCHIRPSHeadProcessor():
             self.process_start_time = time.time()
             self.logger.info("Processing request "+request['uniqueid'])
             self.processWork(request)
-            # self.total_task_count = 100.0
-            # self.finished_task_count = 1.0
-            # self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.0
-            # self.logger.info(self.progress)
             self.__processProgress__(self.progress)
             time_total = time.time()-self.process_start_time
             self.logger.info("Total time: "+str(time_total))
@@ -123,13 +120,10 @@ class ZMQCHIRPSHeadProcessor():
         if (self.isDownloadJob == True ):
             if (self.dj_OperationName == "download"):
                 theJobID = None
-                try:
-                    self.logger.info("("+self.name+"):preProcessWork_ForDownloadTypes: Pre_Processing a Download Data Job. " + str(request['uniqueid']))
-                    theJobID = request['uniqueid']
-                    outFileFolder = params.zipFile_ScratchWorkspace_Path + str(theJobID)+"/" 
-                    extractTif.create_Scratch_Folder(outFileFolder)
-                except:
-                    pass
+                self.logger.info("("+self.name+"):preProcessWork_ForDownloadTypes: Pre_Processing a Download Data Job. " + str(request['uniqueid']))
+                theJobID = request['uniqueid']
+
+
             elif (self.dj_OperationName == "download_all_climate_datasets"):
                 # Placeholder for download_all_climate_datasets operations.... not even sure if going to use this here..
                 pass
@@ -147,11 +141,11 @@ class ZMQCHIRPSHeadProcessor():
                     self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Post_Processing a Download Data Job. " + str(request['uniqueid']))
                     theJobID = request['uniqueid']
                     # Zip the files
-                    zipFilePath, errorMessage = extractTif.zip_Extracted_Tif_Files_Controller(theJobID)
-                    if (errorMessage == None):
-                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Tif files have been zipped to: " + str(zipFilePath))
+                    # zipFilePath, errorMessage = extractTif.zip_Extracted_Tif_Files_Controller(theJobID)
+                    if (self.zipFilePath != None):
+                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Tif files have been zipped to: " + str(self.zipFilePath))
                     else:
-                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: ERROR ZIPPING TIF FILES.  errorMessage: " + str(errorMessage))
+                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: ERROR ZIPPING TIF FILES.")
                         
                 except:
                     pass
@@ -349,7 +343,7 @@ class ZMQCHIRPSHeadProcessor():
         if (self.isDownloadJob == True):
             # For Download Jobs.
             # Need to figure out why we use 'self.finished_items' and what happens if I just skip it..
-            if results['value'] != missingValue:
+            if results['value'] is not None:
                 self.finished_items.append(results)
         else:
             self.finished_items.append(results)
@@ -372,7 +366,7 @@ class ZMQCHIRPSHeadProcessor():
 
         # KS Refactor 2015 // Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
-        
+        self.logger.info("%%%%%%%%%%%%%%%")
         #self.logger.info("Finished Job:"+str(self.request))
         self.logger.info("("+self.name+"):__finishJob__:Finished Job:"+str(self.request))
         
@@ -383,8 +377,10 @@ class ZMQCHIRPSHeadProcessor():
         except:
             theJobID = ""
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
-        
-        self.finished_items = self.__sortData__(self.finished_items)
+        self.logger.info("%%%%%$$$$%%%%%%%%%%")
+
+        if (self.isDownloadJob == False):
+            self.finished_items = self.__sortData__(self.finished_items)
 #         ##Output Data
         if (self.derived_product == True):
             # Special output formatting for Monthly Analysis (we don't necessarily want all the raw data (maybe we do!?)
@@ -392,8 +388,13 @@ class ZMQCHIRPSHeadProcessor():
         else:
             # Normal output formatting
             self.__outputData__()
-#         ##Update Progress 
+#         ##Update Progress
+        self.logger.info("%%%%%$$$$AAaAA^^^%%%%%%%%%%")
+        self.logger.info(self.progress)
+
         self.__updateProgress__(output_full=True)
+        self.logger.info("%%%%%$$$$AAaAA^444^^%%%%%%%%%%")
+
         self.__cleanup__()
 #         ###Back to looking for work.
 
@@ -418,12 +419,12 @@ class ZMQCHIRPSHeadProcessor():
         f = None
         
     def __insertProgressDb__(self,uniqueid):
-        conn = bdp.BDDbConnector()
+        conn = dbmDb.BDDbConnector()
         conn.setProgress(uniqueid, 0)
         conn.close()
         
     def __updateProgressDb__(self,uniqueid, progress):
-        conn = bdp.BDDbConnector()
+        conn = dbmDb.BDDbConnector()
         conn.setProgress(uniqueid, progress)
         conn.close()
         
@@ -646,9 +647,11 @@ class ZMQCHIRPSHeadProcessor():
             operationtype = request['operationtype']
 
             if(params.parameters[operationtype][1] == 'download'):
+
+
                 # If this is a download dataset request, set the self.mathop prop to 0 (or 'max' operator.. this is just so I don't have to refactor a ton of code just to get this feature working at this time... note:  Refactor of this IS needed!)
                 self.mathop = pMath.mathOperations(0,1,params.dataTypes[datatype]['fillValue'],None)
-                
+
                 # Additional customized code for download jobs
                 self.isDownloadJob = True 
                 self.dj_OperationName = "download"
@@ -661,6 +664,8 @@ class ZMQCHIRPSHeadProcessor():
             #self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: MADE IT PASSED THE DIRTY OVERRIDE! requestID: "+uniqueid)
 
             size = params.getGridDimension(int(datatype))
+            downloaddates = dproc.getListOfTimes(begintime, endtime,intervaltype)
+
             # KS Developer Note: The issue here is that I need to only cut simple rectangle shaped images out of the data.
             # All I really need is the largest bounding box that encompases all points (regardless of how complex the original polygon was)
             # Seems simple right? :)
@@ -669,26 +674,34 @@ class ZMQCHIRPSHeadProcessor():
             #geometry_ToPass = None
             polygon_Str_ToPass = None
             dataTypeCategory = params.dataTypes[datatype]['data_category'] #  == 'ClimateModel'
-                
 
             # User Drawn Polygon
             if ('geometry' in request):
 
+                # Process input polygon string
                 if(params.DEBUG_LIVE == True):
                     self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: GEOMETRY FOUND (POLYGON DRAWN BY USER)")
                 polygonstring = request['geometry']
+                geometry = geoutils.decodeGeoJSON(polygonstring)
+
+
                 dataset_name=params.aggregatedDataTypes[int(datatype)]['name']+".nc4"
+
                 variable_name=params.aggregatedDataTypes[int(datatype)]['variable']
+
                 coordinates=json.loads(polygonstring)["features"][0]["geometry"]["coordinates"]
+                # geotransform, wkt = rp.getSpatialReference(int(datatype))
 
                 if(params.DEBUG_LIVE == True):
                     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
-                dates, operation, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, coordinates, request['uniqueid'], params.parameters[request['operationtype']][1])
+                if(params.parameters[operationtype][1] == 'download'):
+                    dates=downloaddates
+                    self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1],params.zipFile_ScratchWorkspace_Path + str(uniqueid) )
+                else:
+                    dates, operation, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1])
                 
                 if(params.DEBUG_LIVE == True):
                     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
-
-            
             # User Selected a Feature
             elif ('layerid' in request):
                 geotransform, wkt = rp.getSpatialReference(int(datatype))
@@ -710,38 +723,57 @@ class ZMQCHIRPSHeadProcessor():
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
                     polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
                     polygon_Str_ToPass = polygonstring
-                    #geometry = geoutils.decodeGeoJSON(polygonstring)
-                    #bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
+                    geometry = geoutils.decodeGeoJSON(polygonstring)
+                    bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
 
                 else:
-
                     bounds,mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
 
+                # Break up date
+                # Check for cached polygon
+                # if no cached polygon exists rasterize polygon
+                clippedmask = mask[bounds[2]:bounds[3], bounds[0]:bounds[1]]
+                # self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'mask': " + str(mask))
+                # self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'clippedmask': " + str(clippedmask))
 
-            current_mask_and_storage_uuid = uniqueid
+                current_mask_and_storage_uuid = uniqueid
+                # self.__writeMask__(uniqueid,clippedmask,bounds)
+                self.__writeMask__(current_mask_and_storage_uuid, clippedmask, bounds)
 
+
+
+                del mask
+                del clippedmask
             worklist =[]
-            for dateIndex in range(len(dates)):
+            if (self.dj_OperationName != "download"):
+                for dateIndex in range(len(dates)):
+                    workid = uu.getUUID()
+                    gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
+                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':uniqueid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':polygon_Str_ToPass, 'derived_product': False} #'geometryToClip':geometry_ToPass}
+                    workdict['year'] = int(dates[dateIndex][0:4])
+                    workdict['month'] = int(dates[dateIndex][5:7])
+                    workdict['day'] = int(dates[dateIndex][8:10])
+                    workdict['epochTime'] = gmt_midnight
+                    workdict['value'] = {operation: values[dateIndex]}
+                    if (intervaltype == 0):
+                        dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
+                    elif (intervaltype == 1):
+                        dateObject = dateutils.createDateFromYearMonth(workdict['year'], workdict['month'] )
+                    elif (intervaltype == 2):
+                        dateObject = dateutils.createDateFromYear(workdict['year'])
+                    workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+                    worklist.extend([workdict])
+            else:
                 workid = uu.getUUID()
-                gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':current_mask_and_storage_uuid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':polygon_Str_ToPass, 'derived_product': False} #'geometryToClip':geometry_ToPass}
-                workdict['year'] = int(dates[dateIndex][0:4])
-                workdict['month'] = int(dates[dateIndex][5:7])
-                workdict['day'] = int(dates[dateIndex][8:10])
-                workdict['epochTime'] = gmt_midnight
-                workdict['value'] = {operation: values[dateIndex]}
-                if (intervaltype == 0):
-                    dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
-                elif (intervaltype == 1):
-                    dateObject = dateutils.createDateFromYearMonth(workdict['year'], workdict['month'] )
-                elif (intervaltype == 2):
-                    dateObject = dateutils.createDateFromYear(workdict['year'])
-                workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+                workdict = {'uid': uniqueid, 'workid':workid,'current_mask_and_storage_uuid': uniqueid, 'intervaltype':intervaltype,
+                            'datatype': datatype, 'operationtype': operationtype,
+                            'polygon_Str_ToPass': polygon_Str_ToPass,
+                            'derived_product': False}  # 'geometryToClip':geometry_ToPass}
+                workdict['value'] = {operation: self.zipFilePath}
                 worklist.extend([workdict])
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['intervaltype']: " + str(intervaltype))
-            self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : dates: " + str(dates))
             return None, worklist
         except Exception as e:
             self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))

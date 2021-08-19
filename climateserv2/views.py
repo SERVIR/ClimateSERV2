@@ -1,13 +1,16 @@
+from wsgiref.util import FileWrapper
+
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
-import climateserv2.db.bddbprocessing as bdp
+import climateserv2.db.DBMDbprocessing as dbmDb
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
 import zmq
-
+import sys
+import os
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
 logger = logging.getLogger("request_processor")
@@ -31,7 +34,7 @@ def readProgress(uid):
     :param uid: unique identifier to find the correct result.
     :rtype: the progress associated with the unique id.
     '''
-    conn = bdp.BDDbConnector()
+    conn = dbmDb.DBMConnector()
     try:
         value = conn.getProgress(uid)
     except Exception as e:
@@ -157,7 +160,7 @@ def read_DataType_Capabilities_For(dataTypeNumberList):
 
     try:
         # Create a connection to the bddb
-        conn = bdp.BDDbConnector_Capabilities()
+        conn = dbmDb.BDDbConnector_Capabilities()
 
         # try and get data
         try:
@@ -169,9 +172,7 @@ def read_DataType_Capabilities_For(dataTypeNumberList):
                 }
                 retList.append(appendObj)
         except Exception as e:
-            # Catch an error?
-            # Error here indicates trouble accessing data or possibly getting an individual capabilities item
-            logger.warn(
+            logger.warning(
                 "Error here indicates trouble accessing data or possibly getting an individual capabilities item: " + str(
                     e))
             pass
@@ -182,11 +183,97 @@ def read_DataType_Capabilities_For(dataTypeNumberList):
         # Catch an error?
         # Error here indicates trouble connecting to the BD Database
         # If trouble connect
-        logger.warn("Error here indicates trouble connecting to the BD Database: " + str(e))
+        logger.warning("Error here indicates trouble connecting to the BD Database: " + str(e))
         pass
-    logger.warn("No error was found, look some place else")
+    logger.warning("No error was found, look some place else")
     # return the list!
     return retList
+
+# getFileForJobID
+@csrf_exempt
+def getFileForJobID(request):
+    '''
+    Get the file for the completed Job ID.  Will return a file download (if it exists)
+    :param request: contains the id of the request you want to look up.
+    '''
+
+    logger.debug("Getting File to download.")
+
+    try:
+        requestid = request.GET["id"]
+        progress = readProgress(requestid)
+
+        # Validate that progress is at 100%
+        if (progress == 100.0):
+
+            doesFileExist = False
+
+            expectedFileLocation = ""  # Full path including filename
+            expectedFileName = ""  # Just the file name
+            try:
+                # Lets find the file
+                path_To_Zip_MediumTerm_Storage = params.zipFile_ScratchWorkspace_Path
+                expectedFileName = requestid + ".zip"
+                expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
+                doesFileExist = os.path.exists(expectedFileLocation)
+            except:
+                doesFileExist = False
+
+            # Validate that a file actually exists where we say it is
+            if (doesFileExist == True):
+
+                # If the above validation checks out, return the file contents
+                # theFile = FileWrapper(expectedFileLocation)
+                # FileWrapper()
+                # response = HttpResponse(wrapper, content_type='application/zip')
+                # theFileWrapper = FileWrapper.File
+                # Open the file
+                theFileToSend = open(expectedFileLocation)
+                theFileWrapper = FileWrapper(theFileToSend)
+                response = HttpResponse(theFileWrapper, content_type='application/zip')
+                response['Content-Disposition'] = 'attachment; filename=' + str(
+                    expectedFileName)  # filename=myfile.zip'
+
+                # Log the data
+                #dataThatWasLogged = set_LogRequest(request, get_client_ip(request))
+
+                return response
+
+                # theFileData = "Return_ZipFile_Data_TODO"
+                #
+                ## TODO, Write file stream server.
+                ## Log the Request (This is normally done in the processCallBack function... however we won't be using that pipe to serve the file stream.
+                # dataThatWasLogged = set_LogRequest(request, get_client_ip(request))
+                # return processCallBack(request,json.dumps("_PLACEHOLDER THIS SHOULD BE THE FILE AND NOT THIS MESSAGE!! _PLACEHOLDER"),"application/json")
+                ##return processCallBack(request,json.dumps(theFileData),"application/json")
+
+            else:
+                # File did not exist        // "File does not exist on server. Was this jobID associated with a server job that produces output as a file?"
+                return processCallBack(request, json.dumps(
+                    "File does not exist on server.  There was an error generating this file during the server job"),
+                                       "application/json")
+        elif (progress == -1.0):
+            # File is not finished being created.
+            retObj = {
+                "msg": "File Not found.  There was an error validating the job progress.  It is possible that this is an invalid job id.",
+                "fileProgress": progress
+            }
+            return processCallBack(request, json.dumps(retObj), "application/json")
+        else:
+            # File is not finished being created.
+            retObj = {
+                "msg": "File still being built.",
+                "fileProgress": progress
+            }
+            return processCallBack(request, json.dumps(retObj), "application/json")
+
+    # except Exception as e:
+    except Exception as e:
+        e = sys.exc_info()[0]
+        logger.warning("Problem with getFileForJobID: System Error Message: " + str(
+            e))  # +str(request.GET)+" "+str(e.errno)+" "+str(e.strerror))
+        return processCallBack(request, json.dumps("Error Getting File"), "application/json")
+
 
 # ks refactor 2015 // New API Hook getClimateScenarioInfo
 # Note: Each individual capabilities entry is already wrapped as a JSON String
@@ -206,15 +293,21 @@ def getClimateScenarioInfo(request):
 
     # Error Tracking
     isError = False
-
+    print('print 1')
     # Get list of datatype numbers that have the category of 'ClimateModel'
     climateModel_DataTypeNumbers = params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
+    print('print 2')
+
 
     # Get all info from the Capabilities Data for each 'ClimateModel' datatype number
     climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
+    print('print 3')
+
 
     # 'data_category':'ClimateModel'
     climate_DatatypeMap = params.get_Climate_DatatypeMap()
+    print('print 4')
+
 
     api_ReturnObject = {
         "RequestName": "getClimateScenarioInfo",
