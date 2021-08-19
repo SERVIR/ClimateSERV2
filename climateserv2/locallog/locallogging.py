@@ -20,7 +20,6 @@ class StreamToLogger(object):
 
 def getNamedLogger(nameofLogger):
     logfilepath = params.logfilepath+nameofLogger+time.strftime("%Y%m%d")+".log"
-    os.chmod(logfilepath, 0o777)
     logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',

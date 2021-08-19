@@ -678,9 +678,9 @@ class ZMQCHIRPSHeadProcessor():
                 geometry = geoutils.decodeGeoJSON(polygonstring)
 
 
-                dataset_name=params.aggregatedDataTypes[int(datatype)]['name']+".nc4"
+                dataset_name=params.dataTypes[int(datatype)]['dataset_name']+".nc4"
 
-                variable_name=params.aggregatedDataTypes[int(datatype)]['variable']
+                variable_name=params.dataTypes[int(datatype)]['variable']
 
                 coordinates=json.loads(polygonstring)["features"][0]["geometry"]["coordinates"]
                 # geotransform, wkt = rp.getSpatialReference(int(datatype))

@@ -18,21 +18,20 @@ except:
 DEBUG_LIVE = False
 
 logToConsole = True
-serviringestroot = '''/cserv2/django_app/data/pythonCode/serviringest/'''
-maskstorage = '''/cserv2/django_app/tmp/'''# '''/data/data/mask/'''
-dbfilepath = '''/cserv2/django_app/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
-newdbfilepath = '''/cserv2/django_app/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
-capabilities_db_filepath = '''/cserv2/django_app/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
-requestLog_db_basepath = '''/cserv2/django_app/''' #'''/data/data/db/requestLog/'''
-zipFile_Storage_Path = '''/cserv2/django_app/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-zipFile_ScratchWorkspace_Path = '''/cserv2/django_app/tmp/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-logfilepath = '''/cserv2/django_app/tmp/'''#'''/data/data/logs/'''
-workpath = '''/cserv2/django_app/mp/'''#'''/data/data/work'''
-shapefilepath = '''/cserv2/django_app/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
+serviringestroot = '''/cserv2/tmp/data/pythonCode/serviringest/'''
+maskstorage = '''/cserv2/tmp/'''# '''/data/data/mask/'''
+dbfilepath = '''/cserv2/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
+newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
+capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
+requestLog_db_basepath = '''/cserv2/tmp/''' #'''/data/data/db/requestLog/'''
+zipFile_Storage_Path = '''/cserv2/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+logfilepath = '''/cserv2/tmp/'''#'''/data/data/logs/'''
+workpath = '''/cserv2/tmp/'''#'''/data/data/work'''
+shapefilepath = '''/cserv2/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
 shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 
-# parameters = ([0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"],[5,'avg','Average'])
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 
@@ -65,24 +64,18 @@ def get_ClimateChangeParam__indexer():
 def get_ClimateChangeParam__number_Of_ForecastDays():
     return 180
 
-aggregatedDataTypes = [
-    {'number': 0,
-     'name': 'ucsb-chirps_global_0.05deg_daily',
-     'variable':'precipitation_amount'
-     }
-
-    ]
-
 dataTypes = [
     {'number': 0,
      'name': 'Chirps', 'description': 'Global CHIRPS Dataset ',
      'size': [7200, 2000],
-     'directory': '/home/tethys/tmp/chirps/',
+     'directory': '/cserv2/tmp/chirps/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),
      'inputDataLocation': '/data/data/image/input/chirps/global/',
-     'data_category': 'CHIRPS'
-     },
+     'data_category': 'CHIRPS',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'ucsb-chirps_global_0.05deg_daily',
+    },
 
     {'number': 1,
      'name': 'NDVI MODIS-West Africa',
@@ -92,7 +85,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data/image/input/emodis/westafrica/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
+     'variable': 'ndvi',
+     'dataset_name': 'emodis-ndvi_westafrica_250m_10dy',
      },
 
     {'number': 2,
@@ -103,7 +98,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data2/image/input/emodis/eastafrica/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
+     'variable': 'ndvi',
+     'dataset_name': 'emodis-ndvi_eastafrica_250m_10dy',
      },
 
     {'number': 3,
@@ -113,7 +110,7 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
      'inputDataLocation': '/data/data/image/input/emodis/northafrica/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
      },
 
     {'number': 4,
@@ -124,7 +121,7 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
      'inputDataLocation': '/data/data/image/input/emodis/centralafrica/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
      },
 
     {'number': 5, 'name': 'NDVI MODIS-South Africa',
@@ -134,12 +131,10 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data2/image/input/emodis/southafrica/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
      },
 
-    # KS Note: Adding new climate change datatypes here.
-    # Also added a few new properties to these.  See 'datatypes_Doc.txt' for more detailed info about these changes
-
+    # Adding new climate change datatypes here.
     # Ensemble 01
     {
         'number': 6,
@@ -465,7 +460,9 @@ dataTypes = [
      'fillValue': 9999.,
      'indexer': dit.DynamicIndex("P1D"),
      'inputDataLocation': '/data/data2/image/input/IMERG1Day/',
-     'data_category': 'IMERG'
+     'data_category': 'IMERG',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'nasa-imerg-late_global_0.1deg_1dy',
      },
     {'number': 27, 'name': 'NDVI MODIS-Afghanistan',
      'description': 'NDVI MODIS Afghanistan description',
@@ -474,7 +471,7 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
      'inputDataLocation': '/data/data2/image/input/emodis/afghanistan/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
      },
     {'number': 28, 'name': 'NDVI MODIS-Asia',
      'description': 'NDVI MODIS Asia description',
@@ -483,7 +480,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data2/image/input/emodis/asia/',
-     'data_category': 'NDVI'
+     'data_category': 'NDVI',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'emodis-ndvi_centralasia_250m_10dy',
      },
     {'number': 29,
      'name': 'ESI', 'description': 'Global ESI  Dataset ',
@@ -492,7 +491,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
      'inputDataLocation': '/data/data/image/input/esi/4WK/',
-     'data_category': 'ESI'
+     'data_category': 'ESI',
+     'variable': 'esi',
+     'dataset_name': 'sport-esi_global_0.05deg_4wk',
      },
     {'number': 30,
      'name': 'SMAP', 'description': 'SMAP  Dataset ',
@@ -501,7 +502,7 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),
      'inputDataLocation': '/data/data2/image/input/smap/',
-     'data_category': 'SMAP'
+     'data_category': 'SMAP',
      },
     {'number': 31,
      'name': 'Chirps-GEFS-Anom', 'description': 'Global CHIRPS GEFS Anomalies Dataset ',
@@ -519,7 +520,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
      'inputDataLocation': '/data/data3/image/input/gefs_precip/',
-     'data_category': 'CHIRPS'
+     'data_category': 'CHIRPS',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
      },
     # There will be more added here in time.
     {'number': 33,
@@ -529,7 +532,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
      'inputDataLocation': '/data/data/image/input/esi/12WK/',
-     'data_category': 'ESI'
+     'data_category': 'ESI',
+     'variable': 'esi',
+     'dataset_name': 'sport-esi_global_0.05deg_12wk',
      },
     {'number': 34,
      'name': 'IMERG Test',
@@ -596,5 +601,5 @@ intervals = [
     {'name': 'year', 'pattern': '%Y'}
 ]
 
-resultsdir = '''/home/tethys/tmp/'''
+resultsdir = '''/cserv2/django_app/tmp/'''
 
