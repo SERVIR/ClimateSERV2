@@ -51,13 +51,8 @@ logfilepath = params.logfilepath
 workpath = params.workpath
 shapefilepath = params.shapefilepath
 shell_script=params.shell_script
-
-# profileLocation = 'mycluster'
-# profileClientLocation = None
 parameters = params.parameters
 dataTypes = params.dataTypes
-aggregatedDataTypes = params.aggregatedDataTypes
-
 dataTypeInfo = params.dataTypeInfo
 shapefileName = params.shapefileName
 operationTypes = params.operationTypes
@@ -65,15 +60,6 @@ intervals = params.intervals
 ageInDaysToPurgeData = params.ageInDaysToPurgeData
 
 resultsdir = params.resultsdir
-
-
-# Climate Change Scenario Specific
-# ks refactor 2015 // New Parameter Variables : New variable to match climate change variable names
-# Climate_Variable_Names = params.Climate_Variable_Names
-
-# ks refactor 2015 // New Parameter Variables : Object used by clientside code to assist in building client UI and client UI Validation.
-# ClientSide_ClimateChangeScenario_Specs = params.ClientSide_ClimateChangeScenario_Specs
-
 
 def getResultsFilename(id):
     '''
