@@ -25,7 +25,6 @@ except:
     import file.npmemmapstorage as rp
     import file.ExtractTifFromH5 as extractTif
 
-#import CHIRPS.utils.file.ExtractTifFromH5 as extractTif
 import time
 
 
@@ -106,10 +105,6 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
         featureids = request['featureids']
         geometries = sf.getPolygons(layerid, featureids)
 
-        # If we MUST have a polygon_Str_ToPass, uncomment the next two lines.
-        #polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
-        #polygon_Str_ToPass = polygonstring
-
         # # this is not a download type or a climate model type --START
         bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
         # # this is not a download type or a climate model type --END
@@ -185,10 +180,6 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
         layerid = request['layerid']
         featureids = request['featureids']
         geometries = sf.getPolygons(layerid, featureids)
-
-        # If we MUST have a polygon_Str_ToPass, uncomment the next two lines.
-        #polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
-        #polygon_Str_ToPass = polygonstring
 
         # # this is not a download type or a climate model type --START
         bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
@@ -346,40 +337,6 @@ def get_workList_for_headProcessor_for_MonthlyGEFSRainfallAnalysis_types(uniquei
     worklist_SeasonalForecast   = _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
     worklist = worklist + worklist_CHIRPS
     worklist = worklist + worklist_SeasonalForecast
-
-
-    # (B) Get the CHIRPS and Monthly Seasonal Forecast Worklists
-
-    # (C) Do any additional stuff needed at the pre-processing level right here?
-
-
-    # Procedural process
-    # Focus on making the tasks for all the workers for (1), and (2).
-
-    # CHIRPS
-    # # Needs to be all historical Chirps dates.  We need the following items from each chirps date
-    # # # FOR JUST THIS FIRST PART (we only need the CHIRPS AVERAGE dataset)
-    # # # FOR ALL THE REST OF THE PARTS (POST PROCESSING)
-    # # # # We need to create a collection of all the monthly averages, and then get the 25, 50, 75 percentile
-
-    # SEASONAL FORECAST
-    # # FOR JUST THIS FIRST PART
-    # # # Need the 10 ensembles, Average
-    # # FOR ALL THE REST OF THE PARTS (POST PROCESSING)
-    # # # For Each Month
-    # # # # Combine the 10 into a min
-    # # # # Combine the 10 into an Average
-    # # # # Combine the 10 into a max
-
-
-    # OLD NOTES - MAYBE IGNORE?
-    # # # Get The averages of all chirps, then create a collection of all the monthly averages
-    # # # LongTerm Average (Average over entire date range?
-
-
-    #worklist.append("WHASSUP..")
-    #worklist.append("TODO.. FINISH THIS SECTION!")
-
     return worklist
 	
 # Alternate version of '__preProcessIncomingRequest__' code that gets the worklist for the Monthly Analysis
@@ -405,76 +362,8 @@ def get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, r
     worklist_SeasonalForecast   = _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
     worklist = worklist + worklist_CHIRPS
     worklist = worklist + worklist_SeasonalForecast
-
-
-    # (B) Get the CHIRPS and Monthly Seasonal Forecast Worklists
-
-    # (C) Do any additional stuff needed at the pre-processing level right here?
-
-
-    # Procedural process
-    # Focus on making the tasks for all the workers for (1), and (2).
-
-    # CHIRPS
-    # # Needs to be all historical Chirps dates.  We need the following items from each chirps date
-    # # # FOR JUST THIS FIRST PART (we only need the CHIRPS AVERAGE dataset)
-    # # # FOR ALL THE REST OF THE PARTS (POST PROCESSING)
-    # # # # We need to create a collection of all the monthly averages, and then get the 25, 50, 75 percentile
-
-    # SEASONAL FORECAST
-    # # FOR JUST THIS FIRST PART
-    # # # Need the 10 ensembles, Average
-    # # FOR ALL THE REST OF THE PARTS (POST PROCESSING)
-    # # # For Each Month
-    # # # # Combine the 10 into a min
-    # # # # Combine the 10 into an Average
-    # # # # Combine the 10 into a max
-
-
-    # OLD NOTES - MAYBE IGNORE?
-    # # # Get The averages of all chirps, then create a collection of all the monthly averages
-    # # # LongTerm Average (Average over entire date range?
-
-
-    #worklist.append("WHASSUP..")
-    #worklist.append("TODO.. FINISH THIS SECTION!")
-
     return worklist
 
-
-
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     END
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     END
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     END
-
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     START
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     START
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     START
-
-# Nope, nothing really needed here..
-
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     END
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     END
-# #  PHASE II SUPPORT - Worker.__dowork__ function, Handling various UUID Hierarchy and doing the same thing worker.__dowork__ does     END
-
-
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     START
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     START
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     START
-
-# datatype, sub_type_name, current_mask_and_storage_uuid
-
-# Example of: self.finished_items[0]:
-# # {
-# #     u'epochTime': u'1230786000',
-# #     u'datatype': 0,
-# #     u'sub_type_name': u'CHIRPS_REQUEST',
-# #     u'workid': u'd25ae615-550d-4925-b630-165e3933980f',
-# #     u'current_mask_and_storage_uuid': u'20fb9e16-066c-44a7-83c8-f617ef70c85b',
-# #     u'value': {u'avg': 0.0},
-# #     u'date': u'1/1/2009',
-# #     u'derived_product': True
-# # }
 def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
     # Data Buckets
@@ -522,7 +411,7 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
         npList_xtemps = np.zeros(len(current_dataset), 'd')
 
         # SeasonalFcstAnalysis.py Line 53 - 59 translated/ported
-        for i in xrange(len(current_dataset)):
+        for i in range(len(current_dataset)):
             current_dataset_item = current_dataset[i]
             current_full_date = current_dataset_item['date']
             current_avg_value = current_dataset_item['value']['avg']
@@ -557,7 +446,7 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
         #     temps[(year[k] - minyr), mon[k] - 1] = xtemps[k]
         #     msum[(year[k] - minyr), mon[k] - 1] = msum[(year[k] - minyr), mon[k] - 1] + xtemps[k]
         #     mhits[(year[k] - minyr), mon[k] - 1] = mhits[(year[k] - minyr), mon[k] - 1] + 1
-        for k in xrange(len(current_dataset)):
+        for k in range(len(current_dataset)):
             temps[(npList_year[k] - minyr), npList_mon[k] - 1] = npList_xtemps[k]
             msum[(npList_year[k] - minyr), npList_mon[k] - 1] = msum[(npList_year[k] - minyr), npList_mon[k] - 1] + npList_xtemps[k]
             mhits[(npList_year[k] - minyr), npList_mon[k] - 1] = mhits[(npList_year[k] - minyr), npList_mon[k] - 1] + 1
@@ -572,8 +461,8 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
         #         f.write('\n')
         # USED TO WRITE TO _SUMMARY.TXT
         year_month_dataLines = []
-        for j in xrange(maxyr - minyr + 1):
-            for k in xrange(12):
+        for j in range(maxyr - minyr + 1):
+            for k in range(12):
                 minyr_j_col01 = str(minyr + j)
                 k_1_col02 = str(k + 1)
                 msum_j_k_col03 = str(msum[j, k])
@@ -605,7 +494,7 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
         # SeasonalFcstAnalysis.py Line 99 - 104 translated/ported
         # Compute percentiles
-        for k in xrange(12):
+        for k in range(12):
             x45 = msum[:, k]
             p75[k] = np.percentile(x45, 75)
             p25[k] = np.percentile(x45, 25)
@@ -613,72 +502,35 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
         # SeasonalFcstAnalysis.py Line 108 - 112 translated/ported
         # Do the sums over the same month in all years
-        for j in xrange(12):
-            for k in xrange(maxyr - minyr + 1):
+        for j in range(12):
+            for k in range(maxyr - minyr + 1):
                 msum2[j] = msum2[j] + msum[k, j]
                 mhits2[j] = mhits2[j] + 1
 
-        # SeasonalFcstAnalysis.py Line 114 - 129 translated/ported
-        #         # print/write the data out
-        # f3.write('Month  MonthlyAverage    25thPercentile  75thPercentile  #YearsInAnalysis')
-        # f3.write('\n')
-        #
-        # for k in xrange(12):
-        #     if mhits2[k] > 0:
-        #         print k + 1, msum2[k] / (mhits2[k]), mhits2[k], p25[k], p75[k]
-        #     else:
-        #         print k + 1, 0.0, 0.0, 0.0, 0.0
-        #
-        #     if mhits2[k] > 0:
-        #         xprint2 = str(k + 1) + ' ' + str(msum2[k] / (mhits2[k])) + ' ' + ' ' + str(p25[k]) + ' ' + str(
-        #             p75[k]) + ' ' + str(mhits2[k])
-        #     else:
-        #         xprint2 = str(k + 1) + ' ' + str(0.0) + ' ' + str(0.0) + ' ' + str(0.0) + ' ' + str(0.0)
-        #     f3.write(xprint2)
-        #     f3.write('\n')
-        #        # print/write the data out
+
         avg_percentiles_dataLines = []
         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
-        #f3.write('Month  MonthlyAverage    25thPercentile  75thPercentile  #YearsInAnalysis')
-        #f3.write('\n')
-        for k in xrange(12):
+
+        for k in range(12):
             col01_Month = ""
             col02_MonthlyAverage = ""
             col03_25thPercentile = ""
             col04_75thPercentile = ""
             col05_YearsInAnalysis = ""
-            # Looks like this bit was just debugging (print statments) on the original version of the code.
-            # if mhits2[k] > 0:
-            #     #print k + 1, msum2[k] / (mhits2[k]), mhits2[k], p25[k], p75[k]
-            #     col01_Month = k + 1
-            #     col02_MonthlyAverage = msum2[k] / (mhits2[k])
-            #     col03_25thPercentile = mhits2[k]
-            #     col04_75thPercentile = p25[k]
-            #     col05_YearsInAnalysis = p75[k]
-            # else:
-            #     #print k + 1, 0.0, 0.0, 0.0, 0.0
-            #     col01_Month = k + 1
-            #     col02_MonthlyAverage = 0.0
-            #     col03_25thPercentile = 0.0
-            #     col04_75thPercentile = 0.0
-            #     col05_YearsInAnalysis = 0.0
+
             if mhits2[k] > 0:
-                #xprint2 = str(k + 1) + ' ' + str(msum2[k] / (mhits2[k])) + ' ' + ' ' + str(p25[k]) + ' ' + str(p75[k]) + ' ' + str(mhits2[k])
                 col01_Month = k + 1
                 col02_MonthlyAverage = msum2[k] / (mhits2[k])
                 col03_25thPercentile = p25[k]
                 col04_75thPercentile = p75[k]
                 col05_YearsInAnalysis = mhits2[k]
             else:
-                #xprint2 = str(k + 1) + ' ' + str(0.0) + ' ' + str(0.0) + ' ' + str(0.0) + ' ' + str(0.0)
                 col01_Month = k + 1
                 col02_MonthlyAverage = 0.0
                 col03_25thPercentile = 0.0
                 col04_75thPercentile = 0.0
                 col05_YearsInAnalysis = 0.0
 
-            #f3.write(xprint2)
-            #f3.write('\n')
             avg_percentiles_dataLine = {
                 'col01_Month':str(col01_Month),
                 'col02_MonthlyAverage':str(col02_MonthlyAverage),
@@ -697,39 +549,9 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
             'out_datatype':out_datatype,
             'out_subTypeName':out_subTypeName,
             'out_storageUUID':out_storageUUID
-            #'what_else':'more goes here!'
         }
         return_dataset_info_list.append(dataset_info_obj)
 
-
-        # for current_dataset_item in current_dataset:
-        #     # THIS IS WHERE TO PROCESS THE DATA.
-        #     pass
-
-    # def __sortData__(self,array):
-    #     newlist = sorted(array, key=itemgetter('epochTime'))
-    #     return newlist
-
-
-
-    # # Iterate through all the items
-    # for raw_item in raw_items_list:
-    #     current_full_date = raw_item['date']
-    #     current_avg_value = raw_item['value']['avg']
-    #     current_month = current_full_date.split('/')[0]
-    #     current_day = current_full_date.split('/')[1]
-    #     current_year = current_full_date.split('/')[2]
-    #     current_dataset_uuid = raw_item['current_mask_and_storage_uuid']
-    #
-    #     # Append the data item to the list, or create a new item
-    #     try:
-    #         organized_container[current_dataset_uuid].append()
-    #     except:
-    #         pass
-
-
-    # We are going to need to convert the raw_items_list into
-    # num_of_data_entries_for_current_dataset = 55 # Need to
 
     final_output = {
         'dataset_info_list':return_dataset_info_list,

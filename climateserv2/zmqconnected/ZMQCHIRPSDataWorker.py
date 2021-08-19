@@ -45,22 +45,22 @@ class ZMQCHIRPSDataWorker():
 
     def __doWork__(self):
         self.operatingData=eval(self.operatingData)
-        mathop = pMath.mathOperations(self.operatingData['operationtype'], 1,
-                                      params.dataTypes[self.operatingData['datatype']]['fillValue'], None)
         if (self.operatingData['intervaltype'] == 0):
-            self.logger.info(self.operatingData)
-            dateOfOperation = str(self.operatingData['month']) + "/" + str(self.operatingData['day']) + "/" + str(
-                self.operatingData['year'])
-            return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
+            if(self.operatingData['operationtype'] ==6):
+                return { 'value': self.operatingData['value']}
+            else:
+                dateOfOperation = str(self.operatingData['month']) + "/" + str(self.operatingData['day']) + "/" + str(
+                    self.operatingData['year'])
+                return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
                     'value': self.operatingData['value']}
         elif (self.operatingData['intervaltype'] == 1):
             dateOfOperation = str(self.operatingData['month']) + "/" + str(self.operatingData['year'])
             return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
-                    'value': mathop.getFillValue()}
+                    'value': self.operatingData['value']}
         elif (self.operatingData['intervaltype'] == 2):
             dateOfOperation = str(self.operatingData['year'])
             return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
-                    'value': mathop.getFillValue()}
+                    'value': self.operatingData['value']}
 
     def __listen__(self):
         while (True):

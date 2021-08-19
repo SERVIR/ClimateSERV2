@@ -45,11 +45,12 @@ dbfilepath = params.dbfilepath
 newdbfilepath = params.newdbfilepath
 capabilities_db_filepath = params.capabilities_db_filepath
 requestLog_db_basepath = params.requestLog_db_basepath
-zipFile_MediumTermStorage_Path = params.zipFile_MediumTermStorage_Path
+# zipFile_MediumTermStorage_Path = params.zipFile_MediumTermStorage_Path
 zipFile_ScratchWorkspace_Path = params.zipFile_ScratchWorkspace_Path
 logfilepath = params.logfilepath
 workpath = params.workpath
 shapefilepath = params.shapefilepath
+shell_script=params.shell_script
 
 # profileLocation = 'mycluster'
 # profileClientLocation = None

@@ -15,11 +15,11 @@ if module_path not in sys.path:
 try:
     import climateserv2.parameters as params
     import climateserv2.locallog.locallogging as llog
-    import climateserv2.db.bddbprocessing as bdp
+    import climateserv2.db.DBMDbprocessing as dbmDb
 except:
     import parameters as params
     import locallog.locallogging as llog
-    import db.bddbprocessing as bdp
+    import db.DBMDbprocessing as dbmDb
 # Utils
 # Set of functions that when used together result in zipfile(s) which contain Tif file collections (datasets) that were extracted from H5 files.
 
@@ -53,7 +53,7 @@ def zip_List_Of_Files(listOf_FullFilePaths_ToZip, zipFile_FullPath):
 # returns the run YYYYMM capabilities
 def get_RunYYYYMM_From_ClimateModel_Capabilities(theDataTypeNumber):
     try:
-        conn = bdp.BDDbConnector_Capabilities()
+        conn = dbmDb.DBMConnector_Capabilities()
         currentCapabilities_jsonString = conn.get_Capabilities(theDataTypeNumber)
         conn.close()
         currentCapabilities = json.loads(currentCapabilities_jsonString)
@@ -161,14 +161,13 @@ def zip_Extracted_Tif_Files_Controller(theJobID):
 # Create the scratch folder if it does not exist.
 def create_Scratch_Folder(pathToCreate):
     # If folder does not exist, create it.
-    if not os.path.exists(pathToCreate):
-        try:
-            os.makedirs(pathToCreate)
-            logger.info("ExtractTifFromH5: Created Folder at: " + str(pathToCreate))
-        except:
-            e = sys.exc_info()[0]
-            errMsg = "ExtractTifFromH5: Failed to create folder path (it may have already been created by another thread).  Error Message: " + str(e)
-            logger.debug(errMsg)
+    try:
+        os.makedirs(pathToCreate,exist_ok=True)
+        logger.info("ExtractTifFromH5: Created Folder at: " + str(pathToCreate))
+    except:
+        e = sys.exc_info()[0]
+        errMsg = "ExtractTifFromH5: Failed to create folder path (it may have already been created by another thread).  Error Message: " + str(e)
+        logger.debug(errMsg)
        
 
 # Round Down
@@ -297,7 +296,7 @@ def get_ClimateDataFiltered_PolygonString_FromSingleGeometry(theGeometry):
     return retObj_JSON #retObj
 
 def get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(theGeometries):
-    
+    logger.info("from get climate")
     # Default 0'd values
     # I think this is the bug!!!! (Setting these values to 0)
     # Fixing by setting to radically large and small numbers (way out of range).. (note the ranges)
@@ -309,6 +308,7 @@ def get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(theGeometries):
     # Foreach geometry found.
     #for poly in polygons:
     for poly in theGeometries:
+        logger.info("from get clim for loop")
         for i in range(0,poly.GetGeometryCount()):
             objToSend = poly.GetGeometryRef(i).GetGeometryRef(0)  # Not sure what this is about but it seems to work!!
             current_maxX_Long, current_minX_Long, current_maxY_Lat, current_minY_Lat = get_MaxXLong_MinXLong_MaxYLat_MinYLat_From_Geometry(objToSend)

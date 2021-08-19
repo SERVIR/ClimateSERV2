@@ -18,19 +18,18 @@ except:
 DEBUG_LIVE = False
 
 logToConsole = True
-serviringestroot = '''/data/data/cserv/pythonCode/serviringest/'''
-maskstorage = '''/home/tethys/tmp/'''# '''/data/data/mask/'''
-dbfilepath = '''/home/tethys/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
-newdbfilepath = '''/home/tethys/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
-capabilities_db_filepath = '''/home/tethys/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
-requestLog_db_basepath = '''/home/tethys/tmp/''' #'''/data/data/db/requestLog/'''
-zipFile_MediumTermStorage_Path = '''/home/tethys/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-zipFile_ScratchWorkspace_Path = '''/home/tethys/tmp//zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-# zipFile_MediumTermStorage_Path = '''/data2/data2/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-# zipFile_ScratchWorkspace_Path = '''/data2/data2/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-logfilepath = '''/home/tethys/tmp/'''#'''/data/data/logs/'''
-workpath = '''/home/tethys/mp/'''#'''/data/data/work'''
-shapefilepath = '''/home/tethys/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
+serviringestroot = '''/cserv2/django_app/data/pythonCode/serviringest/'''
+maskstorage = '''/cserv2/django_app/tmp/'''# '''/data/data/mask/'''
+dbfilepath = '''/cserv2/django_app/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
+newdbfilepath = '''/cserv2/django_app/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
+capabilities_db_filepath = '''/cserv2/django_app/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
+requestLog_db_basepath = '''/cserv2/django_app/''' #'''/data/data/db/requestLog/'''
+zipFile_Storage_Path = '''/cserv2/django_app/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+zipFile_ScratchWorkspace_Path = '''/cserv2/django_app/tmp/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
+logfilepath = '''/cserv2/django_app/tmp/'''#'''/data/data/logs/'''
+workpath = '''/cserv2/django_app/mp/'''#'''/data/data/work'''
+shapefilepath = '''/cserv2/django_app/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
+shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 
 # parameters = ([0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"],[5,'avg','Average'])
@@ -71,6 +70,7 @@ aggregatedDataTypes = [
      'name': 'ucsb-chirps_global_0.05deg_daily',
      'variable':'precipitation_amount'
      }
+
     ]
 
 dataTypes = [

@@ -1,10 +1,10 @@
-import climateserv2.db.bddbprocessing as bdp
+import climateserv2.db.DBMDbprocessing as dbmDb
 import datetime
 import sys
 
 
 
-# Manage interfacing with the RequestLog BDDB. (opening and closing of DB after requests)
+# Manage interfacing with the RequestLog DBM DB. (opening and closing of DB after requests)
 # Handle additional formatting requirements on the output of log data (if we need it in CSV, JSON, etc)
 # Adding DateTime info to request data.
 class requestLog:
@@ -35,11 +35,11 @@ class requestLog:
         isConnected = False
         # Make the DB Connection
         try:
-            requestLog_Connection = bdp.BDDbConnector_RequestLog()
+            requestLog_Connection = dbmDb.DBMConnector_RequestLog()
             isConnected = True
         except:
             e = sys.exc_info()[0]
-            errMsg = "requestLog: Error Connecting to Request Log DB Error Line: requestLog_Connection = bdp.BDDbConnector_RequestLog() System Error Message: " + str(e)
+            errMsg = "requestLog: Error Connecting to Request Log DB Error Line: requestLog_Connection = dbmDb.DBMConnector_RequestLog() System Error Message: " + str(e)
             self.logOutput(errMsg)
             
         
@@ -52,7 +52,7 @@ class requestLog:
                 requestLog_Connection.close()
             except:
                 e = sys.exc_info()[0]
-                errMsg = "requestLog: Error Connecting to Request Log DB Error Line: requestLog_Connection = bdp.BDDbConnector_RequestLog() System Error Message: " + str(e) + " logObj Details: " + str(logObj)
+                errMsg = "requestLog: Error Connecting to Request Log DB Error Line: requestLog_Connection = dbmDb.DBMConnector_RequestLog() System Error Message: " + str(e) + " logObj Details: " + str(logObj)
                 print(errMsg)
                 requestLog_Connection.close()
             
@@ -61,7 +61,7 @@ class requestLog:
         
         retLogs = [] # Scoping
         try:
-            requestLog_Connection = bdp.BDDbConnector_RequestLog()
+            requestLog_Connection = dbmDb.DBMConnector_RequestLog()
             requestLog_Connection.close()  # Fix for request logs crashing worker threads.. the function on the next line looks into older connections not newer ones.
             retLogs = requestLog_Connection.get_RequestLogs_ForDatetimeRange(earliest_DateTime, latest_DateTime)
         except:

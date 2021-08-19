@@ -1,19 +1,10 @@
-'''
-Created on Jan 29, 2015
-
-@author: jeburks
-'''
-import sys
-
-
 import logging
 try:
     import climateserv2.parameters as params
 except:
     import parameters as params
-from logging.handlers import RotatingFileHandler
 import time
-
+import os
 class StreamToLogger(object):
    """
    Fake file-like stream object that redirects writes to a logger instance.
@@ -26,28 +17,18 @@ class StreamToLogger(object):
    def write(self, buf):
       for line in buf.rstrip().splitlines():
          self.logger.log(self.log_level, line.rstrip())
- 
-
- 
-
- 
 
 def getNamedLogger(nameofLogger):
     logfilepath = params.logfilepath+nameofLogger+time.strftime("%Y%m%d")+".log"
-    
+    os.chmod(logfilepath, 0o777)
     logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s %(name)-12s %(levelname)-8s %(message)s',
                     datefmt='%m-%d %H:%M',
                     filename=logfilepath,
                     filemode='a')
-    
     logger=logging.getLogger(nameofLogger)
     if (params.logToConsole == True):
         ch = logging.StreamHandler()
         ch.setLevel(logging.DEBUG)
         logger.addHandler(ch)
-   # sl = StreamToLogger(logger, logging.INFO)
-   # sys.stdout = sl
-   # sl = StreamToLogger(logger, logging.ERROR)
-   # sys.stderr = sl
     return logger
