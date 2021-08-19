@@ -11,7 +11,7 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url = "https://climateserv.servirglobal.net"; // "http://192.168.1.132:8003"; //"http://127.0.0.1:8000/"; //
+const api_url = "https://climateserv.servirglobal.net"; //"http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 
 /**
@@ -64,8 +64,6 @@ function getLayer(which) {
  * styleOptions array, which will be used to load the styles dropdown box
  */
 
-var seeme;
-
 function buildStyles() {
     $.ajax({
         url: client_layers[0].url + "&request=GetCapabilities",
@@ -80,7 +78,6 @@ function buildStyles() {
         } else {
             try {
                 const jsonObj = ($.xml2json(data))["#document"];
-                seeme = jsonObj;
                 const styles =
                     jsonObj
                         .WMS_Capabilities
@@ -1114,7 +1111,11 @@ function pollForProgress(id, isClimate) {
                 updateProgress(val);
                 pollForProgress(id, isClimate);
             } else if (val === 100) {
-                getDataFromRequest(id, isClimate);
+                if ($("#operationmenu").val() === "6") {
+                    getDownLoadLink(id);
+                } else {
+                    getDataFromRequest(id, isClimate);
+                }
             } else {
                 console.log("Server Error");
                 $("#btnRequest").prop("disabled", false);
@@ -1123,11 +1124,10 @@ function pollForProgress(id, isClimate) {
     });
 }
 
-var workhere;
 
 function handleSourceSelected(which) {
     which = which.toString();
-    var layer = client_layers.find(
+    let layer = client_layers.find(
         (item) => item.app_id === which
     )
     if (layer) {
@@ -1169,7 +1169,6 @@ function handleSourceSelected(which) {
                 console.info(sdata.errMsg);
             } else {
                 const data = JSON.parse(sdata);
-                workhere = data;
                 const cc = JSON.parse(data.climate_DataTypeCapabilities[0].current_Capabilities);
                 cc.startDateTime;
 
@@ -1265,8 +1264,32 @@ function getIndex(which) {
 }
 
 
-var rainfall_data;
-var from_compiled;
+function getDownLoadLink(id) {
+    let download = '<div style="width:100%; height:100%; display: flex;\n' +
+        '    align-items: center;\n' +
+        '}">';
+    download += '<div style="width:100%; text-align: center;">';
+    download += '<h1 class="step-marker" style="line-height: 2em;">File Download Ready</h1>';
+    download += '<p style="line-height: 2em;">Job ID: ' + id + '</p>';
+    const url = api_url + '/chirps/getFileForJobID/?id=' + id
+    download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
+    download += '</div>';
+    $("#dialog").html(download);
+    $("#dialog").dialog({
+        title: "Download Data",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: 200,
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
+}
+
+let rainfall_data;
+let from_compiled;
 
 function getDataFromRequest(id, isClimate) {
     let complete = '<div style="width:100%; height:100%; display: flex;\n' +
@@ -1640,7 +1663,7 @@ $(function () {
         return;
     }
 
-    var proto = $.ui.mouse.prototype,
+    const proto = $.ui.mouse.prototype,
         _mouseInit = proto._mouseInit;
 
     $.extend(proto, {
@@ -1681,7 +1704,7 @@ $(function () {
 
         _modifyEvent: function (event) {
             event.which = 1;
-            var target = event.originalEvent.targetTouches[0];
+            const target = event.originalEvent.targetTouches[0];
             event.pageX = target.clientX;
             event.pageY = target.clientY;
         }
