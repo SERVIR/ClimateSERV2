@@ -1,3 +1,4 @@
+from os.path import basename
 from wsgiref.util import FileWrapper
 
 from django.http import HttpResponse
@@ -10,6 +11,7 @@ from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
 import zmq
 import sys
+from zipfile import ZipFile
 import os
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
@@ -160,7 +162,7 @@ def read_DataType_Capabilities_For(dataTypeNumberList):
 
     try:
         # Create a connection to the bddb
-        conn = dbmDb.BDDbConnector_Capabilities()
+        conn = dbmDb.DBMConnector_Capabilities()
 
         # try and get data
         try:
@@ -196,23 +198,20 @@ def getFileForJobID(request):
     Get the file for the completed Job ID.  Will return a file download (if it exists)
     :param request: contains the id of the request you want to look up.
     '''
-
     logger.debug("Getting File to download.")
 
     try:
         requestid = request.GET["id"]
+
         progress = readProgress(requestid)
 
         # Validate that progress is at 100%
-        if (progress == 100.0):
-
+        if (float(progress) == 100.0):
             doesFileExist = False
 
             expectedFileLocation = ""  # Full path including filename
             expectedFileName = ""  # Just the file name
             try:
-                # Lets find the file
-                path_To_Zip_MediumTerm_Storage = params.zipFile_ScratchWorkspace_Path
                 expectedFileName = requestid + ".zip"
                 expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
                 doesFileExist = os.path.exists(expectedFileLocation)
@@ -230,9 +229,22 @@ def getFileForJobID(request):
                 # Open the file
                 theFileToSend = open(expectedFileLocation)
                 theFileWrapper = FileWrapper(theFileToSend)
-                response = HttpResponse(theFileWrapper, content_type='application/zip')
+                with ZipFile(expectedFileLocation, 'w') as zipObj:
+                    # Iterate over all the files in directory
+                    for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
+                        for filename in filenames:
+                            # create complete filepath of file in directory
+                            filePath = os.path.join(folderName, filename)
+                            # Add file to zip
+                            zipObj.write(filePath, basename(filePath))
+
+                # close the Zip File
+                print(expectedFileName)
+                print(zipObj.read())
+                response = HttpResponse(zipObj.read(), content_type='application/zip')
                 response['Content-Disposition'] = 'attachment; filename=' + str(
                     expectedFileName)  # filename=myfile.zip'
+                zipObj.close()
 
                 # Log the data
                 #dataThatWasLogged = set_LogRequest(request, get_client_ip(request))

@@ -29,7 +29,7 @@ zipFile_ScratchWorkspace_Path = '''/cserv2/django_app/tmp/zipout/Zipfile_Scratch
 logfilepath = '''/cserv2/django_app/tmp/'''#'''/data/data/logs/'''
 workpath = '''/cserv2/django_app/mp/'''#'''/data/data/work'''
 shapefilepath = '''/cserv2/django_app/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
-shell_script='''/cserv2/django_app/ClimateSERV2/climateserv2/exportTIFFs.sh'''
+shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 
 # parameters = ([0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"],[5,'avg','Average'])

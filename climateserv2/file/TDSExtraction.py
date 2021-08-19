@@ -76,9 +76,6 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/',0o777)
         os.chmod(params.shell_script, 0o777)
         clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path+"/"+'clipped_'+dataset)
-        logger.info("curre workdi direc")
-        currentDirectory = os.getcwd()
-        logger.info(currentDirectory)
         os.chdir(params.zipFile_ScratchWorkspace_Path+task_id+'/')
         p = subprocess.check_call([params.shell_script, params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset , variable, params.zipFile_ScratchWorkspace_Path+task_id+'/'])
         with ZipFile(params.zipFile_ScratchWorkspace_Path+task_id+'.zip', 'w') as zipObj:

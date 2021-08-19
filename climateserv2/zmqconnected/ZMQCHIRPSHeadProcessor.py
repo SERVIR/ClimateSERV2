@@ -366,7 +366,6 @@ class ZMQCHIRPSHeadProcessor():
 
         # KS Refactor 2015 // Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
-        self.logger.info("%%%%%%%%%%%%%%%")
         #self.logger.info("Finished Job:"+str(self.request))
         self.logger.info("("+self.name+"):__finishJob__:Finished Job:"+str(self.request))
         
@@ -377,7 +376,6 @@ class ZMQCHIRPSHeadProcessor():
         except:
             theJobID = ""
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
-        self.logger.info("%%%%%$$$$%%%%%%%%%%")
 
         if (self.isDownloadJob == False):
             self.finished_items = self.__sortData__(self.finished_items)
@@ -389,12 +387,7 @@ class ZMQCHIRPSHeadProcessor():
             # Normal output formatting
             self.__outputData__()
 #         ##Update Progress
-        self.logger.info("%%%%%$$$$AAaAA^^^%%%%%%%%%%")
-        self.logger.info(self.progress)
-
         self.__updateProgress__(output_full=True)
-        self.logger.info("%%%%%$$$$AAaAA^444^^%%%%%%%%%%")
-
         self.__cleanup__()
 #         ###Back to looking for work.
 
@@ -419,12 +412,12 @@ class ZMQCHIRPSHeadProcessor():
         f = None
         
     def __insertProgressDb__(self,uniqueid):
-        conn = dbmDb.BDDbConnector()
+        conn = dbmDb.DBMConnector()
         conn.setProgress(uniqueid, 0)
         conn.close()
         
     def __updateProgressDb__(self,uniqueid, progress):
-        conn = dbmDb.BDDbConnector()
+        conn = dbmDb.DBMConnector()
         conn.setProgress(uniqueid, progress)
         conn.close()
         
