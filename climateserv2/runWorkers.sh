@@ -3,10 +3,10 @@
 HEADWORKERS=3
 WORKERSPERHEAD=8
 
-python="/home/tethys/miniconda/envs/ClimateSERV2/bin/python"
+python="/cserv2/python_environments/environments/climateserv2/bin/python"
 echo python
-rootdir=/home/tethys/ClimateSERV2/climateserv2/
-BASEIPCDIR="ipc:///home/tethys/tmp/servir/"
+rootdir=/cserv2/django_app/ClimateSERV2/climateserv2/
+BASEIPCDIR="ipc:///cserv2/tmp/servir/"
 MAINQUEUEINPUT=${BASEIPCDIR}Q1/input
 MAINQUEUEOUTPUT=${BASEIPCDIR}Q1/output
 PIDNAME=/tmp/pid
@@ -15,14 +15,14 @@ export PYTHONPATH=${PYTHONPATH}:${rootdir}
 
 launch() {
 	echo 'python: ' + $python
-	python db/DBMDbprocessing.py
-	python file/fileutils.py /home/tethys/tmp/servir/Q1 input
+	$python db/DBMDbprocessing.py
+	$python file/fileutils.py /cserv2/tmp/servir/Q1 input
 	
-	python file/fileutils.py /home/tethys/tmp/servir/Q1 output
+	$python file/fileutils.py /cserv2/tmp/servir/Q1 output
 	
 	echo "starting the Head Workers"
 	##################Start Input Queue########################################
-	python zmqconnected/ArgProxyQueue.py ${MAINQUEUEINPUT} ${MAINQUEUEOUTPUT} &
+	$python zmqconnected/ArgProxyQueue.py ${MAINQUEUEINPUT} ${MAINQUEUEOUTPUT} &
 	echo $! > ${PIDNAME}
 	
 	##################Start Head Workers and subordinate workers###############
@@ -32,31 +32,31 @@ launch() {
 		
 		HEADNAME=HEAD${i}
 		echo "Starting Head Worker Named:" $HEADNAME
-		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q1in
-		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q1out
-		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q2in
-		python file/fileutils.py /home/tethys/tmp/servir/${HEADNAME} q2out
+		$python file/fileutils.py /cserv2/tmp/servir/${HEADNAME} q1in
+		$python file/fileutils.py /cserv2/tmp/servir/${HEADNAME} q1out
+		$python file/fileutils.py /cserv2/tmp/servir/${HEADNAME} q2in
+		$python file/fileutils.py /cserv2/tmp/servir/${HEADNAME} q2out
 		HEADQUEUEONEINPUT=${BASEIPCDIR}${HEADNAME}'/q1in'
 		HEADQUEUEONEOUTPUT=${BASEIPCDIR}${HEADNAME}'/q1out'
 		HEADQUEUETWOINPUT=${BASEIPCDIR}${HEADNAME}'/q2in'
 		HEADQUEUETWOOUTPUT=${BASEIPCDIR}${HEADNAME}'/q2out'
-		python zmqconnected/ZMQCHIRPSHeadProcessor.py ${HEADNAME} ${MAINQUEUEOUTPUT} ${HEADQUEUEONEINPUT} ${HEADQUEUETWOOUTPUT} &
+		$python zmqconnected/ZMQCHIRPSHeadProcessor.py ${HEADNAME} ${MAINQUEUEOUTPUT} ${HEADQUEUEONEINPUT} ${HEADQUEUETWOOUTPUT} &
 		echo $! >> ${PIDNAME}
-		python zmqconnected/ArgProxyQueue.py ${HEADQUEUEONEINPUT} ${HEADQUEUEONEOUTPUT} &
+		$python zmqconnected/ArgProxyQueue.py ${HEADQUEUEONEINPUT} ${HEADQUEUEONEOUTPUT} &
 		value=$!
 		echo ${value} >> ${PIDNAME}
 		for  j in $(seq 1 $WORKERSPERHEAD);
 		do
 			WORKERNAME=W${j}${HEADNAME}
 			echo "Starting Worker: $WORKERNAME"
-			python zmqconnected/ZMQCHIRPSDataWorker.py ${WORKERNAME} ${HEADQUEUEONEOUTPUT} ${HEADQUEUETWOINPUT}  &
+			$python zmqconnected/ZMQCHIRPSDataWorker.py ${WORKERNAME} ${HEADQUEUEONEOUTPUT} ${HEADQUEUETWOINPUT}  &
 			echo $! >> ${PIDNAME}
 		done
-		python zmqconnected/ArgProxyQueue.py ${HEADQUEUETWOINPUT} ${HEADQUEUETWOOUTPUT} &
+		$python zmqconnected/ArgProxyQueue.py ${HEADQUEUETWOINPUT} ${HEADQUEUETWOOUTPUT} &
 		echo $! >> ${PIDNAME}
 		
 	done
-	python file/filePermissions.py /home/tethys/tmp/servir/Q1/input
+	$python file/filePermissions.py /cserv2/tmp/servir/Q1/input
 }
 
 start() {

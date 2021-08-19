@@ -506,7 +506,7 @@ def submitDataRequest(request):
         ##logger.info("submitting ",dictionary)
         context = zmq.Context()
         sender = context.socket(zmq.PUSH)
-        sender.connect("ipc:///home/tethys/tmp/servir/Q1/input") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
+        sender.connect("ipc:///cserv2/tmp/servir/Q1/input") #sender.connect("ipc:///tmp/servir/Q1/input") (posix  - ipc, windows - inproc)
         sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
@@ -700,7 +700,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
             ##logger.info("submitting ",dictionary)
             context = zmq.Context()
             sender = context.socket(zmq.PUSH)
-            sender.connect("ipc:///home/tethys/tmp/servir/Q1/input")
+            sender.connect("ipc:///cserv2/tmp/servir/Q1/input")
             sender.send_string(json.dumps(dictionary))
 
             return processCallBack(request, json.dumps([uniqueid]), "application/json")
