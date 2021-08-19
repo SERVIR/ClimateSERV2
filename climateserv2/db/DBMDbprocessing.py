@@ -10,7 +10,7 @@ try:
     import climateserv2.parameters as params
     import climateserv2.locallog.locallogging as llog
 except:
-    from .. import parameters as params
+    import parameters as params
     import locallog.locallogging as llog
 logger = llog.getNamedLogger("request_processor")
 
