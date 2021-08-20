@@ -227,21 +227,21 @@ def getFileForJobID(request):
                 # response = HttpResponse(wrapper, content_type='application/zip')
                 # theFileWrapper = FileWrapper.File
                 # Open the file
-                theFileToSend = open(expectedFileLocation)
-                theFileWrapper = FileWrapper(theFileToSend)
-                zipObj = ZipFile(expectedFileLocation, 'w')
-                    # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
-                    for filename in filenames:
-                            # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
-                            # Add file to zip
-                        zipObj.write(filePath, basename(filePath))
+                theFileToSend = open(expectedFileLocation, 'rb')
+                #theFileWrapper = FileWrapper(theFileToSend)
+                # zipObj = ZipFile(expectedFileLocation, 'w')
+                #     # Iterate over all the files in directory
+                # for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
+                #     for filename in filenames:
+                #             # create complete filepath of file in directory
+                #         filePath = os.path.join(folderName, filename)
+                #             # Add file to zip
+                #         zipObj.write(filePath, basename(filePath))
 
                 # close the Zip File
                 print(expectedFileName)
                # print(zipObj.read())
-                response = HttpResponse(zipObj.read(name=expectedFileName), content_type='application/zip')
+                response = HttpResponse(theFileToSend, content_type='application/zip')
                 response['Content-Disposition'] = 'attachment; filename=' + str(
                     expectedFileName)  # filename=myfile.zip'
                 #zipObj.close()

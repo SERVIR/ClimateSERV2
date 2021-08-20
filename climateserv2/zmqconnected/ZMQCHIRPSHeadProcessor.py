@@ -406,7 +406,7 @@ class ZMQCHIRPSHeadProcessor():
         self.sub_types_finished = True  # When this is False, the function that watches for finished worker progress keeps running
         self.derived_opname = "Unset"
         os.chmod(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid'])+'.zip', 0o777)
-        shutil.rmtree(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid']), ignore_errors=True)
+        #shutil.rmtree(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid']), ignore_errors=True)
 
 
     def __writeResults__(self,uniqueid,results):
