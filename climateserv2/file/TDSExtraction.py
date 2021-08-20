@@ -17,7 +17,7 @@ try:
 except:
     import locallog.locallogging as llog
     import parameters as params
-
+import shutil
 logger=llog.getNamedLogger("request_processor")
 def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation,outFileFolder=''):
     json_aoi = json.dumps(json.loads(geom))  # convert coordinates to a json object
@@ -91,7 +91,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         zipObj.close()
         os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
         os.chmod(params.zipFile_ScratchWorkspace_Path+task_id+'.zip', 0o777)
-        os.remove(params.zipFile_ScratchWorkspace_Path+task_id)
+        shutil.rmtree(params.zipFile_ScratchWorkspace_Path+task_id, ignore_errors=True)
         return params.zipFile_ScratchWorkspace_Path+task_id+'.zip',operation
     else:
         return "invalid operation"
