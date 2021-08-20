@@ -1652,7 +1652,14 @@ $(function () {
     } catch (e) {
         console.log("aoiOptionToggle Failed");
     }
-    $('#sourcemenu').change();
+    try {
+        $('#sourcemenu').change();
+    } catch(e){}
+
+    try {
+        verify_ready();
+    } catch(e){}
+
 });
 
 (function ($) {
