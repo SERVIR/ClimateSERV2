@@ -90,8 +90,6 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         # close the Zip File
         zipObj.close()
         os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
-        os.chmod(params.zipFile_ScratchWorkspace_Path+task_id+'.zip', 0o777)
-        shutil.rmtree(params.zipFile_ScratchWorkspace_Path+task_id, ignore_errors=True)
         return params.zipFile_ScratchWorkspace_Path+task_id+'.zip',operation
     else:
         return "invalid operation"
