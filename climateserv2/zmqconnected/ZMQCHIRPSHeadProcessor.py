@@ -378,6 +378,8 @@ class ZMQCHIRPSHeadProcessor():
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
 
         if (self.isDownloadJob == False):
+            self.logger.info("***")
+            self.logger.info(self.finished_items)
             self.finished_items = self.__sortData__(self.finished_items)
 #         ##Output Data
         if (self.derived_product == True):
