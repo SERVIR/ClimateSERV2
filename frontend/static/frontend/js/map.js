@@ -1026,7 +1026,7 @@ function sendRequest() {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
         $.ajax({
-            url: api_url + "/chirps/submitDataRequest/",
+            url: "/chirps/submitDataRequest/",
             type: "POST",
             processData: false,
             contentType: false,
@@ -1095,7 +1095,7 @@ function updateProgress(val) {
 
 function pollForProgress(id, isClimate) {
     $.ajax({
-        url: api_url + "/chirps/getDataRequestProgress/?id=" +
+        url: "/chirps/getDataRequestProgress/?id=" +
             id,
         type: "GET",
         async: true,
@@ -1271,7 +1271,7 @@ function getDownLoadLink(id) {
     download += '<div style="width:100%; text-align: center;">';
     download += '<h1 class="step-marker" style="line-height: 2em;">File Download Ready</h1>';
     download += '<p style="line-height: 2em;">Job ID: ' + id + '</p>';
-    const url = api_url + '/chirps/getFileForJobID/?id=' + id
+    const url = '/chirps/getFileForJobID/?id=' + id
     download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
     download += '</div>';
     $("#dialog").html(download);
@@ -1312,7 +1312,7 @@ function getDataFromRequest(id, isClimate) {
     });
 
     $.ajax({
-        url: api_url + "/chirps/getDataFromRequest/?id=" +
+        url: "/chirps/getDataFromRequest/?id=" +
             id,
         type: "GET",
         async: true,
