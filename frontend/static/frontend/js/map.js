@@ -11,7 +11,7 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url = "https://climateserv.servirglobal.net"; //"http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
+const api_url = "https://climateserv2.servirglobal.net"; //"http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 
 /**

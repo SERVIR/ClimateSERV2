@@ -3,7 +3,7 @@
 HEADWORKERS=3
 WORKERSPERHEAD=8
 
-python="/cserv2/python_environments/environments/climateserv2/bin/python"
+python="/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/python"
 echo python
 rootdir=/cserv2/django_app/ClimateSERV2/climateserv2/
 BASEIPCDIR="ipc:///cserv2/tmp/servir/"

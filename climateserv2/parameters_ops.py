@@ -601,5 +601,5 @@ intervals = [
     {'name': 'year', 'pattern': '%Y'}
 ]
 
-resultsdir = '''/cserv2/django_app/tmp/'''
+resultsdir = '''/cserv2/tmp/'''
 

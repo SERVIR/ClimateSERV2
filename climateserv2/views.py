@@ -229,22 +229,22 @@ def getFileForJobID(request):
                 # Open the file
                 theFileToSend = open(expectedFileLocation)
                 theFileWrapper = FileWrapper(theFileToSend)
-                with ZipFile(expectedFileLocation, 'w') as zipObj:
+                zipObj = ZipFile(expectedFileLocation, 'w')
                     # Iterate over all the files in directory
-                    for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
-                        for filename in filenames:
+                for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
+                    for filename in filenames:
                             # create complete filepath of file in directory
-                            filePath = os.path.join(folderName, filename)
+                        filePath = os.path.join(folderName, filename)
                             # Add file to zip
-                            zipObj.write(filePath, basename(filePath))
+                        zipObj.write(filePath, basename(filePath))
 
                 # close the Zip File
                 print(expectedFileName)
-                print(zipObj.read())
-                response = HttpResponse(zipObj.read(), content_type='application/zip')
+               # print(zipObj.read())
+                response = HttpResponse(zipObj.read(name=expectedFileName), content_type='application/zip')
                 response['Content-Disposition'] = 'attachment; filename=' + str(
                     expectedFileName)  # filename=myfile.zip'
-                zipObj.close()
+                #zipObj.close()
 
                 # Log the data
                 #dataThatWasLogged = set_LogRequest(request, get_client_ip(request))
@@ -281,10 +281,11 @@ def getFileForJobID(request):
 
     # except Exception as e:
     except Exception as e:
-        e = sys.exc_info()[0]
-        logger.warning("Problem with getFileForJobID: System Error Message: " + str(
-            e))  # +str(request.GET)+" "+str(e.errno)+" "+str(e.strerror))
-        return processCallBack(request, json.dumps("Error Getting File"), "application/json")
+       # e = sys.exc_info()[0]
+       # logger.warning("Problem with getFileForJobID: System Error Message: " + str(
+        #    e))  # +str(request.GET)+" "+str(e.errno)+" "+str(e.strerror))
+ 	 #return processCallBack(request, json.dumps("Error Getting File"), "application/json")
+        return processCallBack(request, json.dumps(str(e) ), "application/json")
 
 
 # ks refactor 2015 // New API Hook getClimateScenarioInfo
