@@ -90,8 +90,8 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         # close the Zip File
         zipObj.close()
         os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
-        os.chmod(params.shell_script, 0o777)
-        os.remove(params.zipFile_ScratchWorkspace_Path+task_id+'.zip')
+        os.chmod(params.zipFile_ScratchWorkspace_Path+task_id+'.zip', 0o777)
+        os.remove(params.zipFile_ScratchWorkspace_Path+task_id)
         return params.zipFile_ScratchWorkspace_Path+task_id+'.zip',operation
     else:
         return "invalid operation"
