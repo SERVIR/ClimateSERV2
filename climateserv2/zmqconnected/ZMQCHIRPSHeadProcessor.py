@@ -306,7 +306,7 @@ class ZMQCHIRPSHeadProcessor():
             try:
                 results = json.loads(self.listenreceiver.recv())
             except:
-                self.logger.info("**************************")
+                self.logger.info("Error in __WatchForResults__")
             self.processFinishedData(results)
             self.logger.info("("+self.name+"):__watchForResults__: self.progress: " + str(self.progress))
         self.__finishJob__()
@@ -379,8 +379,6 @@ class ZMQCHIRPSHeadProcessor():
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
 
         if (self.isDownloadJob == False):
-            self.logger.info("***")
-            self.logger.info(self.finished_items)
             self.finished_items = self.__sortData__(self.finished_items)
 #         ##Output Data
         if (self.derived_product == True):
@@ -405,7 +403,7 @@ class ZMQCHIRPSHeadProcessor():
         self.derived_product = False
         self.sub_types_finished = True  # When this is False, the function that watches for finished worker progress keeps running
         self.derived_opname = "Unset"
-        os.chmod(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid'])+'.zip', 0o777)
+        # os.chmod(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid'])+'.zip', 0o777)
         #shutil.rmtree(params.zipFile_ScratchWorkspace_Path+str(self.request['uniqueid']), ignore_errors=True)
 
 
@@ -696,14 +694,12 @@ class ZMQCHIRPSHeadProcessor():
                     dates=downloaddates
                     self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1],params.zipFile_ScratchWorkspace_Path + str(uniqueid) )
                 else:
-                    dates, operation, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1])
+                    dates, operation, values ,bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1])
                 
                 if(params.DEBUG_LIVE == True):
                     self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
             # User Selected a Feature
             elif ('layerid' in request):
-                geotransform, wkt = rp.getSpatialReference(int(datatype))
-
                 if(params.DEBUG_LIVE == True):
                     self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: LAYERID FOUND (FEATURE SELECTED BY USER)")
                 
@@ -725,7 +721,14 @@ class ZMQCHIRPSHeadProcessor():
                     bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
 
                 else:
-                    bounds,mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
+                    dates, operation, values, bounds = GetTDSData.get_aggregated_values(request['begintime'],
+                                                                                        request['endtime'],
+                                                                                        dataset_name, variable_name,
+                                                                                        polygonstring,
+                                                                                        request['uniqueid'],
+                                                                                        params.parameters[
+                                                                                            request['operationtype']][
+                                                                                            1])
 
                 # Break up date
                 # Check for cached polygon

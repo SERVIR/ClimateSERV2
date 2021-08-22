@@ -44,33 +44,35 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
     xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
     xds.rio.write_crs("EPSG:4326", inplace=True)
     os.remove(temp_file)  # delete temporary file on server
-
+    logger.info("hhhheyy")
     geodf = gpd.read_file(json_aoi)
 
     clipped_dataset = xds.rio.clip(geodf.geometry.apply(mapping), geodf.crs)  # clip dataset to polygon
     # calculate values based on operation
-
+    logger.info("heyy")
+    logger.info(operation)
     if operation == "min":
         dates = []
         min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
         for i in min_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(min_values[variable].values)
+        return dates,operation,np.array(min_values[variable].values),aoi.total_bounds
     elif operation == "avg":
         dates = []
+        logger.info("in avg")
         mean_values = clipped_dataset.mean(dim=["latitude", "longitude"], skipna=True)
         for i in mean_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(mean_values[variable].values)
+        return dates,operation,np.array(mean_values[variable].values),aoi.total_bounds
     elif operation == "max":
         dates = []
         max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
         for i in max_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(max_values[variable].values)
+        return dates,operation,np.array(max_values[variable].values),aoi.total_bounds
     elif operation == "download":
         os.makedirs(params.zipFile_ScratchWorkspace_Path+task_id+'/',exist_ok=True)
         os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/',0o777)
@@ -89,7 +91,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
 
         # close the Zip File
         zipObj.close()
-        os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
+      #  os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
         return params.zipFile_ScratchWorkspace_Path+task_id+'.zip',operation
     else:
         return "invalid operation"

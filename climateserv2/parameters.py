@@ -35,7 +35,7 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 try:
     import climateserv2.parameters_ops as params
 except:
-    from . import parameters_ops as params
+    import parameters_ops as params
 
 DEBUG_LIVE = params.DEBUG_LIVE
 logToConsole = params.logToConsole

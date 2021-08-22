@@ -36,7 +36,7 @@ parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3,
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 
 
-# KS Refactor // Adding Climate Change Model datatype param getter functions
+# # KS Refactor // Adding Climate Change Model datatype param getter functions
 def get_ClimateChangeParam__directory(ensembleName, variableName):
     return '/data/data/image/processed/nmme/' + str(ensembleName) + '/' + str(variableName) + '/'
 
@@ -568,7 +568,7 @@ dataTypes = [
     # There will be more added here in time.
 
 ]
-dataTypeInfo = [{'path': '/data/data/gis/shapefiles', 'layer': 'county'}]
+dataTypeInfo = [{'path': '/cserv2/tmp/mapfiles', 'layer': 'county'}]
 shapefileName = [{'id': 'country',
                   'displayName': "Countries",
                   'shapefilename': 'country.shp',
