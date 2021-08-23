@@ -1109,7 +1109,10 @@ function pollForProgress(id, isClimate) {
             const val = JSON.parse(data)[0];
             if (val !== -1 && val !== 100) {
                 updateProgress(val);
-                pollForProgress(id, isClimate);
+                setTimeout(function(){
+                    pollForProgress(id, isClimate);
+                }, 500)
+
             } else if (val === 100) {
                 if ($("#operationmenu").val() === "6") {
                     getDownLoadLink(id);
