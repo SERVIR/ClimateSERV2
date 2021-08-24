@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
-import climateserv2.db.DBMDbprocessing as dbmDb
+from .db import DBMDbprocessing as dbmDb
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
@@ -38,9 +38,10 @@ def readProgress(uid):
     '''
     conn = dbmDb.DBMConnector()
     try:
-        value = conn.getProgress(uid)
-    except Exception as e:
-        print(str(e))
+        value = conn.getProgress(str(uid))
+    except:
+        print('from exceptiom read progress')
+
     conn.close()
     return value
 

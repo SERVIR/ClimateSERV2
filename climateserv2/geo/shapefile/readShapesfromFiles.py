@@ -34,6 +34,8 @@ def getPolygon(shapefilePath, layer_id, fid):
     shapef=ogr.Open(shapefilePath)
     lyr = shapef.GetLayer( layer_id )
     poly = lyr.GetFeature(long(fid))
+
+
   
 #     shape = poly.GetGeometryRef().exportToWKt()
 #     print "Got shape",shape

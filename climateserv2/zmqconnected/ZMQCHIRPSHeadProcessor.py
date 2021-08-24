@@ -13,6 +13,7 @@ import json
 import shutil
 from copy import deepcopy
 from operator import itemgetter
+from shapely.geometry import shape
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
@@ -22,8 +23,7 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 try:
     import climateserv2.geoutils as geoutils
     import climateserv2.processtools.dateprocessor as dproc
-    from climateserv2.file.TDSExtraction import get_aggregated_values as GetTDSData
-
+    import climateserv2.file.TDSExtraction as GetTDSData
     import climateserv2.parameters as params
     import climateserv2.file.npmemmapstorage as rp
     import climateserv2.geo.clippedmaskgenerator as mg
@@ -167,6 +167,7 @@ class ZMQCHIRPSHeadProcessor():
         
         # ks notes // Generate a list of work to be done (each item represents a time interval)
         error, workarray = self.__preProcessIncomingRequest__(request)
+
         
         # KS Refactor 2015 // Additional pre-setup items specific to download request types
         self.preProcessWork_ForDownloadTypes(request)
@@ -310,37 +311,9 @@ class ZMQCHIRPSHeadProcessor():
             self.processFinishedData(results)
             self.logger.info("("+self.name+"):__watchForResults__: self.progress: " + str(self.progress))
         self.__finishJob__()
-        # if (self.derived_product == True):
-        #     self.sub_types_finished = False
-        #     while (self.sub_types_finished == False):
-        #         results = json.loads(self.listenreceiver.recv())
-        #         self.processFinishedData(results)
-        #         if(self.finished_task_count == )
-        #     self.__finishJob__()
-        # else:
-        #     # Normal existing code pipeline.
-        #     while (self.progress < 100):
-        #         results = json.loads(self.listenreceiver.recv())
-        #         self.processFinishedData(results)
-        #     self.__finishJob__()
-            
-                
         
     def processFinishedData(self, results):
-        self.logger.info("("+self.name+"):processFinishedData: Process Finished Work "+str(self.request))
-        self.logger.info("(" + self.name + "):processFinishedData: results:  " + str(results))
-
-        
-        #self.logger.info("Process Finished Work "+str(self.request))
-        #Need to process the data
         self.finished_task_count = self.finished_task_count +1
-        #self.workToBeDone.pop(results['workid'],None)
-        missingValue = None
-        if (self.derived_product == True):
-            current_data_type = results['datatype']
-            missingValue = params.dataTypes[current_data_type]['fillValue']  # Now it's dynamic (passed in from the worker)
-        else:
-            missingValue = params.dataTypes[self.request['datatype']]['fillValue']
         if (self.isDownloadJob == True):
             # For Download Jobs.
             # Need to figure out why we use 'self.finished_items' and what happens if I just skip it..
@@ -352,8 +325,7 @@ class ZMQCHIRPSHeadProcessor():
             
     def __sortData__(self,array):
         newlist = sorted(array, key=itemgetter('epochTime'))
-        return newlist    
-    
+        return newlist
         
     def __updateProgress__(self,output_full=False):
         self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.
@@ -367,8 +339,6 @@ class ZMQCHIRPSHeadProcessor():
 
         # KS Refactor 2015 // Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
-        #self.logger.info("Finished Job:"+str(self.request))
-        self.logger.info("("+self.name+"):__finishJob__:Finished Job:"+str(self.request))
         
         # KS Refactor 2015 - Logging Job Finished
         theJobID = ""
@@ -388,12 +358,12 @@ class ZMQCHIRPSHeadProcessor():
             # Normal output formatting
             self.__outputData__()
 #         ##Update Progress
+
         self.__updateProgress__(output_full=True)
         self.__cleanup__()
 #         ###Back to looking for work.
 
     def __cleanup__(self):
-        # self.logger.info("Cleanup")
         self.total_task_count = 0
         self.worklist_length = 0
         self.finished_task_count = 0
@@ -542,8 +512,6 @@ class ZMQCHIRPSHeadProcessor():
                 self.__write_JobStarted_To_DB__(uniqueid, str(request))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(uniqueid))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(request))
-
-                #self.mathop = pMath.mathOperations(operationtype, 1, params.dataTypes[datatype]['fillValue'], None)
                 self.logger.info(
                     "(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): Don't forget about this: self.mathop, it is used again in the finish job code.   ")
                 self.isDownloadJob = False
@@ -610,30 +578,10 @@ class ZMQCHIRPSHeadProcessor():
         else:
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: This is NOT a 'MonthlyRainfallAnalysis' type.  ")
 
-
-        # try:
-        #     return None, worklist
-        # except Exception as e:
-        #     self.logger.warn("(" + self.name + "):Error processing Request in HeadProcessor: uniqueid: " + str(uniqueid) + " Exception Error Message: " + str(e))
-        #     return e, None
-        # # # Something is wrong with this new code???
-
-        # (for MonthlyRainfallAnalysis Types)
-        # # Notes: What needs to happen here is:
-        # # # Jobs need to be split up however possible (worst case is NO splitting and one thread does ALL the analysis...)
-        # # # Each thread needs to update the status when it does a chunk of the work. (simillar to existing code)
-        # # # When all is done, a master process collates all the data into a single return object. (I think the entry point for that is found here in this file)
-        # # # The data is returned.
-
-
         try:
-            if(params.DEBUG_LIVE == True):
-                self.logger.info("("+self.name+"):__preProcessIncomingRequest__: params.DEBUG_LIVE is set to True.  There will be a lot of textual output for this run.")
-                
             uniqueid = request['uniqueid']
             self.__insertProgressDb__(uniqueid)
-            self.__write_JobStarted_To_DB__(uniqueid, str(request))  # Log when Job has started. 
-            
+            self.__write_JobStarted_To_DB__(uniqueid, str(request))  # Log when Job has started.
             self.logger.info("("+self.name+"):__preProcessIncomingRequest__: uniqueid: "+str(uniqueid))
             
             datatype = request['datatype']
@@ -643,61 +591,23 @@ class ZMQCHIRPSHeadProcessor():
             operationtype = request['operationtype']
 
             if(params.parameters[operationtype][1] == 'download'):
-
-
-                # If this is a download dataset request, set the self.mathop prop to 0 (or 'max' operator.. this is just so I don't have to refactor a ton of code just to get this feature working at this time... note:  Refactor of this IS needed!)
-                self.mathop = pMath.mathOperations(0,1,params.dataTypes[datatype]['fillValue'],None)
-
-                # Additional customized code for download jobs
                 self.isDownloadJob = True 
                 self.dj_OperationName = "download"
             else:
-                # This is pass through for all normal requests..
-                self.mathop = pMath.mathOperations(operationtype,1,params.dataTypes[datatype]['fillValue'],None) 
                 self.isDownloadJob = False
                 self.dj_OperationName = "NotDLoad"
 
-            #self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: MADE IT PASSED THE DIRTY OVERRIDE! requestID: "+uniqueid)
-
             size = params.getGridDimension(int(datatype))
-            downloaddates = dproc.getListOfTimes(begintime, endtime,intervaltype)
-
-            # KS Developer Note: The issue here is that I need to only cut simple rectangle shaped images out of the data.
-            # All I really need is the largest bounding box that encompases all points (regardless of how complex the original polygon was)
-            # Seems simple right? :)
-            # The other part of this issue is that this only needs to happen on download data requests.  If I change the code for all requests, it becomes less efficient for stats type jobs.
-            #self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG ALERT: Right now, only user drawn polygons are supported for download requests.  Need to write a function that gets geometry values from features as well.. VERY IMPORTANT TODO BEFORE RELEASE!!")
-            #geometry_ToPass = None
             polygon_Str_ToPass = None
             dataTypeCategory = params.dataTypes[datatype]['data_category'] #  == 'ClimateModel'
 
-            # User Drawn Polygon
             if ('geometry' in request):
-
-                # Process input polygon string
-                if(params.DEBUG_LIVE == True):
-                    self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: GEOMETRY FOUND (POLYGON DRAWN BY USER)")
-                polygonstring = request['geometry']
-                geometry = geoutils.decodeGeoJSON(polygonstring)
-
-
                 dataset_name=params.dataTypes[int(datatype)]['dataset_name']+".nc4"
-
                 variable_name=params.dataTypes[int(datatype)]['variable']
-
-                coordinates=json.loads(polygonstring)["features"][0]["geometry"]["coordinates"]
-                # geotransform, wkt = rp.getSpatialReference(int(datatype))
-
-                if(params.DEBUG_LIVE == True):
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
-                if(params.parameters[operationtype][1] == 'download'):
-                    dates=downloaddates
-                    self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1],params.zipFile_ScratchWorkspace_Path + str(uniqueid) )
+                if self.isDownloadJob == True:
+                    self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
-                    dates, operation, values ,bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, polygonstring, request['uniqueid'], params.parameters[request['operationtype']][1])
-                
-                if(params.DEBUG_LIVE == True):
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : polygonstring (request['geometry']) value: " + str(polygonstring))
+                    dates, operation, values ,bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -707,12 +617,6 @@ class ZMQCHIRPSHeadProcessor():
                 featureids = request['featureids']
                 geometries  = sf.getPolygons(layerid, featureids)
 
-                if(params.DEBUG_LIVE == True):
-                    self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : (FeatureSelection) geometries value: " + str(geometries))
-
-                # For Download data types, convert all of the geometries into a bounding box that covers the whole map.
-                # RIGHT HERE!!
-                #if(self.dj_OperationName == "download"):
                 if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
                     polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
@@ -724,7 +628,7 @@ class ZMQCHIRPSHeadProcessor():
                     dates, operation, values, bounds = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                         request['endtime'],
                                                                                         dataset_name, variable_name,
-                                                                                        polygonstring,
+                                                                                        geometries,
                                                                                         request['uniqueid'],
                                                                                         params.parameters[
                                                                                             request['operationtype']][
@@ -750,12 +654,13 @@ class ZMQCHIRPSHeadProcessor():
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':uniqueid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':polygon_Str_ToPass, 'derived_product': False} #'geometryToClip':geometry_ToPass}
+                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':uniqueid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':request['geometry'], 'derived_product': False}
                     workdict['year'] = int(dates[dateIndex][0:4])
                     workdict['month'] = int(dates[dateIndex][5:7])
                     workdict['day'] = int(dates[dateIndex][8:10])
                     workdict['epochTime'] = gmt_midnight
-                    workdict['value'] = {operation: values[dateIndex]}
+                    op=str(params.parameters[request['operationtype']][1])
+                    workdict['value'] = {op: values[dateIndex]}
                     if (intervaltype == 0):
                         dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
                     elif (intervaltype == 1):
@@ -766,11 +671,10 @@ class ZMQCHIRPSHeadProcessor():
                     worklist.extend([workdict])
             else:
                 workid = uu.getUUID()
-                workdict = {'uid': uniqueid, 'workid':workid,'current_mask_and_storage_uuid': uniqueid, 'intervaltype':intervaltype,
-                            'datatype': datatype, 'operationtype': operationtype,
-                            'polygon_Str_ToPass': polygon_Str_ToPass,
-                            'derived_product': False}  # 'geometryToClip':geometry_ToPass}
-                workdict['value'] = {operation: self.zipFilePath}
+                workdict = {'uid': uniqueid, 'workid': workid, 'current_mask_and_storage_uuid': uniqueid,
+                            'intervaltype': intervaltype, 'datatype': datatype, 'operationtype': operationtype,
+                            'polygon_Str_ToPass': polygon_Str_ToPass, 'derived_product': False,
+                            'value': {params.parameters[request['operationtype']][1]: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
                 worklist.extend([workdict])
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
