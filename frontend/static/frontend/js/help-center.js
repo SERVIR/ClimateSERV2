@@ -56,7 +56,7 @@ function openDialog(metaData) {
     html +=
         '<img src="' +
         metaData.thumbnail +
-        '" style="max-width:100%; width:100%">';
+        '" style="max-width:100%; width:100%" onerror="imgError(this)">';
     html += "</div>";
     html += "</div>";
 
@@ -80,6 +80,11 @@ function openDialog(metaData) {
     });
 }
 
+function imgError(which){
+
+    which.onerror=null;
+    which.src=static_url + 'frontend/img/no_data_preview.png';
+}
 var holdme;
 
 function getMetaData(which) {
