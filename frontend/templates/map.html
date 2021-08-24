@@ -78,17 +78,17 @@
                 <div class="sidebar-tabs">
                     <ul role="tablist">
                         <li>
-                            <a href="#layers" role="tab">
+                            <a href="#layers" role="tab" title="Layers">
                                 <i class="fas fa-layer-group"></i>
                             </a>
                         </li>
                         <li>
-                            <a href="#chart" role="tab">
+                            <a href="#chart" role="tab" title="Statistical Query">
                                 <i class="fas fa-chart-line"></i>
                             </a>
                         </li>
                         <li>
-                            <a href="#basemap" role="tab"><i class="fas fa-map"></i></a>
+                            <a href="#basemap" role="tab" title="Basemaps"><i class="fas fa-map"></i></a>
                         </li>
                     </ul>
                     {#                    <ul role="tablist">#}
@@ -228,13 +228,25 @@
                                 </ul>
                             </div>
                             <div class="btn-group d-flex">
-                                <button id="btnAOIdraw" class="tablinks w-100" onclick="selectAOI('draw')">
+                                <button
+                                        id="btnAOIdraw"
+                                        class="tablinks w-100"
+                                        title="Draw AOI on map"
+                                        onclick="selectAOI('draw')">
                                     Draw
                                 </button>
-                                <button id="btnAOIupload" class="tablinks w-100" onclick="selectAOI('upload')">
+                                <button
+                                        id="btnAOIupload"
+                                        class="tablinks w-100"
+                                        title="Upload geojson or .shp file containing AOI"
+                                        onclick="selectAOI('upload')">
                                     Upload
                                 </button>
-                                <button id="btnAOIselect" class="tablinks w-100" onclick="selectAOI('select')">
+                                <button
+                                        id="btnAOIselect"
+                                        class="tablinks w-100"
+                                        title="Select Admin feature from map"
+                                        onclick="selectAOI('select')">
                                     Select
                                 </button>
                             </div>
@@ -325,13 +337,19 @@
                                     {"type":"FeatureCollection","features":[]}
                                 </span>
                             </div>
-                        <div
-                                class="form-group panel-buffer"
-                                id="download_aoi_holder"
-                                style="display: none; text-align:right;">
-                         <button id="btn_download_aoi" onclick="download_aoi()">Download AOI</button>
+                            <div
+                                    class="form-group panel-buffer"
+                                    id="download_aoi_holder"
+                                    style="display: none; text-align:right;">
+                                <button
+                                        id="btn_download_aoi"
+                                        onclick="download_aoi()"
+                                        title="Download AOI as geojson"
+                                >
+                                    Download AOI
+                                </button>
 
-                        </div>
+                            </div>
                             <form id="query-form" onsubmit="return false;">
                                 <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
