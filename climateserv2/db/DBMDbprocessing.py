@@ -49,7 +49,7 @@ class DBMConnector:
 
     def getProgress(self, uid):
         uid = str(uid)
-        return self.db.get(uid)
+        return self.db[uid]
 
     def deleteProgress(self, uid):
         uid = str(uid)

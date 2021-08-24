@@ -19,60 +19,83 @@ except:
     import parameters as params
 import shutil
 logger=llog.getNamedLogger("request_processor")
-def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation,outFileFolder=''):
-    json_aoi = json.dumps(json.loads(geom))  # convert coordinates to a json object
+def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation):
 
-    aoi = gpd.read_file(json_aoi)  # using geopandas to get the bounds
+    json_aoi = json.loads(geom) # convert coordinates to a json object
+    for x in range(len(json_aoi['features'])):
+        if "properties" not in json_aoi['features'][x]:
+            json_aoi['features'][x]['properties'] = {}
+
+    aoi = gpd.GeoDataFrame.from_features(json_aoi, crs="EPSG:4326")
+    aoi.head()
+    # aoi = gpd.read_file(json_aoi)  # using geopandas to get the bounds
     # The netcdf files use a global lat/lon so adjust values accordingly
-    east = aoi.total_bounds[2]
-    south = aoi.total_bounds[1]
-    west = aoi.total_bounds[0]
-    north = aoi.total_bounds[3]
+
 
     st=datetime.strptime(start_date, '%m/%d/%Y')
     et=datetime.strptime(end_date, '%m/%d/%Y')
     start_date=datetime.strftime(st, '%Y-%m-%d')
     end_date=datetime.strftime(et, '%Y-%m-%d')
 
-    tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
-        north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
-        south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
-    temp_file = task_id + "_" + dataset  # name for temporary netcdf file
-    urllib.request.urlretrieve(tds_request, temp_file)  # download netcdf to a file on server
-    xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
-    xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
-    xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-    xds.rio.write_crs("EPSG:4326", inplace=True)
-    os.remove(temp_file)  # delete temporary file on server
-    logger.info("hhhheyy")
-    geodf = gpd.read_file(json_aoi)
 
-    clipped_dataset = xds.rio.clip(geodf.geometry.apply(mapping), geodf.crs)  # clip dataset to polygon
-    # calculate values based on operation
-    logger.info("heyy")
-    logger.info(operation)
-    if operation == "min":
+    temp_file = task_id + "_" + dataset  # name for temporary netcdf file
+    if json_aoi['features'][0]['geometry']['type']=="Point":
+        coords=json_aoi['features'][0]['geometry']['coordinates']
+        lat, lon=coords[0],coords[1]
+        try:
+            tds_request =  "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude="+str(lat)+"&longitude="+str(lon)+"&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
+            urllib.request.urlretrieve(tds_request, temp_file)
+            clipped_dataset = xr.open_dataset(temp_file)
+        except:
+            logger.info("thredds URL exception")
+    else:
+        east = aoi.total_bounds[2]
+        south = aoi.total_bounds[1]
+        west = aoi.total_bounds[0]
+        north = aoi.total_bounds[3]
+        tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
+            north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
+            south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
+        urllib.request.urlretrieve(tds_request, temp_file)
+        xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
+        xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
+        xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
+        xds.rio.write_crs("EPSG:4326", inplace=True)
+
+        clipped_dataset = xds.rio.clip(aoi.geometry, aoi.crs, drop=False, invert=True)  # clip dataset
+    os.remove(temp_file)  # delete temporary file on server
+    if json_aoi['features'][0]['geometry']['type']=="Point" and operation != "download" :
+        dates = []
+        for i in np.array(clipped_dataset['time'].values):
+            temp = pd.Timestamp(np.datetime64(i)).to_pydatetime()
+            dates.append(temp.strftime("%Y-%m-%d"))
+        values = np.array(clipped_dataset[variable].values)
+        return dates, operation, values, aoi.total_bounds
+    elif operation == "min":
         dates = []
         min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
+        min_values_array=np.array(min_values[variable].values)
         for i in min_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(min_values[variable].values),aoi.total_bounds
+        return dates,operation,np.array(min_values_array),aoi.total_bounds
     elif operation == "avg":
         dates = []
         logger.info("in avg")
         mean_values = clipped_dataset.mean(dim=["latitude", "longitude"], skipna=True)
+        mean_values_array = np.array(mean_values[variable].values)
         for i in mean_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(mean_values[variable].values),aoi.total_bounds
+        return dates,operation,np.array(mean_values_array),aoi.total_bounds
     elif operation == "max":
         dates = []
         max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
+        max_values_array = np.array(max_values[variable].values)
         for i in max_values[variable]:
             temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
-        return dates,operation,np.array(max_values[variable].values),aoi.total_bounds
+        return dates, operation, np.array(max_values_array), aoi.total_bounds
     elif operation == "download":
         os.makedirs(params.zipFile_ScratchWorkspace_Path+task_id+'/',exist_ok=True)
         os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/',0o777)

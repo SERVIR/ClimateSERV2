@@ -45,6 +45,7 @@ class ZMQCHIRPSDataWorker():
 
     def __doWork__(self):
         self.operatingData=eval(self.operatingData)
+
         if (self.operatingData['intervaltype'] == 0):
             if(self.operatingData['operationtype'] ==6):
                 return { 'value': self.operatingData['value']}
