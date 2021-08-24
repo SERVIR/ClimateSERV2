@@ -83,7 +83,7 @@ function openDialog(metaData) {
 function imgError(which){
 
     which.onerror=null;
-    which.src=static_url + 'frontend/img/no_data_preview.png';
+    which.src=static_url + 'frontend/img/data_preview_unavailable.jpg';
 }
 var holdme;
 
