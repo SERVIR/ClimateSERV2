@@ -328,7 +328,10 @@ class ZMQCHIRPSHeadProcessor():
         return newlist
         
     def __updateProgress__(self,output_full=False):
-        self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.
+        if self.total_task_count ==0:
+            self.progress = 100
+        else:
+            self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.
         if (self.progress < 100 or output_full == True):
             self.__processProgress__(self.progress)
 
@@ -589,6 +592,7 @@ class ZMQCHIRPSHeadProcessor():
             endtime = request['endtime']
             intervaltype = request['intervaltype']
             operationtype = request['operationtype']
+            opn=params.parameters[operationtype][1]
 
             if(params.parameters[operationtype][1] == 'download'):
                 self.isDownloadJob = True 
@@ -649,7 +653,7 @@ class ZMQCHIRPSHeadProcessor():
 
                 del mask
                 del clippedmask
-            worklist =[]
+            worklist = []
             if (self.dj_OperationName != "download"):
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
@@ -659,8 +663,7 @@ class ZMQCHIRPSHeadProcessor():
                     workdict['month'] = int(dates[dateIndex][5:7])
                     workdict['day'] = int(dates[dateIndex][8:10])
                     workdict['epochTime'] = gmt_midnight
-                    op=str(params.parameters[request['operationtype']][1])
-                    workdict['value'] = {op: values[dateIndex]}
+                    workdict['value'] = {opn: values[dateIndex]}
                     if (intervaltype == 0):
                         dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
                     elif (intervaltype == 1):
@@ -674,7 +677,7 @@ class ZMQCHIRPSHeadProcessor():
                 workdict = {'uid': uniqueid, 'workid': workid, 'current_mask_and_storage_uuid': uniqueid,
                             'intervaltype': intervaltype, 'datatype': datatype, 'operationtype': operationtype,
                             'polygon_Str_ToPass': polygon_Str_ToPass, 'derived_product': False,
-                            'value': {params.parameters[request['operationtype']][1]: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
+                            'value': {opn: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
                 worklist.extend([workdict])
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))

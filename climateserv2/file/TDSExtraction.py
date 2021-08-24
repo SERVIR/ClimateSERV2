@@ -44,8 +44,12 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         lat, lon=coords[0],coords[1]
         try:
             tds_request =  "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude="+str(lat)+"&longitude="+str(lon)+"&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
-            urllib.request.urlretrieve(tds_request, temp_file)
-            clipped_dataset = xr.open_dataset(temp_file)
+
+            try:
+                urllib.request.urlretrieve(tds_request, temp_file)
+                clipped_dataset = xr.open_dataset(temp_file)
+            except ValueError as v:
+                return [], operation, [], []
         except:
             logger.info("thredds URL exception")
     else:
@@ -56,8 +60,11 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
             north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
             south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
-        urllib.request.urlretrieve(tds_request, temp_file)
-        xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
+        try:
+            urllib.request.urlretrieve(tds_request, temp_file)
+            xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
+        except :
+            return [], operation, [], []
         xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
         xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
         xds.rio.write_crs("EPSG:4326", inplace=True)
