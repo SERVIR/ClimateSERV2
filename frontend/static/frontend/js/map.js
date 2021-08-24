@@ -13,6 +13,7 @@ let drawToolbar;
 let styleOptions = [];
 const api_url =  "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
+let retries = 0;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -905,6 +906,15 @@ function initMap() {
     adjustLayerIndex();
 }
 
+function download_aoi(){
+    const aoi = document.createElement('a');
+    aoi.setAttribute(
+        'href',
+        'data:text/plain;charset=utf-8,' + encodeURIComponent($("#geometry").text().trim()));
+    aoi.setAttribute('download', "climateserv_aoi.geojson");
+    aoi.click();
+}
+
 function isComplete() {
     // what if ensemble data with forecast dates
     // this will have to check those fields,
@@ -945,6 +955,12 @@ function verify_ready() {
     }
     $("#btnRequest").prop("disabled",
         !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
+    if($("#geometry").text().trim().indexOf('{"type"') > -1
+        || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
+        $("#download_aoi_holder").show();
+    } else{
+        $("#download_aoi_holder").hide();
+    }
 }
 
 function collect_review_data() {
@@ -1108,17 +1124,31 @@ function pollForProgress(id, isClimate) {
         } else {
             const val = JSON.parse(data)[0];
             if (val !== -1 && val !== 100) {
+                retries = 0;
                 updateProgress(val);
-                pollForProgress(id, isClimate);
+                setTimeout(function(){
+                    pollForProgress(id, isClimate);
+                }, 500);
+
             } else if (val === 100) {
+                retries = 0;
                 if ($("#operationmenu").val() === "6") {
                     getDownLoadLink(id);
                 } else {
                     getDataFromRequest(id, isClimate);
                 }
             } else {
-                console.log("Server Error");
-                $("#btnRequest").prop("disabled", false);
+                if(retries < 5) {
+                    console.log("Needed retry");
+                    retries++;
+                    setTimeout(function () {
+                        pollForProgress(id, isClimate);
+                    }, 500)
+                } else {
+                    retries = 0;
+                    console.log("Server Error");
+                    $("#btnRequest").prop("disabled", false);
+                }
             }
         }
     });
@@ -1418,7 +1448,7 @@ function getDataFromRequest(id, isClimate) {
                     }, $("#sourcemenu option:selected").text());
                 }
             }
-            $("#btnRequest").prop("disabled", false);
+           // $("#btnRequest").prop("disabled", false);
         }
     });
 };
