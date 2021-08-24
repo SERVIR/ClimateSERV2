@@ -1428,24 +1428,29 @@ function getDataFromRequest(id, isClimate) {
                             compiledData.push(darray); // i can likely store min and max here
                         }
                     });
-                    from_compiled = compiledData;
+                    from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                     inti_chart_dialog();
 //Need to fix this for multi ensemble
-                    let layer = client_layers.find(
-                        (item) => item.app_id === $("#sourcemenu").val()
-                    ) || client_layers.find(
-                        (item) => item.app_id === $("#ensemblemenu").val()
-                    );
-                    const units = layer.units;
+                    if(compiledData.length === 0){
+                        //inti_chart_dialog
+                        $("#chart_holder").html("<h1>No data available</h1>");
+                    } else {
+                        let layer = client_layers.find(
+                            (item) => item.app_id === $("#sourcemenu").val()
+                        ) || client_layers.find(
+                            (item) => item.app_id === $("#ensemblemenu").val()
+                        );
+                        const units = layer.units;
 
-                    finalize_chart([{
-                        color: "#758055",
-                        type: "line",
-                        name: $("#operationmenu option:selected").text(),
-                        data: compiledData.sort((a, b) => a[0] - b[0])
-                    }], units, {
-                        type: "datetime"
-                    }, $("#sourcemenu option:selected").text());
+                        finalize_chart([{
+                            color: "#758055",
+                            type: "line",
+                            name: $("#operationmenu option:selected").text(),
+                            data: compiledData.sort((a, b) => a[0] - b[0])
+                        }], units, {
+                            type: "datetime"
+                        }, $("#sourcemenu option:selected").text());
+                    }
                 }
             }
            // $("#btnRequest").prop("disabled", false);
