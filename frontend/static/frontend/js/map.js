@@ -906,6 +906,15 @@ function initMap() {
     adjustLayerIndex();
 }
 
+function download_aoi(){
+    const aoi = document.createElement('a');
+    aoi.setAttribute(
+        'href',
+        'data:text/plain;charset=utf-8,' + encodeURIComponent($("#geometry").text().trim()));
+    aoi.setAttribute('download', "climateserv_aoi.geojson");
+    aoi.click();
+}
+
 function isComplete() {
     // what if ensemble data with forecast dates
     // this will have to check those fields,
@@ -946,6 +955,12 @@ function verify_ready() {
     }
     $("#btnRequest").prop("disabled",
         !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
+    if($("#geometry").text().trim().indexOf('{"type"') > -1
+        || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
+        $("#download_aoi_holder").show();
+    } else{
+        $("#download_aoi_holder").hide();
+    }
 }
 
 function collect_review_data() {
@@ -1433,7 +1448,7 @@ function getDataFromRequest(id, isClimate) {
                     }, $("#sourcemenu option:selected").text());
                 }
             }
-            $("#btnRequest").prop("disabled", false);
+           // $("#btnRequest").prop("disabled", false);
         }
     });
 };
