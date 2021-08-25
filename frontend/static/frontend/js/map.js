@@ -1042,7 +1042,7 @@ function sendRequest() {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
         $.ajax({
-            url: "/chirps/submitDataRequest/",
+            url: "/api/submitDataRequest/",
             type: "POST",
             processData: false,
             contentType: false,
@@ -1063,7 +1063,7 @@ function sendRequest() {
         // this is climatology
         // this looks like it currently needs to be a get request not a post so we'll have to do it a bit different
         //example request with querystring
-        //https://climateserv.servirglobal.net/chirps/submitMonthlyRainfallAnalysisRequest/?callback=successCallback&custom_job_type=monthly_rainfall_analysis&seasonal_start_date=2021_06_01&seasonal_end_date=2021_11_28&layerid=country&featureids=201&_=1627567378744
+        //https://climateserv.servirglobal.net/api/submitMonthlyRainfallAnalysisRequest/?callback=successCallback&custom_job_type=monthly_rainfall_analysis&seasonal_start_date=2021_06_01&seasonal_end_date=2021_11_28&layerid=country&featureids=201&_=1627567378744
 
         let geometry_params;
 
@@ -1078,7 +1078,7 @@ function sendRequest() {
 
 
         const csi = JSON.parse(climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities);
-        let url = api_url + "/chirps/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
+        let url = api_url + "/api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
         url += "seasonal_start_date=" + csi.startDateTime;
         url += "&seasonal_end_date=" + csi.endDateTime;
         url += geometry_params;
@@ -1111,7 +1111,7 @@ function updateProgress(val) {
 
 function pollForProgress(id, isClimate) {
     $.ajax({
-        url: "/chirps/getDataRequestProgress/?id=" +
+        url: "/api/getDataRequestProgress/?id=" +
             id,
         type: "GET",
         async: true,
@@ -1187,7 +1187,7 @@ function handleSourceSelected(which) {
 
 
         $.ajax({
-            url: api_url + "/chirps/getClimateScenarioInfo/" +
+            url: api_url + "/api/getClimateScenarioInfo/" +
                 id,
             type: "GET",
             async: true,
@@ -1301,7 +1301,7 @@ function getDownLoadLink(id) {
     download += '<div style="width:100%; text-align: center;">';
     download += '<h1 class="step-marker" style="line-height: 2em;">File Download Ready</h1>';
     download += '<p style="line-height: 2em;">Job ID: ' + id + '</p>';
-    const url = '/chirps/getFileForJobID/?id=' + id
+    const url = '/api/getFileForJobID/?id=' + id
     download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
     download += '</div>';
     $("#dialog").html(download);
@@ -1342,7 +1342,7 @@ function getDataFromRequest(id, isClimate) {
     });
 
     $.ajax({
-        url: "/chirps/getDataFromRequest/?id=" +
+        url: "/api/getDataFromRequest/?id=" +
             id,
         type: "GET",
         async: true,

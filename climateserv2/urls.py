@@ -26,18 +26,25 @@ urlpatterns = [
     url('', include('frontend.urls')),
     url(r'^admin/', admin.site.urls),
     url(r'chirps/getParameterTypes/', getParameterTypes),
+    url(r'api/getParameterTypes/', getParameterTypes),
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     url(r'chirps/submitDataRequest/', submitDataRequest),
+    url(r'api/submitDataRequest/', submitDataRequest),
     url(r'chirps/getDataRequestProgress/', getDataRequestProgress),
+    url(r'api/getDataRequestProgress/', getDataRequestProgress),
     url(r'chirps/getDataFromRequest/', getDataFromRequest),
+    url(r'api/getDataFromRequest/', getDataFromRequest),
     url(r'chirps/getFeatureLayers/', getFeatureLayers),
+    url(r'api/getFeatureLayers/', getFeatureLayers),
     # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
-    url('/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
-    # url(r'^/chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
+    url('chirps/getClimateScenarioInfo/', getClimateScenarioInfo),
+    url('api/getClimateScenarioInfo/', getClimateScenarioInfo),
     url('chirps/getFileForJobID/', getFileForJobID),
+    url('api/getFileForJobID/', getFileForJobID),
     # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
     # url(r'^/chirps/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
-    url(r'chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
+    url(r'chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest),
+    url(r'api/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
 ]
 
 if settings.DEBUG:
