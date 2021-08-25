@@ -48,18 +48,26 @@ function openDialog(metaData) {
         '<h1 style="width:100%; font-size: 120%; text-align: center; font-weight: 600; margin: 50px;">' +
         metaData.title +
         "</h1>";
-    html += '<div class="col-md-6"> ';
-    html += '<p class="abstract">' + metaData.abstract + "</p>";
-    html += "<h4 style='font-size: 120%; font-weight: 600; margin-bottom: 25px;'>Credit:</h4>";
-    html += "<p>" + metaData.credit + "</p>";
-    html += "</div>";
-    html += '<div class="col-md-6">';
+    html += '<div class="col-md-12"> ';
+    html += '<div style="width:50%; float:right;margin-left: 20px;">';
     html +=
         '<img src="' +
         metaData.thumbnail +
         '" style="max-width:100%; width:100%" onerror="imgError(this)" class="meta-preview">';
     html += "<button onclick='goto_full_record(" + id +")' class='meta-btn'>View full record</button></div>";
-    html += "</div>";
+
+    html += '<p class="abstract">' + metaData.abstract + "</p>";
+    html += "<h4 style='font-size: 120%; font-weight: 600; margin-bottom: 25px;'>Credit:</h4>";
+    html += "<p>" + metaData.credit + "</p>";
+    html += "</div></div>";
+
+    // html += '<div class="col-md-6">';
+    // html +=
+    //     '<img src="' +
+    //     metaData.thumbnail +
+    //     '" style="max-width:100%; width:100%" onerror="imgError(this)" class="meta-preview">';
+    // html += "<button onclick='goto_full_record(" + id +")' class='meta-btn'>View full record</button></div>";
+    // html += "</div>";
 
     $("#dialog").html(html);
     $("#dialog").dialog({
