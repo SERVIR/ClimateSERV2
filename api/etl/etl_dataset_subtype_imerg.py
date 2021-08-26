@@ -1,5 +1,4 @@
 import datetime, ftplib, os, shutil, sys, time
-from urllib import request as urllib_request
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -16,8 +15,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
     class_name = 'imerg'
     etl_parent_pipeline_instance = None
     mode = 'LATE'
-
-    relative_dir_path__WorkingDir = 'working_dir'
 
     # DRAFTING - Suggestions
     _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
@@ -42,62 +39,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         self.NN__30MinIncrement__Start = params.get('NN__30MinIncrement__Start', 0) or 0
         self.NN__30MinIncrement__End = params.get('NN__30MinIncrement__End', 2) or 2
 
-    # Months between two dates
-    def diff_month(latest_datetime, earliest_datetime):
-        return (latest_datetime.year - earliest_datetime.year) * 12 + latest_datetime.month - earliest_datetime.month
-
-    # Get the local filesystem place to store data
-    def get_root_local_temp_working_dir(self):
-        imerg__EARLY__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY", default_or_error_return_value="")   # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/early/'   # With a year (20xx/) appended
-        imerg__LATE__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/imerg/late/'    # With a year (20xx/) appended
-        ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        if self.mode == 'EARLY':
-            ret_rootlocal_working_dir = imerg__EARLY__rootoutputworkingdir
-        elif self.mode == 'LATE':
-            ret_rootlocal_working_dir = imerg__LATE__rootoutputworkingdir
-        return ret_rootlocal_working_dir
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    def get_final_load_dir(self):
-        imerg__EARLY__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__EARLY", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/nasa-imerg-early/global/0.1deg/30min/'
-        imerg__LATE__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__LATE", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/nasa-imerg-late/global/0.1deg/30min/'
-        ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
-        if self.mode == 'EARLY':
-            ret_dir = imerg__EARLY__finalloaddir
-        elif self.mode == 'LATE':
-            ret_dir = imerg__LATE__finalloaddir
-        return ret_dir
-
-    # Get the Remote Locations for each of the subtypes
-    def get_roothttp_for_subtype(self):
-        imerg__EARLY__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY", default_or_error_return_value="")   # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'        # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
-        imerg__LATE__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE", default_or_error_return_value="")     # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'              # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
-        ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        if self.mode == 'EARLY':
-            ret_roothttp = imerg__EARLY__roothttp
-        if self.mode == 'LATE':
-            ret_roothttp = imerg__LATE__roothttp
-        return ret_roothttp
-
-    @staticmethod
-    def append_YEAR_to_dir_path(dirPath, year_int):
-        # # Add the Year as a string.
-        #year_YYYY = str(year_YYYY).strip()    # Expecting 'year' to be something like 2019 or "2019"
-        year_YYYY = "{:0>4d}".format(year_int)
-        year_dir_name_to_append = year_YYYY + "/"
-        dirPath = dirPath + year_dir_name_to_append
-        return dirPath
-
-    @staticmethod
-    def append_YEAR_and_MONTH_to_dir_path(dirPath, year_int, month_int):
-        # # Add the Year as a string.
-        year_YYYY = "{:0>4d}".format(year_int) #year_YYYY = str(year_YYYY).strip()  # Expecting 'year' to be something like 2019 or "2019"
-        year_dir_name_to_append = year_YYYY + "/"
-        month_MM = "{:02d}".format(month_int)
-        month_dir_name_to_append = month_MM + "/"
-        dirPath = dirPath + year_dir_name_to_append + month_dir_name_to_append
-        return dirPath
-
     def execute__Step__Pre_ETL_Custom(self):
         ret__function_name = "execute__Step__Pre_ETL_Custom"
         ret__is_error = False
@@ -105,11 +46,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Get the root http path based on the region.
-        current_root_http_path = self.get_roothttp_for_subtype()
-        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = self.get_final_load_dir()
-        self.temp_working_dir = str(root_file_download_path).strip()
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
         try:
@@ -198,9 +137,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     tif_filename = base_filename + 'tif'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tif
 
                     # Building the Common NC4 Filename
-                    # nasa-imerg-late.20200130T233000Z.global.nc4
-                    nc4_type = 'LATE' if self.mode == 'LATE' else 'EARLY'
-                    final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}{}{}Z.global.nc4'.format(
+                    # nasa-imerg-late.20200531T000000Z.global.0.1deg.30min.nc4
+                    nc4_type = 'late' if self.mode == 'LATE' else 'early'
+                    final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}{}{}Z.global.0.1deg.30min.nc4'.format(
                         nc4_type,
                         current_year__YYYY_str,
                         current_month__MM_str,
@@ -221,7 +160,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
 
-                    local_full_filepath_final_nc4_file = os.path.join(final_load_dir_path, final_nc4_filename)
+                    local_full_filepath_final_nc4_file = os.path.join(final_load_dir_path, current_year__YYYY_str, final_nc4_filename)
+
+                    is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(final_load_dir_path, current_year__YYYY_str))
 
                     current_obj = {}
 
@@ -342,11 +283,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        # TODO - Iterate each expected granule, attempt to download the file(s) attached to it to the correct expected location (the working directory).
-        # # TODO - Log errors as warnings (not show stoppers) - Add indexes to allow skipping over items (so the ETL job can continue in an automated way). - Need to think this through very carefully, so that the clientside can know about these errors and skip over them as well (and allow the clientside to handle random missing granules - which happens sometimes).
-        #
 
         # Note: In imerg, each granule has 2 files associated with it
         # # A 'tif' (image) file and a 'tfw' (world metadata file)
@@ -715,13 +651,11 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
 
-
                     # Matching to the other script
                     #geotiffFile = tif_filename   # Use Tif Filename for doing string split stuff  # tif_filename
                     #geotiffFile_FullPath
                     # geotiffFile Sometimes is tif_filename
                     # geotiffFile Sometimes is geotiffFile_FullPath
-
 
                     ############################################################
                     # Start extracting data and creating output netcdf file.
@@ -889,10 +823,11 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                 try:
                     local_extract_path = expected_granules_object['local_extract_path']
-                    local_final_load_path = expected_granules_object['local_final_load_path']
+                    # local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    # expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
