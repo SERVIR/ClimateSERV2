@@ -48,6 +48,12 @@ follow the prompts when you run
 python manage.py createsuperuser
 ```
 
+### Application specific variables and config files:
+
+You will need to add some paths and dataset information as follows:
+
+--- TBD ---
+
 At this point you should be able to start the application.
 
 ```
