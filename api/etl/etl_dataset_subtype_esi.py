@@ -17,8 +17,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
     etl_parent_pipeline_instance = None
     mode = '12week'
 
-    relative_dir_path__WorkingDir = 'working_dir'
-
     # DRAFTING - Suggestions
     _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
     _expected_granules                  = []    # Place to store granules
@@ -40,39 +38,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
         self.DD__Day__End = params.get('DD__Day__End') or 31
 
-    # Get the local filesystem place to store data
-    def get_root_local_temp_working_dir(self):
-        esi__4week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__4WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/4week/'
-        esi__12week__rootoutputworkingdir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__ESI__12WEEK", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/esi/12week/'
-        ret_rootlocal_working_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        if self.mode == '4week':
-            ret_rootlocal_working_dir = esi__4week__rootoutputworkingdir
-        elif self.mode == '12week':
-            ret_rootlocal_working_dir = esi__12week__rootoutputworkingdir
-        return ret_rootlocal_working_dir
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    def get_final_load_dir(self):
-        esi__4week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__4WEEK", default_or_error_return_value="")      # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/4wk/'
-        esi__12week__finalloaddir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__ESI__12WEEK", default_or_error_return_value="")    # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/thredds/catalog/climateserv/sport-esi/global/0.05deg/12wk/'
-        ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/THREDDS/UNKNOWN/'
-        if self.mode == '4week':
-            ret_dir = esi__4week__finalloaddir
-        elif self.mode == '12week':
-            ret_dir = esi__12week__finalloaddir
-        return ret_dir
-
-    # Get the Remote Locations for each of the subtypes
-    def get_roothttp_for_subtype(self):
-        esi__4wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_4WK", default_or_error_return_value="")        # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-        esi__12wk__roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__ESI_12WK", default_or_error_return_value="")      # 'https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'
-        ret_roothttp = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        if self.mode == '4week':
-            ret_roothttp = esi__4wk__roothttp
-        if self.mode == '12week':
-            ret_roothttp = esi__12wk__roothttp
-        return ret_roothttp
-
     def execute__Step__Pre_ETL_Custom(self):
         ret__function_name = "execute__Step__Pre_ETL_Custom"
         ret__is_error = False
@@ -80,12 +45,9 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Get the root http path based on the region
-        current_root_http_path = self.get_roothttp_for_subtype()
-        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = self.get_final_load_dir()
-        self.temp_working_dir = str(root_file_download_path).strip()
-        self._expected_granules = []
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
         try:
@@ -114,13 +76,13 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                 current_month__MM_str   = "{:02d}".format(date.month)
                 current_day__DD_str     = "{:02d}".format(date.day)
 
-                # SPORT-ESI.250.4-week.20200130T000000Z.GLOBAL.nc4
-                nc4_week = '4-week' if self.mode == '4week' else '12-week'
-                final_nc4_filename = 'SPORT-ESI.250.{}.{}{}{}T000000Z.GLOBAL.nc4'.format(
-                    nc4_week,
+                # sport-esi.20200415T000000Z.global.0.05deg.4wk.nc4
+                nc4_week = '4wk' if self.mode == '4week' else '12wk'
+                final_nc4_filename = 'sport-esi.{}{}{}T000000Z.global.0.05deg.{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str
+                    current_day__DD_str,
+                    nc4_week
                 )
 
                 tif_gz_filename                     = filename
