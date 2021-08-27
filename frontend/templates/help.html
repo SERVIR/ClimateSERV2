@@ -15,9 +15,9 @@
 {% endblock %}
 
 {% block content %}
-<script>
-const static_url = "{% static '' %}";
-</script>
+    <script>
+        const static_url = "{% static '' %}";
+    </script>
     <div style="background-color: #f6f6f6;" class="p50">
         <div class="row mx-auto my-auto">
             <div class="col-12 tab-holder">
@@ -30,7 +30,7 @@ const static_url = "{% static '' %}";
                 </span>
 
                 <span id="api" class="help-tabs" onclick="activate('api')">
-                    API
+                    Developers API
                 </span>
             </div>
         </div>
@@ -220,9 +220,835 @@ const static_url = "{% static '' %}";
         {#                API#}
         {#            </h2>#}
         {#        </div>#}
-        <p>
-            This section will contain useful information about using the web API.
-        </p>
+        <div class="section" id="developers-api">
+            <h1>Developers API</h1>
+            <p><em>A Developers API is provided for those who wish to incorporate the ClimateSERV data into their own
+                separate application or script.</em></p>
+            <br>
+            <p>
+                One of the easiest ways to use the ClimateSERV API is through python using our climateserv package.
+                This package is a pip install and offers data outputs as csv, zipped .tif files, or as a memory object
+                so you can directly use the returned values in your calculations. More information and full
+                documentation
+                is located at <a href="https://pypi.org/project/climateserv/" title="ClimateSERV python package">https://pypi.org/project/climateserv/</a>
+            </p>
+            <br>
+            <p>
+                You may also write your own interface to access the api directly in any language you choose.
+                The following should help to define everything you will need to do so.
+            </p>
+
+            <div class="section" id="api-methods">
+                <h2>API Methods</h2>
+                <p>All API methods must be called using the following pattern:</p>
+                <p><code class="docutils literal notranslate"><span class="pre">&#123;&#123;</span> <span class="pre">base</span>
+                    <span class="pre">api</span> <span class="pre">url</span> <span class="pre">&#125;&#125;/[MethodName]/?param1=value1&amp;param2=value2&amp;...paramN=valueN</span></code>
+                </p>
+                <div class="section" id="base-api-url">
+                    <h3>Base API URL
+                    </h3>
+                    <p>The API allows access to the ClimateSERV processing engine and resulting data so that developers
+                        can implement their own UI or extract needed data directly from the back-end.</p>
+                    <p>The base URL for all API access is:
+                        <code class="docutils literal notranslate"><span class="pre">https://climateserv.servirglobal.net/api/</span></code>
+                    </p>
+                </div>
+                <div class="section" id="call-back-support">
+                    <h3>Call-back Support</h3>
+                    <p>ALL API functions support passing in the parameter:</p>
+                    <blockquote>
+                        <div>“?callback=callBackFunctionName”</div>
+                    </blockquote>
+                    <p>The return data/object resulting from the API function call will be wrapped into a javascript
+                        function as named in the line above. For instance, including “?callback=ProcessResults” as a
+                        parameter in the call to the API would require you to define a function
+                        “ProcessResults(returnObject)”, where “returnObject” is the object passed back as output from
+                        the API.</p>
+                </div>
+                <div class="section" id="getparametertypes">
+                    <h3>getParameterTypes</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">https://climateserv.servirglobal.net/api/getParameterTypes/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Get a list of the current supported statistical operation types and
+                        their code values.</p>
+                    <p><strong>Supported Methods</strong>: GET</p>
+                    <dl class="docutils">
+                        <dt>Parameters(input):</dt>
+                        <dd>None</dd>
+                        <dt>Returns(output):</dt>
+                        <dd>Array[] // list of items. Each item is a list with 3 elements. Each item represents a
+                            currently supported statistical operation type.
+                        </dd>
+                        <dt>Output Details:</dt>
+                        <dd>currentListItem = returnList[n]
+                            currentListItem[0] is (int), operation type. This is the value that the server understands
+                            as the operation type.
+                            currentListItem[1] is (string), short name for operation type.
+                            currentListItem[2] is (string), more readable name for operation type (used as label on
+                            dropdown part of the UI).
+                        </dd>
+                    </dl>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="p">[[</span><span class="mi">0</span><span
+                                class="p">,</span> <span class="s2">"max"</span><span class="p">,</span> <span
+                                class="s2">"Max"</span><span class="p">],</span> <span class="p">[</span><span
+                                class="mi">1</span><span class="p">,</span> <span class="s2">"min"</span><span
+                                class="p">,</span> <span class="s2">"Min"</span><span class="p">],</span> <span
+                                class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"median"</span><span
+                                class="p">,</span> <span class="s2">"Median"</span><span class="p">],</span> <span
+                                class="p">[</span><span class="mi">3</span><span class="p">,</span> <span class="s2">"range"</span><span
+                                class="p">,</span> <span class="s2">"Range"</span><span class="p">],</span> <span
+                                class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="s2">"sum"</span><span
+                                class="p">,</span> <span class="s2">"Sum"</span><span class="p">],</span> <span
+                                class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="s2">"avg"</span><span
+                                class="p">,</span> <span class="s2">"Average"</span><span class="p">]]</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="section" id="getfeaturelayers">
+                    <h3>getFeatureLayers</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">http://climateserv.servirglobal.net/api/getFeatureLayers/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Get a list of the current feature layers included in the map for
+                        processing.</p>
+                    <p><strong>Supported Methods</strong>: GET</p>
+                    <dl class="docutils">
+                        <dt>Params(input):</dt>
+                        <dd>None</dd>
+                        <dt>Returns(output):</dt>
+                        <dd>Array[] //list of feature layer info. Each layer info includes visible, displayName, and
+                            id.
+                        </dd>
+                        <dt>Output Details:</dt>
+                        <dd>currentLayer = returnList[n]
+                            currentLayer[‘visible’] is (string), true or false.
+                            currentLayer[‘displayName’] is (string), displayed layer name
+                            currentLayer[‘id’] is (string), id of layer
+                        </dd>
+                    </dl>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="p">[&#123;</span><span class="s2">"visible"</span><span
+                                class="p">:</span> <span class="s2">"true"</span><span class="p">,</span> <span
+                                class="s2">"displayName"</span><span class="p">:</span> <span
+                                class="s2">"Countries"</span><span class="p">,</span> <span class="s2">"id"</span><span
+                                class="p">:</span> <span class="s2">"country"</span><span class="p">&#125;,</span>
+<span class="p">&#123;</span><span class="s2">"visible"</span><span class="p">:</span> <span
+                                    class="s2">"false"</span><span class="p">,</span> <span
+                                    class="s2">"displayName"</span><span class="p">:</span> <span
+                                    class="s2">"Admin #1"</span><span class="p">,</span> <span
+                                    class="s2">"id"</span><span class="p">:</span> <span
+                                    class="s2">"admin_1_earth"</span><span class="p">&#125;,</span>
+<span class="p">&#123;</span><span class="s2">"visible"</span><span class="p">:</span> <span
+                                    class="s2">"false"</span><span class="p">,</span> <span
+                                    class="s2">"displayName"</span><span class="p">:</span> <span
+                                    class="s2">"Admin #2"</span><span class="p">,</span> <span
+                                    class="s2">"id"</span><span class="p">:</span> <span
+                                    class="s2">"admin_2_af"</span><span class="p">&#125;]</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="section" id="getclimatescenarioinfo">
+                    <h3>getClimateScenarioInfo</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">http://climateserv.servirglobal.net/api/getClimateScenarioInfo/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Get information about the data structure of currently supported climate
+                        scenario datatypes. At this time there are a total of 10 ‘Climate_Ensembles’. Each
+                        ‘Climate_Ensemble’ can have 1, 2, or n ‘Climate_Variables’. The combination of
+                        ‘Climate_Ensemble’ and ‘Climate_Variable’ is unique and matches up to an individual dataset. (so
+                        1 list of images per ‘Climate_Ensemble’ + ‘Climate_Variable’ combination.)</p>
+                    <p><strong>Supported Methods</strong>: GET</p>
+                    <dl class="docutils">
+                        <dt>Params(input):</dt>
+                        <dd>None</dd>
+                        <dt>Returns(output):</dt>
+                        <dd>Object&#123;&#125;</dd>
+                        <dt>Output Details:</dt>
+                        <dd>Note on Climate Scenario Datatypes and how they relate to ‘Data Type Numbers’: To integrate
+                            this new data structure with the existing system of processing and serving out datasets,
+                            these combinations have been mapped to a unique datatype number.
+                        </dd>
+                    </dl>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="o">//</span> <span class="n">Return</span> <span
+                                class="n">Object</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">RequestName</span>        <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Static</span><span class="p">,</span> <span
+                                    class="n">name</span> <span class="n">of</span> <span class="n">the</span> <span
+                                    class="n">request</span> <span class="p">(</span><span
+                                    class="n">currently</span><span class="p">:</span> <span class="s1">'getClimateScenarioInfo'</span><span
+                                    class="p">)</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">isError</span>                                    <span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">bool</span><span
+                                    class="p">)</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DataTypeCapabilities</span>               <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">array</span><span
+                                    class="p">[])</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span>                        <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">array</span><span
+                                    class="p">[])</span>
+<span class="o">//</span> <span class="n">climate_DataTypeCapabilities</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DataTypeCapabilities</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">dataTypeNumber</span>     <span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">int</span><span
+                                    class="p">)</span> <span class="n">The</span> <span class="n">server</span> <span
+                                    class="n">uses</span> <span class="n">the</span> <span
+                                    class="n">datatype</span> <span class="n">to</span> <span
+                                    class="n">match</span> <span class="n">up</span> <span class="n">to</span> <span
+                                    class="n">a</span> <span class="n">dataset</span> <span class="n">using</span> <span
+                                    class="n">this</span> <span class="n">number</span><span class="o">.</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DataTypeCapabilities</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">current_Capabilities</span>       <span class="o">//</span> <span
+                                    class="p">(</span><span class="n">JSON</span> <span class="n">encoded</span> <span
+                                    class="n">String</span><span class="p">)</span> <span
+                                    class="n">Contains</span> <span class="n">various</span> <span
+                                    class="n">additional</span> <span class="n">properties</span> <span class="n">related</span> <span
+                                    class="n">to</span> <span class="n">the</span> <span class="n">dataset</span> <span
+                                    class="p">(</span><span class="n">such</span> <span class="k">as</span> <span
+                                    class="n">projection</span><span class="p">,</span> <span class="n">forecast</span> <span
+                                    class="n">days</span><span class="p">,</span> <span class="n">start</span><span
+                                    class="o">/</span><span class="n">end</span> <span class="n">date</span><span
+                                    class="s1">'s for forecast range, fill value, projection, grid info, etc.)</span>
+
+<span class="o">//</span> <span class="n">List</span> <span class="n">of</span> <span class="n">properties</span> <span
+                                    class="ow">in</span> <span class="n">the</span> <span
+                                    class="n">current_Capabilities</span> <span class="n">JSON</span> <span class="n">String</span>
+<span class="n">capabilitiesItem</span> <span class="o">=</span> <span class="n">JSON</span><span
+                                    class="o">.</span><span class="n">parse</span><span class="p">(</span><span
+                                    class="n">returnObject</span><span class="o">.</span><span class="n">climate_DataTypeCapabilities</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">current_Capabilities</span><span
+                                    class="p">);</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">data_category</span>          <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Data</span> <span class="n">Type</span> <span
+                                    class="n">Category</span> <span class="p">(</span><span class="k">for</span> <span
+                                    class="nb">all</span> <span class="n">climate</span> <span class="n">datasets</span> <span
+                                    class="n">this</span> <span class="n">should</span> <span class="n">be</span> <span
+                                    class="n">the</span> <span class="n">same</span><span class="p">)</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span
+                                    class="n">date_FormatString_For_ForecastRange</span>    <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Format</span> <span class="n">of</span> <span
+                                    class="n">the</span> <span class="s1">'endDateTime'</span> <span
+                                    class="ow">and</span> <span class="s1">'startDateTime'</span> <span
+                                    class="n">props</span> <span class="n">written</span> <span
+                                    class="k">as</span> <span class="n">a</span> <span class="n">python</span> <span
+                                    class="nb">format</span> <span class="n">string</span> <span class="p">(</span><span
+                                    class="n">i</span><span class="o">.</span><span class="n">e</span><span
+                                    class="o">.</span> <span class="s2">"%Y_%m_</span><span class="si">%d</span><span
+                                    class="s2">"</span><span class="p">)</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">description</span>            <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Text</span> <span
+                                    class="n">description</span> <span class="n">of</span> <span
+                                    class="n">this</span> <span class="n">dataset</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">endDateTime</span>            <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Last</span> <span class="n">Calendar</span> <span
+                                    class="n">date</span> <span class="n">of</span> <span class="n">the</span> <span
+                                    class="n">the</span> <span class="n">forecast</span> <span
+                                    class="nb">range</span> <span class="k">for</span> <span class="n">this</span> <span
+                                    class="n">dataset</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">ensemble</span>               <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="s1">'Climate_Ensemble'</span> <span
+                                    class="k">for</span> <span class="n">the</span> <span class="n">current</span> <span
+                                    class="n">datatype</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">fillValue</span>              <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">unsigned</span> <span
+                                    class="nb">int</span><span class="p">)</span> <span class="n">The</span> <span
+                                    class="s1">'no data'</span> <span class="n">value</span> <span
+                                    class="n">of</span> <span class="n">the</span> <span class="n">current</span> <span
+                                    class="n">dataset</span> <span class="p">(</span><span
+                                    class="n">usually</span> <span class="nb">set</span> <span class="n">to</span> <span
+                                    class="o">-</span><span class="mi">9999</span><span class="p">)</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">grid</span>                   <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">array</span><span
+                                    class="p">[</span><span class="mi">6</span><span class="p">])</span> <span
+                                    class="mi">6</span> <span class="n">elements</span> <span class="n">to</span> <span
+                                    class="n">describe</span> <span class="n">geospatial</span> <span
+                                    class="n">raster</span> <span class="n">resolution</span> <span
+                                    class="ow">and</span> <span class="n">positioning</span> <span
+                                    class="n">of</span> <span class="n">this</span> <span class="n">dataset</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">name</span>                   <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Shorter</span> <span class="n">description</span> <span
+                                    class="n">of</span> <span class="n">this</span> <span class="n">dataset</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">number_Of_ForecastDays</span> <span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">int</span><span
+                                    class="p">)</span> <span class="n">Number</span> <span class="n">of</span> <span
+                                    class="n">days</span> <span class="ow">in</span> <span class="n">the</span> <span
+                                    class="n">forecast</span> <span class="nb">range</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">projection</span>             <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">GIS</span> <span
+                                    class="n">Projection</span> <span class="n">value</span> <span
+                                    class="k">as</span> <span class="n">a</span> <span class="n">string</span> <span
+                                    class="p">(</span><span class="s2">"GEOGCS["</span><span class="n">WGS</span> <span
+                                    class="mi">84</span><span class="s2">",DATUM......]etc"</span><span
+                                    class="p">)</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">size</span>                   <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">array</span><span
+                                    class="p">[</span><span class="mi">2</span><span class="p">])</span>  <span
+                                    class="n">X</span><span class="p">,</span><span class="n">Y</span>  <span class="p">([</span><span
+                                    class="mi">0</span><span class="p">],[</span><span class="mi">1</span><span
+                                    class="p">])</span> <span class="n">pixel</span> <span class="n">size</span> <span
+                                    class="n">of</span> <span class="n">original</span> <span
+                                    class="n">dataset</span> <span class="n">image</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">startDateTime</span>          <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">First</span> <span
+                                    class="n">calendar</span> <span class="n">date</span> <span
+                                    class="n">of</span> <span class="n">the</span> <span class="n">forecast</span> <span
+                                    class="nb">range</span> <span class="k">for</span> <span class="n">this</span> <span
+                                    class="n">dataset</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span
+                                    class="n">variable</span>                       <span class="o">//</span> <span
+                                    class="p">(</span><span class="n">string</span><span class="p">)</span> <span
+                                    class="s1">'Climate_Variable'</span> <span class="n">code</span>
+<span class="n">capabilitiesItem</span><span class="o">.</span><span class="n">variable_Label</span>         <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Human</span> <span
+                                    class="n">readable</span> <span class="n">version</span> <span
+                                    class="n">of</span> <span class="n">the</span> <span class="s1">'capabilitiesItem.variable'</span> <span
+                                    class="nb">property</span><span class="o">.</span>
+
+
+<span class="o">//</span> <span class="n">climate_DatatypeMap</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_Ensemble</span>            <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Parent</span> <span
+                                    class="s1">'Climate_Ensemble'</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span>           <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">array</span><span
+                                    class="p">[])</span> <span class="n">List</span> <span class="n">of</span> <span
+                                    class="s1">'Climate_Variables'</span> <span class="ow">and</span> <span class="n">their</span> <span
+                                    class="n">DataTypeNumbers</span> <span class="k">for</span> <span
+                                    class="n">the</span> <span class="n">current</span> <span class="s1">'Climate_Ensemble'</span>
+
+<span class="o">//</span> <span class="n">climate_DataTypes</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span><span
+                                    class="p">[</span><span class="n">m</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_Ensemble</span>       <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Current</span> <span
+                                    class="n">Climate</span> <span class="n">Ensemble</span> <span
+                                    class="n">value</span> <span class="p">(</span><span class="n">should</span> <span
+                                    class="n">match</span> <span class="n">the</span> <span
+                                    class="n">parent</span> <span class="n">prop</span><span class="p">)</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span><span
+                                    class="p">[</span><span class="n">m</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_Ensemble_Label</span> <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Human</span> <span
+                                    class="n">readable</span> <span class="n">version</span> <span
+                                    class="n">of</span> <span class="s1">'returnObject.climate_DatatypeMap[n].climate_DataTypes[m].climate_Ensemble'</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span><span
+                                    class="p">[</span><span class="n">m</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_Variable</span>       <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Current</span> <span
+                                    class="n">Climate</span> <span class="n">Variable</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span><span
+                                    class="p">[</span><span class="n">m</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_Variable_Label</span> <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">)</span> <span class="n">Human</span> <span
+                                    class="n">readable</span> <span class="n">version</span> <span
+                                    class="n">of</span> <span class="s1">'returnObject.climate_DatatypeMap[n].climate_DataTypes[m].climate_Variable'</span>
+<span class="n">returnObject</span><span class="o">.</span><span class="n">climate_DatatypeMap</span><span
+                                    class="p">[</span><span class="n">n</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">climate_DataTypes</span><span
+                                    class="p">[</span><span class="n">m</span><span class="p">]</span><span
+                                    class="o">.</span><span class="n">dataType_Number</span>                <span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">int</span><span
+                                    class="p">)</span> <span class="n">The</span> <span class="n">value</span> <span
+                                    class="n">the</span> <span class="n">server</span> <span class="n">uses</span> <span
+                                    class="n">to</span> <span class="n">uniquely</span> <span class="n">identify</span> <span
+                                    class="n">the</span> <span class="n">current</span> <span class="n">datatype</span> <span
+                                    class="p">(</span><span class="ow">or</span> <span
+                                    class="s1">'climate_ensemble'</span> <span class="o">+</span> <span class="s1">'climate_variable'</span> <span
+                                    class="n">combination</span><span class="p">)</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="section" id="submitdatarequest">
+                    <h3>submitDataRequest</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">https://climateserv.servirglobal.net/api/submitDataRequest/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Submit a new asynchronous processing request to the server.</p>
+                    <p><strong>Supported Methods</strong>: GET,POST</p>
+                    <p>Parameters(input):</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="s1">'datatype'</span>      <span
+                                class="o">//</span> <span class="p">(</span><span class="nb">int</span><span class="p">),</span> <span
+                                class="n">the</span> <span class="n">unique</span> <span class="n">datatype</span> <span
+                                class="n">number</span> <span class="k">for</span> <span class="n">the</span> <span
+                                class="n">dataset</span> <span class="n">which</span> <span class="n">this</span> <span
+                                class="n">request</span> <span class="n">operates</span> <span class="n">on</span>
+<span class="s1">'begintime'</span>     <span class="o">//</span> <span class="p">(</span><span
+                                    class="n">string</span><span class="p">),</span> <span
+                                    class="n">startDate</span> <span class="k">for</span> <span
+                                    class="n">processing</span> <span class="n">interval</span><span class="p">,</span> <span
+                                    class="nb">format</span> <span class="p">(</span><span
+                                    class="s2">"MM/DD/YYYY"</span><span class="p">)</span>
+<span class="s1">'endtime'</span>       <span class="o">//</span> <span class="p">(</span><span
+                                    class="n">string</span><span class="p">),</span> <span
+                                    class="n">endDate</span> <span class="k">for</span> <span
+                                    class="n">processing</span> <span class="n">interval</span><span class="p">,</span> <span
+                                    class="nb">format</span> <span class="p">(</span><span
+                                    class="s2">"MM/DD/YYYY"</span><span class="p">)</span>
+<span class="s1">'intervaltype'</span>  <span class="o">//</span> <span class="p">(</span><span
+                                    class="nb">int</span><span class="p">),</span> <span
+                                    class="n">enumerated</span> <span class="n">value</span> <span class="n">that</span> <span
+                                    class="n">represents</span> <span class="n">which</span> <span
+                                    class="nb">type</span> <span class="n">of</span> <span class="n">time</span> <span
+                                    class="n">interval</span> <span class="n">to</span> <span
+                                    class="n">process</span> <span class="p">(</span><span class="n">daily</span><span
+                                    class="p">,</span> <span class="n">monthly</span><span class="p">,</span> <span
+                                    class="n">etc</span><span class="p">)</span> <span class="p">(</span><span
+                                    class="n">This</span> <span class="n">enumeration</span> <span class="ow">is</span> <span
+                                    class="n">currently</span> <span class="n">hardcoded</span> <span
+                                    class="ow">in</span> <span class="n">the</span> <span class="n">mark</span> <span
+                                    class="n">up</span> <span class="n">language</span> <span class="n">of</span> <span
+                                    class="n">the</span> <span class="n">current</span> <span
+                                    class="n">client</span><span class="p">)</span><span class="o">.</span>
+<span class="s1">'operationtype'</span>         <span class="o">//</span> <span class="p">(</span><span
+                                    class="nb">int</span><span class="p">),</span> <span
+                                    class="n">enumerated</span> <span class="n">value</span> <span class="n">that</span> <span
+                                    class="n">represents</span> <span class="n">which</span> <span
+                                    class="nb">type</span> <span class="n">of</span> <span class="n">statistical</span> <span
+                                    class="n">operation</span> <span class="n">to</span> <span class="n">perform</span> <span
+                                    class="n">on</span> <span class="n">the</span> <span class="n">dataset</span><span
+                                    class="p">,</span> <span class="n">see</span> <span class="n">api</span> <span
+                                    class="n">call</span> <span class="s1">'getParameterTypes/'</span> <span class="k">for</span> <span
+                                    class="n">the</span> <span class="nb">list</span> <span class="n">of</span> <span
+                                    class="n">currently</span> <span class="n">available</span> <span
+                                    class="n">types</span><span class="o">.</span>
+<span class="o">//</span> <span class="n">Either</span> <span class="s1">'geometry'</span> <span
+                                    class="n">by</span> <span class="n">itself</span> <span class="ow">or</span> <span
+                                    class="n">these</span> <span class="n">other</span> <span class="n">two</span> <span
+                                    class="n">params</span> <span class="n">together</span><span
+                                    class="p">,</span> <span class="s1">'layerid'</span> <span
+                                    class="ow">and</span> <span class="s1">'featureids'</span> <span
+                                    class="n">are</span> <span class="n">required</span>
+<span class="s1">'geometry'</span><span class="p">(</span><span class="n">optional</span><span class="p">)</span><span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">object</span><span
+                                    class="p">),</span> <span class="n">the</span> <span class="n">geometry</span> <span
+                                    class="n">that</span> <span class="ow">is</span> <span
+                                    class="n">defined</span> <span class="n">by</span> <span class="n">the</span> <span
+                                    class="n">user</span> <span class="n">on</span> <span class="n">the</span> <span
+                                    class="n">current</span> <span class="n">client</span>
+<span class="s1">'layerid'</span><span class="p">(</span><span class="n">optional</span><span class="p">)</span> <span
+                                    class="o">//</span> <span class="n">the</span> <span class="n">layerid</span> <span
+                                    class="n">that</span> <span class="ow">is</span> <span
+                                    class="n">selected</span> <span class="n">by</span> <span class="n">the</span> <span
+                                    class="n">by</span> <span class="n">the</span> <span class="n">user</span> <span
+                                    class="n">on</span> <span class="n">the</span> <span class="n">current</span> <span
+                                    class="n">client</span>
+<span class="s1">'featureids'</span><span class="p">(</span><span class="n">optional</span><span
+                                    class="p">)</span>  <span class="o">//</span> <span class="n">the</span> <span
+                                    class="n">featureids</span> <span class="k">as</span> <span
+                                    class="n">selected</span> <span class="n">by</span> <span class="n">the</span> <span
+                                    class="n">user</span> <span class="n">on</span> <span class="n">the</span> <span
+                                    class="n">current</span> <span class="n">client</span>
+<span class="s1">'isZip_CurrentDataType'</span><span class="p">(</span><span class="n">optional</span><span
+                                    class="p">)</span> <span class="o">//</span> <span class="p">(</span><span
+                                    class="n">string</span><span class="p">),</span> <span
+                                    class="n">Leaving</span> <span class="n">this</span> <span
+                                    class="n">blank</span> <span class="n">converts</span> <span
+                                    class="n">to</span> <span class="s1">'False'</span> <span class="n">on</span> <span
+                                    class="n">the</span> <span class="n">server</span><span class="o">.</span>  <span
+                                    class="n">Sending</span> <span class="n">anything</span> <span
+                                    class="n">through</span> <span class="n">equates</span> <span
+                                    class="n">to</span> <span class="n">a</span> <span class="s1">'True'</span> <span
+                                    class="n">value</span> <span class="n">on</span> <span class="n">the</span> <span
+                                    class="n">server</span><span class="o">.</span>  <span class="n">This</span> <span
+                                    class="n">lets</span> <span class="n">the</span> <span class="n">server</span> <span
+                                    class="n">know</span> <span class="n">that</span> <span class="n">this</span> <span
+                                    class="ow">is</span> <span class="n">a</span> <span class="n">job</span> <span
+                                    class="n">to</span> <span class="nb">zip</span> <span class="n">up</span> <span
+                                    class="ow">and</span> <span class="k">return</span> <span class="n">a</span> <span
+                                    class="n">full</span> <span class="n">dataset</span><span class="o">.</span>
+</pre>
+                        </div>
+                    </div>
+                    <dl class="docutils">
+                        <dt>Returns(output):</dt>
+                        <dd>string // returns either the job ID (‘uniqueid’) as a UUID or an error message</dd>
+                        <dt>Output Details:</dt>
+                        <dd>Submit the new datarequest and get the job ID as a response. The returned job ID can then be
+                            used to retrieve results (see getDataFromRequest/).
+                        </dd>
+                    </dl>
+                    <div class="admonition warning">
+                        <p class="first admonition-title">Warning</p>
+                        <p class="last">Be sure that the polygon and geojson coordinates are in the EPSG:4326
+                            projection</p>
+                    </div>
+                    <p><strong>Example request with a polygon</strong>:</p>
+                    <p>If you are interested in retrieving the CHIRPS data for a certain polygon and a time period
+                        period. You will make the following request:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span>https://climateserv.servirglobal.net/api/submitDataRequest/?datatype=0&amp;begintime=04/01/2018&amp;endtime=04/30/2018&amp;intervaltype=0&amp;operationtype=5&amp;callback=successCallback&amp;dateType_Category=default&amp;isZip_CurrentDataType=false&amp;geometry=&#123;"type":"Polygon","coordinates":[[[21.533203124999996,-3.1624555302378496],[21.533203124999996,-6.489983332670647],[26.279296874999986,-5.441022303717986],[26.10351562499999,-2.635788574166625],[21.533203124999996,-3.1624555302378496]]]&#125;
+</pre>
+                        </div>
+                    </div>
+                    <div class="admonition tip">
+                        <p class="first admonition-title">Tip</p>
+                        <p class="last">The above request can be modified to include a geojson with multi-polygon.
+                            Simply replace the geometry parameter with the respective geojson geometry.</p>
+                    </div>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="p">[</span><span class="s2">"7e917e63-600d-4a1e-a069-ab8f73c9fcaf"</span><span
+                                class="p">]</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="section" id="getdatarequestprogress">
+                    <h3>getDataRequestProgress</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">https://climateserv.servirglobal.net/api/getDataRequestProgress/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Get the current progress the server has made on processing the given
+                        request job ID</p>
+                    <p><strong>Supported Methods</strong>: GET</p>
+                    <dl class="docutils">
+                        <dt>Parameters(input):</dt>
+                        <dd>‘id’ // (string/uuid), the unique job id (UUID format) of the job to check</dd>
+                        <dt>Returns(output):</dt>
+                        <dd>float // returns the progress value as a float between 0.0 and 100.0. If error, a value of
+                            ‘-1’ is returned instead
+                        </dd>
+                        <dt>Output Details:</dt>
+                        <dd>Ask the server what the progress on processing the current jobID is. Get a number back,
+                            display/update the client progress bar, wait a few seconds, make the request again.
+                        </dd>
+                    </dl>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="mf">27.0</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="section" id="getdatafromrequest">
+                    <h3>getDataFromRequest</h3>
+                    <p><code class="docutils literal notranslate"><span class="pre">http://climateserv.servirglobal.net/api/getDataFromRequest/</span></code>
+                    </p>
+                    <p><strong>Purpose</strong>: Get the data from a job that has completed it’s processing</p>
+                    <p><strong>Supported Methods</strong>: GET</p>
+                    <dl class="docutils">
+                        <dt>Parameters(input):</dt>
+                        <dd>‘id’ // (string/uuid), the unique job ID of the completed job</dd>
+                        <dt>Returns (output):</dt>
+                        <dd>object&#123;&#125; // Returns the data generated from the request (usually a list of numbers
+                            and dates). See below.
+                        </dd>
+                        <dt>Output Details:</dt>
+                        <dd>Ask the server for the data for a given completed Job, passing in the job ID (UUID
+                            string).
+                        </dd>
+                    </dl>
+                    <p><strong>Example Output</strong>:</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="n">retObj</span><span
+                                class="o">.</span><span class="n">data</span>                     <span
+                                class="o">//</span> <span class="p">(</span><span class="n">Array</span><span class="p">[])</span> <span
+                                class="nb">list</span> <span class="n">of</span> <span class="n">data</span> <span
+                                class="n">granules</span> <span class="n">that</span> <span class="n">the</span> <span
+                                class="n">processing</span> <span class="n">job</span> <span
+                                class="n">output</span> <span class="n">created</span><span class="o">.</span>
+
+<span class="n">granule</span> <span class="o">=</span> <span class="n">retObj</span><span class="o">.</span><span
+                                    class="n">data</span><span class="p">[</span><span class="n">n</span><span
+                                    class="p">]</span>                <span class="o">//</span> <span class="p">(</span><span
+                                    class="nb">object</span><span class="p">),</span> <span
+                                    class="n">single</span> <span class="n">data</span> <span class="n">granule</span>
+
+<span class="n">granule</span><span class="o">.</span><span class="n">date</span>                    <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">),</span> <span class="n">readable</span> <span
+                                    class="n">date</span> <span class="k">for</span> <span
+                                    class="n">current</span> <span class="n">data</span> <span
+                                    class="n">granule</span><span class="o">.</span> <span class="n">Format</span> <span
+                                    class="s2">"d/m/y"</span> <span class="ow">not</span> <span
+                                    class="n">fixed</span> <span class="n">length</span>
+<span class="n">granule</span><span class="o">.</span><span class="n">workid</span>                  <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">),</span> <span class="n">unique</span> <span class="nb">id</span> <span
+                                    class="k">for</span> <span class="n">that</span> <span
+                                    class="n">process</span> <span class="n">item</span> <span class="p">(</span><span
+                                    class="n">this</span> <span class="n">ID</span> <span class="ow">is</span> <span
+                                    class="n">only</span> <span class="n">used</span> <span class="n">by</span> <span
+                                    class="n">the</span> <span class="n">server</span> <span class="n">internally</span><span
+                                    class="o">.</span>
+<span class="n">granule</span><span class="o">.</span><span class="n">epochTime</span>               <span
+                                    class="o">//</span> <span class="p">(</span><span class="n">string</span><span
+                                    class="p">),</span> <span class="n">EpochTime</span> <span class="p">(</span><span
+                                    class="n">so</span> <span class="n">we</span> <span class="n">don</span><span
+                                    class="s1">'t have to parse readable date strings on the client side)</span>
+<span class="n">granule</span><span class="o">.</span><span class="n">value</span>                   <span
+                                    class="o">//</span> <span class="p">(</span><span class="nb">object</span><span
+                                    class="p">),</span> <span class="n">the</span> <span class="n">key</span> <span
+                                    class="ow">in</span> <span class="n">this</span> <span
+                                    class="nb">object</span> <span class="n">matches</span> <span
+                                    class="n">the</span> <span class="n">statistical</span> <span
+                                    class="n">operation</span> <span class="n">performed</span><span class="p">,</span> <span
+                                    class="ow">and</span> <span class="n">the</span> <span class="n">value</span> <span
+                                    class="n">of</span> <span class="n">that</span> <span class="n">key</span> <span
+                                    class="ow">is</span> <span class="n">the</span> <span class="n">value</span> <span
+                                    class="n">generated</span> <span class="k">for</span> <span
+                                    class="n">that</span> <span class="n">particular</span> <span class="n">data</span> <span
+                                    class="n">granule</span><span class="o">.</span>
+</pre>
+                        </div>
+                    </div>
+                    <p><strong>Example</strong>:</p>
+                    <p>For a completed job where the initial submit data request was for: User defined polygon, ‘Daily’
+                        time interval, ‘Max’ statistical value, and for the time range Jan 1, 2015 to Jan 31, 2015</p>
+                    <div class="highlight-default notranslate">
+                        <div class="highlight"><pre><span></span><span class="p">&#123;</span>
+        <span class="s2">"data"</span><span class="p">:</span>
+        <span class="p">[</span>
+                <span class="p">&#123;</span>
+                        <span class="s2">"date"</span><span class="p">:</span> <span class="s2">"1/1/2015"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"workid"</span><span class="p">:</span> <span class="s2">"01f4839f-7b9c-447f-b50f-0ca257c0a339"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"epochTime"</span><span class="p">:</span> <span class="s2">"1420092000"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"value"</span><span class="p">:</span> <span class="p">&#123;</span><span
+                                    class="s2">"max"</span><span class="p">:</span> <span
+                                    class="mf">0.3055223822593689</span><span class="p">&#125;</span>
+                <span class="p">&#125;,</span>
+                <span class="p">&#123;</span>
+                        <span class="s2">"date"</span><span class="p">:</span> <span class="s2">"1/2/2015"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"workid"</span><span class="p">:</span> <span class="s2">"58b6f7ea-5490-4ccd-a715-5e028407ad16"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"epochTime"</span><span class="p">:</span> <span class="s2">"1420178400"</span><span
+                                    class="p">,</span>
+                        <span class="s2">"value"</span><span class="p">:</span> <span class="p">&#123;</span><span
+                                    class="s2">"max"</span><span class="p">:</span> <span
+                                    class="mf">0.15552784502506256</span><span class="p">&#125;</span>
+                <span class="p">&#125;,</span>
+                <span class="p">&#123;</span>
+                        <span class="o">....</span><span class="p">,</span>
+                        <span class="o">....</span><span class="p">,</span>
+                <span class="p">&#125;,</span>
+
+                <span class="p">&#123;</span>
+                <span class="s2">"date"</span><span class="p">:</span> <span class="s2">"1/31/2015"</span><span
+                                    class="p">,</span>
+                <span class="s2">"workid"</span><span class="p">:</span> <span class="s2">"e021a12c-7346-4b7b-a273-bd39c7fde99b"</span><span
+                                    class="p">,</span>
+                <span class="s2">"epochTime"</span><span class="p">:</span> <span class="s2">"1422684000"</span><span
+                                    class="p">,</span>
+                <span class="s2">"value"</span><span class="p">:</span> <span class="p">&#123;</span><span class="s2">"max"</span><span
+                                    class="p">:</span> <span class="mf">4.206714630126953</span><span
+                                    class="p">&#125;</span>
+                <span class="p">&#125;</span>
+        <span class="p">]</span>
+<span class="p">&#125;</span>
+</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="section" id="list-of-datatypes">
+                <h2>List of Datatypes
+                </h2>
+                <div class="section" id="regular-datasets">
+                    <h3>Regular Datasets</h3>
+                    <div class="wy-table-responsive">
+                        <table border="1" class="docutils">
+                            <colgroup>
+                                <col width="38%">
+                                <col width="20%">
+                                <col width="42%">
+                            </colgroup>
+                            <thead valign="bottom">
+                            <tr class="row-odd">
+                                <th class="head">Dataset Name</th>
+                                <th class="head">Datatype Number</th>
+                                <th class="head">Availability</th>
+                            </tr>
+                            </thead>
+                            <tbody valign="top">
+                            <tr class="row-even">
+                                <td>Global CHIRPS</td>
+                                <td>0</td>
+                                <td>Daily from 1981 to present</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>NDVI MODIS-West Africa</td>
+                                <td>1</td>
+                                <td>Every five days from 2001 to 2017</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>NDVI MODIS-East Africa</td>
+                                <td>2</td>
+                                <td>Every five days from 2001 to 2018</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>NDVI MODIS-Central Asia</td>
+                                <td>28</td>
+                                <td>Every five days from 2001 to 2017</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Global ESI 4 Week</td>
+                                <td>29</td>
+                                <td>Every four weeks from 2001 to present</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Global ESI 12 Week</td>
+                                <td>33</td>
+                                <td>Every twelve weeks from 2001 to present</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>IMGERG</td>
+                                <td>26</td>
+                                <td>Daily from 2015 to present</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CHIRS-GEFS Anomalies</td>
+                                <td>31</td>
+                                <td>Decadal from 1985 to present</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CHIRS-GEFS Precip</td>
+                                <td>32</td>
+                                <td>Decadal from 1985 to present</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="section" id="seasonal-forecast-datasets">
+                    <h3>Seasonal Forecast Datasets</h3>
+                    <p>The seasonal forecasts are generated from a NMME model ensemble run.</p>
+                    <div class="wy-table-responsive">
+                        <table border="1" class="docutils">
+                            <colgroup>
+                                <col width="66%">
+                                <col width="34%">
+                            </colgroup>
+                            <thead valign="bottom">
+                            <tr class="row-odd">
+                                <th class="head">Dataset Name</th>
+                                <th class="head">Datatype Number</th>
+                            </tr>
+                            </thead>
+                            <tbody valign="top">
+                            <tr class="row-even">
+                                <td>Ensemble 1, Temperature</td>
+                                <td>6</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 1, Precipitation</td>
+                                <td>7</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 2, Temperature</td>
+                                <td>8</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 2, Precipitation</td>
+                                <td>9</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 3, Temperature</td>
+                                <td>10</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 3, Precipitation</td>
+                                <td>11</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 4, Temperature</td>
+                                <td>12</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 4, Precipitation</td>
+                                <td>13</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 5, Temperature</td>
+                                <td>14</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 5, Precipitation</td>
+                                <td>15</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 6, Temperature</td>
+                                <td>16</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 6, Precipitation</td>
+                                <td>17</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 7, Temperature</td>
+                                <td>18</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 7, Precipitation</td>
+                                <td>19</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 8, Temperature</td>
+                                <td>20</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 8, Precipitation</td>
+                                <td>21</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 9, Temperature</td>
+                                <td>22</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 9, Precipitation</td>
+                                <td>23</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>Ensemble 10, Temperature</td>
+                                <td>24</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>Ensemble 10, Precipitation</td>
+                                <td>25</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Full screen modal -->
