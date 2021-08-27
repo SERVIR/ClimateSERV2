@@ -618,7 +618,7 @@ class ZMQCHIRPSHeadProcessor():
                 if self.isDownloadJob == True:
                     self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
-                   operation, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                   dates, operation, values, bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
