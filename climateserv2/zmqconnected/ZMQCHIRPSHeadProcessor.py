@@ -620,6 +620,8 @@ class ZMQCHIRPSHeadProcessor():
                 else:
 
                     dates, operation, values, bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                    self.logger.info('^^^^^^^^^11^^^^^^^^')
+                    self.logger.info(values)
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -647,9 +649,15 @@ class ZMQCHIRPSHeadProcessor():
                                                                                             1])
             current_mask_and_storage_uuid = uniqueid
             worklist = []
+
             if (self.dj_OperationName != "download"):
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
+                    self.logger.info('+++++')
+                    self.logger.info(len(dates))
+                    self.logger.info('^^^^^^^^^^^^^^^^^')
+                    self.logger.info(len(values))
+                    self.logger.info(float(values[dateIndex]))
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
                     workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":request['geometry'], "derived_product": False}
                     workdict["year"] = int(dates[dateIndex][0:4])
