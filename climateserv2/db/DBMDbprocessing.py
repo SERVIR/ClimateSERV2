@@ -300,7 +300,6 @@ class DBMConnector_RequestLog:
             theValue = json.dumps(requestData)
         # Add new data!
         self.db_ForWriting_NewRequests[theKey] = theValue
-        print(self.db_ForWriting_NewRequests[theKey])
 
 
 if __name__ == '__main__':

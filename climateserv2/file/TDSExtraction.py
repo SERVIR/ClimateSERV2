@@ -20,7 +20,6 @@ except:
 import shutil
 logger=llog.getNamedLogger("request_processor")
 def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation):
-
     json_aoi = json.loads(geom) # convert coordinates to a json object
     for x in range(len(json_aoi['features'])):
         if "properties" not in json_aoi['features'][x]:
@@ -35,10 +34,10 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
     st=datetime.strptime(start_date, '%m/%d/%Y')
     et=datetime.strptime(end_date, '%m/%d/%Y')
     start_date=datetime.strftime(st, '%Y-%m-%d')
-    end_date=datetime.strftime(et, '%Y-%m-%d')
+    end_date=datetime.strftime(et, '%Y-%m-%d')  
 
 
-    temp_file = task_id + "_" + dataset  # name for temporary netcdf file
+    temp_file = os.path.join(params.netCDFpath,task_id + "_" + dataset)  # name for temporary netcdf file
     if json_aoi['features'][0]['geometry']['type']=="Point":
         coords=json_aoi['features'][0]['geometry']['coordinates']
         lat, lon=coords[0],coords[1]
@@ -48,6 +47,13 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
             try:
                 urllib.request.urlretrieve(tds_request, temp_file)
                 clipped_dataset = xr.open_dataset(temp_file)
+                time_var = clipped_dataset[[variable]].time
+                dates_arr = []
+                for x in time_var:
+                    temp = pd.Timestamp(np.datetime64(x.time.values)).to_pydatetime()
+                    dates_arr.append(temp.strftime("%Y-%m-%d"))
+                if (start_date not in dates_arr) and (end_date not in dates_arr):
+                    return [], operation, [], []
             except ValueError as v:
                 return [], operation, [], []
         except:
@@ -70,7 +76,16 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         xds.rio.write_crs("EPSG:4326", inplace=True)
 
         clipped_dataset = xds.rio.clip(aoi.geometry, aoi.crs, drop=False, invert=True)  # clip dataset
-    os.remove(temp_file)  # delete temporary file on server
+        time_var = clipped_dataset[[variable]].time
+        dates_arr = []
+        for x in time_var:
+            temp = pd.Timestamp(np.datetime64(x.time.values)).to_pydatetime()
+            dates_arr.append(temp.strftime("%Y-%m-%d"))
+        if (start_date not in dates_arr) and (end_date not in dates_arr):
+            return [], operation, [], []
+    if params.deletetempnetcdf == True:
+        os.remove(temp_file)  # delete temporary file on server
+
     if json_aoi['features'][0]['geometry']['type']=="Point" and operation != "download" :
         dates = []
         for i in np.array(clipped_dataset['time'].values):
@@ -88,7 +103,6 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         return dates,operation,np.array(min_values_array),aoi.total_bounds
     elif operation == "avg":
         dates = []
-        logger.info("in avg")
         mean_values = clipped_dataset.mean(dim=["latitude", "longitude"], skipna=True)
         mean_values_array = np.array(mean_values[variable].values)
         for i in mean_values[variable]:
@@ -121,7 +135,8 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
 
         # close the Zip File
         zipObj.close()
-      #  os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
+        os.remove(params.zipFile_ScratchWorkspace_Path+'/clipped_'+dataset)
+        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(task_id), ignore_errors=True)
         return params.zipFile_ScratchWorkspace_Path+task_id+'.zip',operation
     else:
         return "invalid operation"

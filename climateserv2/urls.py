@@ -32,12 +32,29 @@ urlpatterns = [
     url(r'chirps/getDataFromRequest/', getDataFromRequest),
     url(r'chirps/getFeatureLayers/', getFeatureLayers),
     # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
-    url('/chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
+    url('chirps/getClimateScenarioInfo/', getClimateScenarioInfo),  # ks refactor 2015 // New API Hook getClimateScenarioInfo
     # url(r'^/chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
     url('chirps/getFileForJobID/', getFileForJobID),
     # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
     # url(r'^/chirps/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
-    url(r'chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
+    url(r'chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest),
+
+    # api calls
+
+    url(r'api/getParameterTypes/', getParameterTypes),
+    # url(r'^/api/getRequiredElements/', getRequiredElements),
+    url(r'api/submitDataRequest/', submitDataRequest),
+    url(r'api/getDataRequestProgress/', getDataRequestProgress),
+    url(r'api/getDataFromRequest/', getDataFromRequest),
+    url(r'api/getFeatureLayers/', getFeatureLayers),
+    # url(r'^/api/getCapabilitiesForDataset/', getCapabilitiesForDataset),
+    url('api/getClimateScenarioInfo/', getClimateScenarioInfo),
+    # ks refactor 2015 // New API Hook getClimateScenarioInfo
+    # url(r'^/api/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
+    url('api/getFileForJobID/', getFileForJobID),
+    # url(r'^/api/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
+    # url(r'^/api/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
+    url(r'api/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
 ]
 
 if settings.DEBUG:

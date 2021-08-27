@@ -87,7 +87,7 @@ def getDayValue(year,month,day,bounds,clippedmask,dataType,operationsType, polyg
     logger.debug("getDay Value year="+str(year)+"  month="+str(month)+" day="+str(day)+" datatype="+str(dataType))
     
     # KS Refactor 2015 // This is where I'm intercepting the code to add the new 'download' operation at the worker thread level
-    if(params.parameters[operationsType][1] == 'download'):
+    if(params.operationTypes[operationsType][1] == 'download'):
         # Do the download stuff
         #logger.debug("DataCalculator:getDayValue: TODO: Finish the code that creates a tif file from all the inputs we have here!")
         onErrorReturnValue = 0 # 0 for failures?  (555 is just a place holder to see if this all works!!)

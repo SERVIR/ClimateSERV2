@@ -58,6 +58,8 @@ shapefileName = params.shapefileName
 operationTypes = params.operationTypes
 intervals = params.intervals
 ageInDaysToPurgeData = params.ageInDaysToPurgeData
+netCDFpath=params.tempnetcdfpath
+deletetempnetcdf=params.deletetempnetcdf
 
 resultsdir = params.resultsdir
 

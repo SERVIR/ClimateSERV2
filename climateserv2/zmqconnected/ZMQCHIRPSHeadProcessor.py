@@ -313,14 +313,21 @@ class ZMQCHIRPSHeadProcessor():
         self.__finishJob__()
         
     def processFinishedData(self, results):
+        opname=""
+        # self.finished_items=[]
         self.finished_task_count = self.finished_task_count +1
+        self.workToBeDone.pop(results['workid'], None)
+        missingValue=None
         if (self.isDownloadJob == True):
             # For Download Jobs.
             # Need to figure out why we use 'self.finished_items' and what happens if I just skip it..
             if results['value'] is not None:
                 self.finished_items.append(results)
         else:
-            self.finished_items.append(results)
+            missingValue = params.dataTypes[self.request['datatype']]['fillValue']
+            opname =params.operationTypes[self.request['operationtype']][1]
+            if results['value'][opname] != missingValue:
+                self.finished_items.append(results)
         self.__updateProgress__()
             
     def __sortData__(self,array):
@@ -611,7 +618,7 @@ class ZMQCHIRPSHeadProcessor():
                 if self.isDownloadJob == True:
                     self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
-                    dates, operation, values ,bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                   operation, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -625,8 +632,8 @@ class ZMQCHIRPSHeadProcessor():
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
                     polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
                     polygon_Str_ToPass = polygonstring
-                    geometry = geoutils.decodeGeoJSON(polygonstring)
-                    bounds, mask = mg.rasterizePolygon(geotransform, size[0], size[1], geometry)
+
+
 
                 else:
                     dates, operation, values, bounds = GetTDSData.get_aggregated_values(request['begintime'],
@@ -637,28 +644,13 @@ class ZMQCHIRPSHeadProcessor():
                                                                                         params.parameters[
                                                                                             request['operationtype']][
                                                                                             1])
-
-                # Break up date
-                # Check for cached polygon
-                # if no cached polygon exists rasterize polygon
-                clippedmask = mask[bounds[2]:bounds[3], bounds[0]:bounds[1]]
-                # self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'mask': " + str(mask))
-                # self.logger.debug("("+self.name+"):__preProcessIncomingRequest__ : debug : Value of 'clippedmask': " + str(clippedmask))
-
-                current_mask_and_storage_uuid = uniqueid
-                # self.__writeMask__(uniqueid,clippedmask,bounds)
-                self.__writeMask__(current_mask_and_storage_uuid, clippedmask, bounds)
-
-
-
-                del mask
-                del clippedmask
+            current_mask_and_storage_uuid = uniqueid
             worklist = []
             if (self.dj_OperationName != "download"):
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':uniqueid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':request['geometry'], 'derived_product': False}
+                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':current_mask_and_storage_uuid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':request['geometry'], 'derived_product': False}
                     workdict['year'] = int(dates[dateIndex][0:4])
                     workdict['month'] = int(dates[dateIndex][5:7])
                     workdict['day'] = int(dates[dateIndex][8:10])
@@ -682,6 +674,7 @@ class ZMQCHIRPSHeadProcessor():
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['intervaltype']: " + str(intervaltype))
+
             return None, worklist
         except Exception as e:
             self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))

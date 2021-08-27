@@ -113,22 +113,6 @@ class ZMQCHIRPSDataWorker():
         except:
             pass
 
-        # When 'results' comes back.  It looks something like this.
-        # results = {"date":dateOfOperation,"epochTime":self.operatingData['epochTime'],'value':mathop.getFillValue()}
-        #
-
-        # TODO!
-        # # The data is actually returned right here... but what we need to do is save the data to separate UUIDs than what would normally happen on a normal request.
-        # # So for Monthly Analysis, need to save to the UUIDs that match the storage
-        # # IF Monthly Storage type, then do this  # 'sub_type_name': sub_type_name, 'derived_product': True, 'special_type': 'MonthlyRainfallAnalysis' }
-        # results['special_type'] = self.operatingData['special_type']  # Maybe this value is 'MonthlyRainfallAnalysis'
-        # results['sub_type_name'] = self.operatingData['sub_type_name']   # Tells us if this is CHIRPS or SEASONAL_FORECAST
-        # results['current_mask_and_storage_uuid'] = self.operatingData['current_mask_and_storage_uuid']
-        # #results['datatype_uuid_for_CHIRPS'] = self.operatingData['datatype_uuid_for_CHIRPS']
-        # #results['datatype_uuid_for_SeasonalForecast'] = self.operatingData['datatype_uuid_for_SeasonalForecast']
-
-        # ks refactor // Understanding how the 'workers' do their work!
-        # self.logger.debug("Worker: " +str(self.name)+ " : doWork : Value of results: " + str(results))
         self.logger.debug("(" + self.name + "):doWork: Value of json.dumps(results): " + str(json.dumps(results)))
 
         results['workid'] = self.operatingData['workid']

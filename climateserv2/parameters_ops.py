@@ -31,6 +31,9 @@ workpath = '''/cserv2/tmp/'''#'''/data/data/work'''
 shapefilepath = '''/cserv2/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
 shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
+tempnetcdfpath= '''/cserv2/tmp/netCDFs'''
+deletetempnetcdf=False
+
 
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]

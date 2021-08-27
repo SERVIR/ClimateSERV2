@@ -31,10 +31,12 @@ def getPolygon(shapefilePath, layer_id, fid):
     :param name:
     :param fid:
     '''
-    shapef=ogr.Open(shapefilePath)
-    lyr = shapef.GetLayer( layer_id )
-    poly = lyr.GetFeature(long(fid))
-
+    shapef = ogr.Open(shapefilePath)
+    lyr = shapef.GetLayer(layer_id)
+    poly = None
+    for feature in lyr:
+        if feature.GetField("geom_id") == long(fid):
+            poly = feature
 
   
 #     shape = poly.GetGeometryRef().exportToWKt()
