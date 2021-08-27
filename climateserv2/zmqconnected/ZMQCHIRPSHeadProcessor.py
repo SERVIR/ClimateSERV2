@@ -618,7 +618,8 @@ class ZMQCHIRPSHeadProcessor():
                 if self.isDownloadJob == True:
                     self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
-                   dates, operation, values, bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+
+                    dates, operation, values, bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -650,19 +651,19 @@ class ZMQCHIRPSHeadProcessor():
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                    workdict = {'uid':uniqueid, 'current_mask_and_storage_uuid':current_mask_and_storage_uuid, 'workid':workid,'datatype':datatype,'operationtype':operationtype, 'intervaltype':intervaltype, 'polygon_Str_ToPass':request['geometry'], 'derived_product': False}
-                    workdict['year'] = int(dates[dateIndex][0:4])
-                    workdict['month'] = int(dates[dateIndex][5:7])
-                    workdict['day'] = int(dates[dateIndex][8:10])
-                    workdict['epochTime'] = gmt_midnight
-                    workdict['value'] = {opn: values[dateIndex]}
+                    workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":request['geometry'], "derived_product": False}
+                    workdict["year"] = int(dates[dateIndex][0:4])
+                    workdict["month"] = int(dates[dateIndex][5:7])
+                    workdict["day"] = int(dates[dateIndex][8:10])
+                    workdict["epochTime"] = gmt_midnight
+                    workdict["value"] = {opn: values[dateIndex]}
                     if (intervaltype == 0):
-                        dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'] )
+                        dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"] )
                     elif (intervaltype == 1):
-                        dateObject = dateutils.createDateFromYearMonth(workdict['year'], workdict['month'] )
+                        dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"] )
                     elif (intervaltype == 2):
-                        dateObject = dateutils.createDateFromYear(workdict['year'])
-                    workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+                        dateObject = dateutils.createDateFromYear(workdict["year"])
+                    workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
                     worklist.extend([workdict])
             else:
                 workid = uu.getUUID()

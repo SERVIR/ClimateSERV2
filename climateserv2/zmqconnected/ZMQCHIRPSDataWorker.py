@@ -44,24 +44,26 @@ class ZMQCHIRPSDataWorker():
         return self.name + ":(" + self.pid + ")"
 
     def __doWork__(self):
+        self.logger.info('%%%%%%%555555555')
+        self.logger.info(self.operatingData)
         self.operatingData=eval(self.operatingData)
 
-        if (self.operatingData['intervaltype'] == 0):
-            if(self.operatingData['operationtype'] ==6):
-                return { 'value': self.operatingData['value']}
+        if (self.operatingData["intervaltype"] == 0):
+            if(self.operatingData["operationtype"] ==6):
+                return { "value": self.operatingData["value"]}
             else:
-                dateOfOperation = str(self.operatingData['month']) + "/" + str(self.operatingData['day']) + "/" + str(
-                    self.operatingData['year'])
-                return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
-                    'value': self.operatingData['value']}
-        elif (self.operatingData['intervaltype'] == 1):
-            dateOfOperation = str(self.operatingData['month']) + "/" + str(self.operatingData['year'])
-            return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
-                    'value': self.operatingData['value']}
-        elif (self.operatingData['intervaltype'] == 2):
-            dateOfOperation = str(self.operatingData['year'])
-            return {"date": dateOfOperation, "epochTime": self.operatingData['epochTime'],
-                    'value': self.operatingData['value']}
+                dateOfOperation = str(self.operatingData["month"]) + "/" + str(self.operatingData["day"]) + "/" + str(
+                    self.operatingData["year"])
+                return {"date": dateOfOperation, "epochTime": self.operatingData["epochTime"],
+                    "value": self.operatingData["value"]}
+        elif (self.operatingData["intervaltype"] == 1):
+            dateOfOperation = str(self.operatingData["month"]) + "/" + str(self.operatingData["year"])
+            return {"date": dateOfOperation, "epochTime": self.operatingData["epochTime"],
+                    "value": self.operatingData["value"]}
+        elif (self.operatingData["intervaltype"] == 2):
+            dateOfOperation = str(self.operatingData["year"])
+            return {"date": dateOfOperation, "epochTime": self.operatingData["epochTime"],
+                    "value": self.operatingData["value"]}
 
     def __listen__(self):
         while (True):
