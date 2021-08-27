@@ -54,7 +54,11 @@ You will need to add some paths and dataset information as follows:
 
 --- TBD ---
 
-At this point you should be able to start the application.
+At this point you should be able to start the application.  From the root directory you can run the following two commands
+
+```
+sudo sh climateserv2/runWorkers.sh restart >> {REPLACE WITH PATH TO temp processing directory}/logs/request_processor_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
+```
 
 ```
 python manage.py runserver
