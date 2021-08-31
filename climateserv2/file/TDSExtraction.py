@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 import geopandas as gpd
-import matplotlib.pyplot as plt
 import urllib
 import numpy as np
 import os
@@ -32,6 +31,10 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
 
     json_aoi=json.dumps(jsonn)
 
+    logger.info(json_aoi)
+
+
+
     try:
         # aoi = gpd.GeoDataFrame.from_features(json_aoi, crs="EPSG:4326")
         aoi = gpd.read_file(json_aoi) # using geopandas to get the bounds
@@ -52,11 +55,11 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
     et=datetime.strptime(end_date, '%m/%d/%Y')
     start_date=datetime.strftime(st, '%Y-%m-%d')
     end_date=datetime.strftime(et, '%Y-%m-%d')
+
     # Extracting data from TDS and making local copy
     tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
         north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
         south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
-    #logger.info(tds_request)
     temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file
 
     #print("Download Started =", datetime.now().strftime("%H:%M:%S"))

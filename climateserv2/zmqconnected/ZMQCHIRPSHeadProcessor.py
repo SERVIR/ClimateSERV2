@@ -10,6 +10,7 @@ import time
 import calendar
 import zmq
 import json
+from osgeo import ogr
 import shutil
 from copy import deepcopy
 from operator import itemgetter
@@ -611,10 +612,10 @@ class ZMQCHIRPSHeadProcessor():
             size = params.getGridDimension(int(datatype))
             polygon_Str_ToPass = None
             dataTypeCategory = params.dataTypes[datatype]['data_category'] #  == 'ClimateModel'
-
+            dataset_name = params.dataTypes[int(datatype)]['dataset_name'] + ".nc4"
+            variable_name = params.dataTypes[int(datatype)]['variable']
             if ('geometry' in request):
-                dataset_name=params.dataTypes[int(datatype)]['dataset_name']+".nc4"
-                variable_name=params.dataTypes[int(datatype)]['variable']
+                polygon_Str_ToPass=request['geometry']
                 if self.isDownloadJob == True:
                     self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
@@ -633,9 +634,15 @@ class ZMQCHIRPSHeadProcessor():
 
                 if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
-                    polygonstring = extractTif.get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(geometries)
-                    polygon_Str_ToPass = polygonstring
-
+                    polygon_Str_ToPass = geometries
+                    self.zipFilePath, operation = GetTDSData.get_aggregated_values(request['begintime'],
+                                                                                    request['endtime'],
+                                                                                    dataset_name, variable_name,
+                                                                                    geometries,
+                                                                                    request['uniqueid'],
+                                                                                    params.parameters[
+                                                                                        request['operationtype']][
+                                                                                        1])
 
 
                 else:
@@ -653,13 +660,8 @@ class ZMQCHIRPSHeadProcessor():
             if (self.dj_OperationName != "download"):
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
-                    self.logger.info('+++++')
-                    self.logger.info(len(dates))
-                    self.logger.info('^^^^^^^^^^^^^^^^^')
-                    self.logger.info(len(values))
-                    self.logger.info(float(values[dateIndex]))
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                    workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":request['geometry'], "derived_product": False}
+                    workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":polygon_Str_ToPass, "derived_product": False}
                     workdict["year"] = int(dates[dateIndex][0:4])
                     workdict["month"] = int(dates[dateIndex][5:7])
                     workdict["day"] = int(dates[dateIndex][8:10])

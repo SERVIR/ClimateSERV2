@@ -296,7 +296,6 @@ def get_ClimateDataFiltered_PolygonString_FromSingleGeometry(theGeometry):
     return retObj_JSON #retObj
 
 def get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(theGeometries):
-    logger.info("from get climate")
     # Default 0'd values
     # I think this is the bug!!!! (Setting these values to 0)
     # Fixing by setting to radically large and small numbers (way out of range).. (note the ranges)
@@ -308,7 +307,6 @@ def get_ClimateDataFiltered_PolygonString_FromMultipleGeometries(theGeometries):
     # Foreach geometry found.
     #for poly in polygons:
     for poly in theGeometries:
-        logger.info("from get clim for loop")
         for i in range(0,poly.GetGeometryCount()):
             objToSend = poly.GetGeometryRef(i).GetGeometryRef(0)  # Not sure what this is about but it seems to work!!
             current_maxX_Long, current_minX_Long, current_maxY_Lat, current_minY_Lat = get_MaxXLong_MinXLong_MaxYLat_MinYLat_From_Geometry(objToSend)

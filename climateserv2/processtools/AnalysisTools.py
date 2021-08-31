@@ -89,12 +89,10 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
         geometry = geoutils.decodeGeoJSON(polygonstring)
         # # this is not a download type or a climate model type  --START
         polygon_Str_ToPass = polygonstring
-        logger.info("bfore unpackkkk")
         dates, operation, values, bounds = GetTDSData.get_aggregated_values(begintime, endtime,
                                                                             'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', polygonstring,
                                                                             uniqueid,
                                                                             operation)
-        logger.info("after unpackkkk")
     # # this is not a download type or a climate model type  --END
     # User Selected a Feature
     elif ('layerid' in request):

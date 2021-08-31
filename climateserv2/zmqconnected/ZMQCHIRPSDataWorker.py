@@ -44,8 +44,6 @@ class ZMQCHIRPSDataWorker():
         return self.name + ":(" + self.pid + ")"
 
     def __doWork__(self):
-        self.logger.info('%%%%%%%555555555')
-        self.logger.info(self.operatingData)
         self.operatingData=eval(self.operatingData)
 
         if (self.operatingData["intervaltype"] == 0):
