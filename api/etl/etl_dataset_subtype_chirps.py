@@ -1,4 +1,4 @@
-import datetime, gzip, os, shutil, sys
+import datetime, gzip, os, requests, shutil, sys, urllib
 from urllib import request as urllib_request
 import xarray as xr
 import pandas as pd
@@ -17,8 +17,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
     etl_parent_pipeline_instance = None
     chirps_mode = 'chirp'
 
-    relative_dir_path__WorkingDir = 'working_dir'
-
     # DRAFTING - Suggestions
     _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
     _expected_granules                  = []    # Place to store granules
@@ -35,115 +33,47 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or 2020
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or 2020
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
         self.MM__Month__End = params.get('MM__Month__End') or 1
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
         self.DD__Day__End = params.get('DD__Day__End') or 1
 
-    # Get the local filesystem place to store data
-    @staticmethod
-    def get_root_local_temp_working_dir(subtype_filter):
-        # Type Specific Settings
-        chirps__chirp__rootoutputworkingdir  = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRP", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirp/")
-        chirps__chirps__rootoutputworkingdir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRPS", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirps/")
-        chirps__chirps_gefs__rootoutputworkingdir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRPS_GEFS", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirps_gefs/")
-        ret_rootlocal_working_dir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # settings.PATH__TEMP_WORKING_DIR__DEFAULT  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'chirp':
-            ret_rootlocal_working_dir = chirps__chirp__rootoutputworkingdir
-        elif subtype_filter == 'chirps':
-            ret_rootlocal_working_dir = chirps__chirps__rootoutputworkingdir
-        elif subtype_filter == 'chirps_gefs':
-            ret_rootlocal_working_dir = chirps__chirps_gefs__rootoutputworkingdir
-        return ret_rootlocal_working_dir
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    @staticmethod
-    def get_final_load_dir(subtype_filter):
-        chirps__chirp__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__CHIRP", default_or_error_return_value="")
-        chirps__chirps__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__CHIRPS", default_or_error_return_value="")
-        chirps__chirps_gefs__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__CHIRPS_GEFS", default_or_error_return_value="")
-        ret_dir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'chirp':
-            ret_dir = chirps__chirp__finalloaddir
-        elif subtype_filter == 'chirps':
-            ret_dir = chirps__chirps__finalloaddir
-        elif subtype_filter == 'chirps_gefs':
-            ret_dir = chirps__chirps_gefs__finalloaddir
-        return ret_dir
-
-    # Get the Remote Locations for each of the subtypes
-    @staticmethod
-    def get_roothttp_for_subtype(subtype_filter):
-        chirps__chirp__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRP", default_or_error_return_value="")
-        chirps__chirps__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS", default_or_error_return_value="")
-        chirps__chirps_gefs__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS_GEFS", default_or_error_return_value="")
-        ret_roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
-        subtype_filter = str(subtype_filter).strip()
-        if subtype_filter == 'chirp':
-            ret_roothttp = chirps__chirp__roothttp
-        if subtype_filter == 'chirps':
-            ret_roothttp = chirps__chirps__roothttp
-        if subtype_filter == 'chirps_gefs':
-            ret_roothttp = chirps__chirps_gefs__roothttp
-        return ret_roothttp
-
     # Specialized Functions (For each Mode)
     @staticmethod
     def get__base_filename__for_chirps_mode__chirp(datetime_obj):
-        current_year__YYYY_str  = "{:0>4d}".format(datetime_obj.year)
-        current_month__MM_str   = "{:02d}".format(datetime_obj.month)
-        current_day__DD_str     = "{:02d}".format(datetime_obj.day)
-        base_filename = ''
-        base_filename += 'chirp.'                   # chirp.
-        base_filename += current_year__YYYY_str     # chirp.2020
-        base_filename += '.'                        # chirp.2020.
-        base_filename += current_month__MM_str      # chirp.2020.04
-        base_filename += '.'                        # chirp.2020.04.
-        base_filename += current_day__DD_str        # chirp.2020.04.02
-        #base_filename += '.tif'                     # chirp.2020.04.02.tif
+        base_filename = 'chirp.{}.{}.{}'.format(
+            '{:0>4d}'.format(datetime_obj.year),
+            '{:02d}'.format(datetime_obj.month),
+            '{:02d}'.format(datetime_obj.day)
+        )
         return base_filename
 
     @staticmethod
     def get__base_filename__for_chirps_mode__chirps(datetime_obj):
-        current_year__YYYY_str = "{:0>4d}".format(datetime_obj.year)
-        current_month__MM_str = "{:02d}".format(datetime_obj.month)
-        current_day__DD_str = "{:02d}".format(datetime_obj.day)
-        base_filename = ''
-        base_filename += 'chirps-v2.0.'             # chirps-v2.0.
-        base_filename += current_year__YYYY_str     # chirps-v2.0.2020
-        base_filename += '.'                        # chirps-v2.0.2020.
-        base_filename += current_month__MM_str      # chirps-v2.0.2020.04
-        base_filename += '.'                        # chirps-v2.0.2020.04.
-        base_filename += current_day__DD_str        # chirps-v2.0.2020.04.02
-        #base_filename += '.tif'                     # chirps-v2.0.2020.04.02.tif
+        base_filename = 'chirps-v2.0.{}.{}.{}'.format(
+            '{:0>4d}'.format(datetime_obj.year),
+            '{:02d}'.format(datetime_obj.month),
+            '{:02d}'.format(datetime_obj.day)
+        )
         return base_filename
 
     @staticmethod
     def get__base_filename__for_chirps_mode__chirps_gefs(datetime_obj):
-        current_year__YYYY_str = "{:0>4d}".format(datetime_obj.year)
-        current_month__MM_str = "{:02d}".format(datetime_obj.month)
-        current_day__DD_str = "{:02d}".format(datetime_obj.day)
-        dekad_day_str = "01"
-        if(datetime_obj.day > 10):
-            dekad_day_str = "11"
-        if (datetime_obj.day > 20):
-            dekad_day_str = "21"
-        base_filename = ''
-        base_filename += 'data.'                    # data.
-        base_filename += current_year__YYYY_str     # data.2020
-        base_filename += '.'                        # data.2020.
-        base_filename += current_month__MM_str      # data.2020.04
-        base_filename += current_day__DD_str        # data.2020.0402
-        base_filename += '.created-from.'           # data.2020.0402.created-from.
-        base_filename += current_year__YYYY_str     # data.2020.0402.created-from.2020
-        base_filename += '.'                        # data.2020.0402.created-from.2020.
-        base_filename += current_month__MM_str      # data.2020.0402.created-from.2020.04
-        base_filename += dekad_day_str              # data.2020.0402.created-from.2020.0401
-        #base_filename += '.tif'                     # data.2020.0402.created-from.2020.0401.tif
+        dekad_day_str = '01'
+        if datetime_obj.day > 10:
+            dekad_day_str = '11'
+        elif datetime_obj.day > 20:
+            dekad_day_str = '21'
+        base_filename = 'data.{}.{}{}.created-from.{}.{}{}'.format(
+            '{:0>4d}'.format(datetime_obj.year),
+            '{:02d}'.format(datetime_obj.month),
+            '{:02d}'.format(datetime_obj.day),
+            '{:0>4d}'.format(datetime_obj.year),
+            '{:02d}'.format(datetime_obj.month),
+            dekad_day_str
+        )
         return base_filename
 
     # Function to decide which basefile name function to call based on the current mode.  (The file structure differs between each mode).
@@ -167,15 +97,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Get the root http path based on the region.
-        current_root_http_path      = self.get_roothttp_for_subtype(subtype_filter=self.chirps_mode)
-        root_file_download_path     = os.path.join(ETL_Dataset_Subtype_CHIRPS.get_root_local_temp_working_dir(subtype_filter=self.chirps_mode), self.relative_dir_path__WorkingDir)
-        final_load_dir_path         = ETL_Dataset_Subtype_CHIRPS.get_final_load_dir(subtype_filter=self.chirps_mode)
-
-        self.temp_working_dir       = str(root_file_download_path).strip()
-        self._expected_granules     = []
-        # expected_granules = []
-
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
         try:
@@ -184,58 +108,40 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             end_Date = datetime.datetime(year=self.YYYY__Year__End, month=self.MM__Month__End, day=self.DD__Day__End)
 
             delta = end_Date - start_Date
-            #print("DELTA: " + str(delta))
+
             for i in range(delta.days + 1):
-                # print start_Date + datetime.timedelta(days=i)
+
                 currentDate = start_Date + datetime.timedelta(days=i)
                 current_year__YYYY_str = "{:0>4d}".format(currentDate.year)
                 current_month__MM_str = "{:02d}".format(currentDate.month)
                 current_day__DD_str = "{:02d}".format(currentDate.day)
 
-
                 # Create the base filename
-                # TODO - Call a function passing in the date object AND the Mode
-                #base_filename = ''
                 base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.chirps_mode, datetime_obj=currentDate) # Returns everything except the '.extension'
                 tif_filename = base_filename + '.tif'
 
                 # Create the final nc4 filename
-                final_nc4_filename = ''
-                final_nc4_filename += 'ucsb-'               # ucsb-
-                if (self.chirps_mode == "chirp"):
-                    final_nc4_filename += 'chirp'           # ucsb-chirp
-                if (self.chirps_mode == "chirps"):
-                    final_nc4_filename += 'chirps'          # ucsb-chirps
-                if (self.chirps_mode == "chirps_gefs"):
-                    final_nc4_filename += 'chirps-gefs'     # ucsb-chirps-gefs
-                final_nc4_filename += '.'                       # ucsb-chirps.
-                final_nc4_filename += current_year__YYYY_str    # ucsb-chirps.2020
-                final_nc4_filename += current_month__MM_str     # ucsb-chirps.202001
-                final_nc4_filename += current_day__DD_str       # ucsb-chirps.20200130
-                final_nc4_filename += 'T'                       # ucsb-chirps.20200130T
-                final_nc4_filename += '000000'                  # ucsb-chirps.20200130T000000
-                final_nc4_filename += 'Z.global.nc4'            # ucsb-chirps.20200130T000000Z.global.nc4
-                # final_nc4_filename += both_hh_str  # nasa-imerg-late.20200130T23
-                # final_nc4_filename += start_mm_str  # nasa-imerg-late.20200130T2330
-                # final_nc4_filename += start_ss_str  # nasa-imerg-late.20200130T233000
-
+                # ucsb-chirp.20210731T000000Z.global.0.05deg.daily.nc4
+                final_nc4_filename = 'ucsb-'
+                if self.chirps_mode == 'chirp':
+                    final_nc4_filename += 'chirp'
+                elif self.chirps_mode == 'chirps':
+                    final_nc4_filename += 'chirps'
+                elif self.chirps_mode == 'chirps_gefs':
+                    final_nc4_filename += 'chirps-gefs'
+                final_nc4_filename += '.{}{}{}T000000Z.global.0.05deg.daily.nc4'.format(
+                    current_year__YYYY_str,
+                    current_month__MM_str,
+                    current_day__DD_str
+                )
 
                 # Now get the remote File Paths (Directory) based on the date infos.
-                remote_directory_path = "UNSET/"
-                if (self.chirps_mode == "chirp"):
-                    remote_directory_path = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRP", default_or_error_return_value="ERROR_GETTING_DIR_FOR_CHIRP/")
-                if (self.chirps_mode == "chirps"):
-                    remote_directory_path = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS", default_or_error_return_value="ERROR_GETTING_DIR_FOR_CHIRPS/")
-                if (self.chirps_mode == "chirps_gefs"):
-                    remote_directory_path = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS_GEFS", default_or_error_return_value="ERROR_GETTING_DIR_FOR_CHIRPS_GEFS/")
-
                 # All 3 of these chirps_mode products use a year appended to the end of their path.
                 # Add the Year to the directory path.
-                remote_directory_path += current_year__YYYY_str
-                remote_directory_path += '/'
+                remote_directory_path = urllib.parse.urljoin(current_root_http_path, current_year__YYYY_str + '/')
 
                 # Getting full paths
-                remote_full_filepath_tif            = str(os.path.join(remote_directory_path, tif_filename)).strip()
+                remote_full_filepath_tif            = urllib.parse.urljoin(remote_directory_path, tif_filename)
                 local_full_filepath_tif             = os.path.join(self.temp_working_dir, tif_filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
@@ -286,7 +192,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # print("DEBUG: JUST DO ONE GRANULE - BREAKING THIS FOR LOOP AFTER 1 ITERATION... BREAKING NOW.")
                 # break
 
-
             # DEBUG
             # print("len(expected_granules): " + str(len(self._expected_granules)))
             # print("First Granule: str(expected_granules[0]): " + str(self._expected_granules[0]))
@@ -308,7 +213,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
 
         # Make sure the directories exist
         #
@@ -347,7 +251,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
-
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -371,7 +274,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
-        if (modulus_size < 1):
+        if modulus_size < 1:
             modulus_size = 1
 
         # No FTP here, just http
@@ -379,7 +282,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         # Loop through each expected granule
         for expected_granule in expected_granules:
             try:
-                if (((loop_counter + 1) % modulus_size) == 0):
+                if (loop_counter + 1) % modulus_size == 0:
                     # print("Output a log, (and send pipeline activity log) saying, --- about to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process))
                     # print(" - Output a log, (and send pipeline activity log) saying, --- about to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process))
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
@@ -393,7 +296,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
-                current_url_to_download     = remote_directory_path + tif_filename + '.gz'
+                current_url_to_download     = urllib.parse.urljoin(remote_directory_path, tif_filename + '.gz')
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif'] + '.gz'
                 #
                 # Granule info
@@ -408,11 +311,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # print("DEBUG: (local_full_filepath_tif): " + str(local_full_filepath_tif))
                 # print("")
 
-                # Actually do the download now
+                # Download the file - Actually do the download now
                 try:
-                    urllib_request.urlretrieve(current_url_to_download, local_full_filepath_tif)  # urllib_request.urlretrieve(url, endfilename)
-                    # print(" - (GRANULE LOGGING) Log Each Download into the Granule Storage Area: (current_download_destination_local_full_file_path): " + str(current_download_destination_local_full_file_path))
-
+                    print(current_url_to_download)
+                    r = requests.get(current_url_to_download)
+                    with open(local_full_filepath_tif, 'wb') as outfile:
+                        outfile.write(r.content)
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -430,9 +334,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     activity_description        = warn_JSON['warning']
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
-
-
-
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
@@ -442,8 +343,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
             # Increment the loop counter
             loop_counter = loop_counter + 1
-
-
 
         # Ended, now for reporting
         #
@@ -470,10 +369,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         error_counter = 0
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
 
-                print(expected_granules_object)
+            for expected_granules_object in self._expected_granules:
 
                 local_full_filepath_download    = expected_granules_object['local_full_filepath_tif'] + '.gz'
                 local_extract_path              = expected_granules_object['local_extract_path']
@@ -779,7 +676,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
-
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -791,12 +687,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
-
 
                 try:
                     local_extract_path = expected_granules_object['local_extract_path']
@@ -901,7 +796,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
-            if(temp_working_dir == ""):
+            if temp_working_dir == '':
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK
