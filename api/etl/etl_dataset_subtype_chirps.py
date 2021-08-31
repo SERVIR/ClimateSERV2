@@ -1,6 +1,5 @@
 import datetime, gzip, os, shutil, sys
 from urllib import request as urllib_request
-from shutil import copyfile, rmtree
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -50,18 +49,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         chirps__chirp__rootoutputworkingdir  = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRP", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirp/")
         chirps__chirps__rootoutputworkingdir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRPS", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirps/")
         chirps__chirps_gefs__rootoutputworkingdir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__CHIRPS_GEFS", default_or_error_return_value="/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/temp_etl_data/chirps/chirps_gefs/")
-
         ret_rootlocal_working_dir = Config_Setting.get_value(setting_name="PATH__TEMP_WORKING_DIR__DEFAULT", default_or_error_return_value="")  # settings.PATH__TEMP_WORKING_DIR__DEFAULT  # '/Volumes/TestData/Data/SERVIR/ClimateSERV_2_0/data/data/image/input/UNKNOWN/'
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'chirp'):
+        if subtype_filter == 'chirp':
             ret_rootlocal_working_dir = chirps__chirp__rootoutputworkingdir
-        if (subtype_filter == 'chirps'):
+        elif subtype_filter == 'chirps':
             ret_rootlocal_working_dir = chirps__chirps__rootoutputworkingdir
-        if (subtype_filter == 'chirps_gefs'):
+        elif subtype_filter == 'chirps_gefs':
             ret_rootlocal_working_dir = chirps__chirps_gefs__rootoutputworkingdir
-
         return ret_rootlocal_working_dir
-
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
     @staticmethod
@@ -71,15 +67,13 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         chirps__chirps_gefs__finalloaddir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__CHIRPS_GEFS", default_or_error_return_value="")
         ret_dir = Config_Setting.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__DEFAULT", default_or_error_return_value="")
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'chirp'):
+        if subtype_filter == 'chirp':
             ret_dir = chirps__chirp__finalloaddir
-        if (subtype_filter == 'chirps'):
+        elif subtype_filter == 'chirps':
             ret_dir = chirps__chirps__finalloaddir
-        if (subtype_filter == 'chirps_gefs'):
+        elif subtype_filter == 'chirps_gefs':
             ret_dir = chirps__chirps_gefs__finalloaddir
-
         return ret_dir
-
 
     # Get the Remote Locations for each of the subtypes
     @staticmethod
@@ -87,29 +81,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         chirps__chirp__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRP", default_or_error_return_value="")
         chirps__chirps__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS", default_or_error_return_value="")
         chirps__chirps_gefs__roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__CHIRPS_GEFS", default_or_error_return_value="")
-        # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         ret_roothttp = Config_Setting.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")  # ret_roothttp = settings.REMOTE_PATH__ROOT_HTTP__DEFAULT #'localhost://UNKNOWN_URL'
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'chirp'):
+        if subtype_filter == 'chirp':
             ret_roothttp = chirps__chirp__roothttp
-        if (subtype_filter == 'chirps'):
+        if subtype_filter == 'chirps':
             ret_roothttp = chirps__chirps__roothttp
-        if (subtype_filter == 'chirps_gefs'):
+        if subtype_filter == 'chirps_gefs':
             ret_roothttp = chirps__chirps_gefs__roothttp
         return ret_roothttp
-
-    @staticmethod
-    def append_YEAR_to_dir_path(dirPath, year_int):
-        # # Add the Year as a string.
-        # year_YYYY = str(year_YYYY).strip()    # Expecting 'year' to be something like 2019 or "2019"
-        year_YYYY = "{:0>4d}".format(year_int)
-        year_dir_name_to_append = year_YYYY + "/"
-        dirPath = dirPath + year_dir_name_to_append
-        return dirPath
-
-
-
-
 
     # Specialized Functions (For each Mode)
     @staticmethod
@@ -171,14 +151,13 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
     def get__base_filename(subtype_filter, datetime_obj):
         base_filename = 'default__chirps_mode_not_recognized'
         subtype_filter = str(subtype_filter).strip()
-        if (subtype_filter == 'chirp'):
-            base_filename = chirps.get__base_filename__for_chirps_mode__chirp(datetime_obj=datetime_obj)
-        if (subtype_filter == 'chirps'):
-            base_filename = chirps.get__base_filename__for_chirps_mode__chirps(datetime_obj=datetime_obj)
-        if (subtype_filter == 'chirps_gefs'):
-            base_filename = chirps.get__base_filename__for_chirps_mode__chirps_gefs(datetime_obj=datetime_obj)
+        if subtype_filter == 'chirp':
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirp(datetime_obj=datetime_obj)
+        elif subtype_filter == 'chirps':
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirps(datetime_obj=datetime_obj)
+        elif subtype_filter == 'chirps_gefs':
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirps_gefs(datetime_obj=datetime_obj)
         return base_filename
-
 
     # ETL Pipeline Functions
     def execute__Step__Pre_ETL_Custom(self):
@@ -190,8 +169,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
         # Get the root http path based on the region.
         current_root_http_path      = self.get_roothttp_for_subtype(subtype_filter=self.chirps_mode)
-        root_file_download_path     = os.path.join(chirps.get_root_local_temp_working_dir(subtype_filter=self.chirps_mode), self.relative_dir_path__WorkingDir)
-        final_load_dir_path         = chirps.get_final_load_dir(subtype_filter=self.chirps_mode)
+        root_file_download_path     = os.path.join(ETL_Dataset_Subtype_CHIRPS.get_root_local_temp_working_dir(subtype_filter=self.chirps_mode), self.relative_dir_path__WorkingDir)
+        final_load_dir_path         = ETL_Dataset_Subtype_CHIRPS.get_final_load_dir(subtype_filter=self.chirps_mode)
 
         self.temp_working_dir       = str(root_file_download_path).strip()
         self._expected_granules     = []
@@ -217,7 +196,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Create the base filename
                 # TODO - Call a function passing in the date object AND the Mode
                 #base_filename = ''
-                base_filename = chirps.get__base_filename(subtype_filter=self.chirps_mode, datetime_obj=currentDate) # Returns everything except the '.extension'
+                base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.chirps_mode, datetime_obj=currentDate) # Returns everything except the '.extension'
                 tif_filename = base_filename + '.tif'
 
                 # Create the final nc4 filename
@@ -378,9 +357,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         # Note: In chirps, each granule has 1 file associated with it.
         # # That file is a tif file that we can download directly.  The file is not zipped so there is no extract step needed.
@@ -460,7 +436,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
-                error_message = "chirps.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
+                error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -482,9 +458,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         #
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
-
-
-
 
     def execute__Step__Extract(self):
         ret__function_name = "execute__Step__Extract"
@@ -568,9 +541,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         # error_counter, detail_errors
         error_counter = 0
@@ -701,7 +671,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     #print("D5")
 
                     # 3) Rename and add attributes to this dataset.
-                    #chirps.rename({'y': 'latitude', 'x': 'longitude'}, inplace=True)  # rename lat/lon
                     chirps_data = chirps_data.rename({'y': 'latitude', 'x': 'longitude'}) # rename lat/lon
 
                     #print("D6")
@@ -769,7 +738,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    error_message = "chirps.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
+                    error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
 
                     # print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
 
@@ -820,9 +789,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         try:
             expected_granules = self._expected_granules
@@ -840,7 +806,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     # # Granule Helpers
@@ -922,9 +888,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -934,9 +898,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
@@ -951,8 +912,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
             else:
-                #shutil.rmtree
-                rmtree(temp_working_dir)
+
+                shutil.rmtree(temp_working_dir)
 
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
                 #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED
@@ -987,7 +948,3 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
-
-
-    def test_class_instance(self):
-        print("chirps.test_class_instance: Reached the end.")
