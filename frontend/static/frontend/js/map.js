@@ -1757,6 +1757,16 @@ $(function () {
         }
     } catch (e) {
     }
+    try{
+        $('html').on('mouseup', function (e) {
+                if (!$(e.target).closest('.popover').length) {
+                    $('.popover').each(function () {
+                        tour.end();
+                    });
+                }
+            });
+    } catch(e){
+    }
 
 });
 
