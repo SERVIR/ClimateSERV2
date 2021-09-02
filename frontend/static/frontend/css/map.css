@@ -12,6 +12,14 @@ html {
     color:#ffffff;
     background-color: #758055!important;
 }
+
+.example-style{
+    background-color: #909d6b94;
+    color: white;
+    line-height: 16px;
+    padding: 4px;
+}
+
 html,
 body,
 #map,

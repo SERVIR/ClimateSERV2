@@ -1659,6 +1659,19 @@ function getClimateScenarioInfo() {
     });
 }
 
+function toggleAOIHeight(){
+    const el = $('#aoiOptions');
+    const curHeight = el.height();
+    if(curHeight === 0) {
+        const autoHeight = el.css('height', 'auto').height();
+        el.height(curHeight).animate({height: autoHeight}, 1000);
+        el.css( "marginBottom", '20px');
+    } else{
+        el.height(curHeight).animate({height: 0}, 1000);
+        el.css( "marginBottom", '0px');
+    }
+}
+
 let img, originalWidth, originalHeight;
 
 const tour = new Tour({
@@ -1666,8 +1679,16 @@ const tour = new Tour({
     onEnd: function (tour) {
         localStorage.setItem("hideTour", "true");
     },
-    backdrop: true,
+    autoscroll: false,
+    backdrop: false,
     steps: [
+        {
+            element: "#menu-about",
+            title: "Welcome to the ClimateSERV tour",
+            content: "You may return to this tour anytime by clicking the <i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
+            placement: "bottom"
+
+        },
         {
             element: "#btnAOIselect",
             title: "Statistical Query",
@@ -1684,7 +1705,10 @@ const tour = new Tour({
             title: "Select Data",
             content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
             onShow: function (tour) {
-                $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+                if(!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
+                    console.log("scroll it");
+                    $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+                } else{console.log("no thank you")}
             }
         },
         {
@@ -1722,7 +1746,7 @@ const tour = new Tour({
 
 function open_tour() {
     localStorage.removeItem("hideTour")
-    tour.setCurrentStep(0);
+
     tour.start(true);
 }
 
@@ -1766,6 +1790,8 @@ $(function () {
         tour.init();
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
+            sidebar.close();
+             tour.setCurrentStep(0);
             open_tour();
         }
     } catch (e) {

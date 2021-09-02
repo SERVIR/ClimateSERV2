@@ -111,16 +111,15 @@
                               <i class="fas fa-caret-left"></i>
                             </span>
                         </h1>
-                        <div id="step1 card-header">
+                        <div id="step1">
                             <h2 class="step-marker">Set Area of Interest</h2>
                             <button
                                     type="button"
                                     class="bread-crumb"
-                                    data-toggle="collapse"
-                                    data-target="#aoiOptions">
+                                    onclick="toggleAOIHeight()">
                                 About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
-                            <div id="aoiOptions" class="collapse" style="padding: 0 10px 20px 20px;">
+                            <div id="aoiOptions" style="padding: 0 10px 0 20px; height:0; overflow: hidden;">
                                 <p>
                                     Choose how you would like to define your area of interest
                                     (AOI)
