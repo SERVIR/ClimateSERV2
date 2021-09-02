@@ -4,6 +4,14 @@ html {
     overflow: hidden;
 }
 
+.popover.tour-tour{
+    z-index: 3000!important;
+}
+
+.popover-title{
+    color:#ffffff;
+    background-color: #758055!important;
+}
 html,
 body,
 #map,

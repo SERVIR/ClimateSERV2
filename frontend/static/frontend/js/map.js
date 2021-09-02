@@ -11,9 +11,10 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url =  "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
+const api_url = "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
+let sidebar;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -476,7 +477,7 @@ function mapSetup() {
     map.addLayer(drawnItems);
     baseLayers = getCommonBaseLayers(map); // use baselayers.js to add, remove, or edit
     L.control.layers(baseLayers, overlayMaps).addTo(map);
-    const sidebar = L.control.sidebar("sidebar").addTo(map);
+    sidebar = L.control.sidebar("sidebar").addTo(map);
 
     sidebar.open('chart');
 
@@ -906,7 +907,7 @@ function initMap() {
     adjustLayerIndex();
 }
 
-function download_aoi(){
+function download_aoi() {
     const aoi = document.createElement('a');
     aoi.setAttribute(
         'href',
@@ -955,10 +956,10 @@ function verify_ready() {
     }
     $("#btnRequest").prop("disabled",
         !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
-    if($("#geometry").text().trim().indexOf('{"type"') > -1
+    if ($("#geometry").text().trim().indexOf('{"type"') > -1
         || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
         $("#download_aoi_holder").show();
-    } else{
+    } else {
         $("#download_aoi_holder").hide();
     }
 }
@@ -1126,7 +1127,7 @@ function pollForProgress(id, isClimate) {
             if (val !== -1 && val !== 100) {
                 retries = 0;
                 updateProgress(val);
-                setTimeout(function(){
+                setTimeout(function () {
                     pollForProgress(id, isClimate);
                 }, 500);
 
@@ -1138,7 +1139,7 @@ function pollForProgress(id, isClimate) {
                     getDataFromRequest(id, isClimate);
                 }
             } else {
-                if(retries < 5) {
+                if (retries < 5) {
                     console.log("Needed retry");
                     retries++;
                     setTimeout(function () {
@@ -1431,7 +1432,7 @@ function getDataFromRequest(id, isClimate) {
                     from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                     inti_chart_dialog();
 //Need to fix this for multi ensemble
-                    if(compiledData.length === 0){
+                    if (compiledData.length === 0) {
                         //inti_chart_dialog
                         $("#chart_holder").html("<h1>No data available</h1>");
                     } else {
@@ -1453,7 +1454,7 @@ function getDataFromRequest(id, isClimate) {
                     }
                 }
             }
-           // $("#btnRequest").prop("disabled", false);
+            // $("#btnRequest").prop("disabled", false);
         }
     });
 };
@@ -1660,6 +1661,58 @@ function getClimateScenarioInfo() {
 
 let img, originalWidth, originalHeight;
 
+const tour = new Tour({
+    smartPlacement: true,
+    onEnd: function (tour) {
+        localStorage.setItem("hideTour", "true");
+    },
+    backdrop: true,
+    steps: [
+        {
+            element: "#btnAOIselect",
+            title: "Statistical Query",
+            content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+            onShow: function (tour) {
+                sidebar.open('chart');
+                if ($("#sidebar-content").scrollTop !== 0) {
+                    $("#sidebar-content").scrollTop(0);
+                }
+            },
+        },
+        {
+            element: "#operationmenu",
+            title: "Select Data",
+            content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
+            onShow: function (tour) {
+                $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+            }
+        },
+        {
+            element: "#tab-layers",
+            title: "Display Data",
+            content: "Click here to show layer panel",
+            onShow: function (tour) {
+                sidebar.open('layers');
+            },
+        },
+        {
+            element: "#menu-help",
+            title: "Help Center",
+            content: "Click here to answer any questions about the application or API",
+            placement: "left"
+        }
+    ],
+    onHide: function (tour) {
+        sidebar.open('chart');
+    }
+});
+
+function open_tour() {
+    localStorage.removeItem("hideTour")
+    tour.setCurrentStep(0);
+    tour.start(true);
+}
+
 /**
  * Calls initMap
  *
@@ -1689,11 +1742,21 @@ $(function () {
     }
     try {
         $('#sourcemenu').change();
-    } catch(e){}
+    } catch (e) {
+    }
 
     try {
         verify_ready();
-    } catch(e){}
+    } catch (e) {
+    }
+    try {
+        tour.init();
+        /* This will have to check if they want to "not show" */
+        if (!localStorage.getItem("hideTour")) {
+            open_tour();
+        }
+    } catch (e) {
+    }
 
 });
 
