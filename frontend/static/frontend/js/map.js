@@ -1690,16 +1690,29 @@ const tour = new Tour({
         {
             element: "#tab-layers",
             title: "Display Data",
-            content: "Click here to show layer panel",
+            content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
             onShow: function (tour) {
                 sidebar.open('layers');
             },
+        },
+        {
+            element: "#basemap_link",
+            title: "Change Basemap",
+            content: "Click here to open basemaps, then click the one you would like to use.",
+            onShow: function (tour) {
+                sidebar.open('basemap');
+            }
         },
         {
             element: "#menu-help",
             title: "Help Center",
             content: "Click here to answer any questions about the application or API",
             placement: "left"
+        },
+        {
+            element: "#tour_link",
+            title: "Tour",
+            content: "Click here to open this tour anytime you need a refresher."
         }
     ],
     onHide: function (tour) {
