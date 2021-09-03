@@ -11,9 +11,10 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url =  "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
+const api_url = "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
+let sidebar;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -476,7 +477,7 @@ function mapSetup() {
     map.addLayer(drawnItems);
     baseLayers = getCommonBaseLayers(map); // use baselayers.js to add, remove, or edit
     L.control.layers(baseLayers, overlayMaps).addTo(map);
-    const sidebar = L.control.sidebar("sidebar").addTo(map);
+    sidebar = L.control.sidebar("sidebar").addTo(map);
 
     sidebar.open('chart');
 
@@ -715,6 +716,11 @@ function enableDrawing() {
         verify_ready();
     });
 
+    map.on('draw:edited', function (e) {
+        collect_review_data();
+        verify_ready();
+    });
+
     map.on(L.Draw.Event.DELETED, function (e) {
         collect_review_data();
         verify_ready();
@@ -906,7 +912,7 @@ function initMap() {
     adjustLayerIndex();
 }
 
-function download_aoi(){
+function download_aoi() {
     const aoi = document.createElement('a');
     aoi.setAttribute(
         'href',
@@ -955,10 +961,10 @@ function verify_ready() {
     }
     $("#btnRequest").prop("disabled",
         !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
-    if($("#geometry").text().trim().indexOf('{"type"') > -1
+    if ($("#geometry").text().trim().indexOf('{"type"') > -1
         || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
         $("#download_aoi_holder").show();
-    } else{
+    } else {
         $("#download_aoi_holder").hide();
     }
 }
@@ -1126,7 +1132,7 @@ function pollForProgress(id, isClimate) {
             if (val !== -1 && val !== 100) {
                 retries = 0;
                 updateProgress(val);
-                setTimeout(function(){
+                setTimeout(function () {
                     pollForProgress(id, isClimate);
                 }, 500);
 
@@ -1138,7 +1144,7 @@ function pollForProgress(id, isClimate) {
                     getDataFromRequest(id, isClimate);
                 }
             } else {
-                if(retries < 5) {
+                if (retries < 5) {
                     console.log("Needed retry");
                     retries++;
                     setTimeout(function () {
@@ -1431,7 +1437,7 @@ function getDataFromRequest(id, isClimate) {
                     from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                     inti_chart_dialog();
 //Need to fix this for multi ensemble
-                    if(compiledData.length === 0){
+                    if (compiledData.length === 0) {
                         //inti_chart_dialog
                         $("#chart_holder").html("<h1>No data available</h1>");
                     } else {
@@ -1453,7 +1459,7 @@ function getDataFromRequest(id, isClimate) {
                     }
                 }
             }
-           // $("#btnRequest").prop("disabled", false);
+            // $("#btnRequest").prop("disabled", false);
         }
     });
 };
@@ -1658,7 +1664,96 @@ function getClimateScenarioInfo() {
     });
 }
 
+function toggleAOIHeight(){
+    const el = $('#aoiOptions');
+    const curHeight = el.height();
+    if(curHeight === 0) {
+        const autoHeight = el.css('height', 'auto').height();
+        el.height(curHeight).animate({height: autoHeight}, 1000);
+        el.css( "marginBottom", '20px');
+    } else{
+        el.height(curHeight).animate({height: 0}, 1000);
+        el.css( "marginBottom", '0px');
+    }
+}
+
 let img, originalWidth, originalHeight;
+
+const tour = new Tour({
+    smartPlacement: true,
+    onEnd: function (tour) {
+        localStorage.setItem("hideTour", "true");
+    },
+    autoscroll: false,
+    backdrop: false,
+    steps: [
+        {
+            element: "#menu-about",
+            title: "Welcome to the ClimateSERV tour",
+            content: "You may return to this tour anytime by clicking the <i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
+            placement: "bottom"
+
+        },
+        {
+            element: "#btnAOIselect",
+            title: "Statistical Query",
+            content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+            onShow: function (tour) {
+                sidebar.open('chart');
+                if ($("#sidebar-content").scrollTop !== 0) {
+                    $("#sidebar-content").scrollTop(0);
+                }
+            },
+        },
+        {
+            element: "#operationmenu",
+            title: "Select Data",
+            content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
+            onShow: function (tour) {
+                if(!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
+                    console.log("scroll it");
+                    $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+                } else{console.log("no thank you")}
+            }
+        },
+        {
+            element: "#tab-layers",
+            title: "Display Data",
+            content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
+            onShow: function (tour) {
+                sidebar.open('layers');
+            },
+        },
+        {
+            element: "#basemap_link",
+            title: "Change Basemap",
+            content: "Click here to open basemaps, then click the one you would like to use.",
+            onShow: function (tour) {
+                sidebar.open('basemap');
+            }
+        },
+        {
+            element: "#menu-help",
+            title: "Help Center",
+            content: "Click here to answer any questions about the application or API",
+            placement: "left"
+        },
+        {
+            element: "#tour_link",
+            title: "Tour",
+            content: "Click here to open this tour anytime you need a refresher."
+        }
+    ],
+    onHide: function (tour) {
+        sidebar.open('chart');
+    }
+});
+
+function open_tour() {
+    localStorage.removeItem("hideTour")
+
+    tour.start(true);
+}
 
 /**
  * Calls initMap
@@ -1689,11 +1784,33 @@ $(function () {
     }
     try {
         $('#sourcemenu').change();
-    } catch(e){}
+    } catch (e) {
+    }
 
     try {
         verify_ready();
-    } catch(e){}
+    } catch (e) {
+    }
+    try {
+        tour.init();
+        /* This will have to check if they want to "not show" */
+        if (!localStorage.getItem("hideTour")) {
+            sidebar.close();
+             tour.setCurrentStep(0);
+            open_tour();
+        }
+    } catch (e) {
+    }
+    try{
+        $('html').on('mouseup', function (e) {
+                if (!$(e.target).closest('.popover').length) {
+                    $('.popover').each(function () {
+                        tour.end();
+                    });
+                }
+            });
+    } catch(e){
+    }
 
 });
 

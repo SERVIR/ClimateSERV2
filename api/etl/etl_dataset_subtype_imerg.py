@@ -284,51 +284,16 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Note: In imerg, each granule has 2 files associated with it
-        # # A 'tif' (image) file and a 'tfw' (world metadata file)
-
         download_counter = 0
         loop_counter = 0
         error_counter = 0
         detail_errors = []
 
-        # # expected_granule Has these properties (and possibly more)
-        #             current_obj['j'] = j
-        #             current_obj['increment_minute_value']           = increment_minute_value
-        #             current_obj['increment_minute_value_4Char_Str'] = increment_minute_value_4Char_Str
-        #             current_obj['increment_minute_value__Div_60']   = increment_minute_value__Div_60
-        #             current_obj['both_hh_str']                      = both_hh_str
-        #             current_obj['start_mm_str']                     = start_mm_str
-        #             current_obj['end_mm_str']                       = end_mm_str
-        #             current_obj['start_ss_str']                     = start_ss_str
-        #             current_obj['end_ss_str']                       = end_ss_str
-        #
-        #             # Date Info (Which Day Is it?)
-        #             current_obj['date_YYYY']    = current_year__YYYY_str
-        #             current_obj['date_MM']      = current_month__MM_str
-        #             current_obj['date_DD']      = current_day__DD_str
-        #
-        #             # Filename and Granule Name info
-        #             current_obj['base_filename']                    = base_filename
-        #             current_obj['remote_directory_path']            = remote_directory_path
-        #             current_obj['tfw_filename']                     = tfw_filename
-        #             current_obj['tif_filename']                     = tif_filename
-        #             current_obj['final_nc4_filename']               = final_nc4_filename
-        #             current_obj['granule_name']                     = final_nc4_filename
-        #
-        #             #
-        #             current_obj['remote_full_filepath_tif']             = remote_full_filepath_tif
-        #             current_obj['remote_full_filepath_tfw']             = remote_full_filepath_tfw
-        #             current_obj['local_full_filepath_tif']              = local_full_filepath_tif
-        #             current_obj['local_full_filepath_tfw']              = local_full_filepath_tfw
-        #             current_obj['local_full_filepath_final_nc4_file']   = local_full_filepath_final_nc4_file
-        #
-        #             current_obj['Granule_UUID']                         = str(new_Granule_UUID).strip()
         expected_granules = self._expected_granules
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
-        if (modulus_size < 1):
+        if modulus_size < 1:
             modulus_size = 1
 
         # Connect to FTP
@@ -338,11 +303,12 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         FTP_SubFolderPath   = "" # Set in granule['remote_directory_path']
 
         # Attempt Making FTP Connection here (if fail, then exit this function with an error
-        ftp_Connection = None
+        ftp_connection = None
+
         # Connect to the FTP Server and download all of the files in the list.
         try:
-            ftp_Connection = ftplib.FTP_TLS(host=FTP_Host, user=FTP_UserName, passwd=FTP_UserPass)
-            ftp_Connection.prot_p()
+            ftp_connection = ftplib.FTP_TLS(host=FTP_Host, user=FTP_UserName, passwd=FTP_UserPass)
+            ftp_connection.prot_p()
 
             time.sleep(1)
 
@@ -371,21 +337,16 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         for expected_granule in expected_granules:
 
             try:
-                if( ( (loop_counter + 1) % modulus_size) == 0):
-                    #print("Output a log, (and send pipeline activity log) saying, --- about to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process))
-                    #print(" - Output a log, (and send pipeline activity log) saying, --- about to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process))
+                if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    #activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
-                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress") #settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
+                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
-                #remote_full_filepath_tif    = expected_granule['remote_full_filepath_tif']
-                #remote_full_filepath_tfw    = expected_granule['remote_full_filepath_tfw']
                 tfw_filename                = expected_granule['tfw_filename']
                 tif_filename                = expected_granule['tif_filename']
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
@@ -393,17 +354,16 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 #
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
-                granule_name = expected_granule['granule_name']
 
                 # FTP Processes
                 # # 1 - Change Directory to the directory path
-                ftp_Connection.cwd(remote_directory_path)
+                ftp_connection.cwd(remote_directory_path)
 
                 # TODO - Fix the problems with checking if a file exists        START
                 # # 2 - Check to see if the files exists
                 hasFiles = False
                 filelist = []  # to store all files
-                ftp_Connection.retrlines('LIST', filelist.append)  # append to list
+                ftp_connection.retrlines('LIST', filelist.append)  # append to list
                 file_found_count = 0
                 # Looking for two specific file matches out of the whole list of files in the current remote directory
                 for f in filelist:
@@ -412,36 +372,14 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     if tif_filename in f:
                         file_found_count = file_found_count + 1
 
-                # # # DEBUG
-                # # print("filelist: " + str(filelist))  # Are we in the right dir?
-                # print("remote_directory_path: " + str(remote_directory_path))
-                # print("tfw_filename: " + str(tfw_filename))
-                # print("tif_filename: " + str(tif_filename))
-                # print("local_full_filepath_tif: " + str(local_full_filepath_tif))
-                # print("local_full_filepath_tfw: " + str(local_full_filepath_tfw))
-
                 if file_found_count == 2:
                     hasFiles = True
 
                 # Validation
-                if (hasFiles == False):
+                if hasFiles == False:
                     print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording here.")
 
-                    #print("DEBUG: EXITING NOW.  Remove me to continue working on IMERG")
-                    #return
-                # TODO - Fix the problems with checking if a file exists        END
-
-                ## Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working.
-                # hasFiles = True
-
-                # print("DEBUG OUTS")
-                # print("remote_directory_path: " + str(remote_directory_path))
-                # print("tfw_filename: " + str(tfw_filename))
-                # print("tif_filename: " + str(tif_filename))
-                # print("local_full_filepath_tif: " + str(local_full_filepath_tif))
-                # print("local_full_filepath_tfw: " + str(local_full_filepath_tfw))
-                # # print("DEBUG RETURN")
-                # # return {}
+                # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working. hasFiles = True
 
                 if hasFiles == True:
                     # Both files were found, so let's now download them.
@@ -462,7 +400,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                         try:
                             with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                ftp_Connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                         except:
                             os.remove(local_FullFilePath_ToSave_Tif)
                             local_FullFilePath_ToSave_Tif = local_FullFilePath_ToSave_Tif.replace("03E", "04A")
@@ -472,7 +410,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                             os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
                             try:
                                 with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                    ftp_Connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                             except:
                                 os.remove(local_FullFilePath_ToSave_Tif)
                                 ftp_PathTo_TIF = ftp_PathTo_TIF.replace("04A", "04B")
@@ -482,7 +420,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                                 os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
                                 try:
                                     with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                        ftp_Connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                                 except:
                                     error_counter = error_counter + 1
                                     sysErrorData = str(sys.exc_info())
@@ -494,12 +432,11 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                                     warn_JSON['function_name'] = "execute__Step__Download"
                                     warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
                                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                                    # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
                                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                                     activity_description = warn_JSON['warning']
                                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
-                                    # Give the FTP Connection a short break (Server spam protection mitigation)
+                        # Give the FTP Connection a short break (Server spam protection mitigation)
                         time.sleep(3)
 
                         # Download the Tfw
@@ -508,7 +445,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                         os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                         try:
                             with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                ftp_Connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                         except:
                             os.remove(local_FullFilePath_ToSave_Twf)
                             local_FullFilePath_ToSave_Twf = local_FullFilePath_ToSave_Twf.replace("03E", "04A")
@@ -518,7 +455,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                             os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                             try:
                                 with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                    ftp_Connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                             except:
                                 os.remove(local_FullFilePath_ToSave_Twf)
                                 ftp_PathTo_TWF = ftp_PathTo_TWF.replace("04A", "04B")
@@ -528,7 +465,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                                 os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                                 try:
                                     with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                        ftp_Connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
                                 except:
                                     error_counter = error_counter + 1
                                     sysErrorData = str(sys.exc_info())
@@ -550,49 +487,27 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                         # Counting Granule downloads, not individual files (in this case, 1 granule is made up from two files)
                         download_counter = download_counter + 1
-                        #print("At the end, no errors....  maybe... download_counter: " + str(download_counter))
 
                     except:
-                        #print("There was some kind of error when trying to download IMERG Files (Tif and/or Tfw files).  TODO - Add the Granule Error here.")
-                        #sysErrorData = str(sys.exc_info())
-                        #print("sysErrorData: " + str(sysErrorData))
-
-                        # remote_directory_path, tfw_filename, tif_filename
-
                         error_counter = error_counter + 1
                         sysErrorData = str(sys.exc_info())
-                        #print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
+                        # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
                         warn_JSON = {}
                         warn_JSON['warning']                = "Warning: There was an uncaught error when attempting to download 1 of these files (tif or tfw), "+str(tif_filename)+", or "+str(tfw_filename)+" from FTP directory: " +str(remote_directory_path)+ ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
                         warn_JSON['is_error']               = True
                         warn_JSON['class_name']             = "imerg"
                         warn_JSON['function_name']          = "execute__Step__Download"
-                        warn_JSON['current_object_info']    = expected_granule #expected_remote_file_path_object
+                        warn_JSON['current_object_info']    = expected_granule
                         # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                        #activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
                         activity_event_type         = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                         activity_description        = warn_JSON['warning']
                         self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
-
-                    # END   try:    Where the file downloads happen
-                # END   if (hasFiles == True):
-
-                # # Will at least 1 download work?
-                # print("DEBUG OUTS")
-                # print("remote_directory_path: " + str(remote_directory_path))
-                # print("tfw_filename: " + str(tfw_filename))
-                # print("tif_filename: " + str(tif_filename))
-                # print("local_full_filepath_tif: " + str(local_full_filepath_tif))
-                # print("local_full_filepath_tfw: " + str(local_full_filepath_tfw))
-                # print("DEBUG RETURN")
-                # return {}
 
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
                 error_message = "imerg.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
-                #print("imerg.execute__Step__Download: Generic Uncaught Error: " + str(sysErrorData))
                 print(error_message)
 
                 # Maybe in here is an error with sending the warning in an earlier step?
@@ -600,7 +515,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
         # Ended, now for reporting
         #
-        ret__detail_state_info['class_name'] = "imerg"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['download_counter'] = download_counter
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['loop_counter'] = loop_counter
@@ -619,9 +534,8 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # For IMERG, there is nothing to extract (we are already downloading TIF and TFW files directly...
-        ret__detail_state_info['class_name'] = "imerg"
-        # ret__detail_state_info['error_counter'] = error_counter
+        # For IMERG, there is nothing to extract (we are already downloading TIF and TFW files directly)
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['custom_message'] = "Imerg types do not need to be extracted.  The source files are non-compressed Tif and Tfw files."
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
