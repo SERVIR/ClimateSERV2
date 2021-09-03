@@ -1,5 +1,4 @@
-import datetime, ftplib, os, sys, time
-from shutil import copyfile, rmtree
+import datetime, ftplib, os, shutil, sys, time
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -8,15 +7,37 @@ from collections import OrderedDict
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 
+from api.services import Config_SettingService
 from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
     class_name = 'ImergOneDay'
     etl_parent_pipeline_instance = None
+    mode = 'LATE'
 
-    @staticmethod
-    def get_run_time_list():
+    # DRAFTING - Suggestions
+    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
+    _expected_granules                  = []    # Place to store granules
+
+    # init (Passing a reference from the calling class, so we can callback the error handler)
+    def __init__(self, etl_parent_pipeline_instance, dataset_subtype):
+        self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        if dataset_subtype == 'imerg1dy_early':
+            self.mode = 'EARLY'
+        elif dataset_subtype == 'imerg1dy_late':
+            self.mode = 'LATE'
+
+    # Set default parameters or using default
+    def set_optional_parameters(self, params):
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year - 1
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year - 1
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.DD__Day__Start = params.get('DD__Day__Start') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or 1
+
+    def get_run_time_list(self):
         return [
             'S023000-E025959.0150',
             'S053000-E055959.0330',
@@ -28,150 +49,61 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             'S233000-E235959.1410'
         ]
 
-    # Imerg Has more than 1 mode which refer to sub datasets (Early and Late)
-    imerg_mode = "LATE"  # Choices at this time are "LATE" and "EARLY" // Controlled by setter functions. // Default
-    # is "LATE"
-
-    relative_dir_path__WorkingDir = 'working_dir'
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
-
-    _remote_connection__Username = ""
-    _remote_connection__Password = ""
-
-    # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, subtype):
-        self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(subtype_filter=subtype),
-                                               self.relative_dir_path__WorkingDir)
-        self.temp_working_dir = str(root_file_download_path).strip()
-        self._expected_granules = []
-
-    def set_imerg_mode(self, which):
-        self.imerg_mode = which
-
-    # Set default parameters or using default
-    def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or 2020
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or 2020
-        self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or 1
-        self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or 1
-
-    # Get the credentials from the settings for connecting to the IMERG Data Source, and then set them to the
-    # Instance Vars.
-    def get_credentials_and_set_to_class(self):
-        self._remote_connection__Username = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER",
-                                                                     default_or_error_return_value="")
-        self._remote_connection__Password = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS",
-                                                                     default_or_error_return_value="")
-
-    # I don't believe this is ever used, remove if it doesn't cause issues
-    # # Months between two dates
-    # def diff_month(self, latest_datetime, earliest_datetime):
-    #     return (latest_datetime.year - earliest_datetime.year) * 12 + latest_datetime.month - earliest_datetime.month
-
-    # Get the local filesystem place to store data
-    @staticmethod
-    def get_root_local_temp_working_dir(subtype_filter):
-        subtype_filter = str(subtype_filter).strip()
-        if str(subtype_filter).strip() == 'EARLY':
-            return Config_Setting.get_value(
-                setting_name="PATH__TEMP_WORKING_DIR__IMERG__EARLY_1DAY",
-                default_or_error_return_value="")
-        else:
-            return Config_Setting.get_value(
-                setting_name="PATH__TEMP_WORKING_DIR__IMERG__LATE_1DAY",
-                default_or_error_return_value="")
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    @staticmethod
-    def get_final_load_dir(subtype_filter):
-        if str(subtype_filter).strip() == 'EARLY':
-            return Config_Setting.get_value(
-                setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__EARLY_1DAY",
-                default_or_error_return_value="")
-        else:
-            return Config_Setting.get_value(
-                setting_name="PATH__THREDDS_MONITORING_DIR__IMERG__LATE_1DAY",
-                default_or_error_return_value="")
-
-    # Get the Remote Locations for each of the subtypes
-    @staticmethod
-    def get_roothttp_for_subtype(subtype_filter):
-        if str(subtype_filter).strip() == 'EARLY':
-            return Config_Setting.get_value(
-                setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY",
-                default_or_error_return_value="")
-            # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/early/'
-            # Early # Note: EARLY from here only requires /yyyy/mm/ appended to path
-        else:
-            return Config_Setting.get_value(
-                setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE",
-                default_or_error_return_value="")
-            # 'ftp://jsimpson.pps.eosdis.nasa.gov/data/imerg/gis/'
-            # Late # Note: LATE, from here only requires /yyyy/mm/ appended to path
-
     def execute__Step__Pre_ETL_Custom(self):
         ret__function_name = "execute__Step__Pre_ETL_Custom"
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-        final_load_dir_path = self.get_final_load_dir(subtype_filter=self.imerg_mode)
+
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
+
         # (1) Generate Expected remote file paths
         try:
 
             # Create the list of Days (From start time to end time)
-            start_date = datetime.datetime(year=self.YYYY__Year__Start, month=self.MM__Month__Start,
-                                           day=self.DD__Day__Start)
+            start_date = datetime.datetime(year=self.YYYY__Year__Start, month=self.MM__Month__Start, day=self.DD__Day__Start)
             end_date = datetime.datetime(year=self.YYYY__Year__End, month=self.MM__Month__End, day=self.DD__Day__End)
 
             delta = end_date - start_date
+            # print('DELTA: {}'.format(str(delta)))
 
             for i in range(delta.days + 1):
+
                 current_date = start_date + datetime.timedelta(days=i)
                 current_year__yyyy_str = "{:0>4d}".format(current_date.year)
                 current_month__mm_str = "{:02d}".format(current_date.month)
                 current_day__dd_str = "{:02d}".format(current_date.day)
 
                 for runTime in self.get_run_time_list():
-                    base_filename = '3B-HHR-' + (
-                        "L" if self.imerg_mode == "LATE" else "E") \
-                                    + '.MS.MRG.3IMERG.' + current_year__yyyy_str \
-                                    + current_month__mm_str + current_day__dd_str \
-                                    + '-' + runTime + '.V06B.1day.'
+
+                    base_filename = '3B-HHR-{}.MS.MRG.3IMERG.{}{}{}-{}.V06B.1day.'.format(
+                        'L' if self.mode == 'LATE' else 'E',
+                        current_year__yyyy_str,
+                        current_month__mm_str,
+                        current_day__dd_str,
+                        runTime
+                    )
                     tfw_filename = base_filename + 'tfw'
                     tif_filename = base_filename + 'tif'
 
-                    final_nc4_filename = 'nasa-imerg-1day-' + (
-                        "late" if self.imerg_mode == "LATE" else "early") + \
-                        '.' + current_year__yyyy_str + current_month__mm_str \
-                        + current_day__dd_str + 'T' + runTime[1:7] + 'Z.global.nc4'
+                    # Building the Common NC4 Filename
+                    # nasa-imerg-late.20200531T000000Z.global.0.1deg.1dy.nc4
+                    final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}Z.global.0.1deg.1dy.nc4'.format(
+                        'late' if self.mode == 'LATE' else 'early',
+                        current_year__yyyy_str,
+                        current_month__mm_str,
+                        current_day__dd_str,
+                        runTime[1:7]
+                    )
 
                     # Now get the remote File Paths (Directory) based on the date infos.
-                    remote_directory_path = "UNSET/"
-                    if self.imerg_mode == "LATE":
-                        remote_directory_path = Config_Setting.get_value(
-                            setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__LATE",
-                            default_or_error_return_value="ERROR_GETTING_DIR_FOR_LATE/")
-                    if self.imerg_mode == "EARLY":
-                        remote_directory_path = Config_Setting.get_value(
-                            setting_name="REMOTE_PATH__ROOT_HTTP__IMERG__EARLY",
-                            default_or_error_return_value="ERROR_GETTING_DIR_FOR_EARLY/")
-
                     # Add the Year and Month to the directory path.
-                    remote_directory_path += current_year__yyyy_str
-                    remote_directory_path += '/'
-                    remote_directory_path += current_month__mm_str
-                    remote_directory_path += '/'
-
+                    remote_directory_path = '{}/{}/{}/'.format(current_root_http_path, current_year__yyyy_str, current_month__mm_str)
 
                     # Getting full paths
                     remote_full_filepath_tif = str(os.path.join(remote_directory_path, tif_filename)).strip()
-                    created = self.etl_parent_pipeline_instance.create_dir_if_not_exist(remote_full_filepath_tif)
                     remote_full_filepath_tfw = str(os.path.join(remote_directory_path, tfw_filename)).strip()
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
@@ -198,9 +130,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     granule_name = final_nc4_filename
                     granule_contextual_information = ""
-                    granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING",
-                                                                      default_or_error_return_value="Attempting")
-                    # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
+                    granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
+
                     additional_json = current_obj  # {}
                     new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
                         granule_name=granule_name,
@@ -213,7 +144,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     # Add to the granules list
                     self._expected_granules.append(current_obj)
-        except Exception:
+        except:
             error_message = "Error: There was an error when generating the expected remote file paths.  "
             "See the additional data for details on which expected file caused the "
             "error.  System Error Message: " + str(sys.exc_info())
@@ -285,12 +216,15 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
     def execute__Step__Download(self):
         ret__function_name = "execute__Step__Download"
         ret__is_error = False
+        ret__event_description = ""
         ret__error_description = ""
+        ret__detail_state_info = {}
 
         download_counter = 0
         loop_counter = 0
         error_counter = 0
         detail_errors = []
+
         expected_granules = self._expected_granules
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
@@ -298,72 +232,63 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         if modulus_size < 1:
             modulus_size = 1
 
+        # Connect to FTP
+        ftp_host            = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST", default_or_error_return_value="error.getting.ftp-host.nasa.gov")
+        ftp_username        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="error_getting_user_name")
+        ftp_userpass        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="error_getting_user_password")
+
+        # Attempt Making FTP Connection here (if fail, then exit this function with an error
+        ftp_connection = None
+
         # Connect to the FTP Server and download all of the files in the list.
         try:
-            ftp_connection = ftplib.FTP_TLS(
-                host=Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST",
-                                              default_or_error_return_value="error.getting.ftp-host.nasa.gov"),
-                user=Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER",
-                                              default_or_error_return_value="error_getting_user_name"),
-                passwd=Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS",
-                                                default_or_error_return_value="error_getting_user_password"))
+            ftp_connection = ftplib.FTP_TLS(host=ftp_host, user=ftp_username, passwd=ftp_userpass)
             ftp_connection.prot_p()
+
             time.sleep(1)
 
-        except Exception:
+        except Exception as e:
+            print(e)
             error_counter = error_counter + 1
-            error_message = "imerg.execute__Step__Download: Error Connecting to FTP.  There was an error when " \
-                            "attempting to connect to the Remote FTP Server.  System Error Message: " \
-                            + str(sys.exc_info())
+            sysErrorData = str(sys.exc_info())
+            error_message = "imerg.execute__Step__Download: Error Connecting to FTP.  There was an error when attempting to connect to the Remote FTP Server.  System Error Message: " + str(sysErrorData)
             detail_errors.append(error_message)
             print(error_message)
 
             # Ended, now for reporting
-            ret__event_description = "Error During Step execute__Step__Download by downloading " + str(
-                download_counter).strip() + " files."
             #
-            return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                       function_name=ret__function_name, is_error=ret__is_error,
-                                                       event_description=ret__event_description,
-                                                       error_description=ret__error_description,
-                                                       detail_state_info={
-                                                           "class_name": self.__class__.__name__,
-                                                           "download_counter": download_counter,
-                                                           "error_counter": error_counter,
-                                                           "loop_counter": loop_counter,
-                                                           "detail_errors": detail_errors
-                                                       })
+            ret__detail_state_info['class_name'] = self.__class__.__name__
+            ret__detail_state_info['download_counter'] = download_counter
+            ret__detail_state_info['error_counter'] = error_counter
+            ret__detail_state_info['loop_counter'] = loop_counter
+            ret__detail_state_info['detail_errors'] = detail_errors
+            # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
+            # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
+            ret__event_description = "Error During Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
+            #
+            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+            return retObj
 
         for expected_granule in expected_granules:
 
             try:
-                if ((loop_counter + 1) % modulus_size) == 0:
-                    event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(
-                        num_of_objects_to_process)
+                if (loop_counter + 1) % modulus_size == 0:
+                    event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    # activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
-                    activity_event_type = Config_Setting.get_value(
-                        setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS",
-                        default_or_error_return_value="ETL Download Progress")
-                    # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
+                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                    self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type,
-                                                                    activity_description=activity_description,
-                                                                    etl_granule_uuid="", is_alert=False,
-                                                                    additional_json=additional_json)
+                    self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
                 # Current Granule to download
-                remote_directory_path = expected_granule['remote_directory_path']
-                tfw_filename = expected_granule['tfw_filename']
-                tif_filename = expected_granule['tif_filename']
-                local_full_filepath_tif = expected_granule['local_full_filepath_tif']
-                local_full_filepath_tfw = expected_granule['local_full_filepath_tfw']
+                remote_directory_path       = expected_granule['remote_directory_path']
+                tfw_filename                = expected_granule['tfw_filename']
+                tif_filename                = expected_granule['tif_filename']
+                local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
                 #
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
-                # unused variable
-                # granule_name = expected_granule['granule_name']
 
                 # FTP Processes
                 # # 1 - Change Directory to the directory path
@@ -386,15 +311,12 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     hasFiles = True
 
                 # Validation
-                if not hasFiles:
-                    print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording "
-                          "here.")
-                # TODO - Fix the problems with checking if a file exists        END
+                if hasFiles == False:
+                    print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording here.")
 
-                # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff
-                # working. hasFiles = True
+                # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working. hasFiles = True
 
-                if hasFiles:
+                if hasFiles == True:
                     # Both files were found, so let's now download them.
 
                     # Backwards compatibility
@@ -413,9 +335,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                         try:
                             with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF,
-                                                          f.write)  # "RETR %s" % ftp_PathTo_TIF
-                        except Exception:
+                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                        except:
                             os.remove(local_FullFilePath_ToSave_Tif)
                             local_FullFilePath_ToSave_Tif = local_FullFilePath_ToSave_Tif.replace("03E", "04A")
                             ftp_PathTo_TIF = ftp_PathTo_TIF.replace("03E", "04A")
@@ -424,9 +345,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
                             try:
                                 with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF,
-                                                              f.write)  # "RETR %s" % ftp_PathTo_TIF
-                            except Exception:
+                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                            except:
                                 os.remove(local_FullFilePath_ToSave_Tif)
                                 ftp_PathTo_TIF = ftp_PathTo_TIF.replace("04A", "04B")
                                 local_FullFilePath_ToSave_Tif = local_FullFilePath_ToSave_Tif.replace("04A", "04B")
@@ -435,41 +355,23 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                 os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
                                 try:
                                     with open(local_FullFilePath_ToSave_Tif, "wb") as f:
-                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF,
-                                                                  f.write)  # "RETR %s" % ftp_PathTo_TIF
-                                except Exception:
+                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                except:
                                     error_counter = error_counter + 1
-                                    activity_event_type = Config_Setting.get_value(
-                                        setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING",
-                                        default_or_error_return_value="ETL Warning")
-                                    activity_description = "Warning: There was an error when downloading tif file: " \
-                                                           + str(tif_filename) + " from FTP directory: " \
-                                                           + str(remote_directory_path) + ".  If the System Error " \
-                                                                                          "message says something " \
-                                                                                          "like 'nodename nor " \
-                                                                                          "servname provided, or " \
-                                                                                          "not known', then one " \
-                                                                                          "common cause of that " \
-                                                                                          "error is an unstable " \
-                                                                                          "or disconnected " \
-                                                                                          "internet connection.  " \
-                                                                                          "Double check that the " \
-                                                                                          "internet connection is" \
-                                                                                          " working and try again." \
-                                                                                          "  System Error Message: " \
-                                                           + str(str(sys.exc_info()))
-                                    self.etl_parent_pipeline_instance.log_etl_error(
-                                        activity_event_type=activity_event_type,
-                                        activity_description=activity_description, etl_granule_uuid=Granule_UUID,
-                                        is_alert=True, additional_json={
-                                            "warning": activity_description,
-                                            "is_error": True,
-                                            "class_name": self.__class__.__name__,
-                                            "function_name": "execute__Step__Download",
-                                            "current_object_info": expected_granule
-                                        })
+                                    sysErrorData = str(sys.exc_info())
+                                    # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
+                                    warn_JSON = {}
+                                    warn_JSON['warning'] = "Warning: There was an error when downloading tif file: " + str(tif_filename) + " from FTP directory: " + str(remote_directory_path) + ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
+                                    warn_JSON['is_error'] = True
+                                    warn_JSON['class_name'] = "imerg"
+                                    warn_JSON['function_name'] = "execute__Step__Download"
+                                    warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
+                                    # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
+                                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                                    activity_description = warn_JSON['warning']
+                                    self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
-                                    # Give the FTP Connection a short break (Server spam protection mitigation)
+                        # Give the FTP Connection a short break (Server spam protection mitigation)
                         time.sleep(3)
 
                         # Download the Tfw
@@ -478,9 +380,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                         try:
                             with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF,
-                                                          f.write)  # "RETR %s" % ftp_PathTo_TIF
-                        except Exception:
+                                ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                        except:
                             os.remove(local_FullFilePath_ToSave_Twf)
                             local_FullFilePath_ToSave_Twf = local_FullFilePath_ToSave_Twf.replace("03E", "04A")
                             ftp_PathTo_TWF = ftp_PathTo_TWF.replace("03E", "04A")
@@ -489,9 +390,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                             try:
                                 with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF,
-                                                              f.write)  # "RETR %s" % ftp_PathTo_TIF
-                            except Exception:
+                                    ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                            except:
                                 os.remove(local_FullFilePath_ToSave_Twf)
                                 ftp_PathTo_TWF = ftp_PathTo_TWF.replace("04A", "04B")
                                 local_FullFilePath_ToSave_Twf = local_FullFilePath_ToSave_Twf.replace("04A", "04B")
@@ -500,80 +400,48 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                 os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                                 try:
                                     with open(local_FullFilePath_ToSave_Twf, "wb") as f:
-                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF,
-                                                                  f.write)  # "RETR %s" % ftp_PathTo_TIF
-                                except Exception:
+                                        ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
+                                except:
                                     error_counter = error_counter + 1
-
-                                    warning_message = "Warning: There was an error when downloading tfw file: " + str(
-                                        tfw_filename) + " from FTP directory: " + str(
-                                        remote_directory_path) + ".  If the System Error message says something " \
-                                                                 "like 'nodename nor servname provided, or not " \
-                                                                 "known', then one common cause of that error is " \
-                                                                 "an unstable or disconnected internet connection.  " \
-                                                                 "Double check that the internet connection is " \
-                                                                 "working and try again.  System Error " \
-                                                                 "Message: " + str(str(sys.exc_info()))
-                                    # Call Error handler right here to send a warning message to ETL log. - Note this
-                                    # warning will not make it back up to the overall pipeline, it is being sent here
-                                    # so admin can still be aware of it and handle it. activity_event_type         =
-                                    # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
-
-                                    self.etl_parent_pipeline_instance.log_etl_error(
-                                        activity_event_type="warning",
-                                        # activity_event_type=Config_Setting.get_value(
-                                        #     setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING",
-                                        #     default_or_error_return_value="ETL Warning"),
-                                        activity_description=warning_message, etl_granule_uuid=Granule_UUID,
-                                        is_alert=True, additional_json={
-                                            "warning": warning_message,
-                                            "is_error": True,
-                                            "class_name": self.__class__.__name__,
-                                            "function_name": "execute__Step__Download",
-                                            "current_object_info": expected_granule
-                                        })
+                                    sysErrorData = str(sys.exc_info())
+                                    # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
+                                    warn_JSON = {}
+                                    warn_JSON['warning'] = "Warning: There was an error when downloading tfw file: " + str(tfw_filename) + " from FTP directory: " + str(remote_directory_path) + ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
+                                    warn_JSON['is_error'] = True
+                                    warn_JSON['class_name'] = "imerg"
+                                    warn_JSON['function_name'] = "execute__Step__Download"
+                                    warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
+                                    # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
+                                    # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
+                                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                                    activity_description = warn_JSON['warning']
+                                    self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
                         # Give the FTP Connection a short break (Server spam protection mitigation)
                         time.sleep(3)
 
-                        # Counting Granule downloads, not individual files (in this case, 1 granule is made up from
-                        # two files)
+                        # Counting Granule downloads, not individual files (in this case, 1 granule is made up from two files)
                         download_counter = download_counter + 1
 
-                    except Exception:
+                    except Exception as e:
                         error_counter = error_counter + 1
-                        warning_message = "Warning: There was an uncaught error when attempting to download 1 of " \
-                                          "these files (tif or tfw), " + str(tif_filename) + ", or" \
-                                          " " + str(tfw_filename) + " from FTP " \
-                                          "directory: " + str(remote_directory_path) + ".  If the System Error " \
-                                          "message says something like 'nodename " \
-                                          "nor servname provided, or not known', then one common cause of " \
-                                          "that error is an unstable or disconnected internet connection." \
-                                          "  Double check that the internet connection is working and try " \
-                                          "again.  System Error Message: " + str(str(sys.exc_info()))
-                        # Call Error handler right here to send a warning message to ETL log. - Note this warning
-                        # will not make it back up to the overall pipeline, it is being sent here so admin can still
-                        # be aware of it and handle it. activity_event_type         =
-                        # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
-                        activity_event_type = Config_Setting.get_value(
-                            setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING",
-                            default_or_error_return_value="ETL Warning")
-                        activity_description = warning_message
-                        self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type,
-                                                                        activity_description=activity_description,
-                                                                        etl_granule_uuid=Granule_UUID, is_alert=True,
-                                                                        additional_json={
-                                                                            "warning": warning_message,
-                                                                            "is_error": True,
-                                                                            "class_name": self.__class__.__name__,
-                                                                            "function_name": "execute__Step__Download",
-                                                                            "current_object_info": expected_granule
-                                                                        })
+                        sysErrorData = str(sys.exc_info())
+                        # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
+                        warn_JSON = {}
+                        warn_JSON['warning']                = "Warning: There was an uncaught error when attempting to download 1 of these files (tif or tfw), "+str(tif_filename)+", or "+str(tfw_filename)+" from FTP directory: " +str(remote_directory_path)+ ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
+                        warn_JSON['is_error']               = True
+                        warn_JSON['class_name']             = "imerg"
+                        warn_JSON['function_name']          = "execute__Step__Download"
+                        warn_JSON['current_object_info']    = expected_granule
+                        # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
+                        activity_event_type         = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                        activity_description        = warn_JSON['warning']
+                        self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
-            except Exception:
+            except Exception as e:
                 error_counter = error_counter + 1
-                error_message = "imerg.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed." \
-                                "  System Error Message: " + str(sys.exc_info())
+                sysErrorData = str(sys.exc_info())
+                error_message = "imerg.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -581,49 +449,38 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             loop_counter = loop_counter + 1
 
         # Ended, now for reporting
-        ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(
-            download_counter).strip() + " files."
         #
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name=ret__function_name, is_error=ret__is_error,
-                                                   event_description=ret__event_description,
-                                                   error_description=ret__error_description,
-                                                   detail_state_info={
-                                                       "class_name": self.__class__.__name__,
-                                                       "download_counter": download_counter,
-                                                       "error_counter": error_counter,
-                                                       "loop_counter": loop_counter,
-                                                       "detail_errors": detail_errors
-                                                   })
+        ret__detail_state_info['class_name'] = self.__class__.__name__
+        ret__detail_state_info['download_counter'] = download_counter
+        ret__detail_state_info['error_counter'] = error_counter
+        ret__detail_state_info['loop_counter'] = loop_counter
+        ret__detail_state_info['detail_errors'] = detail_errors
+        # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
+        # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
+        ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
+        #
+        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
 
     def execute__Step__Extract(self):
         ret__function_name = "execute__Step__Extract"
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+        ret__detail_state_info = {}
 
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name=ret__function_name, is_error=ret__is_error,
-                                                   event_description=ret__event_description,
-                                                   error_description=ret__error_description,
-                                                   detail_state_info={
-                                                       "class_name": self.__class__.__name__,
-                                                       "custom_message": "Imerg types do not need to be extracted.  "
-                                                                         "The source files are non-compressed Tif "
-                                                                         "and Tfw files. "
-                                                   })
+        # For IMERG, there is nothing to extract (we are already downloading TIF and TFW files directly)
+        ret__detail_state_info['class_name'] = self.__class__.__name__
+        ret__detail_state_info['custom_message'] = "Imerg types do not need to be extracted.  The source files are non-compressed Tif and Tfw files."
+
+        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
 
     def execute__Step__Transform(self):
         ret__function_name = "execute__Step__Transform"
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-        #
-        # TODO: Subtype Specific Logic Here
-        #
 
         # error_counter, detail_errors
         error_counter = 0
@@ -700,9 +557,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     imerg.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
                     imerg.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'),
                                                                     ('units', 'mm'),
-                                                                    ('accumulation_interval', '30 minute'),
+                                                                    ('accumulation_interval', '1 day'),
                                                                     ('comment',
-                                                                     'IMERG 30-minute accumulated rainfall,'
+                                                                     'IMERG 1-day accumulated rainfall,'
                                                                      ' Early Run')])
                     imerg.attrs = OrderedDict(
                         [('Description',
@@ -722,7 +579,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                          ('NorthernmostLatitude', np.max(imerg.latitude.values)),
                          ('WesternmostLongitude', np.min(imerg.longitude.values)),
                          ('EasternmostLongitude', np.max(imerg.longitude.values)),
-                         ('TemporalResolution', '30-minute'), ('SpatialResolution', '0.1deg')])
+                         ('TemporalResolution', '1-day'), ('SpatialResolution', '0.1deg')])
                     # Set the Endcodings
                     imerg.precipitation_amount.encoding = {
                         '_FillValue': np.uint16(29999),
@@ -743,16 +600,10 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         'dtype': np.dtype('int32')
                     }
 
-                    # 5) Output File outputFile_name_ORIG_SCRIPT = 'NASA-IMERG_EARLY.' + startTime.strftime(
-                    # '%Y%m%dT%H%M%SZ') + '.' + regionID + '.nc4' print("READY FOR OUTPUT FILE!: (
-                    # outputFile_name_ORIG_SCRIPT): " + str(outputFile_name_ORIG_SCRIPT)) outputFile =
-                    # 'NASA-IMERG_EARLY.' + startTime.strftime('%Y%m%dT%H%M%SZ') + '.' + regionID + '.nc4'
-                    # imerg.to_netcdf(outputFile, unlimited_dims='time')
+                    # 5) Output File
                     imerg.to_netcdf(os.path.join(local_extract_path, final_nc4_filename), unlimited_dims='time')
 
-                    pass
-
-                except Exception:
+                except:
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
                     error_message = "imerg.execute__Step__Transform: An Error occurred during the Transform step " \
@@ -782,9 +633,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             "is_update_succeed_2": "Current process"
                         })
 
-                pass
-
-        except Exception:
+        except:
             error_message = "Error: There was an uncaught error when processing the Transform step on all of the " \
                             "expected Granules.  See the additional data and system error message for details on " \
                             "what caused this error.  System Error Message: " + str(str(sys.exc_info()))
@@ -815,9 +664,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+
         try:
             expected_granules = self._expected_granules
             for expected_granules_object in expected_granules:
@@ -828,16 +675,14 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     local_extract_path = expected_granules_object['local_extract_path']
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
-                    expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path,
-                                                                                final_nc4_filename)
+                    expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)
                     # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path,
-                                                                              final_nc4_filename)
+                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)
                     # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS
                     # Monitors for it)
-                    copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
                     Granule_UUID = expected_granules_object['Granule_UUID']
                     # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__SUCCESS # When a granule has a
                     # NC4 file in the correct location, this counts as a Success.
@@ -884,7 +729,6 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                 expected_full_path_to_local_final_nc4_file).strip()
                         })
 
-            pass
         except Exception:
             error_message = "Error: There was an uncaught error when processing the Load step on all of the expected " \
                             "Granules.  See the additional data and system error message for details on what caused " \
@@ -912,91 +756,58 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                                    })
 
     def execute__Step__Post_ETL_Custom(self):
-        #
-        # TODO: Subtype Specific Logic Here
-        #
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name="execute__Step__Post_ETL_Custom", is_error=False,
-                                                   event_description="",
-                                                   error_description="",
-                                                   detail_state_info={
-                                                       "custom_message": "No logic was written here",
-                                                       "function_name": "execute__Step__Post_ETL_Custom"
-                                                   })
+        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__is_error = False
+        ret__event_description = ""
+        ret__error_description = ""
+        ret__detail_state_info = {}
+
+        retObj = common.get_function_response_object(class_name=self.__class__.__name__, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
 
     def execute__Step__Clean_Up(self):
         ret__function_name = "execute__Step__Clean_Up"
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
-        #
-        # TODO: Subtype Specific Logic Here
-        #
+        ret__detail_state_info = {}
+
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == "":
-
-                # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                # activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK
-                activity_event_type = Config_Setting.get_value(
-                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK",
-                    default_or_error_return_value="Temp Working Dir Blank")  #
-                activity_description = "Could not remove the temporary working directory.  The value for " \
-                                       "self.temp_working_dir was blank. "
+                # Log an ETL Activity that says that the value of the temp_working_dir was blank
+                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "imerg"
-                self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type,
-                                                                activity_description=activity_description,
-                                                                etl_granule_uuid="", is_alert=False,
-                                                                additional_json=additional_json)
-
+                additional_json['subclass'] = self.__class__.__name__
+                self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
-                # shutil.rmtree
-                rmtree(temp_working_dir)
-
-                # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                # activity_event_type = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED
-                activity_event_type = Config_Setting.get_value(
-                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED",
-                    default_or_error_return_value="Temp Working Dir Removed")  #
-                activity_description = "Temp Working Directory, " + str(
-                    self.temp_working_dir).strip() + ", was removed."
+                shutil.rmtree(temp_working_dir)
+                # Log an ETL Activity that says that the value of the temp_working_dir was blank
+                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "imerg"
+                additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
-                self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type,
-                                                                activity_description=activity_description,
-                                                                etl_granule_uuid="", is_alert=False,
-                                                                additional_json=additional_json)
-
-        except Exception:
-            error_message = "Error: There was an uncaught error when processing the Clean Up step.  This function is " \
-                            "supposed to simply remove the working directory.  This means the working directory was " \
-                            "not removed.  See the additional data and system error message for details on what " \
-                            "caused this error.  System Error Message: " + str(str(sys.exc_info()))
+                self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+            # print("execute__Step__Clean_Up: Cleanup is finished.")
+        except:
+            sysErrorData = str(sys.exc_info())
+            error_JSON = {}
+            error_JSON['error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is supposed to simply remove the working directory.  This means the working directory was not removed.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
+            error_JSON['is_error'] = True
+            error_JSON['class_name'] = self.__class__.__name__
+            error_JSON['function_name'] = "execute__Step__Clean_Up"
+            #
+            # Additional info
+            error_JSON['self__temp_working_dir'] = str(self.temp_working_dir).strip()
+            #
             # Exit Here With Error info loaded up
-            return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                       function_name=ret__function_name, is_error=True,
-                                                       event_description=ret__event_description,
-                                                       error_description=error_message,
-                                                       detail_state_info={
-                                                           "error": error_message,
-                                                           "is_error": True,
-                                                           "class_name": self.__class__.__name__,
-                                                           "function_name": "execute__Step__Clean_Up",
-                                                           "self__temp_working_dir": str(self.temp_working_dir).strip()
-                                                       })
+            ret__is_error = True
+            ret__error_description = error_JSON['error']
+            ret__detail_state_info = error_JSON
+            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+            return retObj
 
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name=ret__function_name, is_error=ret__is_error,
-                                                   event_description=ret__event_description,
-                                                   error_description=ret__error_description,
-                                                   detail_state_info={
-                                                       "class_name": self.__class__.__name__,
-                                                       "function_name": "execute__Step__Clean_Up",
-                                                       "is_error": False
-                                                   })
-
-    @staticmethod
-    def test_class_instance():
-        print("imerg.test_class_instance: Reached the end.")
+        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
