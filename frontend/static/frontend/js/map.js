@@ -716,6 +716,11 @@ function enableDrawing() {
         verify_ready();
     });
 
+    map.on('draw:edited', function (e) {
+        collect_review_data();
+        verify_ready();
+    });
+
     map.on(L.Draw.Event.DELETED, function (e) {
         collect_review_data();
         verify_ready();
