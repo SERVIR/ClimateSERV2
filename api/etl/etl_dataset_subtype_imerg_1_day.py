@@ -39,13 +39,13 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
     def get_run_time_list(self):
         return [
-            'S023000-E025959.0150',
-            'S053000-E055959.0330',
-            'S083000-E085959.0510',
-            'S113000-E115959.0690',
-            'S143000-E145959.0870',
-            'S173000-E175959.1050',
-            'S203000-E205959.1230',
+            # 'S023000-E025959.0150',
+            # 'S053000-E055959.0330',
+            # 'S083000-E085959.0510',
+            # 'S113000-E115959.0690',
+            # 'S143000-E145959.0870',
+            # 'S173000-E175959.1050',
+            # 'S203000-E205959.1230',
             'S233000-E235959.1410'
         ]
 
@@ -95,7 +95,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         current_year__yyyy_str,
                         current_month__mm_str,
                         current_day__dd_str,
-                        runTime[1:7]
+                        # runTime[1:7]
+                        '000000'
                     )
 
                     # Now get the remote File Paths (Directory) based on the date infos.
