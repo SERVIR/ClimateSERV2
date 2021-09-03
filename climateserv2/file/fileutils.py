@@ -6,6 +6,17 @@ Created on Jun 30, 2014
 import fileinput
 import os
 import sys
+module_path = os.path.abspath(os.getcwd())
+if module_path not in sys.path:
+    sys.path.append(module_path)
+PACKAGE_PARENT = '..'
+SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
+sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+try:
+    import climateserv2.parameters as params
+except:
+    import parameters as params
+
 
 def readFile(filename):
     '''
@@ -17,6 +28,21 @@ def readFile(filename):
         output = output+line
     return output
 
+def makeParamsFilePaths():
+    if not os.path.exists(params.workpath):
+        makePath(params.workpath)
+    if not os.path.exists(params.netCDFpath):
+        makePath(params.netCDFpath)
+    if not os.path.exists(params.shapefilepath):
+        makePath(params.shapefilepath)
+    if not os.path.exists(params.zipFile_ScratchWorkspace_Path):
+        makePath(params.zipFile_ScratchWorkspace_Path)
+    if not os.path.exists(params.logfilepath):
+        makePath(params.logfilepath)
+    if not os.path.exists(params.requestLog_db_basepath):
+        makePath(params.requestLog_db_basepath)
+    if not os.path.exists(params.serviringestroot):
+        makePath(params.serviringestroot)
 
 
 def makeFilePath(dirLoc,filename):

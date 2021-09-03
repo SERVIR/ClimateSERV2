@@ -40,7 +40,6 @@ except:
 DEBUG_LIVE = params.DEBUG_LIVE
 logToConsole = params.logToConsole
 serviringestroot = params.serviringestroot
-maskstorage = params.maskstorage
 dbfilepath = params.dbfilepath
 newdbfilepath = params.newdbfilepath
 capabilities_db_filepath = params.capabilities_db_filepath

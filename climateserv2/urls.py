@@ -37,6 +37,8 @@ urlpatterns = [
     # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
     # url(r'^/chirps/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
     url(r'chirps/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest),
+    url(r'chirps/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
+
     # api calls
 
     url(r'api/getParameterTypes/', getParameterTypes),
@@ -48,7 +50,7 @@ urlpatterns = [
     # url(r'^/api/getCapabilitiesForDataset/', getCapabilitiesForDataset),
     url('api/getClimateScenarioInfo/', getClimateScenarioInfo),
     # ks refactor 2015 // New API Hook getClimateScenarioInfo
-    # url(r'^/api/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
+    url(r'api/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
     url('api/getFileForJobID/', getFileForJobID),
     # url(r'^/api/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
     # url(r'^/api/scriptAccess/', scriptAccess),  # New path for Serverside Script access.

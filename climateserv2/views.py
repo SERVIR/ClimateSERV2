@@ -73,6 +73,47 @@ def processCallBack(request, output, contenttype):
         except KeyError:
             return HttpResponse(output)
 
+
+# Logging
+# How to access the request stuff.
+# logger.info("DEBUG: request: " + str(request))
+# req_Data_ToLog = decode_Request_For_Logging(request, get_client_ip(request))
+
+# Handler for getting request log data
+# global_CONST_LogToken = "SomeRandomStringThatGoesHere"
+# Test url string
+# http://localhost:8000/getRequestLogs/?callback=success&sYear=2015&sMonth=10&sDay=01&eYear=2015&eMonth=10&eDay=04&tn=SomeRandomStringThatGoesHere
+@csrf_exempt
+def getRequestLogs(request):
+    '''
+    Get a list of all request logs within a specified date range.
+    :param request: in coming request, Need to pull the following params: sYear, sMonth, sDay, eYear, eMonth, eDay, tn
+    returns a list wrapped in JSON string
+    '''
+    theLogs = []
+
+    try:
+        # get tn (token)
+        # global global_CONST_LogToken
+        request_Token = request.GET["tn"]
+        if (request_Token == global_CONST_LogToken):
+            sYear = request.GET["sYear"]
+            sMonth = request.GET["sMonth"]
+            sDay = request.GET["sDay"]
+            eYear = request.GET["eYear"]
+            eMonth = request.GET["eMonth"]
+            eDay = request.GET["eDay"]
+            theLogs = get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay)
+
+    except:
+        retObj = {
+            "error": "Error Processing getRequestLogs (This error message has been simplified for security reasons.  Please contact the website owner for more information)"
+        }
+        theLogs.append(retObj)
+
+    return processCallBack(request, json.dumps(theLogs), "application/json")
+
+
 @csrf_exempt
 def getParameterTypes(request):
     '''
@@ -307,21 +348,14 @@ def getClimateScenarioInfo(request):
 
     # Error Tracking
     isError = False
-    print('print 1')
     # Get list of datatype numbers that have the category of 'ClimateModel'
     climateModel_DataTypeNumbers = params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
-    print('print 2')
-
 
     # Get all info from the Capabilities Data for each 'ClimateModel' datatype number
     climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
-    print('print 3')
-
 
     # 'data_category':'ClimateModel'
     climate_DatatypeMap = params.get_Climate_DatatypeMap()
-    print('print 4')
-
 
     api_ReturnObject = {
         "RequestName": "getClimateScenarioInfo",

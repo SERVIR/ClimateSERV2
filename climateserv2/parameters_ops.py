@@ -19,12 +19,10 @@ DEBUG_LIVE = False
 
 logToConsole = True
 serviringestroot = '''/cserv2/tmp/data/pythonCode/serviringest/'''
-maskstorage = '''/cserv2/tmp/'''# '''/data/data/mask/'''
 dbfilepath = '''/cserv2/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
 newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
 capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
 requestLog_db_basepath = '''/cserv2/tmp/''' #'''/data/data/db/requestLog/'''
-zipFile_Storage_Path = '''/cserv2/tmp/zipout/Zipfile_Storage/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
 logfilepath = '''/cserv2/tmp/'''#'''/data/data/logs/'''
 workpath = '''/cserv2/tmp/'''#'''/data/data/work'''

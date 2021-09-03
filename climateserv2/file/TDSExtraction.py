@@ -62,11 +62,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
     temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file
 
-    #print("Download Started =", datetime.now().strftime("%H:%M:%S"))
     urllib.request.urlretrieve(tds_request, temp_file)
-    #print("Download Ended =", datetime.now().strftime("%H:%M:%S"))
-    # Reading local NetCDF
-    #print("Current Time =", datetime.now().strftime("%H:%M:%S"))
 
     xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
 
@@ -111,28 +107,37 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
                 dates.append(temp.strftime("%Y-%m-%d"))
             return np.array(dates),operation, np.array(max_values[variable].values), aoi.total_bounds
         elif operation == "download":
-            os.makedirs(params.zipFile_ScratchWorkspace_Path + task_id + '/', exist_ok=True)
-            os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/', 0o777)
-            os.chmod(params.shell_script, 0o777)
-            clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset)
-            os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
-            p = subprocess.check_call(
-                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
-                 params.zipFile_ScratchWorkspace_Path + task_id + '/'])
-            with ZipFile(params.zipFile_ScratchWorkspace_Path + task_id + '.zip', 'w') as zipObj:
-                # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path + task_id + '/'):
-                    for filename in filenames:
-                        # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
-                        # Add file to zip
-                        zipObj.write(filePath, basename(filePath))
-
-            # close the Zip File
-            zipObj.close()
-            os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset)
-            shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(task_id), ignore_errors=True)
-            return params.zipFile_ScratchWorkspace_Path + task_id + '.zip', operation
+            # os.makedirs(params.zipFile_ScratchWorkspace_Path + task_id + '/', exist_ok=True)
+            # os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/', 0o777)
+            # os.chmod(params.shell_script, 0o777)
+            # clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset)
+            # os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
+            # t = subprocess.check_output('cdo showdate ' +params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, shell=True, text=True)
+            # clipped_dates = t.split()
+            # prog = 0
+            # for i in range(len(clipped_dates)):
+            #     prog = ((i + 1) / len(clipped_dates)) * 100
+            #     p = subprocess.check_call(
+            #         [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
+            #          params.zipFile_ScratchWorkspace_Path + task_id + '/'],clipped_dates[i],i+1)
+            # # p = subprocess.check_call(
+            # #     [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
+            # #      params.zipFile_ScratchWorkspace_Path + task_id + '/'])
+            # with ZipFile(params.zipFile_ScratchWorkspace_Path + task_id + '.zip', 'w') as zipObj:
+            #     # Iterate over all the files in directory
+            #     for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path + task_id + '/'):
+            #         for filename in filenames:
+            #             # create complete filepath of file in directory
+            #             filePath = os.path.join(folderName, filename)
+            #             # Add file to zip
+            #             zipObj.write(filePath, basename(filePath))
+            #
+            # # close the Zip File
+            # zipObj.close()
+            # os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset)
+            # shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(task_id), ignore_errors=True)
+            # return params.zipFile_ScratchWorkspace_Path + task_id + '.zip', operation
+            return clipped_dataset,task_id
         else:
             return "invalid operation"
 
