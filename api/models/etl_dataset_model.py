@@ -10,8 +10,8 @@ class ETL_Dataset(models.Model):
     is_pipeline_active = models.BooleanField(default=False, help_text="Is this ETL Dataset currently being run through the ETL Pipeline? If this is set to True, that means an ETL job is actually running for this specific dataset and data ingestion is currently in progress.  When a pipeline finishes (success or error) this value should be set to False by the pipeline code.")
     capabilities = models.TextField('JSON Data', default="{}", help_text="Set Automatically by ETL Pipeline.  Please don't touch this!  Messing with this will likely result in broken content elsewhere in the system.  This is a field to hold Dataset specific information that the clientside code may need access to in order to properly render the details from this dataset.  (In ClimateSERV 1.0, some of this was a GeoReference, Time/Date Ranges, and other information.)")
     # Paths
-    temp_working_dir = models.TextField('(Path) Temp working direcory', default='', help_text="The local filesystem place to store data")
-    final_load_dir = models.TextField('(Path)', default='', help_text="The local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)")
+    temp_working_dir = models.TextField('(Path) Local temp working direcory', default='', help_text="The local filesystem place to store data")
+    final_load_dir = models.TextField('(Path) Local NC4 directory', default='', help_text="The local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)")
     source_url = models.TextField('(URL) Remote location', default='', help_text="The remote location")
     # THREDDS Columns (Following Threads Data Server Conventions (TDS))
     tds_product_name = models.CharField('(TDS Conventions) Product Name', max_length=90, blank=False, default="UNKNOWN_PRODUCT_NAME", help_text="The Product name as defined on the THREDDS Data Server (TDS) Conventions Document.  Example Value: 'EMODIS-NDVI'")
@@ -30,8 +30,9 @@ class ETL_Dataset(models.Model):
     is_test_object = models.BooleanField(default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
 
     def __str__(self):
-        return '{} ({})'.format(self.dataset_name, self.dataset_subtype)
+        return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
 
     class Meta:
         verbose_name = 'ETL Dataset'
         verbose_name_plural = 'ETL Datasets'
+        ordering = ['dataset_name']
