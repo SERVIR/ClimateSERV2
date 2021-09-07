@@ -38,6 +38,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
+
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
         final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
@@ -49,13 +50,17 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
             end_monthrange = calendar.monthrange(self.YYYY__Year__Start, self.MM__Month__End)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, end_monthrange[1])
 
+
             filenames, dates, ensambles = [], [], []
             for date_dir in os.scandir(current_root_http_path):
                 if date_dir.is_dir():
                     date = datetime.datetime.strptime(date_dir.name,'%Y%m')
+
                     if date >= start_date and date <= end_date:
+
                         for ensemble_dir in os.scandir(os.path.join(current_root_http_path, date_dir.name)):
                             if ensemble_dir.is_dir():
+
                                 for path in glob.glob(os.path.join(current_root_http_path, date_dir.name, ensemble_dir.name, '*.tif')):
                                     filename = os.path.basename(path)
                                     filenames.append(filename)
@@ -67,20 +72,19 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 current_year__YYYY_str = '{:0>4d}'.format(date.year)
                 current_month__MM_str = '{:02d}'.format(date.month)
                 current_day__DD_str = '{:02d}'.format(date.day)
-
-                final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.{}.nc4'.format(
+                final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.ens{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str,
-                    ensamble
+                    '{:03d}'.format(int(ensamble[3:7]))
                 )
-
                 date_str = date.strftime('%Y%m')
+                date_str_local = date.strftime('%Y%m01')
 
                 # Granule
                 current_obj = {}
-                current_obj['local_download_path'] = os.path.join(self.temp_working_dir, date_str, ensamble)
-                current_obj['local_final_load_path'] = os.path.join(final_load_dir_path, date_str, ensamble)
+                current_obj['local_download_path'] = os.path.join(self.temp_working_dir, date_str_local)
+                current_obj['local_final_load_path'] = os.path.join(final_load_dir_path, date_str_local)
+
                 #
                 current_obj['tif_filename'] = filename
                 current_obj['final_nc4_filename'] = final_nc4_filename
@@ -89,9 +93,9 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 current_obj['remote_directory_path'] = current_root_http_path
                 current_obj['remote_full_filepath_tif'] = os.path.join(current_root_http_path, date_str, ensamble, filename)
                 #
-                current_obj['local_full_filepath_download'] = os.path.join(self.temp_working_dir, date_str, ensamble, filename)
-                current_obj['working_full_filepath_final_nc4_file'] = os.path.join(self.temp_working_dir, date_str, ensamble, final_nc4_filename)
-                current_obj['local_full_filepath_final_nc4_file'] = os.path.join(final_load_dir_path, date_str, ensamble, final_nc4_filename)
+                current_obj['local_full_filepath_download'] = os.path.join(self.temp_working_dir, date_str_local, filename)
+                current_obj['working_full_filepath_final_nc4_file'] = os.path.join(self.temp_working_dir, date_str_local, final_nc4_filename)
+                current_obj['local_full_filepath_final_nc4_file'] = os.path.join(final_load_dir_path, date_str_local, final_nc4_filename)
 
                 granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
 
@@ -104,7 +108,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 self._expected_granules.append(current_obj)
 
                 # Make sure the directories exist
-                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(self.temp_working_dir, date_str, ensamble))
+                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(self.temp_working_dir, date_str_local))
                 if is_error_creating_directory == True:
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
@@ -119,7 +123,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                     return retObj
 
                 # final_load_dir_path
-                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(final_load_dir_path, date_str, ensamble))
+                is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(os.path.join(final_load_dir_path, date_str_local))
                 if is_error_creating_directory == True:
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
@@ -258,7 +262,6 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         detail_errors = []
 
         datasets = []
-
         try:
 
             for expected_granules_object in self._expected_granules:
