@@ -38,13 +38,12 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
+
+        # (1) Generate Expected remote file paths
         try:
-
-            self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
-            final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
-            current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
-
-            # (1) Generate Expected remote file paths
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, 1)
             end_monthrange = calendar.monthrange(self.YYYY__Year__Start, self.MM__Month__End)
@@ -59,7 +58,6 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                             if ensemble_dir.is_dir():
                                 for path in glob.glob(os.path.join(current_root_http_path, date_dir.name, ensemble_dir.name, '*.tif')):
                                     filename = os.path.basename(path)
-                                    # _, _, _, _ = filename.replace('.tif', '').split('_')
                                     filenames.append(filename)
                                     dates.append(date)
                                     ensambles.append(ensemble_dir.name)
@@ -70,10 +68,11 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 current_month__MM_str = '{:02d}'.format(date.month)
                 current_day__DD_str = '{:02d}'.format(date.day)
 
-                final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.nc4'.format(
+                final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
                     current_day__DD_str,
+                    ensamble
                 )
 
                 date_str = date.strftime('%Y%m')
@@ -332,8 +331,8 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32')
                     }
-                    time_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
-                    time_bounds_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+                    time_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    time_bounds_encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
                     # Set the Attributes
                     ds.latitude.attrs = latAttr

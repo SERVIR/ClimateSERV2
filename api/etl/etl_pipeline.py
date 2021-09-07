@@ -277,7 +277,7 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, dataset_subtype)
             elif dataset_subtype in ('imerg_early', 'imerg_late'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
-            elif dataset_subtype == 'ImergOneDay':
+            elif dataset_subtype == ('imerg1dy_early', 'imerg1dy_late'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, dataset_subtype)
             elif dataset_subtype == 'nmme':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NMME(self)

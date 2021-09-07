@@ -156,7 +156,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     # Getting full paths
                     remote_full_filepath_tif = str(os.path.join(remote_directory_path, tif_filename)).strip()
                     remote_full_filepath_tfw = str(os.path.join(remote_directory_path, tfw_filename)).strip()
-
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
                     local_full_filepath_tfw = os.path.join(self.temp_working_dir, tfw_filename)
 
@@ -225,12 +224,8 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when generating the expected remote filepaths.  See the additional data for details on which expected file caused the error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "imerg"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
-            # Call Error handler right here (If this is commented out, then the info should be bubbling up to the calling function))
-            # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR
-            # self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=error_JSON)
-            #
             # Exit Here With Error info loaded up
             ret__is_error = True
             ret__error_description = error_JSON['error']
@@ -244,7 +239,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "imerg"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -259,7 +254,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "imerg"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -269,8 +264,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # Ended, now for reporting
-        ret__detail_state_info['class_name'] = "imerg"
-        #ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
@@ -297,17 +291,16 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             modulus_size = 1
 
         # Connect to FTP
-        FTP_Host            = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST", default_or_error_return_value="error.getting.ftp-host.nasa.gov")
-        FTP_UserName        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="error_getting_user_name")
-        FTP_UserPass        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="error_getting_user_password")
-        FTP_SubFolderPath   = "" # Set in granule['remote_directory_path']
+        ftp_host            = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST", default_or_error_return_value="error.getting.ftp-host.nasa.gov")
+        ftp_username        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="error_getting_user_name")
+        ftp_userpass        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="error_getting_user_password")
 
         # Attempt Making FTP Connection here (if fail, then exit this function with an error
         ftp_connection = None
 
         # Connect to the FTP Server and download all of the files in the list.
         try:
-            ftp_connection = ftplib.FTP_TLS(host=FTP_Host, user=FTP_UserName, passwd=FTP_UserPass)
+            ftp_connection = ftplib.FTP_TLS(host=ftp_host, user=ftp_username, passwd=ftp_userpass)
             ftp_connection.prot_p()
 
             time.sleep(1)
@@ -317,12 +310,10 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             sysErrorData = str(sys.exc_info())
             error_message = "imerg.execute__Step__Download: Error Connecting to FTP.  There was an error when attempting to connect to the Remote FTP Server.  System Error Message: " + str(sysErrorData)
             detail_errors.append(error_message)
-            # print("imerg.execute__Step__Download: Generic Uncaught Error: " + str(sysErrorData))
             print(error_message)
 
             # Ended, now for reporting
-            #
-            ret__detail_state_info['class_name'] = "imerg"
+            ret__detail_state_info['class_name'] = self.__class__.__name__
             ret__detail_state_info['download_counter'] = download_counter
             ret__detail_state_info['error_counter'] = error_counter
             ret__detail_state_info['loop_counter'] = loop_counter
@@ -663,8 +654,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
                     imerg.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
-                    pass
-
                 except:
 
                     sysErrorData = str(sys.exc_info())
@@ -691,14 +680,12 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     new_json_key_to_append = "execute__Step__Transform"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
-                pass
-
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Transform step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "imerg"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Transform"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -707,8 +694,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-
-        ret__detail_state_info['class_name'] = "imerg"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
@@ -792,7 +778,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
                     # return retObj
 
-            pass
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
@@ -834,7 +819,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "imerg"
+                additional_json['subclass'] = self.__class__.__name__
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
                 shutil.rmtree(temp_working_dir)
@@ -842,7 +827,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "imerg"
+                additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             # print("execute__Step__Clean_Up: Cleanup is finished.")
@@ -851,7 +836,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is supposed to simply remove the working directory.  This means the working directory was not removed.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "imerg"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Clean_Up"
             #
             # Additional info

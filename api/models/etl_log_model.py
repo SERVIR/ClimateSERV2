@@ -21,8 +21,9 @@ class ETL_Log(models.Model):
     is_test_object = models.BooleanField(default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
 
     def __str__(self):
-        return self.uuid
+        return '{} - {}'.format(self.activity_event_type, self.created_by)
 
     class Meta:
         verbose_name = 'ETL Log'
         verbose_name_plural = 'ETL Logs'
+        ordering = ['-created_at']

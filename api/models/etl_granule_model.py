@@ -19,8 +19,9 @@ class ETL_Granule(models.Model):
     is_test_object = models.BooleanField(default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
 
     def __str__(self):
-        return self.granule_name
+        return '{} - {}'.format(self.etl_dataset.dataset_name, self.granule_name)
 
     class Meta:
         verbose_name = 'ETL Granule'
         verbose_name_plural = 'ETL Granules'
+        ordering = ['-created_at']
