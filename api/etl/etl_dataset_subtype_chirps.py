@@ -601,8 +601,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
                     precipEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     # Set the Attributes
                     chirps_data.latitude.attrs              = latAttr
                     chirps_data.longitude.attrs             = lonAttr
