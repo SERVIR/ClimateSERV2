@@ -8,6 +8,46 @@ html {
     z-index: 3000!important;
 }
 
+@keyframes blink {
+    0% {
+        color: #ffffff;
+    }
+    50%{
+        color: #758055;
+    }
+    100%{
+        color: #ffffff;
+    }
+}
+
+.tour_icon_blink {
+    animation-name: blink;
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+    animation-play-state: paused;
+    animation-iteration-count: 2;
+}
+
+@keyframes box-blink {
+    0% {
+        background-color: transparent;
+    }
+    50%{
+        background-color: #ffffff;
+    }
+    100%{
+        background-color: transparent;
+    }
+}
+
+.tour_box_blink {
+    animation-name: box-blink;
+    animation-duration: 1.5s;
+    animation-fill-mode: forwards;
+    animation-play-state: paused;
+    animation-iteration-count: 2;
+}
+
 .popover-title{
     color:#ffffff;
     background-color: #758055!important;

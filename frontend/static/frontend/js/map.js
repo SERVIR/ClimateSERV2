@@ -75,8 +75,8 @@ function buildStyles() {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.warn(jqXHR + textStatus + errorThrown);
     }).done(function (data, _textStatus, _jqXHR) {
-        if (data.errMsg) {
-            console.info(data.errMsg);
+        if (data["errMsg"]) {
+            console.info(data["errMsg"]);
         } else {
             try {
                 const jsonObj = ($.xml2json(data))["#document"];
@@ -1664,16 +1664,16 @@ function getClimateScenarioInfo() {
     });
 }
 
-function toggleAOIHeight(){
+function toggleAOIHeight() {
     const el = $('#aoiOptions');
     const curHeight = el.height();
-    if(curHeight === 0) {
+    if (curHeight === 0) {
         const autoHeight = el.css('height', 'auto').height();
         el.height(curHeight).animate({height: autoHeight}, 1000);
-        el.css( "marginBottom", '20px');
-    } else{
+        el.css("marginBottom", '20px');
+    } else {
         el.height(curHeight).animate({height: 0}, 1000);
-        el.css( "marginBottom", '0px');
+        el.css("marginBottom", '0px');
     }
 }
 
@@ -1683,6 +1683,8 @@ const tour = new Tour({
     smartPlacement: true,
     onEnd: function (tour) {
         localStorage.setItem("hideTour", "true");
+        document.querySelector(".tour_icon_blink").style.animationPlayState = 'running';
+        document.querySelector(".tour_box_blink").style.animationPlayState = 'running';
     },
     autoscroll: false,
     backdrop: false,
@@ -1710,10 +1712,12 @@ const tour = new Tour({
             title: "Select Data",
             content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
             onShow: function (tour) {
-                if(!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
+                if (!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
                     console.log("scroll it");
                     $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
-                } else{console.log("no thank you")}
+                } else {
+                    console.log("no thank you")
+                }
             }
         },
         {
@@ -1796,20 +1800,35 @@ $(function () {
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
             sidebar.close();
-             tour.setCurrentStep(0);
+            tour.setCurrentStep(0);
             open_tour();
         }
     } catch (e) {
     }
-    try{
+    try {
         $('html').on('mouseup', function (e) {
-                if (!$(e.target).closest('.popover').length) {
-                    $('.popover').each(function () {
-                        tour.end();
-                    });
-                }
-            });
-    } catch(e){
+            if (!$(e.target).closest('.popover').length) {
+                $('.popover').each(function () {
+                    tour.end();
+                });
+            }
+        });
+    } catch (e) {
+    }
+    try {
+        document.querySelector(".tour_icon_blink").addEventListener('animationend', () => {
+            document.querySelector(".tour_icon_blink").style.animationPlayState = 'paused';
+            $("#tour_icon").removeClass("tour_icon_blink");
+            document.getElementById("tour_icon").offsetWidth = document.getElementById("tour_icon").offsetWidth;
+            $("#tour_icon").addClass("tour_icon_blink");
+        });
+        document.querySelector(".tour_box_blink").addEventListener('animationend', () => {
+            document.querySelector(".tour_box_blink").style.animationPlayState = 'paused';
+            $("#tour_box_blink").removeClass("tour_box_blink");
+            document.getElementById("tour_box_blink").offsetWidth = document.getElementById("tour_box_blink").offsetWidth;
+            $("#tour_box_blink").addClass("tour_box_blink");
+        });
+    } catch (e) {
     }
 
 });
