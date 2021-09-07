@@ -10,8 +10,9 @@ class ETL_PipelineRun(models.Model):
     is_test_object = models.BooleanField(default=False, help_text="Is this Instance meant to be used ONLY for internal platform testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR VALIDATION)")
 
     def __str__(self):
-        return self.uuid
+        return self.created_at
 
     class Meta:
         verbose_name = 'ETL Pipeline Run'
         verbose_name_plural = 'ETL Pipeline Runs'
+        ordering = ['-created_at']
