@@ -454,9 +454,7 @@ class ZMQCHIRPSHeadProcessor():
             rLog.add_New_ServerSide_Request(theID, theStatusNote, theAdditionalNotes)
         except:
             pass
-        
-    def __writeMask__(self,uid,array,bounds):
-        mst.writeHMaskToTempStorage(uid,array,bounds)
+
     def __is_custom_job_type__MonthlyGEFSRainfallAnalysis__(self, request):
         # # Inputs: From ZMQ (from the API Layer):      ( A location, ( (layerid + featureids) OR ( geometry ) ), custom_job_type ( Hard coded String "MonthlyRainfallAnalysis" ), uniqueid  )
         try:
@@ -627,7 +625,7 @@ class ZMQCHIRPSHeadProcessor():
             if ('geometry' in request):
                 polygon_Str_ToPass=request['geometry']
                 if self.isDownloadJob == True:
-                    clipped_dataset,task_id = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                    clipped_dataset,task_id,percent = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
 
                     os.makedirs(params.zipFile_ScratchWorkspace_Path + task_id + '/', exist_ok=True)
                     os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/', 0o777)
@@ -635,12 +633,16 @@ class ZMQCHIRPSHeadProcessor():
                     clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
                     os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
                     t = subprocess.check_output(
-                        '/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                        ' cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
                         text=True)
                     clipped_dates = t.split()
+                    self.__processProgress__(percent)
                     for i in range(len(clipped_dates)):
-                        self.progress = ((i + 1) / len(clipped_dates)) * 100
-                        self.__processProgress__(self.progress)
+                        self.progress = 80*((i + 1) / len(clipped_dates))
+                        if self.progress+percent>=100:
+                            self.__processProgress__(100)
+                        else:
+                            self.__processProgress__(self.progress)
                         p = subprocess.check_call(
                             [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
                              variable_name,
@@ -665,8 +667,7 @@ class ZMQCHIRPSHeadProcessor():
                     self.zipFilePath= params.zipFile_ScratchWorkspace_Path + task_id + '.zip'
                     # self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
                 else:
-
-                    dates, operation, values, bounds= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                    dates, values,percent= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -679,7 +680,7 @@ class ZMQCHIRPSHeadProcessor():
                 if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
                     polygon_Str_ToPass = geometries
-                    clipped_dataset, task_id = GetTDSData.get_aggregated_values(request['begintime'],
+                    clipped_dataset, task_id,percent = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                 request['endtime'], dataset_name,
                                                                                 variable_name, geometries,
                                                                                 request['uniqueid'], params.parameters[
@@ -691,12 +692,16 @@ class ZMQCHIRPSHeadProcessor():
                     clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
                     os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
                     t = subprocess.check_output(
-                        '/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                        'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
                         text=True)
                     clipped_dates = t.split()
+                    self.__processProgress__(percent)
                     for i in range(len(clipped_dates)):
-                        self.progress = ((i + 1) / len(clipped_dates)) * 100
-                        self.__processProgress__(self.progress)
+                        self.progress = 80*((i + 1) / len(clipped_dates))
+                        if self.progress+percent>=100:
+                            self.__processProgress__(100)
+                        else:
+                            self.__processProgress__(self.progress)
                         p = subprocess.check_call(
                             [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
                              variable_name,
@@ -731,7 +736,7 @@ class ZMQCHIRPSHeadProcessor():
 
 
                 else:
-                    dates, operation, values, bounds = GetTDSData.get_aggregated_values(request['begintime'],
+                    dates, values,percent = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                         request['endtime'],
                                                                                         dataset_name, variable_name,
                                                                                         geometries,

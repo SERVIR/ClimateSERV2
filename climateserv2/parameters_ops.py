@@ -460,7 +460,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/IMERG1Day/',
      'fillValue': 9999.,
      'indexer': dit.DynamicIndex("P1D"),
-     'inputDataLocation': '/data/data2/image/input/IMERG1Day/',
+     'inputDataLocation': '/data/imerglate/',
      'data_category': 'IMERG',
      'variable': 'precipitation_amount',
      'dataset_name': 'nasa-imerg-late_global_0.1deg_1dy',
