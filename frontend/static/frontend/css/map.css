@@ -48,6 +48,11 @@ html {
     animation-iteration-count: 2;
 }
 
+.tour_box_blink:hover{
+    color: #fff;
+    background-color: #758055d1!important;
+}
+
 .popover-title{
     color:#ffffff;
     background-color: #758055!important;

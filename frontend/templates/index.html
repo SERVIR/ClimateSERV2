@@ -2,9 +2,9 @@
 {% load static %}
 {% block title %}ClimateSERV - Home{% endblock %}
 
-{%  block script %}
-<script src="{% static 'frontend/js/data-items.js' %}"></script>
-<script src="{% static 'frontend/js/index.js' %}"></script>
+{% block script %}
+    <script src="{% static 'frontend/js/data-items.js' %}"></script>
+    <script src="{% static 'frontend/js/index.js' %}"></script>
 {% endblock %}
 
 {% block content %}
@@ -18,14 +18,14 @@
                     <div class="carousel-item1">
                         <img
                                 class="d-block w-100"
-                                src="{% static 'frontend/img/banner.jpg' %}"
+                                src="{{ page_elements.hero_image.url }}"
                                 alt="IMERG Data"
                                 style="width: 100% !important"
                         />
                         <div class="carousel-caption d-md-block">
-                            <h3>ClimateSERV 2.0</h3>
+                            <h3>{{ page_elements.hero_title }}</h3>
                             <p>
-                                Data and tools for sustainable development
+                                {{ page_elements.hero_subtitle }}
                             </p>
                         </div>
                     </div>
@@ -35,16 +35,11 @@
     </div>
     <div style="background-color: #f6f6f6;" class="p50b0">
         <div class="row mx-auto my-auto">
-            <h2 class="underline-header" >
-                Background
+            <h2 class="underline-header">
+                {{ page_elements.intro_text_header }}
             </h2>
             <p style="padding: 15px 15px 0 15px">
-                ClimateSERV allows development practitioners, scientists/researchers,
-                and government decision-makers to visualize and download historical
-                rainfall data, vegetation condition data, and 180-day forecasts of
-                rainfall and temperature to improve understanding of, and make
-                improved decisions for, issues related to agriculture and water
-                availability.
+                {{ page_elements.intro_text }}
             </p>
         </div>
     </div>
@@ -77,10 +72,10 @@
 
                                             <div class="mbr-section-btn">
                                                 <button class="btn btn-lg btn-info"
-                                                   onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
-                                                   title="Help Center">
+                                                        onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
+                                                        title="Help Center">
                                                     Help Center
-                                                    </button>
+                                                </button>
                                                 <button
                                                         class="btn btn-lg btn-info"
                                                         onclick="window.location = 'map?data={{ dataset.button_variable }}'"
@@ -130,152 +125,41 @@
                     style="padding: 0 15px"
             >
                 <div class="carousel-inner w-100" role="listbox">
-                    <div class="carousel-item active h-100">
-                        <div class="row">
-                            <div class="col">
-                                <img
-                                        src="{% static 'frontend/img/chart_data.jpg' %}"
-                                        alt="Chart Data"
-                                        class="img-fluid do-with-img"
-                                />
-                                <p>
-                    <span class="active-title">As a student</span>
-                                    you can use ClimateSERV data to help in your thesis. For
-                                    example you could use Integrated Multi-satellitE Retrievals
-                                    for GPM (IMERG) dataset which provides near-realtime global
-                                    observations of rainfall at 10km resolution, to estimate
-                                    total rainfall accumulation from storm systems and quantify
-                                    the intensity of rainfall and flood impacts from tropical
-                                    cyclones and other storm systems in your specific area of
-                                    study.
-                                </p>
-                                <p>
-                                    Because ClimateSERV has historical data you can also drill
-                                    down through the data to get statistical information about
-                                    the study area over time in order to compare, contrast, and
-                                    model different scenarios. Using this data you can download
-                                    and print charts to help support your thesis.
-                                </p>
-                                <p>
-                    <span class="right carousel-control site-link" disabled>
-                      As a Student
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span
-                                            class="right carousel-control site-link"
-                                            onclick="setYouCanDoSlide(1)"
-                                    >
-                      As a Researcher
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span
-                                            class="right carousel-control site-link"
-                                            onclick="setYouCanDoSlide(2)"
-                                    >
-                      As a Decision Maker
-                    </span>
-                                </p>
+                    {% for tasks in page_elements.homepage.all %}
+
+                        <div class="carousel-item h-100 {% if forloop.first %} active {% endif %}">
+                            <div class="row">
+                                <div class="col">
+                                    <img
+                                            src="{{ tasks.display_image.url }}"
+                                            alt="{{ tasks.title }}"
+                                            class="img-fluid do-with-img"
+                                    />
+                                    <p>
+                                        <span class="active-title">{{ tasks.title }}</span>
+                                        {{ tasks.body }}
+                                    </p>
+                                    <p>
+                                        {% for tasktitle in page_elements.homepage.all %}
+                                            <span class="right carousel-control site-link" {% if tasktitle.title ==  tasks.title %}disabled
+                                            {%  else %}
+                                                onclick="setYouCanDoSlide({{ forloop.counter0 }})"
+                                            {% endif %}>
+                                              {{ tasktitle.title }}
+                                            </span>
+
+                                            {% if not forloop.last %}
+                                            <span> &nbsp;|&nbsp; </span>
+                                            {% endif %}
+
+                                       {% endfor %}
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="carousel-item h-100">
-                        <div class="row">
-                            <div class="col">
-                                <img
-                                        src="{% static 'frontend/img/agriculture.jpg' %}"
-                                        alt="Agriculture"
-                                        class="img-fluid do-with-img"
-                                />
-                                <p>
-                    <span class="active-title" >As a researcher</span>
-                                    you could use NDVI and rainfall data from ClimateSERV to
-                                    identify the effects of interventions by selecting two areas
-                                    of interest, one control with no intervention and another
-                                    that has experienced intervention. Each of these areas you
-                                    would perform an on-demand comparative analysis which would
-                                    result in a chart for each. Those charts could help you
-                                    highlight the differences of the two areas in terms of
-                                    vegetation health, derived growing season lengths and
-                                    rainfall. You can also download the summary data table as
-                                    well as the full dataset for the period specified.
-                                </p>
-                                <p>
-                                    With the result of this analysis, you could help showcase
-                                    the utility of the intervention programs and to provide an
-                                    objective rationale for expansion of those intervention
-                                    programs.
-                                </p>
-                                <p> 
-                    <span
-                            class="right carousel-control site-link"
-                            onclick="setYouCanDoSlide(0)"
-                    >
-                      As a Student
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span class="right carousel-control site-link" disabled>
-                      As a Researcher
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span
-                                            class="right carousel-control site-link"
-                                            onclick="setYouCanDoSlide(2)"
-                                    >
-                      As a Decision Maker
-                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="carousel-item h-100">
-                        <div class="row">
-                            <div class="col">
-                                <img
-                                        src="{% static 'frontend/img/drought.jpg' %}"
-                                        alt="Drought"
-                                        class="img-fluid do-with-img"
-                                />
-                                <p>
-                    <span sclass="active-title">
-                      As a decision maker
-                    </span>
-                                    you could use the rainfall data from ClimateSERV to help
-                                    predict droughts, estimate crop yields, and much more.
-                                    ClimateSERV provides data that you could use to accurately
-                                    assess how severe a drought will be, how it compares to past
-                                    droughts, and its potential effect on crop yields. This fact
-                                    is due to the long historical archive of data offered
-                                    through the system. It is important to place an evolving
-                                    dryer-than-normal season into historical context in order to
-                                    analyze the severity of rainfall deficits.
-                                </p>
-                                <p>
-                                    Being able to instantly narrow your statistical calculations
-                                    to your specific area of interest and time period gives you
-                                    fresh, as well as historical data at a moments notice.
-                                </p>
-                                <p>
-                    <span
-                            class="right carousel-control site-link"
-                            onclick="setYouCanDoSlide(0)"
-                    >
-                      As a Student
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span
-                                            class="right carousel-control site-link"
-                                            onclick="setYouCanDoSlide(1)"
-                                    >
-                      As a Researcher
-                    </span>
-                                    <span> &nbsp;|&nbsp; </span>
-                                    <span class="right carousel-control site-link" disabled>
-                      As a Decision Maker
-                    </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+
+
+                    {% endfor %}
                 </div>
             </div>
         </div>
