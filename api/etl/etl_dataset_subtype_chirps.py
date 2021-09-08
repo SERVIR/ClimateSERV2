@@ -32,8 +32,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
         self.MM__Month__End = params.get('MM__Month__End') or 1
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
@@ -221,7 +222,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "chirps"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -292,9 +293,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # print("DEBUG: (local_full_filepath_tif): " + str(local_full_filepath_tif))
                 # print("")
 
+                print(current_url_to_download)
+
                 # Download the file - Actually do the download now
                 try:
-                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
                     with open(local_full_filepath_tif, 'wb') as outfile:
                         outfile.write(r.content)
@@ -357,11 +359,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 extracted_tif_filename          = expected_granules_object['tif_filename']
                 local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
 
+                print(local_full_filepath_download)
+
                 if not os.path.isfile(local_full_filepath_download):
                     continue
 
                 try:
-                    print(local_full_filepath_download)
                     with gzip.open(local_full_filepath_download, 'rb') as f_in:
                         with open(local_extract_full_filepath, 'wb') as f_out:
                             shutil.copyfileobj(f_in, f_out)
@@ -430,9 +433,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     # print("A")
 
                     # Getting info ready for the current granule.
-                    local_extract_path              = expected_granules_object['local_extract_path']
-                    tif_filename                    = expected_granules_object['tif_filename']
-                    final_nc4_filename              = expected_granules_object['final_nc4_filename']
+                    local_extract_path = expected_granules_object['local_extract_path']
+                    tif_filename = expected_granules_object['tif_filename']
+                    final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file = os.path.join(local_extract_path, tif_filename)
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
@@ -448,11 +451,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         mode_var__precipAttr_comment    = 'Climate Hazards group InfraRed Precipitation'
                         mode_var__fileAttr_Description  = 'Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution'
                         mode_var__fileAttr_Version      = '1.0'
-                    if self.chirps_mode == 'chirps':
+                    elif self.chirps_mode == 'chirps':
                         mode_var__precipAttr_comment    = 'Climate Hazards group InfraRed Precipitation with Stations'
                         mode_var__fileAttr_Description  = 'Climate Hazards group InfraRed Precipitation with Stations at 0.05x0.05 degree resolution'
                         mode_var__fileAttr_Version      = '2.0'
-                    if self.chirps_mode == 'chirps_gefs':
+                    elif self.chirps_mode == 'chirps_gefs':
                         mode_var__precipAttr_comment    = 'chirps_gefs'
                         mode_var__fileAttr_Description  = 'chirps_gefs'
                         mode_var__fileAttr_Version      = 'chirps_gefs'
@@ -487,10 +490,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
-                    TimeStrSplit = ""
-                    yearStr = ""
-                    monthStr = ""
-                    dayStr = ""
+                    TimeStrSplit = ''
+                    yearStr = ''
+                    monthStr = ''
+                    dayStr = ''
                     if self.chirps_mode == 'chirp':
                         TimeStrSplit    = geotiffFile_FullPath.split('.')
                         yearStr         = TimeStrSplit[1]
@@ -666,7 +669,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except:
+                except Exception as e:
+                    print(e)
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
