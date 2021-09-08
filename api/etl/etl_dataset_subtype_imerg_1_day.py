@@ -245,6 +245,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         try:
             ftp_connection = ftplib.FTP_TLS(host=ftp_host, user=ftp_username, passwd=ftp_userpass)
             ftp_connection.prot_p()
+            ftp_connection.voidcmd('TYPE I')
 
             time.sleep(1)
 
@@ -295,27 +296,18 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                 # # 1 - Change Directory to the directory path
                 ftp_connection.cwd(remote_directory_path)
 
-                # TODO - Fix the problems with checking if a file exists        START
                 # # 2 - Check to see if the files exists
                 hasFiles = False
-                file_list = []  # to store all files
-                ftp_connection.retrlines('LIST', file_list.append)  # append to list
                 file_found_count = 0
-                # Looking for two specific file matches out of the whole list of files in the current remote directory
-                for f in file_list:
-                    if tfw_filename in f:
-                        file_found_count = file_found_count + 1
-                    if tif_filename in f:
-                        file_found_count = file_found_count + 1
 
+                if ftp_connection.size(tfw_filename):
+                    file_found_count = file_found_count + 1
+                if ftp_connection.size(tif_filename):
+                    file_found_count = file_found_count + 1
                 if file_found_count == 2:
                     hasFiles = True
-
-                # Validation
                 if hasFiles == False:
                     print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording here.")
-
-                # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working. hasFiles = True
 
                 if hasFiles == True:
                     # Both files were found, so let's now download them.
