@@ -68,6 +68,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                                     ensambles.append(ensemble_dir.name)
 
             for filename, date, ensamble in zip(filenames, dates, ensambles):
+                ens_code= '{:03d}'.format(int(ensamble[3:7]))
 
                 current_year__YYYY_str = '{:0>4d}'.format(date.year)
                 current_month__MM_str = '{:02d}'.format(date.month)
@@ -75,7 +76,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
                 final_nc4_filename = 'nmme-geos_s2s.{}{}01T000000Z.global.0.5deg.daily.ens{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    '{:03d}'.format(int(ensamble[3:7]))
+                    ens_code
                 )
                 date_str = date.strftime('%Y%m')
                 date_str_local = date.strftime('%Y%m01')
