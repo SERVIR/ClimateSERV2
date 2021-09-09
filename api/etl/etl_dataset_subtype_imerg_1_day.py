@@ -88,7 +88,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     tfw_filename = base_filename + 'tfw'
                     tif_filename = base_filename + 'tif'
 
-                    # Building the Common NC4 Filename
+                    # Create the final nc4 filename
                     # nasa-imerg-late.20200531T000000Z.global.0.1deg.1dy.nc4
                     final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}Z.global.0.1deg.1dy.nc4'.format(
                         'late' if self.mode == 'LATE' else 'early',
@@ -116,18 +116,25 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     # There is no extract step, so just using the working directory as the local extract path.
                     local_final_load_path = final_load_dir_path
 
-                    current_obj = {'runTime': runTime, 'date_YYYY': current_year__yyyy_str,
-                                   'date_MM': current_month__mm_str, 'date_DD': current_day__dd_str,
-                                   'local_extract_path': local_extract_path,
-                                   'local_final_load_path': local_final_load_path,
-                                   'remote_directory_path': remote_directory_path, 'base_filename': base_filename,
-                                   'tfw_filename': tfw_filename, 'tif_filename': tif_filename,
-                                   'final_nc4_filename': final_nc4_filename, 'granule_name': final_nc4_filename,
-                                   'remote_full_filepath_tif': remote_full_filepath_tif,
-                                   'remote_full_filepath_tfw': remote_full_filepath_tfw,
-                                   'local_full_filepath_tif': local_full_filepath_tif,
-                                   'local_full_filepath_tfw': local_full_filepath_tfw,
-                                   'local_full_filepath_final_nc4_file': local_full_filepath_final_nc4_file}
+                    current_obj = {
+                        'runTime': runTime,
+                        'date_YYYY': current_year__yyyy_str,
+                        'date_MM': current_month__mm_str,
+                        'date_DD': current_day__dd_str,
+                        'local_extract_path': local_extract_path,
+                        'local_final_load_path': local_final_load_path,
+                        'remote_directory_path': remote_directory_path,
+                        'base_filename': base_filename,
+                        'tfw_filename': tfw_filename,
+                        'tif_filename': tif_filename,
+                        'final_nc4_filename': final_nc4_filename,
+                        'granule_name': final_nc4_filename,
+                        'remote_full_filepath_tif': remote_full_filepath_tif,
+                        'remote_full_filepath_tfw': remote_full_filepath_tfw,
+                        'local_full_filepath_tif': local_full_filepath_tif,
+                        'local_full_filepath_tfw': local_full_filepath_tfw,
+                        'local_full_filepath_final_nc4_file': local_full_filepath_final_nc4_file
+                    }
 
                     granule_name = final_nc4_filename
                     granule_contextual_information = ""
@@ -226,6 +233,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         error_counter = 0
         detail_errors = []
 
+        # Setting up for the periodic reporting on the terminal
         expected_granules = self._expected_granules
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
@@ -245,6 +253,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         try:
             ftp_connection = ftplib.FTP_TLS(host=ftp_host, user=ftp_username, passwd=ftp_userpass)
             ftp_connection.prot_p()
+            ftp_connection.voidcmd('TYPE I')
 
             time.sleep(1)
 
@@ -291,31 +300,24 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
 
+                print(remote_directory_path)
+
                 # FTP Processes
                 # # 1 - Change Directory to the directory path
                 ftp_connection.cwd(remote_directory_path)
 
-                # TODO - Fix the problems with checking if a file exists        START
                 # # 2 - Check to see if the files exists
                 hasFiles = False
-                file_list = []  # to store all files
-                ftp_connection.retrlines('LIST', file_list.append)  # append to list
                 file_found_count = 0
-                # Looking for two specific file matches out of the whole list of files in the current remote directory
-                for f in file_list:
-                    if tfw_filename in f:
-                        file_found_count = file_found_count + 1
-                    if tif_filename in f:
-                        file_found_count = file_found_count + 1
 
+                if ftp_connection.size(tfw_filename):
+                    file_found_count = file_found_count + 1
+                if ftp_connection.size(tif_filename):
+                    file_found_count = file_found_count + 1
                 if file_found_count == 2:
                     hasFiles = True
-
-                # Validation
                 if hasFiles == False:
                     print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording here.")
-
-                # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working. hasFiles = True
 
                 if hasFiles == True:
                     # Both files were found, so let's now download them.
@@ -330,14 +332,15 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     try:
                         # Download the Tif
+                        print(local_FullFilePath_ToSave_Tif)
                         fx = open(local_FullFilePath_ToSave_Tif, "wb")
                         fx.close()
                         os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
-
                         try:
                             with open(local_FullFilePath_ToSave_Tif, "wb") as f:
                                 ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                        except:
+                        except Exception as e:
+                            e.print(e)
                             os.remove(local_FullFilePath_ToSave_Tif)
                             local_FullFilePath_ToSave_Tif = local_FullFilePath_ToSave_Tif.replace("03E", "04A")
                             ftp_PathTo_TIF = ftp_PathTo_TIF.replace("03E", "04A")
@@ -347,7 +350,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             try:
                                 with open(local_FullFilePath_ToSave_Tif, "wb") as f:
                                     ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                            except:
+                            except Exception as e:
+                                e.print(e)
                                 os.remove(local_FullFilePath_ToSave_Tif)
                                 ftp_PathTo_TIF = ftp_PathTo_TIF.replace("04A", "04B")
                                 local_FullFilePath_ToSave_Tif = local_FullFilePath_ToSave_Tif.replace("04A", "04B")
@@ -356,8 +360,10 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                 os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
                                 try:
                                     with open(local_FullFilePath_ToSave_Tif, "wb") as f:
+                                        print(ftp_PathTo_TIF)
                                         ftp_connection.retrbinary("RETR " + ftp_PathTo_TIF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                                except:
+                                except Exception as e:
+                                    e.print(e)
                                     error_counter = error_counter + 1
                                     sysErrorData = str(sys.exc_info())
                                     # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -376,13 +382,15 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         time.sleep(3)
 
                         # Download the Tfw
+                        print(local_FullFilePath_ToSave_Twf)
                         fx = open(local_FullFilePath_ToSave_Twf, "wb")
                         fx.close()
                         os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
                         try:
                             with open(local_FullFilePath_ToSave_Twf, "wb") as f:
                                 ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                        except:
+                        except Exception as e:
+                            print(e)
                             os.remove(local_FullFilePath_ToSave_Twf)
                             local_FullFilePath_ToSave_Twf = local_FullFilePath_ToSave_Twf.replace("03E", "04A")
                             ftp_PathTo_TWF = ftp_PathTo_TWF.replace("03E", "04A")
@@ -392,7 +400,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             try:
                                 with open(local_FullFilePath_ToSave_Twf, "wb") as f:
                                     ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                            except:
+                            except Exception as e:
+                                print(e)
                                 os.remove(local_FullFilePath_ToSave_Twf)
                                 ftp_PathTo_TWF = ftp_PathTo_TWF.replace("04A", "04B")
                                 local_FullFilePath_ToSave_Twf = local_FullFilePath_ToSave_Twf.replace("04A", "04B")
@@ -402,7 +411,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                                 try:
                                     with open(local_FullFilePath_ToSave_Twf, "wb") as f:
                                         ftp_connection.retrbinary("RETR " + ftp_PathTo_TWF, f.write)  # "RETR %s" % ftp_PathTo_TIF
-                                except:
+                                except Exception as e:
+                                    print(e)
                                     error_counter = error_counter + 1
                                     sysErrorData = str(sys.exc_info())
                                     # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -425,6 +435,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         download_counter = download_counter + 1
 
                     except Exception as e:
+                        print(e)
                         error_counter = error_counter + 1
                         sysErrorData = str(sys.exc_info())
                         # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -440,6 +451,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
             except Exception as e:
+                print(e)
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
                 error_message = "imerg.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
@@ -482,21 +494,25 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
+        ret__detail_state_info = {}
 
-        # error_counter, detail_errors
         error_counter = 0
         detail_errors = []
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
                 try:
+
+                    # print("A")
 
                     # Getting info ready for the current granule.
                     local_extract_path = expected_granules_object['local_extract_path']
                     tif_filename = expected_granules_object['tif_filename']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file = os.path.join(local_extract_path, tif_filename)
+
+                    print(final_nc4_filename)
 
                     ############################################################
                     # Start extracting data and creating output netcdf file.
@@ -530,8 +546,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     # Add the time dimension as a new coordinate.
                     imerg = imerg.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    imerg['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)),
-                                                      dims=['time', 'nbnds'])
+                    imerg['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
 
                     # 3) Rename and add attributes to this dataset.
                     # # Error, 'inplace' has been removed from xarray.
@@ -540,7 +555,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     imerg = imerg.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
 
                     # Lat/Lon/Time dictionaries.
-                    # Use Ordered dict]
+                    # Use Ordered dict
 
                     # missing_data/_FillValue , relative time units etc. are handled as
                     # part of the encoding dictionary used in to_netcdf() call.
@@ -591,170 +606,138 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         'zlib': True,
                         'complevel': 7}
 
-                    imerg.time.encoding = {
-                        'units': 'seconds since 1970-01-01T00:00:00Z',
-                        'dtype': np.dtype('int32')
-                    }
+                    imerg.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    imerg.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
-                    imerg.time_bnds.encoding = {
-                        'units': 'seconds since 1970-01-01T00:00:00Z',
-                        'dtype': np.dtype('int32')
-                    }
+                    # print("F")
 
                     # 5) Output File
                     imerg.to_netcdf(os.path.join(local_extract_path, final_nc4_filename), unlimited_dims='time')
 
-                except:
+                    # print("G")
+
+                    print(final_nc4_filename)
+
+                except Exception as e:
+                    print(e)
+                    sysErrorData = str(sys.exc_info())
+
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    error_message = "imerg.execute__Step__Transform: An Error occurred during the Transform step " \
-                                    "with ETL_Granule UUID: " + str(Granule_UUID) + ".  System " \
-                                    "Error Message: " + str(sys.exc_info())
+                    error_message = "ETL_Dataset_Subtype_IMERG_1_DAY.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
 
                     # Individual Transform Granule Error
                     error_counter = error_counter + 1
                     detail_errors.append(error_message)
 
-                    # Update this Granule for Failure (store the error info in the granule also) Granule_UUID =
-                    # expected_granules_object['Granule_UUID'] new__granule_pipeline_state =
-                    # settings.GRANULE_PIPELINE_STATE__FAILED  # When a granule has a NC4 file in the correct
-                    # location, this counts as a Success.
-                    new__granule_pipeline_state = Config_Setting.get_value(
-                        setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
+                    error_JSON = {}
+                    error_JSON['error_message'] = error_message
+
+                    # Update this Granule for Failure (store the error info in the granule also)
+                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
-                    is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
-                        is_error=is_error)
+                    is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Transform"
-                    self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(
-                        granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append,
-                        sub_jsonable_object={
-                            "error_message": error_message,
-                            "is_update_succeed": is_update_succeed,
-                            "is_update_succeed_2": "Current process"
-                        })
+                    is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
         except:
-            error_message = "Error: There was an uncaught error when processing the Transform step on all of the " \
-                            "expected Granules.  See the additional data and system error message for details on " \
-                            "what caused this error.  System Error Message: " + str(str(sys.exc_info()))
-            # Exit Here With Error info loaded up
-            return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                       function_name=ret__function_name, is_error=True,
-                                                       event_description=ret__event_description,
-                                                       error_description=error_message,
-                                                       detail_state_info={
-                                                           "error": error_message,
-                                                           "is_error": True,
-                                                           "class_name": self.__class__.__name__,
-                                                           "function_name": "execute__Step__Transform"
-                                                       })
 
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name=ret__function_name, is_error=ret__is_error,
-                                                   event_description=ret__event_description,
-                                                   error_description=ret__error_description,
-                                                   detail_state_info={
-                                                       "class_name": self.__class__.__name__,
-                                                       "error_counter": error_counter,
-                                                       "detail_errors": detail_errors
-                                                   })
+            sysErrorData = str(sys.exc_info())
+            error_JSON = {}
+            error_JSON['error'] = "Error: There was an uncaught error when processing the Transform step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
+            error_JSON['is_error'] = True
+            error_JSON['class_name'] = self.__class__.__name__
+            error_JSON['function_name'] = "execute__Step__Transform"
+            # Exit Here With Error info loaded up
+            ret__is_error = True
+            ret__error_description = error_JSON['error']
+            ret__detail_state_info = error_JSON
+            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+            return retObj
+
+        ret__detail_state_info['class_name'] = self.__class__.__name__
+        ret__detail_state_info['error_counter'] = error_counter
+        ret__detail_state_info['detail_errors'] = detail_errors
+
+        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
 
     def execute__Step__Load(self):
         ret__function_name = "execute__Step__Load"
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
+        ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
+
                 try:
                     local_extract_path = expected_granules_object['local_extract_path']
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
-                    expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)
-                    # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)
-                    # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
+                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename) # Where the final NC4 file should be placed for THREDDS Server monitoring
 
-                    # Copy the file from the working directory over to the final location for it.  (Where THREDDS
-                    # Monitors for it)
+                    print(expected_full_path_to_local_final_nc4_file)
+
+                    # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
+
                     Granule_UUID = expected_granules_object['Granule_UUID']
-                    # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__SUCCESS # When a granule has a
-                    # NC4 file in the correct location, this counts as a Success.
-                    new__granule_pipeline_state = Config_Setting.get_value(
-                        setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")  #
+
+                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
                     is_error = False
-                    self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
-                        is_error=is_error)
+                    is_update_succeed =self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    granule_name = final_nc4_filename
-                    granule_contextual_information = ""
-                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(
-                    #     granule_name=granule_name,
-                    #     granule_contextual_information=granule_contextual_information,
-                    #     additional_json={
-                    #         "MostRecent__ETL_Granule_UUID": str(Granule_UUID).strip()
-                    #     })
+                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
+                    #
+                    # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
+                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
+                    additional_json = {}
+                    additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
+                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except Exception:
-                    error_message = "Error: There was an error when attempting to copy the current nc4 file to it's " \
-                                    "final directory location.  See the additional data and system error message for " \
-                                    "details on what caused this error.  System Error " \
-                                    "Message: " + str(str(sys.exc_info()))
+                except:
+                    sysErrorData = str(sys.exc_info())
+                    error_JSON = {}
+                    error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
+                    error_JSON['is_error'] = True
+                    error_JSON['class_name'] = self.__class__.__name__
+                    error_JSON['function_name'] = "execute__Step__Load"
+                    #
+                    # Additional infos
+                    error_JSON['expected_full_path_to_local_working_nc4_file'] = str(expected_full_path_to_local_working_nc4_file).strip()
+                    error_JSON['expected_full_path_to_local_final_nc4_file'] = str(expected_full_path_to_local_final_nc4_file).strip()
+                    #
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
-                    # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__FAILED  # When a granule has a
-                    # NC4 file in the correct location, this counts as a Success.
-                    new__granule_pipeline_state = Config_Setting.get_value(
-                        setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
-                    self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
-                        is_error=True)
-                    self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(
-                        granule_uuid=Granule_UUID, new_json_key_to_append="execute__Step__Load",
-                        sub_jsonable_object={
-                            "error": error_message,
-                            "is_error": True,
-                            "class_name": self.__class__.__name__,
-                            "function_name": "execute__Step__Load",
-                            "expected_full_path_to_local_working_nc4_file": str(
-                                expected_full_path_to_local_working_nc4_file).strip(),
-                            "expected_full_path_to_local_final_nc4_file": str(
-                                expected_full_path_to_local_final_nc4_file).strip()
-                        })
+                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    is_error = True
+                    is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
+                    new_json_key_to_append = "execute__Step__Load"
+                    is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
-        except Exception:
-            error_message = "Error: There was an uncaught error when processing the Load step on all of the expected " \
-                            "Granules.  See the additional data and system error message for details on what caused " \
-                            "this error.  System Error Message: " + str(str(sys.exc_info()))
+        except Exception as e:
+            sysErrorData = str(sys.exc_info())
+            error_JSON = {}
+            error_JSON['error'] = "Error: There was an uncaught error when processing the Load step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
+            error_JSON['is_error'] = True
+            error_JSON['class_name'] = self.__class__.__name__
+            error_JSON['function_name'] = "execute__Step__Load"
             # Exit Here With Error info loaded up
-            return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                       function_name=ret__function_name, is_error=True,
-                                                       event_description=ret__event_description,
-                                                       error_description=error_message,
-                                                       detail_state_info={
-                                                           "is_error": True,
-                                                           "error": error_message,
-                                                           "class_name": self.__class__.__name__,
-                                                           "function_name": "execute__Step__Load"
-                                                       })
+            ret__is_error = True
+            ret__error_description = error_JSON['error']
+            ret__detail_state_info = error_JSON
+            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+            return retObj
 
-        return common.get_function_response_object(class_name=self.__class__.__name__,
-                                                   function_name=ret__function_name, is_error=ret__is_error,
-                                                   event_description=ret__event_description,
-                                                   error_description=ret__error_description,
-                                                   detail_state_info={
-                                                       "class_name": self.__class__.__name__,
-                                                       "is_error": False,
-                                                       "function_name": "execute__Step__Load"
-                                                   })
+        retObj = common.get_function_response_object(class_name=self.__class__.__name__, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
+        return retObj
 
     def execute__Step__Post_ETL_Custom(self):
         ret__function_name = "execute__Step__Post_ETL_Custom"
@@ -791,7 +774,6 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-            # print("execute__Step__Clean_Up: Cleanup is finished.")
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}

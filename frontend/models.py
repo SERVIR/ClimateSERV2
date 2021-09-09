@@ -73,3 +73,28 @@ class EnsembleLayer(models.Model):
     def __str__(self):
         name = self.master_layer.title + "_" + self.title
         return f"{name}"
+
+
+class HomePage(models.Model):
+    """Model representing an ensemble layer for the map"""
+    hero_title = models.CharField(max_length=200, help_text='Enter a title which will display in the hero image.')
+    hero_subtitle = models.CharField(max_length=200, help_text='Enter a subtitle which will display in the hero image.')
+    hero_image = models.ImageField(default='images/no_data_preview.png', upload_to='images/')
+    intro_text_header = models.CharField(max_length=200, help_text='Header for intro section.')
+    intro_text = models.TextField(help_text="Paragraph for intro text")
+
+    def __str__(self):
+        name = self.hero_title
+        return f"{name}"
+
+
+class WhatYouCanDo(models.Model):
+    title = models.CharField(max_length=200, help_text='Enter a title for the section.')
+    body = models.TextField(help_text='Enter the body.')
+    display_image = models.ImageField(default='images/no_data_preview.png', upload_to='images/')
+
+    HomePage = models.ForeignKey(HomePage, on_delete=models.CASCADE, related_name="homepage")
+
+    def __str__(self):
+        name = self.title
+        return f"{name}"

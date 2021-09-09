@@ -7,6 +7,7 @@ def index(request):
     return render(request, 'index.html', context={
         'page': 'menu-home',
         'datasets': DataSet.objects.exclude(featured=False).all(),
+        'page_elements': HomePage.objects.first()
     })
 
 
