@@ -8,30 +8,27 @@ from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 
 from api.services import Config_SettingService
-from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'ImergOneDay'
-    etl_parent_pipeline_instance = None
-    mode = 'LATE'
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, dataset_subtype):
+    def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        self.class_name = self.__class__.__name__
+        self._expected_remote_full_file_paths = []
+        self._expected_granules = []
         if dataset_subtype == 'imerg1dy_early':
             self.mode = 'EARLY'
         elif dataset_subtype == 'imerg1dy_late':
             self.mode = 'LATE'
+        else:
+            self.mode = 'LATE'
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year - 1
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year - 1
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
         self.MM__Month__End = params.get('MM__Month__End') or 1
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
@@ -140,24 +137,26 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     }
 
                     granule_name = final_nc4_filename
-                    granule_contextual_information = ""
-                    granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
+                    granule_contextual_information = ''
+                    granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
 
-                    additional_json = current_obj  # {}
+                    additional_json = current_obj
                     new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
                         granule_name=granule_name,
                         granule_contextual_information=granule_contextual_information,
                         granule_pipeline_state=granule_pipeline_state,
-                        additional_json=additional_json)
-                    #
+                        additional_json=additional_json
+                    )
+
                     # Save the Granule's UUID for reference in later steps
                     current_obj['Granule_UUID'] = str(new_granule_uuid).strip()
 
                     # Add to the granules list
                     self._expected_granules.append(current_obj)
-        except:
+
+        except Exception as e:
+            print(e)
             sysErrorData = str(sys.exc_info())
-            print(sysErrorData)
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when generating the expected remote filepaths.  See the additional data for details on which expected file caused the error.  System Error Message: " + str(sysErrorData)
             error_JSON['is_error'] = True
@@ -201,7 +200,6 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # Ended, now for reporting
-        # Ended, now for reporting
         ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
@@ -230,9 +228,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             modulus_size = 1
 
         # Connect to FTP
-        ftp_host            = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST", default_or_error_return_value="error.getting.ftp-host.nasa.gov")
-        ftp_username        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="error_getting_user_name")
-        ftp_userpass        = Config_Setting.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="error_getting_user_password")
+        ftp_host            = Config_SettingService.get_value(setting_name="FTP_CREDENTIAL_IMERG__HOST", default_or_error_return_value="error.getting.ftp-host.nasa.gov")
+        ftp_username        = Config_SettingService.get_value(setting_name="FTP_CREDENTIAL_IMERG__USER", default_or_error_return_value="error_getting_user_name")
+        ftp_userpass        = Config_SettingService.get_value(setting_name="FTP_CREDENTIAL_IMERG__PASS", default_or_error_return_value="error_getting_user_password")
 
         # Attempt Making FTP Connection here (if fail, then exit this function with an error
         ftp_connection = None
@@ -273,7 +271,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
+                    activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
@@ -282,9 +280,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tfw_filename                = expected_granule['tfw_filename']
                 tif_filename                = expected_granule['tif_filename']
-                local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
-                local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
-                #
+                # local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                # local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
+
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
 
@@ -364,7 +362,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             warn_JSON['function_name'] = "execute__Step__Download"
                             warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
                             # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                            activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                            activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                             activity_description = warn_JSON['warning']
                             self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
@@ -391,8 +389,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                             warn_JSON['function_name'] = "execute__Step__Download"
                             warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
                             # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                            # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
-                            activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                            activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                             activity_description = warn_JSON['warning']
                             self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
@@ -414,7 +411,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         warn_JSON['function_name']          = "execute__Step__Download"
                         warn_JSON['current_object_info']    = expected_granule
                         # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                        activity_event_type         = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                        activity_event_type         = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                         activity_description        = warn_JSON['warning']
                         self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
 
@@ -499,6 +496,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     # '%Y%m%dS%H%M%S')   # pandas can't seem to use datetime to parse timestrings...
                     start_time = datetime.datetime.strptime(yyyymmdd + hhmmss, '%Y%m%dS%H%M%S')
                     end_time = start_time + pd.Timedelta(minutes=29) + pd.Timedelta(seconds=59)  # 4 weeks (i.e. 28 days)
+
                     ############################################################
                     # beginning extracting data and creating output netcdf file.
                     ############################################################
@@ -564,6 +562,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                          ('WesternmostLongitude', np.min(imerg.longitude.values)),
                          ('EasternmostLongitude', np.max(imerg.longitude.values)),
                          ('TemporalResolution', '1-day'), ('SpatialResolution', '0.1deg')])
+
                     # Set the Endcodings
                     imerg.precipitation_amount.encoding = {
                         '_FillValue': np.uint16(29999),
@@ -573,7 +572,6 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         'add_offset': 0.0,
                         'zlib': True,
                         'complevel': 7}
-
                     imerg.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     imerg.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
@@ -602,7 +600,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     error_JSON['error_message'] = error_message
 
                     # Update this Granule for Failure (store the error info in the granule also)
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Transform"
@@ -658,7 +656,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
                     is_error = False
                     is_update_succeed =self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
@@ -684,7 +682,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     #
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
@@ -728,7 +726,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == "":
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
@@ -736,7 +734,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             else:
                 shutil.rmtree(temp_working_dir)
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
