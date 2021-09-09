@@ -8,32 +8,29 @@ from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 
 from api.services import Config_SettingService
-from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'chirps'
-    etl_parent_pipeline_instance = None
-    chirps_mode = 'chirp'
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, subtype):
+    def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        if subtype == 'chirp':
-            self.chirps_mode = 'chirp'
-        elif subtype == 'chirps':
-            self.chirps_mode = 'chirps'
-        elif subtype == 'chirps_gefs':
-            self.chirps_mode = 'chirps_gefs'
+        self.class_name = self.__class__.__name__
+        self._expected_remote_full_file_paths = []
+        self._expected_granules = []
+        if dataset_subtype == 'chirp':
+            self.mode = 'chirp'
+        elif dataset_subtype == 'chirps':
+            self.mode = 'chirps'
+        elif dataset_subtype == 'chirps_gefs':
+            self.mode = 'chirps_gefs'
+        else:
+            self.mode = 'chirp'
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
         self.MM__Month__End = params.get('MM__Month__End') or 1
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
@@ -41,7 +38,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
     # Specialized Functions (For each Mode)
     @staticmethod
-    def get__base_filename__for_chirps_mode__chirp(datetime_obj):
+    def get__base_filename__for_mode__chirp(datetime_obj):
         base_filename = 'chirp.{}.{}.{}'.format(
             '{:0>4d}'.format(datetime_obj.year),
             '{:02d}'.format(datetime_obj.month),
@@ -50,7 +47,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         return base_filename
 
     @staticmethod
-    def get__base_filename__for_chirps_mode__chirps(datetime_obj):
+    def get__base_filename__for_mode__chirps(datetime_obj):
         base_filename = 'chirps-v2.0.{}.{}.{}'.format(
             '{:0>4d}'.format(datetime_obj.year),
             '{:02d}'.format(datetime_obj.month),
@@ -59,7 +56,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         return base_filename
 
     @staticmethod
-    def get__base_filename__for_chirps_mode__chirps_gefs(datetime_obj):
+    def get__base_filename__for_mode__chirps_gefs(datetime_obj):
         dekad_day_str = '01'
         if datetime_obj.day > 10:
             dekad_day_str = '11'
@@ -78,14 +75,14 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
     # Function to decide which basefile name function to call based on the current mode.  (The file structure differs between each mode).
     @staticmethod
     def get__base_filename(subtype_filter, datetime_obj):
-        base_filename = 'default__chirps_mode_not_recognized'
+        base_filename = 'default__mode_not_recognized'
         subtype_filter = str(subtype_filter).strip()
         if subtype_filter == 'chirp':
-            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirp(datetime_obj=datetime_obj)
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirp(datetime_obj=datetime_obj)
         elif subtype_filter == 'chirps':
-            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirps(datetime_obj=datetime_obj)
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirps(datetime_obj=datetime_obj)
         elif subtype_filter == 'chirps_gefs':
-            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_chirps_mode__chirps_gefs(datetime_obj=datetime_obj)
+            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirps_gefs(datetime_obj=datetime_obj)
         return base_filename
 
     def execute__Step__Pre_ETL_Custom(self):
@@ -114,17 +111,17 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 current_day__DD_str = "{:02d}".format(currentDate.day)
 
                 # Create the base filename
-                base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.chirps_mode, datetime_obj=currentDate)
+                base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.mode, datetime_obj=currentDate)
                 tif_filename = '{}.tif'.format(base_filename)
 
                 # Create the final nc4 filename
                 # ucsb-chirp.20210731T000000Z.global.0.05deg.daily.nc4
                 product = ''
-                if self.chirps_mode == 'chirp':
+                if self.mode == 'chirp':
                     product = 'chirp'
-                elif self.chirps_mode == 'chirps':
+                elif self.mode == 'chirps':
                     product = 'chirps'
-                elif self.chirps_mode == 'chirps_gefs':
+                elif self.mode == 'chirps_gefs':
                     product = 'chirps-gefs'
                 final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.daily.nc4'.format(
                     product,
@@ -134,7 +131,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 )
 
                 # Now get the remote File Paths (Directory) based on the date infos.
-                # All 3 of these chirps_mode products use a year appended to the end of their path.
+                # All 3 of these mode products use a year appended to the end of their path.
                 # Add the Year to the directory path.
                 remote_directory_path = urllib.parse.urljoin(current_root_http_path, current_year__YYYY_str + '/')
 
@@ -172,7 +169,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 current_obj['local_full_filepath_final_nc4_file'] = local_full_filepath_final_nc4_file
 
                 # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
-                granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
+                granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
                 new_Granule_UUID = self.etl_parent_pipeline_instance.log_etl_granule(granule_name=final_nc4_filename, granule_contextual_information="", granule_pipeline_state=granule_pipeline_state, additional_json=current_obj)
 
                 # Save the Granule's UUID for reference in later steps
@@ -189,10 +186,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
-            # Call Error handler right here (If this is commented out, then the info should be bubbling up to the calling function))
-            # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR
-            # self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=error_JSON)
-            #
             # Exit Here With Error info loaded up
             ret__is_error = True
             ret__error_description = error_JSON['error']
@@ -221,7 +214,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
-            error_JSON['class_name'] = "chirps"
+            error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
             # Exit Here With Error info loaded up
             ret__is_error = True
@@ -231,7 +224,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # Ended, now for reporting
-        ret__detail_state_info['class_name'] = "chirps"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
@@ -261,15 +254,13 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         if modulus_size < 1:
             modulus_size = 1
 
-        # No FTP here, just http
-
         # Loop through each expected granule
         for expected_granule in expected_granules:
             try:
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
+                    activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
@@ -279,22 +270,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 tif_filename                = expected_granule['tif_filename']
                 current_url_to_download     = urllib.parse.urljoin(remote_directory_path, tif_filename + '.gz')
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif'] + '.gz'
-                #
+
                 # Granule info
                 Granule_UUID    = expected_granule['Granule_UUID']
                 granule_name    = expected_granule['granule_name']
 
-                # Debug / Testing the download step
-                # print("")
-                # print("DEBUG: (remote_directory_path): " + str(remote_directory_path))
-                # print("DEBUG: (tif_filename): " + str(tif_filename))
-                # print("DEBUG: (current_url_to_download): " + str(current_url_to_download))
-                # print("DEBUG: (local_full_filepath_tif): " + str(local_full_filepath_tif))
-                # print("")
+                print(current_url_to_download)
 
                 # Download the file - Actually do the download now
                 try:
-                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
                     with open(local_full_filepath_tif, 'wb') as outfile:
                         outfile.write(r.content)
@@ -310,7 +294,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     warn_JSON['function_name']          = "execute__Step__Download"
                     warn_JSON['current_object_info']    = expected_granule
                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                    activity_event_type         = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
+                    activity_event_type         = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                     activity_description        = warn_JSON['warning']
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
@@ -357,11 +341,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 extracted_tif_filename          = expected_granules_object['tif_filename']
                 local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
 
+                print(local_full_filepath_download)
+
                 if not os.path.isfile(local_full_filepath_download):
                     continue
 
                 try:
-                    print(local_full_filepath_download)
                     with gzip.open(local_full_filepath_download, 'rb') as f_in:
                         with open(local_extract_full_filepath, 'wb') as f_out:
                             shutil.copyfileobj(f_in, f_out)
@@ -385,8 +370,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     error_JSON['error_message'] = error_message
 
                     # Update this Granule for Failure (store the error info in the granule also)
-                    # Granule_UUID = expected_granules_object['Granule_UUID']
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Extract"
@@ -430,9 +414,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     # print("A")
 
                     # Getting info ready for the current granule.
-                    local_extract_path              = expected_granules_object['local_extract_path']
-                    tif_filename                    = expected_granules_object['tif_filename']
-                    final_nc4_filename              = expected_granules_object['final_nc4_filename']
+                    local_extract_path = expected_granules_object['local_extract_path']
+                    tif_filename = expected_granules_object['tif_filename']
+                    final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file = os.path.join(local_extract_path, tif_filename)
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
@@ -444,15 +428,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     mode_var__precipAttr_comment    = ''
                     mode_var__fileAttr_Description  = ''
                     mode_var__fileAttr_Version      = ''
-                    if self.chirps_mode == 'chirp':
+                    if self.mode == 'chirp':
                         mode_var__precipAttr_comment    = 'Climate Hazards group InfraRed Precipitation'
                         mode_var__fileAttr_Description  = 'Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution'
                         mode_var__fileAttr_Version      = '1.0'
-                    if self.chirps_mode == 'chirps':
+                    elif self.mode == 'chirps':
                         mode_var__precipAttr_comment    = 'Climate Hazards group InfraRed Precipitation with Stations'
                         mode_var__fileAttr_Description  = 'Climate Hazards group InfraRed Precipitation with Stations at 0.05x0.05 degree resolution'
                         mode_var__fileAttr_Version      = '2.0'
-                    if self.chirps_mode == 'chirps_gefs':
+                    elif self.mode == 'chirps_gefs':
                         mode_var__precipAttr_comment    = 'chirps_gefs'
                         mode_var__fileAttr_Description  = 'chirps_gefs'
                         mode_var__fileAttr_Version      = 'chirps_gefs'
@@ -487,21 +471,21 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
-                    TimeStrSplit = ""
-                    yearStr = ""
-                    monthStr = ""
-                    dayStr = ""
-                    if self.chirps_mode == 'chirp':
+                    TimeStrSplit = ''
+                    yearStr = ''
+                    monthStr = ''
+                    dayStr = ''
+                    if self.mode == 'chirp':
                         TimeStrSplit    = geotiffFile_FullPath.split('.')
                         yearStr         = TimeStrSplit[1]
                         monthStr        = TimeStrSplit[2]
                         dayStr          = TimeStrSplit[3]
-                    elif self.chirps_mode == 'chirps':
+                    elif self.mode == 'chirps':
                         TimeStrSplit    = geotiffFile_FullPath.split('.')
                         yearStr         = TimeStrSplit[2]
                         monthStr        = TimeStrSplit[3]
                         dayStr          = TimeStrSplit[4]
-                    elif self.chirps_mode == 'chirps_gefs':
+                    elif self.mode == 'chirps_gefs':
                         pass
 
                     # print("C: TimeStrSplit: " + str(TimeStrSplit))
@@ -597,7 +581,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     error_JSON['error_message'] = error_message
 
                     # Update this Granule for Failure (store the error info in the granule also)
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Transform"
@@ -654,7 +638,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
@@ -666,7 +650,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except:
+                except Exception as e:
+                    print(e)
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
@@ -681,7 +666,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
-                    new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
+                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
@@ -733,7 +718,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == '':
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
@@ -741,7 +726,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             else:
                 shutil.rmtree(temp_working_dir)
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
