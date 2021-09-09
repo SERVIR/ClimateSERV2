@@ -59,6 +59,7 @@ intervals = params.intervals
 ageInDaysToPurgeData = params.ageInDaysToPurgeData
 netCDFpath=params.tempnetcdfpath
 deletetempnetcdf=params.deletetempnetcdf
+pythonpath=params.pythonpath
 
 resultsdir = params.resultsdir
 

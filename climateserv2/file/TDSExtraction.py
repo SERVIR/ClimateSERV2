@@ -6,11 +6,8 @@ import numpy as np
 import os
 import xarray as xr
 from datetime import datetime
-from shapely.geometry import mapping, Polygon
+from shapely.geometry import mapping, Polygon,Point
 import rioxarray
-from zipfile import ZipFile
-from os.path import basename
-import netCDF4
 import shutil
 try:
     import climateserv2.locallog.locallogging as llog
@@ -21,6 +18,13 @@ except:
     import parameters as params
 import subprocess
 logger=llog.getNamedLogger("request_processor")
+
+def get_polygon_from_point(lon, lat):
+    pt = Point(lon,lat)
+    # buffer with CAP_STYLE = 3
+    buf = pt.buffer(10, cap_style=3)
+    polygon = gpd.GeoSeries([buf]).__geo_interface__
+    return polygon
 
 def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation):
     percent=0
@@ -46,6 +50,11 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         count=9
         coords=jsonn['features'][0]['geometry']['coordinates']
         lat, lon=coords[0],coords[1]
+        polygon = get_polygon_from_point(lon,lat)
+        east = list(polygon['bbox'])[2]
+        south = list(polygon['bbox'])[1]
+        west = list(polygon['bbox'])[0]
+        north = list(polygon['bbox'])[3]
         try:
             tds_request =  "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude="+str(lat)+"&longitude="+str(lon)+"&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
             temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file

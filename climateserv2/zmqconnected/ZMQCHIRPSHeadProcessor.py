@@ -633,7 +633,7 @@ class ZMQCHIRPSHeadProcessor():
                     clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
                     os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
                     t = subprocess.check_output(
-                        ' cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                        params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
                         text=True)
                     clipped_dates = t.split()
                     self.__processProgress__(percent)
@@ -692,7 +692,7 @@ class ZMQCHIRPSHeadProcessor():
                     clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
                     os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
                     t = subprocess.check_output(
-                        'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                        params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
                         text=True)
                     clipped_dates = t.split()
                     self.__processProgress__(percent)

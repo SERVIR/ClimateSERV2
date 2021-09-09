@@ -31,6 +31,7 @@ shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 tempnetcdfpath= '''/cserv2/tmp/netCDFs'''
 deletetempnetcdf=False
+pythonpath='''/home/tethys/miniconda/envs/ClimateSERV2/bin/python/'''
 
 
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
