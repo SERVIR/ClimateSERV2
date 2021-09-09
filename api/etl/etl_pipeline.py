@@ -199,15 +199,13 @@ class ETL_Pipeline():
         return is_update_succeed
 
     # Standard Function to update the State of an individual if it is missing from the database or not. Updates the ETL Granule's is_missing property (bool)
-    # def update_existing_ETL_Granule__is_missing_bool_val(granule_uuid, new__is_missing__Bool_Val):
     def etl_granule__Update__is_missing_bool_val(self, granule_uuid, new__is_missing__Bool_Val):
-        is_update_succeed = ETL_Granule.update_existing_ETL_Granule__is_missing_bool_val(granule_uuid=granule_uuid, new__is_missing__Bool_Val=new__is_missing__Bool_Val)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__is_missing_bool_val(granule_uuid=granule_uuid, new__is_missing__Bool_Val=new__is_missing__Bool_Val)
         return is_update_succeed
 
     # Standard Function for adding new JSON data to an etl_granule (Expected Use Case: if we have an error, we can attach error info as a new JSON object to the existing record)
-    # def update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid, new_json_key_to_append, sub_jsonable_object):
     def etl_granule__Append_JSON_To_Additional_JSON(self, granule_uuid, new_json_key_to_append, sub_jsonable_object):
-        is_update_succeed = ETL_Granule.update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=sub_jsonable_object)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=sub_jsonable_object)
         return is_update_succeed
 
     # Convenient function to call just before using a return statement during 'execute_pipeline_control_function'

@@ -9,3 +9,5 @@ node_modules
 media
 *logfile.txt
 *.pyc
+data.json
+logfile

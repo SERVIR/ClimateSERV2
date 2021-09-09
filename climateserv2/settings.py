@@ -11,6 +11,14 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 import os
 from pathlib import Path
+import json
+
+# Opening JSON file
+f = open('/cserv2/django_app/ClimateSERV2/climateserv2/data.json', )
+
+# returns JSON object as
+# a dictionary
+data = json.load(f)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -76,10 +84,21 @@ WSGI_APPLICATION = 'climateserv2.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.sqlite3',
+#         'NAME': BASE_DIR / 'db.sqlite3',
+#     }
+# }
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': data["NAME"],
+        'USER': data["USER"],
+        'PASSWORD': data["PASSWORD"],
+        'HOST': data["HOST"],
+        'POST': '',
     }
 }
 

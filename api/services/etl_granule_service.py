@@ -51,9 +51,24 @@ class ETL_GranuleService():
     def update_existing_ETL_Granule__is_missing_bool_val(granule_uuid, new__is_missing__Bool_Val):
         ret__update_is_success = False
         try:
-            is_missing__BOOL = utils.get_True_or_False_from_boolish_string(bool_ish_str_value=new__is_missing__Bool_Val, defaultBoolValue=True)  # Usually when this function is called, it is because there was an error and the granule is missing..
+            is_missing__BOOL = utils.get_True_or_False_from_boolish_string(bool_ish_str_value=new__is_missing__Bool_Val, defaultBoolValue=True)
             existing_ETL_Granule_Row = ETL_Granule.objects.filter(uuid=str(granule_uuid).strip())[0]
             existing_ETL_Granule_Row.is_missing = is_missing__BOOL
+            existing_ETL_Granule_Row.save()
+            ret__update_is_success = True
+        except:
+            ret__update_is_success = False
+        return ret__update_is_success
+
+    @staticmethod
+    def update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid, new_json_key_to_append, sub_jsonable_object):
+        ret__update_is_success = False
+        try:
+            new_json_key_to_append = str(new_json_key_to_append).strip()
+            existing_ETL_Granule_Row = ETL_Granule.objects.filter(uuid=str(granule_uuid).strip())[0]
+            current_Additional_JSON = json.loads(existing_ETL_Granule_Row.additional_json)
+            current_Additional_JSON[new_json_key_to_append] = sub_jsonable_object
+            existing_ETL_Granule_Row.additional_json = json.dumps(current_Additional_JSON)
             existing_ETL_Granule_Row.save()
             ret__update_is_success = True
         except:
