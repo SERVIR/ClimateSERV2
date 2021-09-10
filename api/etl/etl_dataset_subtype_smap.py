@@ -3,7 +3,6 @@ import xarray as xr
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
-from bs4 import BeautifulSoup
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
@@ -11,70 +10,42 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from api.services import Config_SettingService
 from ..models import Config_Setting
 
+from bs4 import BeautifulSoup
+
 class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'smap'
-    etl_parent_pipeline_instance = None
-    mode = 'smap_10km'
-
-    relative_dir_path__WorkingDir = 'working_dir'
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, subtype):
+    def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        if subtype == 'smap_10km':
+        self.class_name = self.__class__.__name__
+        self._expected_remote_full_file_paths = []
+        self._expected_granules = []
+        self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        if dataset_subtype == 'smap_10km':
+            self.mode = 'smap_10km'
+        else:
             self.mode = 'smap_10km'
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or 12
-        self.DD__Day__Start = params.get('DD__Day__Start', 1) or 1
-        self.DD__Day__End = params.get('DD__Day__End') or 31
-
-    # Get the local filesystem place to store data
-    def get_root_local_temp_working_dir(self):
-        ret_dir = Config_SettingService.get_value(setting_name='PATH__TEMP_WORKING_DIR__DEFAULT', default_or_error_return_value='')
-        if self.mode == 'smap_10km':
-            # ret_dir = '\\temp\\processing\\smap'
-            ret_dir = Config_SettingService.get_value(setting_name="PATH__TEMP_WORKING_DIR__SMAP_10KM", default_or_error_return_value='')
-        return ret_dir
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    def get_final_load_dir(self):
-        ret_dir = Config_SettingService.get_value(setting_name='PATH__THREDDS_MONITORING_DIR__DEFAULT', default_or_error_return_value='')
-        if self.mode == 'smap_10km':
-            # ret_dir = '\\temp\\THREDDS\\smap'
-            ret_dir = Config_SettingService.get_value(setting_name="PATH__THREDDS_MONITORING_DIR__SMAP_10KM", default_or_error_return_value='')
-        return ret_dir
-
-    # Get the Remote Locations for each of the subtypes
-    def get_roothttp_for_subtype(self):
-        ret_dir = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__DEFAULT", default_or_error_return_value="")
-        if self.mode == 'smap_10km':
-            # ret_dir = 'https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/'
-            ret_dir = Config_SettingService.get_value(setting_name="REMOTE_PATH__ROOT_HTTP__SMAP_10KM", default_or_error_return_value='')
-        return ret_dir
+        self.MM__Month__End = params.get('MM__Month__End') or today.month
+        self.DD__Day__Start = params.get('DD__Day__Start') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     def execute__Step__Pre_ETL_Custom(self):
-        ret__function_name = "execute__Step__Pre_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Get the root http path based on the region
-        current_root_http_path = self.get_roothttp_for_subtype()
-        root_file_download_path = os.path.join(self.get_root_local_temp_working_dir(), self.relative_dir_path__WorkingDir)
-        final_load_dir_path = self.get_final_load_dir()
-        self.temp_working_dir = str(root_file_download_path).strip()
-        self._expected_granules = []
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
         try:
@@ -82,11 +53,10 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
-            response = requests.get(current_root_http_path)
-            soup = BeautifulSoup(response.text, 'html.parser')
             filenames = []
             dates = []
-
+            response = requests.get(current_root_http_path)
+            soup = BeautifulSoup(response.text, 'html.parser')
             for _, link in enumerate(soup.findAll('a')):
                 if link.get('href').startswith('NASA_USDA_SMAP_'):
                     _, _, _, start, end = link.get('href').split('_')
@@ -102,10 +72,13 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 current_month__MM_str   = "{:02d}".format(date.month)
                 current_day__DD_str     = "{:02d}".format(date.day)
 
-                final_nc4_filename = 'SMAP.SM.{}{}{}T000000Z.GLOBAL.nc4'.format(
+                # usda-smap.20200415T000000Z.global.10km.3dy.nc4
+                final_nc4_filename = 'usda-smap.{}{}{}T000000Z.global.{}.{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str
+                    current_day__DD_str,
+                    '10km',
+                    '3dy'
                 )
 
                 extracted_tif_filename              = filename
@@ -204,8 +177,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Download(self):
-
-        ret__function_name = "execute__Step__Download"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -226,27 +198,23 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         # Process each expected granule
         for expected_granule in expected_granules:
             try:
-                if ((loop_counter + 1) % modulus_size) == 0:
+                if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
                     print(event_message)
-                    activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")  # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
+                    activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS", default_or_error_return_value="ETL Download Progress")  # settings.ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
                 # Current Granule to download
-                #remote_full_filepath_gz_tif = expected_granule['remote_full_filepath_gz_tif']
                 current_url_to_download                             = expected_granule['remote_full_filepath_gz_tif']
                 current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download'] # current_download_destination_local_full_file_path = expected_granule['local_full_filepath']
 
-                # remote_directory_path = expected_granule['remote_directory_path']
-                # # remote_full_filepath_tif    = expected_granule['remote_full_filepath_tif']
-                # tif_filename                = expected_granule['tif_filename']
-                # local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
-                #
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
                 granule_name = expected_granule['granule_name']
+
+                print(current_url_to_download)
 
                 # Download the file - Actually do the download now
                 try:
@@ -292,7 +260,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Extract(self):
-        ret__function_name = "execute__Step__Extract"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -305,7 +273,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Transform(self):
-        ret__function_name = "execute__Step__Transform"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -324,7 +292,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
 
                     # Getting info ready for the current granule.
                     local_extract_path                                  = expected_granules_object['local_extract_path']
-                    tif_filename                                        = expected_granules_object['extracted_tif_filename']   #  tif_filename to extracted_tif_filename
+                    tif_filename                                        = expected_granules_object['extracted_tif_filename']
                     final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
 
@@ -359,17 +327,8 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     # 3) Clean up the dataset: Rename and add dimensions, attributes, and scaling factors as appropriate.
                     # 4) Dump the dataset to a netCDF-4 file with a filename conforming to the ClimateSERV 2.0 TDS conventions.
 
-                    # import xarray as xr
-                    # import pandas as pd
-                    # import numpy as np
-                    # import sys
-                    # import re
-                    # from collections import OrderedDict
-
-                    #geotiffFile = sys.argv[1]
-
                     # Set region ID
-                    regionID = 'Global'  # technically only semi-global as it spans 60S to 90N in latitude
+                    # regionID = 'Global'
 
                     _, _, _, start, end = tif_filename.split('_')
                     startTime = datetime.datetime.strptime(start[2:], '%Y%m%d')
@@ -419,8 +378,8 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
 
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
                     esiEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z'}
+                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     # Set the Attributes
                     esi.latitude.attrs = latAttr
                     esi.longitude.attrs = lonAttr
@@ -436,18 +395,14 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     # print("F")
 
                     # 5) Output File
-                    #outputFile = 'SPORT-ESI.' + endTime.strftime('%Y%m%dT%H%M%SZ') + '.' + regionID + '.nc4'
-                    #esi.to_netcdf(outputFile, unlimited_dims='time')
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
                     esi.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
-                    #print("outputFile_FullPath: " + str(outputFile_FullPath))
-                    # Can't put ':' in file names...
-
                     # print("G")
 
-                except Exception as e:
+                    print(outputFile_FullPath)
 
+                except Exception as e:
                     print(e)
 
                     sysErrorData = str(sys.exc_info())
@@ -466,8 +421,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     error_JSON['error_message'] = error_message
 
                     # Update this Granule for Failure (store the error info in the granule also)
-                    # Granule_UUID = expected_granules_object['Granule_UUID']
-                    # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__FAILED  # When a granule has a NC4 file in the correct location, this counts as a Success.
                     new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
@@ -499,15 +452,15 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Load(self):
-        ret__function_name = "execute__Step__Load"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in  self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
@@ -523,20 +476,11 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
-                    # # Granule Helpers
-                    # # # def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="", granule_pipeline_state=settings.GRANULE_PIPELINE_STATE__ATTEMPTING, additional_json={}):
-                    # # # def etl_granule__Update__granule_pipeline_state(self, granule_uuid, new__granule_pipeline_state, is_error):
-                    # # # def etl_granule__Update__is_missing_bool_val(self, granule_uuid, new__is_missing__Bool_Val):
-                    # # # def etl_granule__Append_JSON_To_Additional_JSON(self, granule_uuid, new_json_key_to_append, sub_jsonable_object):
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    # new__granule_pipeline_state = settings.GRANULE_PIPELINE_STATE__SUCCESS # When a granule has a NC4 file in the correct location, this counts as a Success.
                     new__granule_pipeline_state = Config_Setting.get_value(setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")  #
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    #
-
-
 
                     # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
                     #
@@ -597,7 +541,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -607,7 +551,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Clean_Up(self):
-        ret__function_name = "execute__Step__Clean_Up"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -632,7 +576,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 additional_json['subclass'] = "esi"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
 
         except:
             sysErrorData = str(sys.exc_info())
