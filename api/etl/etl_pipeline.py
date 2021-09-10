@@ -33,7 +33,6 @@ class ETL_Pipeline():
     START_30MININCREMENT_NN     = ""
     END_30MININCREMENT_NN       = ""
     REGION_CODE                 = ""
-    WEEKLY_JULIAN_START_OFFSET  = ""
 
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -94,8 +93,6 @@ class ETL_Pipeline():
         retObj["END_30MININCREMENT_NN"]     = str(self.END_30MININCREMENT_NN).strip()
         # Region Code
         retObj["REGION_CODE"] = str(self.REGION_CODE).strip()
-        # Julian Date Weekly Offset
-        retObj["WEEKLY_JULIAN_START_OFFSET"] = str(self.WEEKLY_JULIAN_START_OFFSET).strip()
 
         # Pipeline - Dataset Config Options - Set by Reading From the Database
         retObj["dataset_name"]              = str(self.dataset_name).strip()
@@ -298,7 +295,7 @@ class ETL_Pipeline():
                 'DD__Day__End': self.END_DAY_DD,
                 'NN__30MinIncrement__Start': self.START_30MININCREMENT_NN,
                 'NN__30MinIncrement__End': self.END_30MININCREMENT_NN,
-                'XX__Region_Code': self.WEEKLY_JULIAN_START_OFFSET
+                'XX__Region_Code': self.REGION_CODE
             })
 
         except etl_exceptions.UnableToReadDatasetException:
