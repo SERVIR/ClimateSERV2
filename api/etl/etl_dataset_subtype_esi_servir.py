@@ -11,7 +11,7 @@ from api.services import Config_SettingService
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -31,13 +31,9 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
-        self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or today.month
-        self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     def execute__Step__Pre_ETL_Custom(self):
-        ret__function_name = "execute__Step__Pre_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -50,20 +46,21 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         # (1) Generate Expected remote file paths
         try:
 
-            start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
-            end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
+            start_year = self.YYYY__Year__Start
+            end_year = self.YYYY__Year__End
 
             filenames = []
             dates = []
-            response = requests.get(current_root_http_path)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
-            for _, link in enumerate(soup.findAll('a')):
-                if link.get('href').endswith('.tif.gz'):
-                    _, wk, rest = link.get('href').split('_')
-                    if wk == expected_file_name_wk_number_string:
-                        date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif.gz', ''), rest[:4]),'%j %Y')
-                        if date >= start_date and date <= end_date:
+
+            for year in range(start_year, end_year + 1):
+                response = requests.get(current_root_http_path + '/' + str(year))
+                soup = BeautifulSoup(response.text, 'html.parser')
+                expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
+                for _, link in enumerate(soup.findAll('a')):
+                    if link.get('href').endswith('.tif'):
+                        _, wk, rest = link.get('href').split('_')
+                        if wk == expected_file_name_wk_number_string:
+                            date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),'%j %Y')
                             filenames.append(link.get_text())
                             dates.append(date)
 
@@ -83,8 +80,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                 )
 
                 tif_gz_filename                     = filename
-                extracted_tif_filename              = filename.replace('.gz', '')
-                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
+                extracted_tif_filename              = filename
+                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(year) + '/', filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -175,7 +172,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Download(self):
-        ret__function_name = "execute__Step__Download"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -207,7 +204,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
                 # Current Granule to download
                 current_url_to_download                             = expected_granule['remote_full_filepath_gz_tif']
-                current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download'] # current_download_destination_local_full_file_path = expected_granule['local_full_filepath']
+                current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download']
 
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
@@ -221,7 +218,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     with open(current_download_destination_local_full_file_path, 'wb') as outfile:
                         outfile.write(r.content)
                     download_counter = download_counter + 1
-                except:
+                except Exception as e:
+                    print(e)
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
                     # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -236,7 +234,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     activity_description = warn_JSON['warning']
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
-            except:
+            except Exception as e:
+                print(e)
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
                 error_message = "esi.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
@@ -262,73 +261,21 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Extract(self):
-        ret__function_name = "execute__Step__Extract"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        error_counter = 0
-        detail_errors = []
-
-        try:
-
-            for expected_granules_object in self._expected_granules:
-
-                local_full_filepath_download    = expected_granules_object['local_full_filepath_download']
-                local_extract_path              = expected_granules_object['local_extract_path']
-                extracted_tif_filename          = expected_granules_object['extracted_tif_filename']
-                local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
-
-                print(local_full_filepath_download)
-
-                if not os.path.isfile(local_full_filepath_download):
-                    continue
-
-                try:
-                    with gzip.open(local_full_filepath_download, 'rb') as f_in:
-                        with open(local_extract_full_filepath, 'wb') as f_out:
-                            shutil.copyfileobj(f_in, f_out)
-
-                except Exception as e:
-                    print(e)
-                    # This granule errored on the Extract step.
-                    sysErrorData = str(sys.exc_info())
-
-                    Granule_UUID = expected_granules_object['Granule_UUID']
-
-                    error_message = "esi.execute__Step__Extract: An Error occurred during the Extract step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
-
-                    # print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
-
-                    # Individual Transform Granule Error
-                    error_counter = error_counter + 1
-                    detail_errors.append(error_message)
-
-                    error_JSON = {}
-                    error_JSON['error_message'] = error_message
-
-                    # Update this Granule for Failure (store the error info in the granule also)
-                    new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
-                    is_error = True
-                    is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    new_json_key_to_append = "execute__Step__Extract"
-                    is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-        except:
-            sysErrorData = str(sys.exc_info())
-            ret__is_error = True
-            ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when attempting to Extract the Granules.  System Error Message: " + str(sysErrorData)
-
+        # For IMERG, there is nothing to extract (we are already downloading TIF and TFW files directly)
         ret__detail_state_info['class_name'] = self.__class__.__name__
-        ret__detail_state_info['error_counter'] = error_counter
-        ret__detail_state_info['detail_errors'] = detail_errors
+        ret__detail_state_info['custom_message'] = "Imerg types do not need to be extracted.  The source files are non-compressed Tif and Tfw files."
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
     def execute__Step__Transform(self):
-        ret__function_name = "execute__Step__Transform"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -473,7 +420,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
                     # print("G")
 
-                    print(outputFile_FullPath)
+                    print(final_nc4_filename)
 
                 except Exception as e:
                     print(e)
@@ -520,7 +467,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Load(self):
-        ret__function_name = "execute__Step__Load"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -579,14 +526,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
-                    # # Exit Here With Error info loaded up
-                    # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
-                    # ret__is_error = True
-                    # ret__error_description = error_JSON['error']
-                    # ret__detail_state_info = error_JSON
-                    # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-                    # return retObj
-
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
@@ -605,7 +544,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -615,7 +554,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Clean_Up(self):
-        ret__function_name = "execute__Step__Clean_Up"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -639,7 +578,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-        except:
+        except Exception as e:
+            print(e)
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON['error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is supposed to simply remove the working directory.  This means the working directory was not removed.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)

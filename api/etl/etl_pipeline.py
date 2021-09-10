@@ -13,6 +13,8 @@ from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_nmme import ETL_Dataset_Subtype_NMME
 from .etl_dataset_subtype_imerg_1_day import ETL_Dataset_Subtype_IMERG_1_DAY
 from .etl_dataset_subtype_smap import ETL_Dataset_Subtype_SMAP
+from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
+
 from . import etl_exceptions
 
 class ETL_Pipeline():
@@ -281,6 +283,8 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NMME(self)
             elif dataset_subtype == 'smap':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_SMAP(self, dataset_subtype)
+            elif dataset_subtype in ('esi_4week_servir', 'esi_12week_servir'):
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
 
