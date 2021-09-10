@@ -38,7 +38,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         self.NN__30MinIncrement__End = params.get('NN__30MinIncrement__End', 2) or 2
 
     def execute__Step__Pre_ETL_Custom(self):
-        ret__function_name = "execute__Step__Pre_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -254,7 +254,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Download(self):
-        ret__function_name = "execute__Step__Download"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -503,7 +503,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Extract(self):
-        ret__function_name = "execute__Step__Extract"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -517,7 +517,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Transform(self):
-        ret__function_name = "execute__Step__Transform"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -686,7 +686,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Load(self):
-        ret__function_name = "execute__Step__Load"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -780,7 +780,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -790,7 +790,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Clean_Up(self):
-        ret__function_name = "execute__Step__Clean_Up"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""

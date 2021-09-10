@@ -37,7 +37,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     def execute__Step__Pre_ETL_Custom(self):
-        ret__function_name = "execute__Step__Pre_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -175,7 +175,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Download(self):
-        ret__function_name = "execute__Step__Download"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -186,7 +186,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         error_counter = 0
         detail_errors = []
 
-        # Setting up for the periodic reporting on the terminal
         expected_granules = self._expected_granules
         num_of_objects_to_process = len(expected_granules)
         num_of_download_activity_events = 4
@@ -262,7 +261,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Extract(self):
-        ret__function_name = "execute__Step__Extract"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -328,7 +327,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Transform(self):
-        ret__function_name = "execute__Step__Transform"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -512,7 +511,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Load(self):
-        ret__function_name = "execute__Step__Load"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -597,7 +596,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -607,7 +606,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Clean_Up(self):
-        ret__function_name = "execute__Step__Clean_Up"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
