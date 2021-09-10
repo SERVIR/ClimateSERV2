@@ -32,9 +32,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     # Specialized Functions (For each Mode)
     @staticmethod
@@ -563,7 +563,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
                     # print("G")
 
-                    print(final_nc4_filename)
+                    print(outputFile_FullPath)
 
                 except Exception as e:
                     print(e)
