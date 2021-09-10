@@ -12,20 +12,20 @@ from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'emodis'
-    etl_parent_pipeline_instance = None
-    etl_dataset_instance = None
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        self.class_name = self.__class__.__name__
+        self._expected_remote_full_file_paths = []
+        self._expected_granules = []
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
-        self.MM__Month__Start = params.get('MM__Month__Start') or datetime.date.today().month
-        self.MM__Month__End = params.get('MM__Month__End') or datetime.date.today().month
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
+        self.MM__Month__Start = params.get('MM__Month__Start') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.XX__Region_Code = params.get('XX__Region_Code') or 'ea'
 
     # Get the local filesystem place to store data
@@ -68,10 +68,6 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
             ret_roothttp = os.path.join(ret_roothttp, 'asia/centralasia')
         ret_roothttp = os.path.join(ret_roothttp, 'dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/')
         return ret_roothttp
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
 
     # Whatever Month we are in, multiple by 3  and then subtract 2, (Jan would be 1 (3 - 2), Dec would be 34 (36 - 2) )
     @staticmethod

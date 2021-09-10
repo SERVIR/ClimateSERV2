@@ -12,30 +12,28 @@ from ..models import Config_Setting
 
 class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'imerg'
-    etl_parent_pipeline_instance = None
-    mode = 'LATE'
-
-    # DRAFTING - Suggestions
-    _expected_remote_full_file_paths    = []    # Place to store a list of remote file paths (URLs) that the script will need to download.
-    _expected_granules                  = []    # Place to store granules
-
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance, dataset_subtype):
+    def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        self.class_name = self.__class__.__name__
+        self._expected_remote_full_file_paths = []
+        self._expected_granules = []
         if dataset_subtype == 'imerg_early':
             self.mode = 'EARLY'
         elif dataset_subtype == 'imerg_late':
             self.mode = 'LATE'
+        else:
+            self.mode = 'LATE'
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or datetime.date.today().year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or datetime.date.today().year
+        today = datetime.date.today()
+        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or today.day
         self.NN__30MinIncrement__Start = params.get('NN__30MinIncrement__Start', 0) or 0
         self.NN__30MinIncrement__End = params.get('NN__30MinIncrement__End', 2) or 2
 
@@ -53,6 +51,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         # (1) Generate Expected remote file paths
         try:
 
+            # Create the list of Days (From start time to end time)
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
@@ -65,13 +64,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 current_year__YYYY_str = "{:0>4d}".format(current_date.year)
                 current_month__MM_str = "{:02d}".format(current_date.month)
                 current_day__DD_str = "{:02d}".format(current_date.day)
-
-                # Debug (making sure we got the right date ranges)
-                # print(current_date)
-                # print("i: " + str(i) + ": (currentDate.year) " + str(current_date.year))
-                # print("i: " + str(i) + ": (current_year__YYYY_str) " + str(current_year__YYYY_str))
-                # print("i: " + str(i) + ": (current_month__MM_str) " + str(current_month__MM_str))
-                # print("i: " + str(i) + ": (current_day__DD_str) " + str(current_day__DD_str))
 
                 # Get the Current Day, Start '30 min' increment
                 start_30min_increment = 0
@@ -110,37 +102,27 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     start_ss_str    = "00"
                     end_ss_str      = "59"
 
-                    base_filename = ''
-                    base_filename += '3B-HHR-'                              # 3B-HHR-
-                    if self.mode == 'LATE':
-                        base_filename += 'L'                                # 3B-HHR-L
-                    if self.mode == 'EARLY':
-                        base_filename += 'E'                                # 3B-HHR-E
-                    base_filename += '.MS.MRG.3IMERG.'                      # 3B-HHR-L.MS.MRG.3IMERG.
-                    base_filename += current_year__YYYY_str                 # 3B-HHR-L.MS.MRG.3IMERG.2020
-                    base_filename += current_month__MM_str                  # 3B-HHR-L.MS.MRG.3IMERG.202004
-                    base_filename += current_day__DD_str                    # 3B-HHR-L.MS.MRG.3IMERG.20200402
-                    base_filename += '-'                                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-
-                    base_filename += 'S'                                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S
-                    base_filename += both_hh_str                            # 3B-HHR-L.MS.MRG.3IMERG.20200402-S23
-                    base_filename += start_mm_str                           # 3B-HHR-L.MS.MRG.3IMERG.20200402-S2330
-                    base_filename += start_ss_str                           # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000
-                    base_filename += '-'                                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-
-                    base_filename += 'E'                                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E
-                    base_filename += both_hh_str                            # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E23
-                    base_filename += end_mm_str                             # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E2359
-                    base_filename += end_ss_str                             # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959
-                    base_filename += '.'                                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.
-                    base_filename += str(increment_minute_value_4Char_Str)  # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410
-                    base_filename += '.V06B.30min.'                         # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.
-                    tfw_filename = base_filename + 'tfw'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tfw
-                    tif_filename = base_filename + 'tif'                    # 3B-HHR-L.MS.MRG.3IMERG.20200402-S233000-E235959.1410.V06B.30min.tif
+                    base_filename = '3B-HHR-{}.MS.MRG.3IMERG.{}{}{}-S{}{}{}-E{}{}{}.V06B.30min'.format(
+                        'L' if self.mode == 'LATE' else 'E',
+                        current_year__YYYY_str,
+                        current_month__MM_str,
+                        current_day__DD_str,
+                        both_hh_str,
+                        start_mm_str,
+                        start_ss_str,
+                        both_hh_str,
+                        end_mm_str,
+                        end_ss_str,
+                        str(increment_minute_value_4Char_Str)
+                    )
 
-                    # Building the Common NC4 Filename
+                    tfw_filename = '{}.tfw'.format(base_filename)
+                    tif_filename = '{}.tif'.format(base_filename)
+
+                    # Create the final nc4 filename
                     # nasa-imerg-late.20200531T000000Z.global.0.1deg.30min.nc4
-                    nc4_type = 'late' if self.mode == 'LATE' else 'early'
                     final_nc4_filename = 'nasa-imerg-{}.{}{}{}T{}{}{}Z.global.0.1deg.30min.nc4'.format(
-                        nc4_type,
+                        'late' if self.mode == 'LATE' else 'early',
                         current_year__YYYY_str,
                         current_month__MM_str,
                         current_day__DD_str,
@@ -200,23 +182,23 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                     current_obj['local_full_filepath_tfw']              = local_full_filepath_tfw
                     current_obj['local_full_filepath_final_nc4_file']   = local_full_filepath_final_nc4_file
 
-                    # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     granule_name = final_nc4_filename
                     granule_contextual_information = ''
                     granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")  # settings.GRANULE_PIPELINE_STATE__ATTEMPTING
+
                     additional_json = current_obj
-                    new_Granule_UUID = self.etl_parent_pipeline_instance.log_etl_granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, granule_pipeline_state=granule_pipeline_state, additional_json=additional_json)
+                    new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
+                        granule_name=granule_name,
+                        granule_contextual_information=granule_contextual_information,
+                        granule_pipeline_state=granule_pipeline_state,
+                        additional_json=additional_json
+                    )
 
                     # Save the Granule's UUID for reference in later steps
-                    current_obj['Granule_UUID'] = str(new_Granule_UUID).strip()
+                    current_obj['Granule_UUID'] = str(new_granule_uuid).strip()
 
                     # Add to the granules list
                     self._expected_granules.append(current_obj)
-
-                    # print("DEBUG: JUST DO ONE GRANULE - BREAKING THIS FOR LOOP AFTER 1 ITERATION... BREAKING NOW.")
-                    # break
-
-            # End Loop for getting all the granules for each of the days
 
         except:
             sysErrorData = str(sys.exc_info())
@@ -302,10 +284,12 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         try:
             ftp_connection = ftplib.FTP_TLS(host=ftp_host, user=ftp_username, passwd=ftp_userpass)
             ftp_connection.prot_p()
+            ftp_connection.voidcmd('TYPE I')
 
             time.sleep(1)
 
-        except:
+        except Exception as e:
+            print(e)
             error_counter = error_counter + 1
             sysErrorData = str(sys.exc_info())
             error_message = "imerg.execute__Step__Download: Error Connecting to FTP.  There was an error when attempting to connect to the Remote FTP Server.  System Error Message: " + str(sysErrorData)
@@ -342,9 +326,11 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 tif_filename                = expected_granule['tif_filename']
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
                 local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
-                #
+
                 # Granule info
                 Granule_UUID = expected_granule['Granule_UUID']
+
+                print(remote_directory_path)
 
                 # FTP Processes
                 # # 1 - Change Directory to the directory path
@@ -366,25 +352,23 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                 if file_found_count == 2:
                     hasFiles = True
 
-                # Validation
                 if hasFiles == False:
-                    print("Could not find both TIF and TFW files in the directory.  - TODO - Granule Error Recording here.")
+                    print("Could not find both TIF and TFW files in the directory.")
 
                 # # Let's assume the files DO exist on the remote server - until we can get the rest of the stuff working. hasFiles = True
 
                 if hasFiles == True:
-                    # Both files were found, so let's now download them.
 
-                    # Backwards compatibility
-                    # # Remote paths (where the files are coming from)
+                    # Remote paths (where the files are coming from)
                     ftp_PathTo_TIF = tif_filename
                     ftp_PathTo_TWF = tfw_filename
-                    # # Local Paths (Where the files are being saved)
+                    # Local Paths (Where the files are being saved)
                     local_FullFilePath_ToSave_Tif = local_full_filepath_tif
                     local_FullFilePath_ToSave_Twf = local_full_filepath_tfw
 
                     try:
                         # Download the Tif
+                        print(local_FullFilePath_ToSave_Tif)
                         fx = open(local_FullFilePath_ToSave_Tif, "wb")
                         fx.close()
                         os.chmod(local_FullFilePath_ToSave_Tif, 0o0777)  # 0777
@@ -431,6 +415,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                         time.sleep(3)
 
                         # Download the Tfw
+                        print(local_FullFilePath_ToSave_Twf)
                         fx = open(local_FullFilePath_ToSave_Twf, "wb")
                         fx.close()
                         os.chmod(local_FullFilePath_ToSave_Twf, 0o0777)  # 0777
@@ -468,7 +453,6 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
                                     warn_JSON['function_name'] = "execute__Step__Download"
                                     warn_JSON['current_object_info'] = expected_granule  # expected_remote_file_path_object
                                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
-                                    # activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
                                     activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                                     activity_description = warn_JSON['warning']
                                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid=Granule_UUID, is_alert=True, additional_json=warn_JSON)
@@ -544,8 +528,8 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         detail_errors = []
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
                 try:
 
                     # Getting info ready for the current granule.

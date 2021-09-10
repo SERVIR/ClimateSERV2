@@ -30,9 +30,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or 1
+        self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or 1
+        self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     def get_run_time_list(self):
         return [
@@ -68,12 +68,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         # (1) Generate Expected remote file paths
         try:
 
-            # Create the list of Days (From start time to end time)
             start_date = datetime.datetime(year=self.YYYY__Year__Start, month=self.MM__Month__Start, day=self.DD__Day__Start)
             end_date = datetime.datetime(year=self.YYYY__Year__End, month=self.MM__Month__End, day=self.DD__Day__End)
-
             delta = end_date - start_date
-            # print('DELTA: {}'.format(str(delta)))
 
             for i in range(delta.days + 1):
 
@@ -724,9 +721,9 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
-            if temp_working_dir == "":
+            if temp_working_dir == '':
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank
-                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
@@ -734,7 +731,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             else:
                 shutil.rmtree(temp_working_dir)
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank
-                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__

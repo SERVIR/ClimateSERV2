@@ -527,8 +527,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
