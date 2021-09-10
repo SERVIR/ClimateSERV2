@@ -81,7 +81,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
 
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename
-                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(year) + '/', filename)
+                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(date.year) + '/', filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
