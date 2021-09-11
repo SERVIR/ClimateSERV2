@@ -292,12 +292,10 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # print("A")
 
                     # Getting info ready for the current granule.
-                    local_extract_path                                  = expected_granules_object['local_extract_path']
-                    tif_filename                                        = expected_granules_object['extracted_tif_filename']   #  tif_filename to extracted_tif_filename
-                    final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
-                    expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
-
-                    geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
+                    local_extract_path = expected_granules_object['local_extract_path']
+                    tif_filename = expected_granules_object['extracted_tif_filename']
+                    final_nc4_filename = expected_granules_object['final_nc4_filename']
+                    geotiff_fullpath = os.path.join(local_extract_path, tif_filename)
 
                     print(final_nc4_filename)
 
@@ -358,7 +356,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # Beging extracting data and creating output netcdf file.
                     ############################################################
                     # 1) Read the geotiff data into an xarray data array
-                    da = xr.open_rasterio(geotiffFile_FullPath)
+                    da = xr.open_rasterio(geotiff_fullpath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
                     ds = da.rename('esi').to_dataset()
                     # Handle selecting/adding the dimesions
@@ -407,12 +405,12 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # print("F")
 
                     # 5) Output File
-                    outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    ds.to_netcdf(outputFile_FullPath, unlimited_dims='time')
+                    output_filepath = os.path.join(local_extract_path, final_nc4_filename)
+                    ds.to_netcdf(output_filepath, unlimited_dims='time')
 
                     # print("G")
 
-                    print(outputFile_FullPath)
+                    print(output_filepath)
 
                 except Exception as e:
                     print(e)
@@ -466,8 +464,8 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
@@ -480,7 +478,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -495,7 +493,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
+                    self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
