@@ -19,9 +19,9 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
-        if dataset_subtype == 'esi_4week':
+        if dataset_subtype == 'esi_4week_servir':
             self.mode = '4week'
-        elif dataset_subtype == 'esi_12week':
+        elif dataset_subtype == 'esi_12week_servir':
             self.mode = '12week'
         else:
             self.mode = '12week'
@@ -57,11 +57,13 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                 soup = BeautifulSoup(response.text, 'html.parser')
                 expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
                 for _, link in enumerate(soup.findAll('a')):
-                    if link.get('href').endswith('.tif'):
-                        _, wk, rest = link.get('href').split('_')
+                    href = link.get('href').replace('_.tif', '.tif')
+                    if href.endswith('.tif'):
+                        _, wk, rest = href.split('_')
                         if wk == expected_file_name_wk_number_string:
                             date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),'%j %Y')
-                            filenames.append(link.get_text())
+                            text = link.get_text().replace('_.tif', '.tif')
+                            filenames.append(text)
                             dates.append(date)
 
             for filename, date in zip(filenames, dates):
