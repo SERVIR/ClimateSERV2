@@ -31,7 +31,7 @@ shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 tempnetcdfpath= '''/cserv2/tmp/netCDFs'''
 deletetempnetcdf=False
-pythonpath='''/usr/bin/'''
+pythonpath='''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/'''
 
 
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
