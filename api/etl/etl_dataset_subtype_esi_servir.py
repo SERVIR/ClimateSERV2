@@ -19,9 +19,9 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
-        if dataset_subtype == 'esi_4week':
+        if dataset_subtype == 'esi_4week_servir':
             self.mode = '4week'
-        elif dataset_subtype == 'esi_12week':
+        elif dataset_subtype == 'esi_12week_servir':
             self.mode = '12week'
         else:
             self.mode = '12week'
@@ -57,11 +57,13 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                 soup = BeautifulSoup(response.text, 'html.parser')
                 expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
                 for _, link in enumerate(soup.findAll('a')):
-                    if link.get('href').endswith('.tif'):
-                        _, wk, rest = link.get('href').split('_')
+                    href = link.get('href').replace('_.tif', '.tif')
+                    if href.endswith('.tif'):
+                        _, wk, rest = href.split('_')
                         if wk == expected_file_name_wk_number_string:
                             date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),'%j %Y')
-                            filenames.append(link.get_text())
+                            text = link.get_text().replace('_.tif', '.tif')
+                            filenames.append(text)
                             dates.append(date)
 
             for filename, date in zip(filenames, dates):
@@ -81,7 +83,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
 
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename
-                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(year) + '/', filename)
+                remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(date.year) + '/', filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -292,29 +294,26 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # print("A")
 
                     # Getting info ready for the current granule.
-                    local_extract_path                                  = expected_granules_object['local_extract_path']
-                    tif_filename                                        = expected_granules_object['extracted_tif_filename']   #  tif_filename to extracted_tif_filename
-                    final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
-                    expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
-
-                    geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
+                    local_extract_path = expected_granules_object['local_extract_path']
+                    tif_filename = expected_granules_object['extracted_tif_filename']
+                    final_nc4_filename = expected_granules_object['final_nc4_filename']
+                    geotiff_fullpath = os.path.join(local_extract_path, tif_filename)
 
                     print(final_nc4_filename)
 
                     # print("B")
 
                     # Note there are only 3 lines of differences between the 4wk and 12 wk scripts
-                    # TODO: Place those difference variables here.
-                    mode_var__pd_timedelta = ""
-                    mode_var__attr_composite_interval = ""
-                    mode_var__attr_comment = ""
-                    mode_var__TemporalResolution = ""
+                    mode_var__pd_timedelta = ''
+                    mode_var__attr_composite_interval = ''
+                    mode_var__attr_comment = ''
+                    mode_var__TemporalResolution = ''
                     if self.mode == '4week':
                         mode_var__pd_timedelta += '28d'
                         mode_var__attr_composite_interval += '4 week'
                         mode_var__attr_comment += '4-week mean composite estimate of evaporative stress index'
                         mode_var__TemporalResolution += '4-week'
-                    if self.mode == '12week':
+                    elif self.mode == '12week':
                         mode_var__pd_timedelta += '84d'
                         mode_var__attr_composite_interval += '12 week'
                         mode_var__attr_comment += '12-week mean composite estimate of evaporative stress index'
@@ -350,8 +349,8 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     #print("yyyyddd: " + str(yyyyddd))
 
                     # Determine starting and ending times.
-                    endTime = datetime.datetime.strptime(yyyyddd, '%Y%j')
-                    startTime = endTime - pd.Timedelta(mode_var__pd_timedelta)  # 4 weeks (i.e. 28 days), # 12 weeks (i.e. 84 days)
+                    end_time = datetime.datetime.strptime(yyyyddd, '%Y%j')
+                    start_time = end_time - pd.Timedelta(mode_var__pd_timedelta)  # 4 weeks (i.e. 28 days), # 12 weeks (i.e. 84 days)
 
                     # print("D")
 
@@ -359,68 +358,61 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # Beging extracting data and creating output netcdf file.
                     ############################################################
                     # 1) Read the geotiff data into an xarray data array
-                    tiffData = xr.open_rasterio(geotiffFile_FullPath)  #tiffData = xr.open_rasterio(geotiffFile)
+                    da = xr.open_rasterio(geotiff_fullpath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    esi = tiffData.rename('esi').to_dataset()
+                    ds = da.rename('esi').to_dataset()
                     # Handle selecting/adding the dimesions
-                    esi = esi.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
+                    ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
-                    esi = esi.assign_coords(time=endTime).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=end_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    esi['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
+                    ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
-                    #esi.rename({'y': 'latitude', 'x': 'longitude'}, inplace=True)  # rename lat/lon
-                    esi = esi.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
-                    # Lat/Lon/Time dictionaries.
-                    # Use Ordered dict
-                    latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
-                    lonAttr = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
-                    timeAttr = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
-                    timeBoundsAttr = OrderedDict([('long_name', 'time_bounds')])
-                    esiAttr = OrderedDict([('long_name', 'evaporative_stress_index'), ('units', 'unitless'), ('composite_interval', str(mode_var__attr_composite_interval)), ('comment', str(mode_var__attr_comment))])
-
-                    fileAttr = OrderedDict([('Description', 'The Evaporative Stress Index (ESI) at ~5-kilometer resolution for the entire globe reveals regions of drought where vegetation is stressed due to lack of water, enabling agriculture ministries to provide farmers with actionable advice about irrigation.  The 4 week composite responds to fast-changing conditions, while the 12-week composite integrates data over a longer period and responds to slower evolving conditions.'), \
-                                            ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'), \
-                                            ('Source', 'NASA/MSFC SPORT; C. Hain, christopher.hain@nasa.gov; https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'), \
-                                            ('Version', '1.0'), \
-                                            ('Reference', 'Hain, C. R. and M.C. Anderson, 2017: Estimating morning change in land surface temperature from MODIS day/night observations: Applications for surface energy balance modeling., Geophys. Res. Letts., 44, 9723-9733, doi:10.1002/2017GL074952.'), \
-                                            ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('SouthernmostLatitude', np.min(esi.latitude.values)), \
-                                            ('NorthernmostLatitude', np.max(esi.latitude.values)), \
-                                            ('WesternmostLongitude', np.min(esi.longitude.values)), \
-                                            ('EasternmostLongitude', np.max(esi.longitude.values)), \
-                                            ('TemporalResolution', str(mode_var__TemporalResolution)), \
-                                            ('SpatialResolution', '0.05deg')])
+                    ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
 
                     # print("E")
 
-                    # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
-                    esiEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     # Set the Attributes
-                    esi.latitude.attrs = latAttr
-                    esi.longitude.attrs = lonAttr
-                    esi.time.attrs = timeAttr
-                    esi.time_bnds.attrs = timeBoundsAttr
-                    esi.esi.attrs = esiAttr
-                    esi.attrs = fileAttr
+                    ds.latitude.attrs = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
+                    ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
+                    ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
+                    ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
+                    ds.esi.attrs = OrderedDict([
+                        ('long_name', 'evaporative_stress_index'),
+                        ('units', 'unitless'),
+                        ('composite_interval', str(mode_var__attr_composite_interval)),
+                        ('comment', str(mode_var__attr_comment))
+                    ])
+                    ds.attrs = OrderedDict([
+                        ('Description', 'The Evaporative Stress Index (ESI) at ~5-kilometer resolution for the entire globe reveals regions of drought where vegetation is stressed due to lack of water, enabling agriculture ministries to provide farmers with actionable advice about irrigation.  The 4 week composite responds to fast-changing conditions, while the 12-week composite integrates data over a longer period and responds to slower evolving conditions.'),
+                        ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
+                        ('Source', 'NASA/MSFC SPORT; C. Hain, christopher.hain@nasa.gov; https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'),
+                        ('Version', '1.0'),
+                        ('Reference', 'Hain, C. R. and M.C. Anderson, 2017: Estimating morning change in land surface temperature from MODIS day/night observations: Applications for surface energy balance modeling., Geophys. Res. Letts., 44, 9723-9733, doi:10.1002/2017GL074952.'), \
+                        ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('SouthernmostLatitude', np.min(ds.latitude.values)),
+                        ('NorthernmostLatitude', np.max(ds.latitude.values)),
+                        ('WesternmostLongitude', np.min(ds.longitude.values)),
+                        ('EasternmostLongitude', np.max(ds.longitude.values)),
+                        ('TemporalResolution', str(mode_var__TemporalResolution)),
+                        ('SpatialResolution', '0.05deg')
+                    ])
                     # Set the Endcodings
-                    esi.esi.encoding = esiEncoding
-                    esi.time.encoding = timeEncoding
-                    esi.time_bnds.encoding = timeBoundsEncoding
+                    ds.esi.encoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
+                    ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
                     # print("F")
 
                     # 5) Output File
-                    outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    esi.to_netcdf(outputFile_FullPath, unlimited_dims='time')
+                    output_filepath = os.path.join(local_extract_path, final_nc4_filename)
+                    ds.to_netcdf(output_filepath, unlimited_dims='time')
 
                     # print("G")
 
-                    print(final_nc4_filename)
+                    print(output_filepath)
 
                 except Exception as e:
                     print(e)
@@ -474,8 +466,8 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         try:
-            expected_granules = self._expected_granules
-            for expected_granules_object in expected_granules:
+
+            for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
                 expected_full_path_to_local_final_nc4_file = "UNSET"
@@ -488,7 +480,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -503,7 +495,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
+                    self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
