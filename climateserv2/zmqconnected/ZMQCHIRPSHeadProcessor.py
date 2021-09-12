@@ -324,11 +324,8 @@ class ZMQCHIRPSHeadProcessor():
     # This is the part of the code that listens for workers to be done with their processing.
     # Once finished, it fires off the __finishJob__ method which completes the job.
     def __watchForResults__(self):
-        self.logger.info("progrrrr11")
-        self.logger.info(self.progress)
         if self.progress ==100.0:
             self.finished_items=[]
-
         # Normal existing code pipeline.
         while (self.progress < 100.0):
 
