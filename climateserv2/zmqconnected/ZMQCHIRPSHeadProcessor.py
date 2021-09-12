@@ -63,7 +63,7 @@ except:
     import requestLog as reqLog
     import file.ExtractTifFromH5 as extractTif
     import processtools.AnalysisTools as analysisTools
-    from file import fileutils
+    import file.fileutils
 
 
 class ZMQCHIRPSHeadProcessor():
@@ -182,7 +182,7 @@ class ZMQCHIRPSHeadProcessor():
         self.request = request
         
         # ks notes // Generate a list of work to be done (each item represents a time interval)
-        error, workarray = self.__preProcessIncomingRequest__(request)
+        error, workarray, percent = self.__preProcessIncomingRequest__(request)
 
         
         # KS Refactor 2015 // Additional pre-setup items specific to download request types
@@ -190,10 +190,19 @@ class ZMQCHIRPSHeadProcessor():
         
         # ks notes // Dispatch that list of work through the output receiver (to be picked up by workers)
         if (error == None):
-            self.worklist_length = len(workarray)
-            self.total_task_count = len(workarray)
-            self.progress = (float(self.finished_task_count) / float(self.total_task_count)) * 100.
-            self.__processProgress__(self.progress)
+            if len(workarray) == 0:
+                self.progress=100.0
+            else:
+                self.worklist_length = len(workarray)
+                self.total_task_count = len(workarray)
+                self.progress = (float(self.finished_task_count) / float(self.total_task_count)) * 80.
+               # self.__processProgress__(self.progress)
+
+                if self.progress + percent >= 100:
+                    self.__processProgress__(100)
+                else:
+                    self.__processProgress__(self.progress)
+
             workingArray_guid_index_list = []
             for item in workarray:
                 self.workToBeDone[item['workid']]= item
@@ -219,6 +228,7 @@ class ZMQCHIRPSHeadProcessor():
 
     # Use this when the size of the worklist is too large and we need to keep sending as some come in.
     def __watchForResults_and_keepSending__(self, workingArray, workingArray_guid_index_list):
+
         # Send the first 1000 items.
         # As new items come in for processing, send another item out.
 
@@ -314,6 +324,11 @@ class ZMQCHIRPSHeadProcessor():
     # This is the part of the code that listens for workers to be done with their processing.
     # Once finished, it fires off the __finishJob__ method which completes the job.
     def __watchForResults__(self):
+        self.logger.info("progrrrr11")
+        self.logger.info(self.progress)
+        if self.progress ==100.0:
+            self.finished_items=[]
+
         # Normal existing code pipeline.
         while (self.progress < 100.0):
 
@@ -359,6 +374,7 @@ class ZMQCHIRPSHeadProcessor():
     # We can find the values for every job inside the variable called,
     # # self.finished_items = []
     def __finishJob__(self):
+        self.logger.info("finish job")
 
         # KS Refactor 2015 // Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
@@ -372,7 +388,8 @@ class ZMQCHIRPSHeadProcessor():
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
 
         if (self.isDownloadJob == False):
-            self.finished_items = self.__sortData__(self.finished_items)
+            if len(self.finished_items)>0:
+                self.finished_items = self.__sortData__(self.finished_items)
 #         ##Output Data
         if (self.derived_product == True):
             # Special output formatting for Monthly Analysis (we don't necessarily want all the raw data (maybe we do!?)
@@ -381,8 +398,9 @@ class ZMQCHIRPSHeadProcessor():
             # Normal output formatting
             self.__outputData__()
 #         ##Update Progress
-
-        self.__updateProgress__(output_full=True)
+        self.logger.info(self.finished_items)
+        if len(self.finished_items) > 0:
+            self.__updateProgress__(output_full=True)
         self.__cleanup__()
 #         ###Back to looking for work.
 
@@ -736,6 +754,7 @@ class ZMQCHIRPSHeadProcessor():
 
 
                 else:
+
                     dates, values,percent = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                         request['endtime'],
                                                                                         dataset_name, variable_name,
@@ -744,11 +763,15 @@ class ZMQCHIRPSHeadProcessor():
                                                                                         params.parameters[
                                                                                             request['operationtype']][
                                                                                             1])
+
             current_mask_and_storage_uuid = uniqueid
             worklist = []
+            self.__processProgress__(percent)
 
             if (self.dj_OperationName != "download"):
+
                 for dateIndex in range(len(dates)):
+
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
                     workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":polygon_Str_ToPass, "derived_product": False}
@@ -775,11 +798,10 @@ class ZMQCHIRPSHeadProcessor():
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['intervaltype']: " + str(intervaltype))
-
-            return None, worklist
+            return None, worklist, percent
         except Exception as e:
             self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))
-            return e,None
+            return e,None, -1
         
     def __processProgress__(self, progress):
         self.__updateProgressDb__(self.request['uniqueid'],progress)

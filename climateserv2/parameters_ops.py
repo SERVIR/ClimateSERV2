@@ -31,7 +31,7 @@ shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 tempnetcdfpath= '''/cserv2/tmp/netCDFs'''
 deletetempnetcdf=False
-pythonpath='''/home/tethys/miniconda/envs/ClimateSERV2/bin/python/'''
+pythonpath='''/usr/bin/'''
 
 
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
@@ -132,8 +132,10 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-southafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data2/image/input/emodis/southafrica/',
+     'inputDataLocation': '/data/data2/imagef/input/emodis/southafrica/',
      'data_category': 'NDVI',
+     'variable': 'ndvi',
+     'dataset_name': 'emodis-ndvi_southafrica_250m_10dy',
      },
 
     # Adding new climate change datatypes here.
@@ -483,7 +485,7 @@ dataTypes = [
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data2/image/input/emodis/asia/',
      'data_category': 'NDVI',
-     'variable': 'precipitation_amount',
+     'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_centralasia_250m_10dy',
      },
     {'number': 29,
@@ -513,12 +515,14 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': '/data/data3/image/input/gefs_anom/',
-     'data_category': 'CHIRPS'
+     'data_category': 'CHIRPS',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
      },
     {'number': 32,
      'name': 'Chirps-GEFS-Precip', 'description': 'Global CHIRPS GEFS Precipitation Dataset ',
      'size': [7200, 2000],
-     'directory': '/data/data3/image/processed/gefs_precip/',
+     'directory': '/cserv2/tmp/gefs_precip/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
      'inputDataLocation': '/data/data3/image/input/gefs_precip/',
@@ -555,7 +559,9 @@ dataTypes = [
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
      'inputDataLocation': '/data/data3/image/input/gefs_precip_25/',
-     'data_category': 'CHIRPS'
+     'data_category': 'CHIRPS',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
      },
     {'number': 36,
      'name': 'Chirps-GEFS-Precip', 'description': 'Global CHIRPS GEFS 75th Percentile Dataset ',
