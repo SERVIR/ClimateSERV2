@@ -463,12 +463,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     # 3) Clean up the dataset: Rename and add dimensions, attributes, and scaling factors as appropriate
                     # 4) Dump the precipitation dataset to a netCDF-4 file with a filename conforming to the ClimateSERV 2.0 TDS conventions
 
-                    # Set region ID
-                    # regionID = 'Global'
-
-                    # TimeStrSplit_TEST = geotiffFile_FullPath.split('.')
-                    # print("C: TimeStrSplit_TEST: " + str(TimeStrSplit_TEST))
-
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
                     TimeStrSplit = ''
@@ -488,11 +482,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     elif self.mode == 'chirps_gefs':
                         pass
 
-                    # print("C: TimeStrSplit: " + str(TimeStrSplit))
-
                     # Determine the timestamp for the data.
-                    startTime = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
-                    endTime = pd.Timestamp('{}-{}-{}T23:59:59'.format(yearStr, monthStr, dayStr))
+                    start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
+                    end_time = pd.Timestamp('{}-{}-{}T23:59:59'.format(yearStr, monthStr, dayStr))
 
                     # print("D")
 
@@ -501,65 +493,55 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     ############################################################
 
                     # 1) Read the geotiff data into an xarray data array
-                    tiffData = xr.open_rasterio(geotiffFile_FullPath)
+                    da = xr.open_rasterio(geotiffFile_FullPath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    chirps_data = tiffData.rename('precipitation_amount').to_dataset()
+                    ds = da.rename('precipitation_amount').to_dataset()
                     # Handle selecting/adding the dimesions
-                    chirps_data = chirps_data.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
+                    ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
-                    chirps_data = chirps_data.assign_coords(time=startTime).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    chirps_data['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
+                    ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
-                    chirps_data = chirps_data.rename({'y': 'latitude', 'x': 'longitude'})
-                    # Lat/Lon/Time dictionaries.
-                    # Use Ordered dict
-                    latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
-                    lonAttr = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
-                    timeAttr = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
-                    timeBoundsAttr = OrderedDict([('long_name', 'time_bounds')])
-                    precipAttr = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', str(mode_var__precipAttr_comment) )])
-
-                    # 'Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution'
-                    # '1.0'  '2.0'
-                    fileAttr = OrderedDict([('Description', str(mode_var__fileAttr_Description) ), \
-                                            ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'), \
-                                            ('Source', 'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'), \
-                                            ('Version', str(mode_var__fileAttr_Version)), \
-                                            ('Reference', 'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'), \
-                                            ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('SouthernmostLatitude', np.min(chirps_data.latitude.values)), \
-                                            ('NorthernmostLatitude', np.max(chirps_data.latitude.values)), \
-                                            ('WesternmostLongitude', np.min(chirps_data.longitude.values)), \
-                                            ('EasternmostLongitude', np.max(chirps_data.longitude.values)), \
-                                            ('TemporalResolution', 'daily'), \
-                                            ('SpatialResolution', '0.05deg')])
+                    ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if ds.latitude.values[1] - ds.latitude.values[0] < 0:
+                        ds = ds.reindex(latitude=ds.latitude[::-1])
 
                     # print("E")
 
-                    # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
-                    precipEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     # Set the Attributes
-                    chirps_data.latitude.attrs              = latAttr
-                    chirps_data.longitude.attrs             = lonAttr
-                    chirps_data.time.attrs                  = timeAttr
-                    chirps_data.time_bnds.attrs             = timeBoundsAttr
-                    chirps_data.precipitation_amount.attrs  = precipAttr
-                    chirps_data.attrs                       = fileAttr
+                    ds.latitude.attrs = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
+                    ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
+                    ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
+                    ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
+                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', str(mode_var__precipAttr_comment))])
+                    ds.attrs = OrderedDict([
+                        ('Description', str(mode_var__fileAttr_Description)),
+                        ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
+                        ('Source', 'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'),
+                        ('Version', str(mode_var__fileAttr_Version)),
+                        ('Reference', 'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'),
+                        ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                        ('SouthernmostLatitude', np.min(ds.latitude.values)),
+                        ('NorthernmostLatitude', np.max(ds.latitude.values)),
+                        ('WesternmostLongitude', np.min(ds.longitude.values)),
+                        ('EasternmostLongitude', np.max(ds.longitude.values)),
+                        ('TemporalResolution', 'daily'),
+                        ('SpatialResolution', '0.05deg')
+                    ])
                     # Set the Endcodings
-                    chirps_data.precipitation_amount.encoding   = precipEncoding
-                    chirps_data.time.encoding                   = timeEncoding
-                    chirps_data.time_bnds.encoding              = timeBoundsEncoding
+                    ds.precipitation_amount.encoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
+                    ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
                     # print("F")
 
                     # 5) Output File
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    chirps_data.to_netcdf(outputFile_FullPath, unlimited_dims='time')
+                    ds.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
                     # print("G")
 

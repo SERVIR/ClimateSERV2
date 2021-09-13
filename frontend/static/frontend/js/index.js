@@ -6,6 +6,12 @@ function setYouCanDoSlide(which) {
   $("#usageCarousel").carousel(which);
 }
 
+function decodeHtml(html) {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+}
+
 /**
  * Sets up the carousels and loads data into the teaser from the dataItems structure.
  * It also creates cloned copies of the slides and mashes them into new slides that
@@ -18,7 +24,7 @@ function initIndex() {
   });
 
   $("#dataCarousel").carousel({
-    interval: 8000,
+    interval: 5000,
     transition: "transform 2s ease, opacity .5s ease-out"
   });
 

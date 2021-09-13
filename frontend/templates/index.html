@@ -23,9 +23,9 @@
                                 style="width: 100% !important"
                         />
                         <div class="carousel-caption d-md-block">
-                            <h3>{{ page_elements.hero_title }}</h3>
+                            <h3>{{ page_elements.hero_title | safe }}</h3>
                             <p>
-                               <span class="hero-subtitle">{{ page_elements.hero_subtitle }}</span>
+                               <span class="hero-subtitle">{{ page_elements.hero_subtitle | safe }}</span>
                             </p>
                         </div>
                     </div>
@@ -36,10 +36,10 @@
     <div style="background-color: #f6f6f6;" class="p50b0">
         <div class="row mx-auto my-auto">
             <h2 class="underline-header">
-                {{ page_elements.intro_text_header }}
+                {{ page_elements.intro_text_header | safe  }}
             </h2>
             <p style="padding: 15px 15px 0 15px">
-                {{ page_elements.intro_text }}
+                {{ page_elements.intro_text | safe  }}
             </p>
         </div>
     </div>
@@ -66,9 +66,9 @@
                                 <div class="mbr-overlay" style="background-color: rgb(49, 47, 46);"></div>
                                 <div class="container-slide container">
                                     <div class="row">
-                                        <div class="col-md-8 col-md-offset-1" style="color:white;">
-                                            <h2 class="mbr-section-title display-4">{{ dataset.heading }}</h2>
-                                            <p class="mbr-section-lead lead">{{ dataset.feature_subtext }}</p>
+                                        <div class="col-md-12" style="color:white; margin-left:40px;">
+                                            <h2 class="mbr-section-title display-4">{{ dataset.heading | safe }}</h2>
+                                            <p class="mbr-section-lead lead">{{ dataset.feature_subtext | safe }}</p>
 
                                             <div class="mbr-section-btn">
                                                 <button class="btn btn-lg btn-data-info"
@@ -79,7 +79,9 @@
                                                 <button
                                                         class="btn btn-lg btn-data-info"
                                                         onclick="window.location = 'map?data={{ dataset.button_variable }}'"
-                                                        title="{{ dataset.button_text }}">{{ dataset.button_text }}</button>
+                                                        title="{{ dataset.button_text }}"
+                                                style="margin-left:1%">{{ dataset.button_text }}
+                                                </button>
 
                                             </div>
                                         </div>
@@ -139,7 +141,7 @@
                                 </div>
                                     <p class="do-with-text">
                                         <span class="active-title">{{ tasks.title }}</span>
-                                        {{ tasks.body }}
+                                        {{ tasks.body | safe  }}
                                     </p>
                                     <p style="text-align: center;">
                                         {% for tasktitle in page_elements.homepage.all %}

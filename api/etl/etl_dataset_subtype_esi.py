@@ -344,10 +344,10 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     # print("A")
 
                     # Getting info ready for the current granule.
-                    local_extract_path                                  = expected_granules_object['local_extract_path']
-                    tif_filename                                        = expected_granules_object['extracted_tif_filename']   #  tif_filename to extracted_tif_filename
-                    final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
-                    expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
+                    local_extract_path = expected_granules_object['local_extract_path']
+                    tif_filename = expected_granules_object['extracted_tif_filename']
+                    final_nc4_filename = expected_granules_object['final_nc4_filename']
+                    expected_full_path_to_local_extracted_tif_file = os.path.join(local_extract_path, tif_filename)
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
 
@@ -389,16 +389,10 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     # 3) Clean up the dataset: Rename and add dimensions, attributes, and scaling factors as appropriate
                     # 4) Dump the dataset to a netCDF-4 file with a filename conforming to the ClimateSERV 2.0 TDS conventions
 
-                    # Set region ID
-                    # regionID = 'Global'
-
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
-                    TimeStrSplit = tif_filename.split('.')  #TimeStrSplit = geotiffFile.split('_')              # 'DFPPM_4WK_2020232' , 'tif'
-                    #print("TimeStrSplit: " + str(TimeStrSplit))
-                    #yyyyddd = TimeStrSplit[2].split('.')[0]  # added extra split to trim off .tif
-                    yyyyddd = TimeStrSplit[0].split('_')[2] # Should just get the '2020232' part        # TimeStrSplit[2].split('.')[0]  # added extra split to trim off .tif
-                    #print("yyyyddd: " + str(yyyyddd))
+                    TimeStrSplit = tif_filename.split('.')
+                    yyyyddd = TimeStrSplit[0].split('_')[2]
 
                     # Determine starting and ending times.
                     end_time = datetime.datetime.strptime(yyyyddd, '%Y%j')
@@ -406,21 +400,25 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
                     # print("D")
 
-                    ############################################################
-                    # Beging extracting data and creating output netcdf file.
-                    ############################################################
+                    ##########################################################
+                    # Beging extracting data and creating output netcdf file #
+                    ##########################################################
+
                     # 1) Read the geotiff data into an xarray data array
                     da = xr.open_rasterio(geotiffFile_FullPath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
                     ds = da.rename('esi').to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
-                    # Add the time dimension as a new coordinate.
+                    # Add the time dimension as a new coordinate
                     ds = ds.assign_coords(time=end_time).expand_dims(dim='time', axis=0)
-                    # Add an additional variable "time_bnds" for the time boundaries.
+                    # Add an additional variable "time_bnds" for the time boundaries
                     ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
-                    # 3) Rename and add attributes to this dataset.
+                    # 3) Rename and add attributes to this dataset
                     ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if ds.latitude.values[1] - ds.latitude.values[0] < 0:
+                        ds = ds.reindex(latitude=ds.latitude[::-1])
 
                     # print("E")
 
