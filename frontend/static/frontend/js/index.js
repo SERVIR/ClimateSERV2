@@ -18,7 +18,7 @@ function initIndex() {
   });
 
   $("#dataCarousel").carousel({
-    interval: 8000,
+    interval: 5000,
     transition: "transform 2s ease, opacity .5s ease-out"
   });
 
