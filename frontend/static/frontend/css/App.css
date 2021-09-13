@@ -106,6 +106,14 @@ body {
     width: unset;
 }
 
+   .carousel-item{
+        align-items: flex-end;
+    }
+
+    .mbr-table-cell{
+        margin-bottom: 50px;
+    }
+
 .card-button {
     color: #ffffff;
     background-color: #73ac58;
