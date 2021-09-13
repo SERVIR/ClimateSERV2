@@ -23,9 +23,9 @@
                                 style="width: 100% !important"
                         />
                         <div class="carousel-caption d-md-block">
-                            <h3>{{ page_elements.hero_title }}</h3>
+                            <h3>{{ page_elements.hero_title | safe }}</h3>
                             <p>
-                               <span class="hero-subtitle">{{ page_elements.hero_subtitle }}</span>
+                               <span class="hero-subtitle">{{ page_elements.hero_subtitle | safe }}</span>
                             </p>
                         </div>
                     </div>
@@ -67,8 +67,8 @@
                                 <div class="container-slide container">
                                     <div class="row">
                                         <div class="col-md-8 col-md-offset-1" style="color:white;">
-                                            <h2 class="mbr-section-title display-4">{{ dataset.heading }}</h2>
-                                            <p class="mbr-section-lead lead">{{ dataset.feature_subtext }}</p>
+                                            <h2 class="mbr-section-title display-4">{{ dataset.heading | safe }}</h2>
+                                            <p class="mbr-section-lead lead">{{ dataset.feature_subtext | safe }}</p>
 
                                             <div class="mbr-section-btn">
                                                 <button class="btn btn-lg btn-data-info"
