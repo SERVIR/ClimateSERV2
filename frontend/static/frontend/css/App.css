@@ -23,7 +23,7 @@ body {
     pointer-events: none;
 }
 
-.display-4{
+.display-4 {
     font-size: 300%;
 }
 
@@ -70,6 +70,18 @@ body {
 .navbar-collapse {
     text-align: center;
     width: 100%;
+}
+
+.hero-subtitle {
+    padding: 10px 20px;
+    background-color: #92B03D;
+    border-radius: 5px;
+}
+
+.btn-data-info{
+    color: #fff;
+    background-color: #92B03D;
+    border-color: #92B03D;
 }
 
 .nav-link:hover {
@@ -143,10 +155,27 @@ body {
     color: #3b6e22
 }
 
+.do-with-text{
+    margin-left: 300px;
+    margin-bottom: 50px;
+}
+
+.todo-wrapper{
+    display: inline-block;
+  position: relative;
+  width: 250px;
+  height: 250px;
+  overflow: hidden;
+  border-radius: 50%;
+    float:left;
+}
+
 .do-with-img {
-    float: right;
-    margin: 10px;
-    max-width: calc(50vw - 20px);
+    /*float: right;*/
+    /*margin: 10px;*/
+    /*max-width: calc(50vw - 20px);*/
+    width: auto;
+    height: 100%;
 }
 
 .bg-servir {
@@ -169,6 +198,7 @@ body {
     max-width: 100%;
     left: 0;
     bottom: 40%;
+    width: 100%;
 }
 
 .carousel-caption h3 {
@@ -181,9 +211,10 @@ body {
 
 .carousel-caption p {
     font-size: 28px;
-    text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;
+    /*text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;*/
     color: #FFFFFF;
     font-style: italic;
+        margin-top: 20px;
 }
 
 @keyframes App-logo-spin {
@@ -532,7 +563,7 @@ footer a:hover,
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    right: 10px;
+    right: 20px;
 }
 
 .climate-power {

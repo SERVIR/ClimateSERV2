@@ -25,7 +25,7 @@
                         <div class="carousel-caption d-md-block">
                             <h3>{{ page_elements.hero_title }}</h3>
                             <p>
-                                {{ page_elements.hero_subtitle }}
+                               <span class="hero-subtitle">{{ page_elements.hero_subtitle }}</span>
                             </p>
                         </div>
                     </div>
@@ -71,13 +71,13 @@
                                             <p class="mbr-section-lead lead">{{ dataset.feature_subtext }}</p>
 
                                             <div class="mbr-section-btn">
-                                                <button class="btn btn-lg btn-info"
+                                                <button class="btn btn-lg btn-data-info"
                                                         onclick="window.location = '/help?metaid={{ dataset.metadata_id }}'"
                                                         title="Help Center">
                                                     Help Center
                                                 </button>
                                                 <button
-                                                        class="btn btn-lg btn-info"
+                                                        class="btn btn-lg btn-data-info"
                                                         onclick="window.location = 'map?data={{ dataset.button_variable }}'"
                                                         title="{{ dataset.button_text }}">{{ dataset.button_text }}</button>
 
@@ -130,16 +130,18 @@
                         <div class="carousel-item h-100 {% if forloop.first %} active {% endif %}">
                             <div class="row">
                                 <div class="col">
+                                <div class="todo-wrapper">
                                     <img
                                             src="{{ tasks.display_image.url }}"
                                             alt="{{ tasks.title }}"
                                             class="img-fluid do-with-img"
                                     />
-                                    <p>
+                                </div>
+                                    <p class="do-with-text">
                                         <span class="active-title">{{ tasks.title }}</span>
                                         {{ tasks.body }}
                                     </p>
-                                    <p>
+                                    <p style="text-align: center;">
                                         {% for tasktitle in page_elements.homepage.all %}
                                             <span class="right carousel-control site-link" {% if tasktitle.title ==  tasks.title %}disabled
                                             {%  else %}
