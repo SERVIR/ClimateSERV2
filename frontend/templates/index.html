@@ -36,10 +36,10 @@
     <div style="background-color: #f6f6f6;" class="p50b0">
         <div class="row mx-auto my-auto">
             <h2 class="underline-header">
-                {{ page_elements.intro_text_header }}
+                {{ page_elements.intro_text_header | safe  }}
             </h2>
             <p style="padding: 15px 15px 0 15px">
-                {{ page_elements.intro_text }}
+                {{ page_elements.intro_text | safe  }}
             </p>
         </div>
     </div>
