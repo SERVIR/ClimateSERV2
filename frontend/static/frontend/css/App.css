@@ -78,10 +78,16 @@ body {
     border-radius: 5px;
 }
 
-.btn-data-info{
+.lead {
+    margin: 20px 0;
+}
+
+.btn-data-info {
     color: #fff;
     background-color: #92B03D;
     border-color: #92B03D;
+    text-transform: uppercase;
+    line-height: 1;
 }
 
 .nav-link:hover {
@@ -155,19 +161,19 @@ body {
     color: #3b6e22
 }
 
-.do-with-text{
+.do-with-text {
     margin-left: 300px;
     margin-bottom: 50px;
 }
 
-.todo-wrapper{
+.todo-wrapper {
     display: inline-block;
-  position: relative;
-  width: 250px;
-  height: 250px;
-  overflow: hidden;
-  border-radius: 50%;
-    float:left;
+    position: relative;
+    width: 250px;
+    height: 250px;
+    overflow: hidden;
+    border-radius: 50%;
+    float: left;
 }
 
 .do-with-img {
@@ -214,7 +220,7 @@ body {
     /*text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;*/
     color: #FFFFFF;
     /*font-style: italic;*/
-        margin-top: 20px;
+    margin-top: 20px;
 }
 
 @keyframes App-logo-spin {

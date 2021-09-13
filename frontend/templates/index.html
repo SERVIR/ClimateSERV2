@@ -139,7 +139,7 @@
                                 </div>
                                     <p class="do-with-text">
                                         <span class="active-title">{{ tasks.title }}</span>
-                                        {{ tasks.body }}
+                                        {{ tasks.body | safe  }}
                                     </p>
                                     <p style="text-align: center;">
                                         {% for tasktitle in page_elements.homepage.all %}
