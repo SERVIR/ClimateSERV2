@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: "Fira Sans", sans-serif;
+    font-family: Signika, sans-serif;
     color: #666666;
     background-color: #f9f9f9;
 }
@@ -205,15 +205,15 @@ body {
     font-size: 48px;
     text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;
     color: #FFFFFF;
-    font-weight: 800;
-    font-style: italic;
+    font-weight: 500;
+    /*font-style: italic;*/
 }
 
 .carousel-caption p {
     font-size: 28px;
     /*text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;*/
     color: #FFFFFF;
-    font-style: italic;
+    /*font-style: italic;*/
         margin-top: 20px;
 }
 
