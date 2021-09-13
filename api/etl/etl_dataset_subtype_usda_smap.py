@@ -12,7 +12,7 @@ from ..models import Config_Setting
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -85,7 +85,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
-                # print("DONE - Create a granule with all the above info")
 
                 current_obj = {}
 
@@ -240,7 +239,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
-                error_message = "esi.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
+                error_message = "usda_smap.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -252,8 +251,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['loop_counter'] = loop_counter
         ret__detail_state_info['detail_errors'] = detail_errors
-        # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
-        # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
@@ -315,21 +312,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     # Start extracting data and creating output netcdf file.
                     ############################################################
 
-                    # !/usr/bin/env python
-                    # Program: Convert SPORT-ESI 4-week (and 12-week) composite geoTiff files into netCDF-4 for storage on the ClimateSERV 2.0 thredds data server.
-                    # Calling: esi4week2netcdf.py geotiffFile               (and esi12week2netcdf)
-                    # geotiffFile: The inputfile to be processed.
-                    #
-                    # General Flow:
-                    # Determine the date associated with the geoTiff file.
-                    # 1) Use  xarray+rasterio to read the geotiff data from a file into a data array.
-                    # 2) Convert to a dataset and add an appropriate time dimension
-                    # 3) Clean up the dataset: Rename and add dimensions, attributes, and scaling factors as appropriate.
-                    # 4) Dump the dataset to a netCDF-4 file with a filename conforming to the ClimateSERV 2.0 TDS conventions.
-
-                    # Set region ID
-                    # regionID = 'Global'
-
                     _, _, _, start, end = tif_filename.split('_')
                     startTime = datetime.datetime.strptime(start[2:], '%Y%m%d')
                     endTime = datetime.datetime.strptime(end[:-4], '%Y%m%d')
@@ -342,63 +324,78 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     # 1) Read the geotiff data into an xarray data array
                     tiffData = xr.open_rasterio(geotiffFile_FullPath)  #tiffData = xr.open_rasterio(geotiffFile)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    esi = tiffData.rename('esi').to_dataset()
+                    usda = tiffData.rename('smap').to_dataset()
                     # Handle selecting/adding the dimesions
-                    esi = esi.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
+                    ssm = usda.isel(band=0).reset_coords('band', drop=True).rename({'smap':'ssm'})  # select the singleton band dimension and drop out the associated coordinate.
+                    susm = usda.isel(band=1).reset_coords('band', drop=True).rename({'smap':'susm'})
+                    smp = usda.isel(band=2).reset_coords('band', drop=True).rename({'smap':'smp'})
+                    ssma = usda.isel(band=3).reset_coords('band', drop=True).rename({'smap':'ssma'})
+                    susma = usda.isel(band=4).reset_coords('band', drop=True).rename({'smap':'susma'})
+
+                    usda = xr.merge([ssm,susm,smp,ssma,susma])
+                    centerTime=startTime +pd.Timedelta('36h')
                     # Add the time dimension as a new coordinate.
-                    esi = esi.assign_coords(time=endTime).expand_dims(dim='time', axis=0)
+                    usda = usda.assign_coords(time=centerTime).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    esi['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
-                    # 3) Rename and add attributes to this dataset.
-                    #esi.rename({'y': 'latitude', 'x': 'longitude'}, inplace=True)  # rename lat/lon
-                    esi = esi.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    usda['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
+                    # 3) Rename coordinates
+                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
                     # Lat/Lon/Time dictionaries.
                     # Use Ordered dict
                     latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
                     lonAttr = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     timeAttr = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     timeBoundsAttr = OrderedDict([('long_name', 'time_bounds')])
-                    esiAttr = OrderedDict([('long_name', 'evaporative_stress_index'), ('units', 'unitless'), ('composite_interval', str(mode_var__attr_composite_interval)), ('comment', str(mode_var__attr_comment))])
-                    fileAttr = OrderedDict([('Description', 'The Evaporative Stress Index (ESI) at ~5-kilometer resolution for the entire globe reveals regions of drought where vegetation is stressed due to lack of water, enabling agriculture ministries to provide farmers with actionable advice about irrigation.  The 4 week composite responds to fast-changing conditions, while the 12-week composite integrates data over a longer period and responds to slower evolving conditions.'), \
+                    ssmAttr = OrderedDict([('long_name', 'surface_soil_moisture'), ('units', 'mm'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
+                    susmAttr = OrderedDict([('long_name', 'sub_surface_soil_moisture'), ('units', 'mm'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
+                    smpAttr = OrderedDict([('long_name', 'soil_moisture_profile'), ('units', '%'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
+                    ssmaAttr = OrderedDict([('long_name', 'surface_soil_moisture_anomaly'), ('units', 'unitless'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
+                    susmaAttr = OrderedDict([('long_name', 'sub_surface_soil_moisture_anomaly'), ('units', 'unitless'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
+
+                    fileAttr = OrderedDict([('Description', 'The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.'), \
                                             ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                             ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'), \
-                                            ('Source', 'NASA/MSFC SPORT; C. Hain, christopher.hain@nasa.gov; https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/'), \
+                                            ('Source', 'NASA Goddard Space Flight Center; John D. Bolten. john.bolten@nasa.gov; https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/'), \
                                             ('Version', '1.0'), \
-                                            ('Reference', 'Hain, C. R. and M.C. Anderson, 2017: Estimating morning change in land surface temperature from MODIS day/night observations: Applications for surface energy balance modeling., Geophys. Res. Letts., 44, 9723-9733, doi:10.1002/2017GL074952.'), \
+                                            ('Reference', 'Mladenova, I.E., Bolten, J.D., Crow, W., Sazib, N. and Reynolds, C., 2020. Agricultural drought monitoring via the assimilation of SMAP soil moisture retrievals into a global soil water balance model.'), \
                                             ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                             ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('SouthernmostLatitude', np.min(esi.latitude.values)), \
-                                            ('NorthernmostLatitude', np.max(esi.latitude.values)), \
-                                            ('WesternmostLongitude', np.min(esi.longitude.values)), \
-                                            ('EasternmostLongitude', np.max(esi.longitude.values)), \
+                                            ('SouthernmostLatitude', np.min(usda.latitude.values)), \
+                                            ('NorthernmostLatitude', np.max(usda.latitude.values)), \
+                                            ('WesternmostLongitude', np.min(usda.longitude.values)), \
+                                            ('EasternmostLongitude', np.max(usda.longitude.values)), \
                                             ('TemporalResolution', str(mode_var__TemporalResolution)), \
-                                            ('SpatialResolution', '0.05deg')])
-
-                    # print("E")
+                                            ('SpatialResolution', '10kmx10km')])
 
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
-                    esiEncoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
+                    ssmEncoding = {'_FillValue': np.float32(-999.0), 'missing_value': np.float32(-999.0), 'dtype': np.dtype('float32')}
                     timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     # Set the Attributes
-                    esi.latitude.attrs = latAttr
-                    esi.longitude.attrs = lonAttr
-                    esi.time.attrs = timeAttr
-                    esi.time_bnds.attrs = timeBoundsAttr
-                    esi.esi.attrs = esiAttr
-                    esi.attrs = fileAttr
-                    # Set the Endcodings
-                    esi.esi.encoding = esiEncoding
-                    esi.time.encoding = timeEncoding
-                    esi.time_bnds.encoding = timeBoundsEncoding
+                    usda.latitude.attrs = latAttr
+                    usda.longitude.attrs = lonAttr
+                    usda.time.attrs = timeAttr
+                    usda.time_bnds.attrs = timeBoundsAttr
+                    usda.ssm.attrs = ssmAttr
+                    usda.susm.attrs = susmAttr
+                    usda.smp.attrs = smpAttr
+                    usda.ssma.attrs = ssmaAttr
+                    usda.susma.attrs = susmaAttr
+                    usda.attrs = fileAttr
+                    # Set the Encodings
+                    usda.ssm.encoding = ssmEncoding
+                    usda.susm.encoding = ssmEncoding
+                    usda.smp.encoding = ssmEncoding
+                    usda.ssma.encoding = ssmEncoding
+                    usda.susma.encoding = ssmEncoding
 
-                    # print("F")
+                    usda.time.encoding = timeEncoding
+                    usda.time_bnds.encoding = timeBoundsEncoding
+                    usda.reindex(latitude=usda.latitude[::-1])
 
                     # 5) Output File
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    esi.to_netcdf(outputFile_FullPath, unlimited_dims='time')
-
-                    # print("G")
+                    usda.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
                     print(outputFile_FullPath)
 
@@ -409,7 +406,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    error_message = "esi.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
+                    error_message = "usada_smap.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
 
                     print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
 
@@ -472,6 +469,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
+
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
 
@@ -513,14 +511,6 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-                    # # Exit Here With Error info loaded up
-                    # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
-                    # ret__is_error = True
-                    # ret__error_description = error_JSON['error']
-                    # ret__detail_state_info = error_JSON
-                    # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-                    # return retObj
 
             pass
         except:
@@ -564,7 +554,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "esi"
+                additional_json['subclass'] = "usda_smap"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
                 shutil.rmtree(temp_working_dir)
@@ -573,7 +563,7 @@ class ETL_Dataset_Subtype_SMAP(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "esi"
+                additional_json['subclass'] = "usda_smap"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
