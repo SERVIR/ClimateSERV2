@@ -88,6 +88,8 @@ body {
     border-color: #92B03D;
     text-transform: uppercase;
     line-height: 1;
+    max-width: 49%;
+    font-size: 1em;
 }
 
 .nav-link:hover {
@@ -1233,11 +1235,17 @@ button[disabled] {
         bottom: unset;
         top: 10px;
     }
+    .btn-data-info{
+        font-size: 1em;
+    }
 }
 
 @media (min-width: 768px) {
     .tl-open {
         left: 470px;
+    }
+    .btn-data-info{
+        font-size: 1.25em;
     }
 }
 
