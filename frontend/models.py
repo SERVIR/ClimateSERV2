@@ -22,6 +22,7 @@ class DataSet(models.Model):
     button_variable = models.CharField(max_length=200, help_text='Enter variable to pass to map application which '
                                                                  'will enable the selected data type on the map')
     button_text = models.CharField(max_length=200, help_text='Enter text of button to access data on map')
+    # button_color = models.CharField(max_length=200, help_text='Valid hex, RGB, or RGBA color')
     metadata_id = models.CharField(max_length=200, help_text='Enter metadata id from GeoNetwork')
     featured = models.BooleanField(default=False)
 
