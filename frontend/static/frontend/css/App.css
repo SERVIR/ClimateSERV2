@@ -114,6 +114,13 @@ body {
         margin-bottom: 50px;
     }
 
+.carousel-item-next, .carousel-item-prev, .carousel-item.active {
+    display: block;
+    transition: -webkit-transform 1.5s ease;
+    transition: transform 1.5s ease;
+    transition: transform 1.5 ease,-webkit-transform 1.5s ease;
+}
+
 .card-button {
     color: #ffffff;
     background-color: #73ac58;
@@ -1336,6 +1343,9 @@ button[disabled] {
 
     .tab-holder {
         margin-top: 30px;
+    }
+    .lg-br{
+        display:none;
     }
 }
 
