@@ -1720,6 +1720,18 @@ function toggleAOIHeight() {
 }
 
 let img, originalWidth, originalHeight;
+const last_step_template = "<div class='popover tour'>" +
+    "   <div class='arrow'></div>" +
+    "   <h3 class='popover-title'></h3>" +
+    "   <div class='popover-content'></div>" +
+    "   <div class='popover-navigation'>" +
+    "       <div class='btn-group'> " +
+    "           <button class='btn btn-sm btn-default' data-role='prev'>« Prev</button>" +
+    "           <button class='btn btn-sm btn-default' onclick='tour.goTo(0)'>Restart</button>" +
+    "       </div>" +
+    "       <button class='btn btn-sm btn-default' data-role='end'>End tour</button>" +
+    "   </div>" +
+    "</div>";
 
 const tour = new Tour({
     smartPlacement: true,
@@ -1787,7 +1799,8 @@ const tour = new Tour({
         {
             element: "#tour_link",
             title: "Tour",
-            content: "Click here to open this tour anytime you need a refresher."
+            content: "Click here to open this tour anytime you need a refresher.",
+            template: last_step_template
         }
     ],
     onHide: function (tour) {
