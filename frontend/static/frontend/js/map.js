@@ -15,6 +15,7 @@ const api_url = "https://climateserv2.servirglobal.net/" //http://192.168.1.132:
 const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
 let sidebar;
+let previous_chart;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -1286,6 +1287,15 @@ function inti_chart_dialog() {
     });
 }
 
+function open_previous_chart(){
+    if(previous_chart){
+        console.log(previous_chart);
+         inti_chart_dialog();
+         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
+
+    } else {alert("you have no previous chart, please send a request.")}
+}
+
 function getIndex(which) {
     switch (which) {
         case 'LongTermAverage':
@@ -1465,6 +1475,14 @@ function getDataFromRequest(id, isClimate) {
 };
 
 function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) {
+    previous_chart = {
+        "compiled_series": compiled_series,
+        "units": units,
+        "xAxis_object": xAxis_object,
+        "title": title,
+        "isClimate": isClimate
+    };
+    $("#btnPreviousChart").prop("disabled", false);
     let chart_obj = {};
     chart_obj.title = {
         text: title
