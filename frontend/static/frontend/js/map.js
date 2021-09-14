@@ -1288,7 +1288,7 @@ function inti_chart_dialog() {
         }
     });
 
-    $('div#popup_content').on('dialogclose', function(event) {
+    $('#dialog').on('dialogclose', function(event) {
         $("#btnPreviousChart").prop("disabled", false);
     });
 
