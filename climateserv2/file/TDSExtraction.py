@@ -54,6 +54,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
             logger.info("thredds URL exception")
 
     else:
+        logger.info("else")
         # The netcdf files use a global lat/lon so adjust values accordingly
         east = aoi.total_bounds[2]
         south = aoi.total_bounds[1]
@@ -63,6 +64,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
             north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
             south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
+        logger.info(tds_request)
         temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file
         try:
             urllib.request.urlretrieve(tds_request, temp_file)
@@ -89,7 +91,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
             temp = pd.Timestamp(np.datetime64(x.time.values)).to_pydatetime()
             new_data.append(temp.strftime("%Y-%m-%d"))
         print(new_data)
-        if (start_date not in new_data) and (end_date not in new_data):
+        if (start_date not in new_data) and (end_date not in new_data) and ('smap' not in dataset):
             count = 1
     if count == 0 and os.path.exists(temp_file):
         percent=20
@@ -109,6 +111,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
             return np.array(dates), np.array(avg_values[variable].values),percent
         elif operation == "max":
             max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
+            logger.info(max_values)
             dates = []
             for i in max_values[variable]:
                 temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
