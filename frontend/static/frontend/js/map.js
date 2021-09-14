@@ -1265,6 +1265,8 @@ function syncDates() {
 }
 
 function inti_chart_dialog() {
+
+    $("#btnPreviousChart").prop("disabled", true);
     $("#dialog").html(
         '<div id="chart_holder"></p>'
     );
@@ -1285,6 +1287,11 @@ function inti_chart_dialog() {
             of: window
         }
     });
+
+    $('div#popup_content').on('dialogclose', function(event) {
+        $("#btnPreviousChart").prop("disabled", false);
+    });
+
 }
 
 function open_previous_chart(){
@@ -1482,7 +1489,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) 
         "title": title,
         "isClimate": isClimate
     };
-    $("#btnPreviousChart").prop("disabled", false);
+
     let chart_obj = {};
     chart_obj.title = {
         text: title
