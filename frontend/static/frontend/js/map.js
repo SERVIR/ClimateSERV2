@@ -363,6 +363,9 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
+if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
 function openSettings(which) {
     let active_layer = getLayer(which);
     let multi = false;
@@ -432,6 +435,9 @@ function baseSettingsHtml() {
  * @param {string} which - Name of layer to open legend for
  */
 function openLegend(which) {
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
     let id = which.replace("TimeLayer", "") + "ens";
     const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
@@ -989,6 +995,9 @@ function getEnsDataType() {
 }
 
 function handle_initial_request_data(data, isClimate) {
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
     let progress = '<div style="width:100%; height:100%; display: flex;\n' +
         '    align-items: center;\n' +
         '}">';
@@ -1265,7 +1274,9 @@ function syncDates() {
 }
 
 function inti_chart_dialog() {
-
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
     $("#btnPreviousChart").prop("disabled", true);
     $("#dialog").html(
         '<div id="chart_holder"></p>'
@@ -1318,6 +1329,9 @@ function getIndex(which) {
 
 
 function getDownLoadLink(id) {
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
     let download = '<div style="width:100%; height:100%; display: flex;\n' +
         '    align-items: center;\n' +
         '}">';
@@ -1345,6 +1359,9 @@ let rainfall_data;
 let from_compiled;
 
 function getDataFromRequest(id, isClimate) {
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
     let complete = '<div style="width:100%; height:100%; display: flex;\n' +
         '    align-items: center;\n' +
         '}">';
