@@ -25,7 +25,7 @@ function initIndex() {
 
   $("#dataCarousel").carousel({
     interval: 5000,
-    transition: "transform 2s ease, opacity .5s ease-out"
+    transition: "transform 4s ease, opacity 2s ease-out"
   });
 
   preloadCarousel();

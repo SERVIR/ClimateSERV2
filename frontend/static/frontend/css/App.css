@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: Signika, sans-serif;
+    font-family: "Work Sans", Roboto;
     color: #666666;
     background-color: #f9f9f9;
 }
@@ -113,6 +113,13 @@ body {
     .mbr-table-cell{
         margin-bottom: 50px;
     }
+
+.carousel-item-next, .carousel-item-prev, .carousel-item.active {
+    display: block;
+    transition: -webkit-transform 1.5s ease;
+    transition: transform 1.5s ease;
+    transition: transform 1.5 ease,-webkit-transform 1.5s ease;
+}
 
 .card-button {
     color: #ffffff;
@@ -1336,6 +1343,9 @@ button[disabled] {
 
     .tab-holder {
         margin-top: 30px;
+    }
+    .lg-br{
+        display:none;
     }
 }
 
