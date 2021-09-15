@@ -34,6 +34,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['climateserv2.servirglobal.net', 'climateserv.servirglobal.net', "localhost", "127.0.0.1", "192.168.1.132"]
 
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r".*",
+]
+
 # Application definition
 
 INSTALLED_APPS = [
