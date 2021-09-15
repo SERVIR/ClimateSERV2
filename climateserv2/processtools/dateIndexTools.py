@@ -178,13 +178,13 @@ class DecadalIndex:
 
     def getIndexBasedOnDecad(self, decad, month, year):
         tIn = [x for x in range(0, 36)]
-        decadChunks = [tIn[i:i + 3] for i in xrange(0, len(tIn), 3)]
+        decadChunks = [tIn[i:i + 3] for i in range(0, len(tIn), 3)]
 
         return int(decadChunks[int(month) - 1][int(decad) - 1])
 
     def getDateBasedOnIndex(self, index, year):
         tIn = [x for x in range(0, 36)]
-        decadChunks = [tIn[i:i + 3] for i in xrange(0, len(tIn), 3)]
+        decadChunks = [tIn[i:i + 3] for i in range(0, len(tIn), 3)]
         decadIndex = [[i, j] for i, lst in enumerate(decadChunks) for j, pos in enumerate(lst) if pos == index]
         month = int((decadIndex)[0][0]) + 1
         decad = int((decadIndex)[0][1]) + 1

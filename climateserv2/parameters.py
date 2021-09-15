@@ -109,14 +109,6 @@ def getGridDimension(dataType):
     return dataTypes[int(dataType)]['size']
 
 
-def getMaskStorageName(uid):
-    return maskstorage + uid + ".npy"
-
-
-def getHMaskStorageName(uid):
-    return maskstorage + uid + ".hdf"
-
-
 # Get a list of all datatypesnumbers by their data_category property
 def get_DataTypeNumber_List_By_DataCategory(dataCateogrySearchValue):
     resultList = []
