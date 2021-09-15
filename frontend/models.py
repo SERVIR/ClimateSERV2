@@ -51,6 +51,12 @@ class DataLayer(models.Model):
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
     isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
+    yAxis_Special_Formatting = models.TextField(
+        help_text="Only include if your yAxis needs special formatting, this should be a json object with the key "
+                  "formatter: function () and the function should return the formatted value", default="")
+    graph_point_Special_Formatting = models.TextField(
+        help_text="Only include if your graph point needs special formatting, , this should be a json object with the "
+                  "key {pointFormatter: function() nd the function should return the formatted value", default="")
 
     def __str__(self):
         return f"{self.title}"

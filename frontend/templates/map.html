@@ -68,7 +68,9 @@
                     id: "{{ layer.ui_id }}",
                     dataset: "{{ layer.dataset_type }}",
                     app_id: "{{ layer.api_id }}",
-                    units: "{{ layer.units }}"
+                    units: "{{ layer.units }}",
+                    yAxis_format: {% if layer.yAxis_Special_Formatting %} {{ layer.yAxis_Special_Formatting | safe }}{% else %} null {% endif %},
+                    point_format: {% if layer.graph_point_Special_Formatting %} {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %}
                 })
             {% endif %}
         {% endfor %}

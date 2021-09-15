@@ -42,7 +42,6 @@ function createLayer(item) {
     overlayMaps[item.id + "TimeLayer"].id = item.id;
 
     if (item.id.includes(passedLayer)) {
-        console.log(item.id);
         try {
             document.getElementById(item.id).checked = true;
             toggleLayer(item.id + "TimeLayer");
@@ -1067,6 +1066,33 @@ function sendRequest() {
             data: formData
         }).fail(function (jqXHR, textStatus, errorThrown) {
             console.warn(jqXHR + textStatus + errorThrown);
+            if ($("#dialog").dialog()) {
+                        $("#dialog").dialog("close");
+                    }
+                    let error_message = '<div style="width:100%; height:100%; display: flex;\n' +
+                        '    align-items: center;\n' +
+                        '}">';
+                    error_message += '<div style="width:100%; text-align: center;">';
+                    error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
+                    error_message += '<p style="line-height: 2em;">There was am error processing this request' ;
+                   error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+
+                    error_message += '</div>';
+                    $("#dialog").html(error_message);
+                    $("#dialog").dialog({
+                        title: "Processing Error",
+                        resizable: false,
+                        width: $(window).width() / 2,
+                        height: 200,
+                        position: {
+                            my: "center",
+                            at: "center",
+                            of: window
+                        },
+                        close: function( event, ui ) {
+                            $("#btnRequest").prop("disabled", false);
+                        }
+                    });
         }).done(function (data, _textStatus, _jqXHR) {
             if (data.errMsg) {
                 console.info(data.errMsg);
@@ -1164,6 +1190,34 @@ function pollForProgress(id, isClimate) {
                     retries = 0;
                     console.log("Server Error");
                     $("#btnRequest").prop("disabled", false);
+                    if ($("#dialog").dialog()) {
+                        $("#dialog").dialog("close");
+                    }
+                    let error_message = '<div style="width:100%; height:100%; display: flex;\n' +
+                        '    align-items: center;\n' +
+                        '}">';
+                    error_message += '<div style="width:100%; text-align: center;">';
+                    error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
+                    error_message += '<p style="line-height: 2em;">There was am error processing Job ID: ' + id ;
+                   error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+
+                    error_message += '</div>';
+                    $("#dialog").html(error_message);
+                    $("#dialog").dialog({
+                        title: "Processing Error",
+                        resizable: false,
+                        width: $(window).width() / 2,
+                        height: 200,
+                        position: {
+                            my: "center",
+                            at: "center",
+                            of: window
+                        },
+                        close: function( event, ui ) {
+                            $("#btnRequest").prop("disabled", false);
+                        }
+
+                    });
                 }
             }
         }
@@ -1481,7 +1535,11 @@ function getDataFromRequest(id, isClimate) {
                             (item) => item.app_id === $("#ensemblemenu").val()
                         );
                         const units = layer.units;
+console.log(layer)
 
+                        const yAxis_format = layer.yAxis_format || null;
+                        const point_format = layer.point_format || null
+console.log(point_format)
                         finalize_chart([{
                             color: "#758055",
                             type: "line",
@@ -1489,7 +1547,10 @@ function getDataFromRequest(id, isClimate) {
                             data: compiledData.sort((a, b) => a[0] - b[0])
                         }], units, {
                             type: "datetime"
-                        }, $("#sourcemenu option:selected").text());
+                        }, $("#sourcemenu option:selected").text(),
+                            false,
+                            yAxis_format,
+                            point_format);
                     }
                 }
             }
@@ -1498,7 +1559,7 @@ function getDataFromRequest(id, isClimate) {
     });
 };
 
-function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) {
+function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, yAxis_format, point_format) {
     previous_chart = {
         "compiled_series": compiled_series,
         "units": units,
@@ -1521,6 +1582,10 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) 
             text: units
         }
     };
+
+    if(yAxis_format){
+        chart_obj.yAxis.labels = yAxis_format
+    }
 
     chart_obj.legend = {
         layout: 'vertical',
@@ -1597,10 +1662,16 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate) 
         }
     };
     chart_obj.series = compiled_series;
-    chart_obj.tooltip = {
-        pointFormat: "Value: {point.y:.2f} " + units,
-        borderColor: "#758055",
-    };
+    if(point_format){
+        chart_obj.tooltip = point_format;
+        chart_obj.tooltip.borderColor = "#758055";
+    } else {
+
+        chart_obj.tooltip = {
+            pointFormat: "Value: {point.y:.2f} " + units,
+            borderColor: "#758055",
+        };
+    }
     chart_obj.responsive = {
         rules: [{
             condition: {
@@ -1767,10 +1838,7 @@ const tour = new Tour({
             content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
             onShow: function (tour) {
                 if (!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
-                    console.log("scroll it");
                     $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
-                } else {
-                    console.log("no thank you")
                 }
             }
         },
