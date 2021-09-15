@@ -12,6 +12,8 @@ import zmq
 import json
 from osgeo import ogr
 import shutil
+import io
+import urllib.request
 import subprocess
 from zipfile import ZipFile
 from os.path import basename
@@ -170,11 +172,7 @@ class ZMQCHIRPSHeadProcessor():
                 # Placeholder for download_all_climate_datasets operations.... not even sure if going to use this here..
                 pass
         else:
-            # This is a statistical  do nothing
             return
-        
-        # Placeholder
-        
         pass
     
         
@@ -182,27 +180,21 @@ class ZMQCHIRPSHeadProcessor():
         self.request = request
         
         # ks notes // Generate a list of work to be done (each item represents a time interval)
-        error, workarray, percent = self.__preProcessIncomingRequest__(request)
-
+        error, workarray = self.__preProcessIncomingRequest__(request)
         
         # KS Refactor 2015 // Additional pre-setup items specific to download request types
         self.preProcessWork_ForDownloadTypes(request)
         
         # ks notes // Dispatch that list of work through the output receiver (to be picked up by workers)
         if (error == None):
+
             if len(workarray) == 0:
                 self.progress=100.0
             else:
                 self.worklist_length = len(workarray)
                 self.total_task_count = len(workarray)
-                self.progress = (float(self.finished_task_count) / float(self.total_task_count)) * 80.
-               # self.__processProgress__(self.progress)
-
-                if self.progress + percent >= 100:
-                    self.__processProgress__(100)
-                else:
-                    self.__processProgress__(self.progress)
-
+                if self.isDownloadJob == False:
+                    self.progress = 20 +(float(self.finished_task_count) / float(self.total_task_count)) * 80.
             workingArray_guid_index_list = []
             for item in workarray:
                 self.workToBeDone[item['workid']]= item
@@ -273,7 +265,7 @@ class ZMQCHIRPSHeadProcessor():
 
         #last_current_progress
         last_chunk_sent = 1
-        next_progress_threshold_to_check = ((100.0 / number_of_progress_thresholds) * last_chunk_sent)
+        next_progress_threshold_to_check = ((80.0 / number_of_progress_thresholds) * last_chunk_sent)
 
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: ENTERING THE WHILE LOOP OF CHECKING PROGRESS.")
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: last_chunk_sent: " + str(last_chunk_sent))
@@ -299,7 +291,7 @@ class ZMQCHIRPSHeadProcessor():
                     # Set the next progress to check
                     #last_current_progress = self.progress
                     last_chunk_sent = last_chunk_sent + 1
-                    next_progress_threshold_to_check = ((100.0 / number_of_progress_thresholds) * last_chunk_sent)
+                    next_progress_threshold_to_check = ((80.0 / number_of_progress_thresholds) * last_chunk_sent)
 
                     self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: PROGRESS THRESHOLD HIT: Changing the compare for the next time" )
                     self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: last_chunk_sent: " + str(last_chunk_sent))
@@ -363,7 +355,7 @@ class ZMQCHIRPSHeadProcessor():
         if self.total_task_count ==0:
             self.progress = 100
         else:
-            self.progress = (float(self.finished_task_count)/float(self.total_task_count))*100.
+            self.progress = 20+(float(self.finished_task_count)/float(self.total_task_count))*80.
         if (self.progress < 100 or output_full == True):
             self.__processProgress__(self.progress)
 
@@ -371,13 +363,9 @@ class ZMQCHIRPSHeadProcessor():
     # We can find the values for every job inside the variable called,
     # # self.finished_items = []
     def __finishJob__(self):
-        self.logger.info("finish job")
-
         # KS Refactor 2015 // Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
-        
-        # KS Refactor 2015 - Logging Job Finished
-        theJobID = ""
+
         try:
             theJobID = str(self.request['uniqueid'])
         except:
@@ -637,52 +625,106 @@ class ZMQCHIRPSHeadProcessor():
             dataTypeCategory = params.dataTypes[datatype]['data_category']
             dataset_name = params.dataTypes[int(datatype)]['dataset_name'] + ".nc4"
             variable_name = params.dataTypes[int(datatype)]['variable']
+            dates=[]
+            values=[]
             if ('geometry' in request):
                 polygon_Str_ToPass=request['geometry']
                 if self.isDownloadJob == True:
-                    clipped_dataset,task_id,percent = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                    try:
+                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
+                                                         variable_name, request['geometry'])
 
-                    os.makedirs(params.zipFile_ScratchWorkspace_Path + task_id + '/', exist_ok=True)
-                    os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/', 0o777)
-                    os.chmod(params.shell_script, 0o777)
-                    clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
-                    os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
-                    t = subprocess.check_output(
-                        params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
-                        text=True)
-                    clipped_dates = t.split()
-                    self.__processProgress__(percent)
-                    for i in range(len(clipped_dates)):
-                        self.progress = 80*((i + 1) / len(clipped_dates))
-                        if self.progress+percent>=100:
-                            self.__processProgress__(100)
+                        length = len(urllib.request.urlopen(url).read())
+                        resp = urllib.request.urlopen(url)
+                        temp_file = os.path.join(params.netCDFpath,request['uniqueid'])  # name for temporary netcdf file
+
+                        urllib.request.urlretrieve(url, temp_file)
+                        if length:
+                            length = int(length)
+                            blocksize = max(1024, length // 100)
                         else:
-                            self.__processProgress__(self.progress)
-                        p = subprocess.check_call(
-                            [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-                             variable_name,
-                             params.zipFile_ScratchWorkspace_Path + task_id + '/', clipped_dates[i], str(i + 1)])
-                    # p = subprocess.check_call(
-                    #     [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
-                    #      params.zipFile_ScratchWorkspace_Path + task_id + '/'])
-                    with ZipFile(params.zipFile_ScratchWorkspace_Path + task_id + '.zip', 'w') as zipObj:
-                        # Iterate over all the files in directory
-                        for folderName, subfolders, filenames in os.walk(
-                                params.zipFile_ScratchWorkspace_Path + task_id + '/'):
-                            for filename in filenames:
-                                # create complete filepath of file in directory
-                                filePath = os.path.join(folderName, filename)
-                                # Add file to zip
-                                zipObj.write(filePath, basename(filePath))
+                            blocksize = 1000
 
-                    # close the Zip File
-                    zipObj.close()
-                    os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
-                    shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(task_id), ignore_errors=True)
-                    self.zipFilePath= params.zipFile_ScratchWorkspace_Path + task_id + '.zip'
-                    # self.zipFilePath,operation = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                        buf = io.BytesIO()
+                        size = 0
+                        while True:
+                            buf1 = resp.read(blocksize)
+                            if not buf1:
+                                break
+                            buf.write(buf1)
+                            size += len(buf1)
+                            print(size)
+                            if length:
+                                self.__processProgress__((size / length) * 20)
+                        clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, temp_file)
+
+                        os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
+                        os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
+                        os.chmod(params.shell_script, 0o777)
+                        clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
+                        os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
+                        t = subprocess.check_output(
+                            params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                            text=True)
+                        clipped_dates = t.split()
+                        for i in range(len(clipped_dates)):
+                            self.progress = 20+ 80*((i + 1) / len(clipped_dates))
+                            self.__processProgress__(self.progress)
+                            p = subprocess.check_call(
+                                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
+                                 variable_name,
+                                 params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
+                        # p = subprocess.check_call(
+                        #     [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
+                        #      params.zipFile_ScratchWorkspace_Path + task_id + '/'])
+                        with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
+                            # Iterate over all the files in directory
+                            for folderName, subfolders, filenames in os.walk(
+                                    params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
+                                for filename in filenames:
+                                    # create complete filepath of file in directory
+                                    filePath = os.path.join(folderName, filename)
+                                    # Add file to zip
+                                    zipObj.write(filePath, basename(filePath))
+
+                        # close the Zip File
+                        zipObj.close()
+                        os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
+                        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
+                        self.zipFilePath= params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
+                    except:
+                        self.zipFilePath=None
+                        self.logger.info("TDS URL Exception")
                 else:
-                    dates, values,percent= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], request['uniqueid'], params.parameters[request['operationtype']][1])
+                    try:
+                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'])
+                        length = len(urllib.request.urlopen(url).read())
+                        resp = urllib.request.urlopen(url)
+                        temp_file = os.path.join(params.netCDFpath,request['uniqueid'])  # name for temporary netcdf file
+
+                        urllib.request.urlretrieve(url, temp_file)
+                        if length:
+                            length = int(length)
+                            blocksize = max(1024, length // 100)
+                        else:
+                            blocksize = 1000
+
+                        buf = io.BytesIO()
+                        size = 0
+                        while True:
+                            buf1 = resp.read(blocksize)
+                            if not buf1:
+                                break
+                            buf.write(buf1)
+                            size += len(buf1)
+                            print(size)
+                            if length:
+                                self.logger.info((size / length) * 20)
+                                self.__processProgress__((size / length) * 20)
+                        dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)
+                    except:
+                        self.logger.info("TDS URL Exception")
+
             # User Selected a Feature
             elif ('layerid' in request):
                 if(params.DEBUG_LIVE == True):
@@ -693,78 +735,103 @@ class ZMQCHIRPSHeadProcessor():
                 geometries  = sf.getPolygons(layerid, featureids)
 
                 if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
+                    try:
                     # Convert all the geometries to the rounded polygon string, and then pass that through the system
-                    polygon_Str_ToPass = geometries
-                    clipped_dataset, task_id,percent = GetTDSData.get_aggregated_values(request['begintime'],
-                                                                                request['endtime'], dataset_name,
-                                                                                variable_name, geometries,
-                                                                                request['uniqueid'], params.parameters[
-                                                                                    request['operationtype']][1])
+                        polygon_Str_ToPass = geometries
+                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
+                                                         variable_name, geometries)
+                        length = len(urllib.request.urlopen(url).read())
+                        resp = urllib.request.urlopen(url)
+                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
 
-                    os.makedirs(params.zipFile_ScratchWorkspace_Path + task_id + '/', exist_ok=True)
-                    os.chmod(params.zipFile_ScratchWorkspace_Path + task_id + '/', 0o777)
-                    os.chmod(params.shell_script, 0o777)
-                    clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
-                    os.chdir(params.zipFile_ScratchWorkspace_Path + task_id + '/')
-                    t = subprocess.check_output(
-                        params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
-                        text=True)
-                    clipped_dates = t.split()
-                    self.__processProgress__(percent)
-                    for i in range(len(clipped_dates)):
-                        self.progress = 80*((i + 1) / len(clipped_dates))
-                        if self.progress+percent>=100:
-                            self.__processProgress__(100)
+                        urllib.request.urlretrieve(url, temp_file)
+                        if length:
+                            length = int(length)
+                            blocksize = max(1024, length // 100)
                         else:
+                            blocksize = 1000
+
+                        buf = io.BytesIO()
+                        size = 0
+                        while True:
+                            buf1 = resp.read(blocksize)
+                            if not buf1:
+                                break
+                            buf.write(buf1)
+                            size += len(buf1)
+                            if length:
+                                self.__processProgress__((size / length) * 20)
+                        clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'],
+                                                                                    request['endtime'], dataset_name,
+                                                                                    variable_name, geometries,opn,temp_file)
+
+                        os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
+                        os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
+                        os.chmod(params.shell_script, 0o777)
+                        clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
+                        os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
+                        t = subprocess.check_output(
+                            params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
+                            text=True)
+                        clipped_dates = t.split()
+                        for i in range(len(clipped_dates)):
+                            self.progress = 20 + 80*((i + 1) / len(clipped_dates))
                             self.__processProgress__(self.progress)
-                        p = subprocess.check_call(
-                            [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-                             variable_name,
-                             params.zipFile_ScratchWorkspace_Path + task_id + '/', clipped_dates[i], str(i + 1)])
-                    # p = subprocess.check_call(
-                    #     [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
-                    #      params.zipFile_ScratchWorkspace_Path + task_id + '/'])
-                    with ZipFile(params.zipFile_ScratchWorkspace_Path + task_id + '.zip', 'w') as zipObj:
-                        # Iterate over all the files in directory
-                        for folderName, subfolders, filenames in os.walk(
-                                params.zipFile_ScratchWorkspace_Path + task_id + '/'):
-                            for filename in filenames:
-                                # create complete filepath of file in directory
-                                filePath = os.path.join(folderName, filename)
-                                # Add file to zip
-                                zipObj.write(filePath, basename(filePath))
+                            p = subprocess.check_call(
+                                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
+                                 variable_name,
+                                 params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
+                        with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
+                            # Iterate over all the files in directory
+                            for folderName, subfolders, filenames in os.walk(
+                                    params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
+                                for filename in filenames:
+                                    # create complete filepath of file in directory
+                                    filePath = os.path.join(folderName, filename)
+                                    # Add file to zip
+                                    zipObj.write(filePath, basename(filePath))
 
-                    # close the Zip File
-                    zipObj.close()
-                    os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
-                    shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(task_id), ignore_errors=True)
-                    self.zipFilePath = params.zipFile_ScratchWorkspace_Path + task_id + '.zip'
-
-                    #self.zipFilePath, operation = GetTDSData.get_aggregated_values(request['begintime'],
-                                                                                    # request['endtime'],
-                                                                                    # dataset_name, variable_name,
-                                                                                    # geometries,
-                                                                                    # request['uniqueid'],
-                                                                                    # params.parameters[
-                                                                                    #     request['operationtype']][
-                                                                                    #     1])
-
-
+                        # close the Zip File
+                        zipObj.close()
+                        os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
+                        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
+                        self.zipFilePath = params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
+                    except:
+                        self.zipFilePath=None
+                        self.logger.info("TDS URL Exception")
                 else:
+                    try:
+                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
+                                                         variable_name, geometries)
+                        length = len(urllib.request.urlopen(url).read())
+                        resp = urllib.request.urlopen(url)
+                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
 
-                    dates, values,percent = GetTDSData.get_aggregated_values(request['begintime'],
-                                                                                        request['endtime'],
-                                                                                        dataset_name, variable_name,
-                                                                                        geometries,
-                                                                                        request['uniqueid'],
-                                                                                        params.parameters[
-                                                                                            request['operationtype']][
-                                                                                            1])
+                        urllib.request.urlretrieve(url, temp_file)
+                        if length:
+                            length = int(length)
+                            blocksize = max(1024, length // 100)
+                        else:
+                            blocksize = 1000
+
+                        buf = io.BytesIO()
+                        size = 0
+                        while True:
+                            buf1 = resp.read(blocksize)
+                            if not buf1:
+                                break
+                            buf.write(buf1)
+                            size += len(buf1)
+                            if length:
+                                self.logger.info((size / length) * 20)
+                                self.__processProgress__((size / length) * 20)
+                        dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name,
+                                                                                            geometries,opn,temp_file)
+                    except:
+                        self.logger.info("TDS URL Exception")
 
             current_mask_and_storage_uuid = uniqueid
             worklist = []
-            self.__processProgress__(percent)
-
             if (self.dj_OperationName != "download"):
 
                 for dateIndex in range(len(dates)):
@@ -787,18 +854,22 @@ class ZMQCHIRPSHeadProcessor():
                     worklist.extend([workdict])
             else:
                 workid = uu.getUUID()
-                workdict = {'uid': uniqueid, 'workid': workid, 'current_mask_and_storage_uuid': uniqueid,
-                            'intervaltype': intervaltype, 'datatype': datatype, 'operationtype': operationtype,
-                            'polygon_Str_ToPass': polygon_Str_ToPass, 'derived_product': False,
-                            'value': {opn: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
-                worklist.extend([workdict])
+                if self.zipFilePath is not None:
+                    workdict = {'uid': uniqueid, 'workid': workid, 'current_mask_and_storage_uuid': uniqueid,
+                                'intervaltype': intervaltype, 'datatype': datatype, 'operationtype': operationtype,
+                                'polygon_Str_ToPass': polygon_Str_ToPass, 'derived_product': False,
+                                'value': {opn: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
+                    worklist.extend([workdict])
+                else:
+                    self.logger.info("Noneeeee")
+                    return "download_error", []
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['intervaltype']: " + str(intervaltype))
-            return None, worklist, percent
+            return None, worklist
         except Exception as e:
             self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))
-            return e,None, -1
+            return e,None
         
     def __processProgress__(self, progress):
         self.__updateProgressDb__(self.request['uniqueid'],progress)

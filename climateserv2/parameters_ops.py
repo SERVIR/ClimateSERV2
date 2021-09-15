@@ -499,7 +499,12 @@ dataTypes = [
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_4wk',
      },
+    # There will be more added here in time.
+    {'number': 30,
+     'name': 'dummy',
+     'size': [7200, 3000],
 
+     },
     {'number': 31,
      'name': 'Chirps-GEFS-Anom', 'description': 'Global CHIRPS GEFS Anomalies Dataset ',
      'size': [7200, 2000],
