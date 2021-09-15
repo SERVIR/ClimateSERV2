@@ -6,9 +6,8 @@ import numpy as np
 import os
 import xarray as xr
 from datetime import datetime
-from shapely.geometry import mapping, Polygon,Point
-import rioxarray
-import shutil
+from shapely.geometry import mapping
+
 try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.parameters as params
@@ -16,21 +15,18 @@ try:
 except:
     import locallog.locallogging as llog
     import parameters as params
-import subprocess
 logger=llog.getNamedLogger("request_processor")
 
-def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id, operation):
-    percent=0
-    count = 0
-    jsonn =json.loads(str(geom))
+def get_tds_request(start_date, end_date, dataset, variable, geom):
+    jsonn = json.loads(str(geom))
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
-    json_aoi=json.dumps(jsonn)
+    json_aoi = json.dumps(jsonn)
 
     try:
         # aoi = gpd.GeoDataFrame.from_features(json_aoi, crs="EPSG:4326")
-        aoi = gpd.read_file(json_aoi) # using geopandas to get the bounds
+        aoi = gpd.read_file(json_aoi)  # using geopandas to get the bounds
     except Exception as e:
         logger.info(e)
 
@@ -38,23 +34,14 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
     et = datetime.strptime(end_date, '%m/%d/%Y')
     start_date = datetime.strftime(st, '%Y-%m-%d')
     end_date = datetime.strftime(et, '%Y-%m-%d')
-    if jsonn['features'][0]['geometry']['type']=="Point":
-        count=9
-        coords=jsonn['features'][0]['geometry']['coordinates']
-        lat, lon=coords[0],coords[1]
-        try:
-            tds_request =  "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude="+str(lat)+"&longitude="+str(lon)+"&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
-            temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file
-
-            urllib.request.urlretrieve(tds_request, temp_file)
-
-            clipped_dataset = xr.open_dataset(temp_file)
-
-        except:
-            logger.info("thredds URL exception")
-
+    if jsonn['features'][0]['geometry']['type'] == "Point":
+        count = 9
+        coords = jsonn['features'][0]['geometry']['coordinates']
+        lat, lon = coords[0], coords[1]
+        tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude=" + str(
+            lat) + "&longitude=" + str(
+            lon) + "&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
     else:
-        logger.info("else")
         # The netcdf files use a global lat/lon so adjust values accordingly
         east = aoi.total_bounds[2]
         south = aoi.total_bounds[1]
@@ -64,15 +51,22 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
             north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
             south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
-        logger.info(tds_request)
-        temp_file = os.path.join(params.netCDFpath, task_id + "_" + dataset)  # name for temporary netcdf file
-        try:
-            urllib.request.urlretrieve(tds_request, temp_file)
+    logger.info(tds_request)
+    return tds_request
 
-        except:
-            logger.info("thredds URL exception")
-            return [],[],-1
+def get_aggregated_values(start_date, end_date, dataset, variable, geom, operation, temp_file):
+    percent=0
+    count = 0
+    jsonn =json.loads(str(geom))
+    for x in range(len(jsonn["features"])):
+        if "properties" not in jsonn["features"][x]:
+            jsonn["features"][x]["properties"] = {}
+    json_aoi=json.dumps(jsonn)
 
+    if jsonn['features'][0]['geometry']['type']=="Point":
+        count=9
+        clipped_dataset = xr.open_dataset(temp_file)
+    else:
         xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
 
         xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
@@ -94,38 +88,39 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, task_id
         if (start_date not in new_data) and (end_date not in new_data) and ('smap' not in dataset):
             count = 1
     if count == 0 and os.path.exists(temp_file):
-        percent=20
         if operation == "min":
             min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
             dates = []
             for i in min_values[variable]:
                 temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
                 dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(min_values[variable].values),percent
+            return np.array(dates), np.array(min_values[variable].values)
         elif operation == "avg":
             avg_values = clipped_dataset.mean(dim=["latitude", "longitude"], skipna=True)
             dates = []
             for i in avg_values[variable]:
                 temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
                 dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(avg_values[variable].values),percent
+            return np.array(dates), np.array(avg_values[variable].values)
         elif operation == "max":
             max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
-            logger.info(max_values)
             dates = []
             for i in max_values[variable]:
                 temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
                 dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(max_values[variable].values),percent
+            return np.array(dates), np.array(max_values[variable].values)
         elif operation == "download":
-            return clipped_dataset,task_id,percent
+            return clipped_dataset
     elif count==9 and os.path.exists(temp_file):
         dates = []
         for i in np.array(clipped_dataset['time'].values):
             temp = pd.Timestamp(np.datetime64(i)).to_pydatetime()
             dates.append(temp.strftime("%Y-%m-%d"))
         values = np.array(clipped_dataset[variable].values)
-        return dates, values,percent
+        values = values[values != -999.0]
+        if len(values)==0:
+            return [],[]
+        return dates, values
     else:
         return [],[],[]
 
