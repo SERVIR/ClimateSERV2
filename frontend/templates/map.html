@@ -386,7 +386,14 @@
                               <i class="fas fa-caret-left"></i>
                             </span>
                         </h1>
-
+                    <input
+                            type="search"
+                            placeholder="filter layers.."
+                            name="search"
+                            class="form-control searchbox-input"
+                            title="filter layers.."
+                            onkeyup="layer_filter()"
+                            id="layer_filter" />
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
                                 <li id="{{ layer.ui_id }}_node"
@@ -405,7 +412,9 @@
                                                                            name="{{ layer.ui_id }}"
                                                                            onchange="$('#ens-{{ layer.ui_id }}').toggleClass('checked')"/>
                                                                       <label for="{{ layer.ui_id }}"
-                                                                             title="{{ layer.title }}">{{ layer.title }}</label>
+                                                                             title="{{ layer.title }}"
+                                                                             class="cblabel"
+                                                                      >{{ layer.title }}</label>
                                                                       <br/>
                                                                 </span>
                                                                 <div class="ens-holder" id="ens-{{ layer.ui_id }}">
@@ -440,7 +449,7 @@
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
                                              onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
-                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}">{{ layer.title }}</label>
+                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}" class="cblabel">{{ layer.title }}</label>
                                       <br/>
                                   </span>
                                                                 <div>

@@ -1886,7 +1886,25 @@ $(function () {
     } catch (e) {
     }
 
+
 });
+
+function layer_filter() {
+    const input = document.getElementById('layer_filter');
+    const filter = input.value.toUpperCase();
+    const layer_list = document.getElementById("layer-list");
+    const layers = layer_list.getElementsByTagName('li');
+
+    for (let i = 0; i < layers.length; i++) {
+        const label = layers[i].getElementsByClassName("cblabel")[0];
+        const txtValue = label.textContent || label.innerText;
+        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            layers[i].style.display = "";
+        } else {
+            layers[i].style.display = "none";
+        }
+    }
+}
 
 (function ($) {
 
