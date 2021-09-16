@@ -717,7 +717,6 @@ class ZMQCHIRPSHeadProcessor():
                                 break
                             buf.write(buf1)
                             size += len(buf1)
-                            print(size)
                             if length:
                                 self.logger.info((size / length) * 20)
                                 self.__processProgress__((size / length) * 20)
