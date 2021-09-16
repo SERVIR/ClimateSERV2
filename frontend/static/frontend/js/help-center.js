@@ -61,32 +61,59 @@ function openDialog(metaData) {
     html += "<p>" + metaData.credit + "</p>";
     html += "</div></div>";
 
-    // html += '<div class="col-md-6">';
-    // html +=
-    //     '<img src="' +
-    //     metaData.thumbnail +
-    //     '" style="max-width:100%; width:100%" onerror="imgError(this)" class="meta-preview">';
-    // html += "<button onclick='goto_full_record(" + id +")' class='meta-btn'>View full record</button></div>";
-    // html += "</div>";
-
     $("#dialog").html(html);
     $("#dialog").dialog({
         title: metaData.title,
-        width: $(window).width() - 100,
-        height: $(window).height() - 140,
+        width: "200px",
+        height: "200px",
         draggable: true,
         resizable: false,
         open: function () {
+            //set position to top left
             $(".ui-dialog-content").scrollTop(0);
             scroll_freeze = document.documentElement.scrollTop;
             $('body').css('top', -(document.documentElement.scrollTop) + 'px')
                 .addClass('noscroll');
+            $("#dialog").parent().css({top:$("body").offset().top * -1 + 70, left:50})
+            $("#dialog").parent().animate({
+                height: $(window).height() - 140,
+                width: $(window).width() - 100
+              }, 1000 , "linear", function(){
+console.log("in callback")
+
+               fix_dialog();
+                $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                   $('#dialog').dialog('close');
+                });
+            });
+            $("#dialog").animate({
+                height: $(window).height() - 140,
+                width: $(window).width() - 100
+              }, 1000 , "swing", function(){
+console.log("in callback")
+               fix_dialog()
+            });
+
+
+
+            //after animation do
+            /*
+
+             */
         },
         close: function () {
             $('body').removeClass('noscroll');
             document.documentElement.scrollTop = scroll_freeze;
         }
     });
+}
+
+function fix_dialog(){
+     $("#dialog").dialog({
+                  width: $(window).width() - 100,
+                 height: $(window).height() - 140,
+                })
+               // $("#dialog").css({height:"unset"})
 }
 
 function goto_full_record(which){
