@@ -396,6 +396,11 @@ function openSettings(which) {
         resizable: {handles: "se"},
         width: "auto",
         height: "auto",
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "center",
             at: "center",
@@ -455,6 +460,11 @@ function openLegend(which) {
         resizable: {handles: "se"},
         width: 169,
         height: 322,
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "center",
             at: "center",
@@ -1011,6 +1021,11 @@ function handle_initial_request_data(data, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "center",
             at: "center",
@@ -1088,6 +1103,11 @@ function sendRequest() {
                             my: "center",
                             at: "center",
                             of: window
+                        },
+                        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
                         },
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
@@ -1212,6 +1232,11 @@ function pollForProgress(id, isClimate) {
                             my: "center",
                             at: "center",
                             of: window
+                        },
+                        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
                         },
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
@@ -1346,6 +1371,11 @@ function inti_chart_dialog() {
         resize: function () {
             window.dispatchEvent(new Event('resize'));
         },
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "right",
             at: "right-25",
@@ -1401,11 +1431,17 @@ function getDownLoadLink(id) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "center",
             at: "center",
             of: window
         }
+
     });
 }
 
@@ -1428,6 +1464,11 @@ function getDataFromRequest(id, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
         position: {
             my: "center",
             at: "center",
