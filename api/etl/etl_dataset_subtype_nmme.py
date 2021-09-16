@@ -10,7 +10,7 @@ import ftplib
 import time
 from ftplib import FTP
 from urllib.parse import urlparse
-
+import wget
 from bs4 import BeautifulSoup
 
 from .common import common
@@ -75,10 +75,6 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
-    from bs4 import BeautifulSoup
-    import requests
-
-
 
     def listFD(url, ext=''):
         page = requests.get(url).text
@@ -99,16 +95,14 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         current_root_https_path = self.etl_parent_pipeline_instance.dataset.source_url
         final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
-        for file in ETL_Dataset_Subtype_NMME.listFD(current_root_https_path, ".nc4"):
-            print(file)
-        for path in glob.glob(os.path.join(current_root_https_path, '*.nc4')):
+        for path in ETL_Dataset_Subtype_NMME.listFD(current_root_https_path, ".nc4"):
+            print(path)
+        # for path in glob.glob(os.path.join(current_root_https_path, '*.nc4')):
             try:
-                print("from try")
                 filename = os.path.basename(path)
-                print(filename)
                 url_to_download = os.path.join(current_root_https_path, filename)
-                #shutil.copyfile(url_to_download,   final_load_dir_path + filename )
-                urllib.urlretrieve(url_to_download, final_load_dir_path + filename)
+                wget.download(url_to_download , final_load_dir_path)
+                #urllib.urlretrieve(url_to_download, final_load_dir_path + filename)
                 download_counter = download_counter + 1
             except Exception as e:
                 print(e)
