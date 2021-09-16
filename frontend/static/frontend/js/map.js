@@ -1369,9 +1369,12 @@ function inti_chart_dialog() {
         width: $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
+             alert("resize debug");
             window.dispatchEvent(new Event('resize'));
         },
-        resizeStop: function( event, ui ) { window.dispatchEvent(new Event('resize')); },
+        resizeStop: function( event, ui ) {
+            alert("debug");
+            window.dispatchEvent(new Event('resize')); },
         open: function(event, ui){
                             $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
                                $('#dialog').dialog('close');
@@ -1933,6 +1936,16 @@ function open_tour() {
 $(function () {
     initMap();
     try {
+        tour.init();
+        /* This will have to check if they want to "not show" */
+        if (!localStorage.getItem("hideTour")) {
+            sidebar.close();
+            tour.setCurrentStep(0);
+            open_tour();
+        }
+    } catch (e) {
+    }
+    try {
         getClimateScenarioInfo();
     } catch (e) {
         console.log("ClimateScenarioInfo Failed");
@@ -1959,16 +1972,6 @@ $(function () {
 
     try {
         verify_ready();
-    } catch (e) {
-    }
-    try {
-        tour.init();
-        /* This will have to check if they want to "not show" */
-        if (!localStorage.getItem("hideTour")) {
-            sidebar.close();
-            tour.setCurrentStep(0);
-            open_tour();
-        }
     } catch (e) {
     }
     try {
