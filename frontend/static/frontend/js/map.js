@@ -1360,13 +1360,10 @@ function inti_chart_dialog() {
     $("#dialog").html(
         '<div id="chart_holder"></p>'
     );
-    // $("#chart_holder").resize(function(){
-    //   window.dispatchEvent(new Event('resize'));
-    // });
     $("#dialog").dialog({
         title: "Statistical Query",
-        resizable: {handles: "se"},
-        width: $(window).width() - ($("#sidebar").width() + 100),
+        resizable: $("#isMobile").css("display") === "block" ? false : {handles: "se"},
+        width: $("#isMobile").css("display") === "block" ? $(window).width(): $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
             $(window).resize();
@@ -1378,7 +1375,11 @@ function inti_chart_dialog() {
                             });
                             window.dispatchEvent(new Event('resize'));
                         },
-        position: {
+        position: $("#isMobile").css("display") === "block" ? {
+            my: "center",
+            at: "center",
+            of: window
+        } : {
             my: "right",
             at: "right-25",
             of: window

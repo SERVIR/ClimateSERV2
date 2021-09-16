@@ -8,6 +8,10 @@ html {
     z-index: 3000!important;
 }
 
+#isMobile {
+    display:none;
+}
+
 @keyframes blink {
     0% {
         color: #ffffff;
@@ -371,4 +375,10 @@ ol {
 .ens-holder.checked {
     padding-left: 20px;
     display: block;
+}
+
+@media only screen and (max-width: 768px) {
+    #isMobile {
+        display: block;
+    }
 }
