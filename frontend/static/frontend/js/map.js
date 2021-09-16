@@ -1369,12 +1369,9 @@ function inti_chart_dialog() {
         width: $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
-             alert("resize debug");
+            $(window).resize();
             window.dispatchEvent(new Event('resize'));
         },
-        resizeStop: function( event, ui ) {
-            alert("debug");
-            window.dispatchEvent(new Event('resize')); },
         open: function(event, ui){
                             $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
                                $('#dialog').dialog('close');
