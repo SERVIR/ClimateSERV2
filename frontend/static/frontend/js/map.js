@@ -1375,7 +1375,8 @@ function inti_chart_dialog() {
         open: function(event, ui){
                             $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
                                $('#dialog').dialog('close');
-                            })
+                            });
+                            window.dispatchEvent(new Event('resize'));
                         },
         position: {
             my: "right",
