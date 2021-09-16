@@ -1369,6 +1369,7 @@ function inti_chart_dialog() {
         width: $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
+            alert("Debug resize");
             window.dispatchEvent(new Event('resize'));
         },
         open: function(event, ui){
