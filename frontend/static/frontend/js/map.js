@@ -486,6 +486,19 @@ function mapSetup() {
         fullscreenControl: true,
         timeDimension: true,
         timeDimensionControl: true,
+        timeDimensionControlOptions: {
+            autoPlay: false,
+            loopButton: true,
+            timeSteps: 1,
+            playReverseButton: true,
+            displayDate: true,
+            timeSlider: true,
+            limitSliders: true,
+            limitMinimumRange: 5,
+            playerOptions: {
+                buffer: 20,
+                loop: true,
+            }},
         center: [38.0, 15.0],
     });
 
@@ -1366,7 +1379,7 @@ function inti_chart_dialog() {
         width: $("#isMobile").css("display") === "block" ? $(window).width(): $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
-            $(window).resize();
+            Highcharts.charts[0].reflow();
             window.dispatchEvent(new Event('resize'));
         },
         open: function(event, ui){
