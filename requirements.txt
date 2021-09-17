@@ -25,3 +25,4 @@ shapely==1.7.1
 snuggs==1.4.7
 urllib3==1.26.6
 pyzmq==22.2.1
+wget==3.2

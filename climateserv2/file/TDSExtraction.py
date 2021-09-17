@@ -84,9 +84,12 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
         for x in time_var:
             temp = pd.Timestamp(np.datetime64(x.time.values)).to_pydatetime()
             new_data.append(temp.strftime("%Y-%m-%d"))
-        print(new_data)
-        if (start_date not in new_data) and (end_date not in new_data) and ('smap' not in dataset):
-            count = 1
+        # if (start_date not in new_data) and (end_date not in new_data):
+        #     # if ('smap' not in dataset):
+        #     #     count = 1
+        #     # else:
+        #     #     count = 0
+        #     count=1
     if count == 0 and os.path.exists(temp_file):
         if operation == "min":
             min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
@@ -103,11 +106,13 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
                 dates.append(temp.strftime("%Y-%m-%d"))
             return np.array(dates), np.array(avg_values[variable].values)
         elif operation == "max":
+            logger.info("from max")
             max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
             dates = []
             for i in max_values[variable]:
                 temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
                 dates.append(temp.strftime("%Y-%m-%d"))
+            logger.info(max_values[variable].values)
             return np.array(dates), np.array(max_values[variable].values)
         elif operation == "download":
             return clipped_dataset
