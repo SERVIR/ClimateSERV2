@@ -19,9 +19,9 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from api.services import Config_SettingService
 from ..models import Config_Setting
 
-class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_NMME_CFSV2(ETL_Dataset_Subtype_Interface):
 
-    class_name = 'nmme'
+    class_name = 'nmme_cfsv2'
     etl_parent_pipeline_instance = None
     etl_dataset_instance = None
 
@@ -95,10 +95,11 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         current_root_https_path = self.etl_parent_pipeline_instance.dataset.source_url
         final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
-        for path in ETL_Dataset_Subtype_NMME.listFD(current_root_https_path, ".nc4"):
+        for path in ETL_Dataset_Subtype_NMME_CFSV2.listFD(current_root_https_path, ".nc4"):
+        # for path in glob.glob(os.path.join(current_root_https_path, '*.nc4')):
             try:
                 filename = os.path.basename(path)
-                if 'ccsm4' in filename:
+                if 'cfsv2' in filename:
                     print(path)
                     url_to_download = os.path.join(current_root_https_path, filename)
                     wget.download(url_to_download , final_load_dir_path)
