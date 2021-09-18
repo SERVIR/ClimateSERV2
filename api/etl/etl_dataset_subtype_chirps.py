@@ -533,7 +533,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.precipitation_amount.encoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
+                    ds.precipitation_amount.encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32'),
+                        'chunksizes': (1, 256, 256)
+                    }
                     ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 

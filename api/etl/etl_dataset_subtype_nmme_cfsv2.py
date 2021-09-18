@@ -102,9 +102,11 @@ class ETL_Dataset_Subtype_NMME_CFSV2(ETL_Dataset_Subtype_Interface):
                 if 'cfsv2' in filename:
                     print(path)
                     url_to_download = os.path.join(current_root_https_path, filename)
-                    wget.download(url_to_download , final_load_dir_path)
-                    #urllib.urlretrieve(url_to_download, final_load_dir_path + filename)
-                    download_counter = download_counter + 1
+                    if not os.path.exists(final_load_dir_path+filename):
+
+                        wget.download(url_to_download , final_load_dir_path)
+                        #urllib.urlretrieve(url_to_download, final_load_dir_path + filename)
+                        download_counter = download_counter + 1
             except Exception as e:
                 print(e)
                 error_counter = error_counter + 1
