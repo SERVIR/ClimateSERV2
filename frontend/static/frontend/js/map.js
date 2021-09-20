@@ -16,6 +16,7 @@ const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/
 let retries = 0;
 let sidebar;
 let previous_chart;
+let layer_limits = {min: null, max: null}
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -552,16 +553,35 @@ function toggleLayer(which) {
     } else {
         map.addLayer(overlayMaps[which]);
     }
+    let hasLayer = false;
     let available_times = [];
     for (let key in overlayMaps) {
         if (overlayMaps.hasOwnProperty(key)) {
             if (map.hasLayer(overlayMaps[key])) {
+                hasLayer = true;
                 available_times = available_times.concat(overlayMaps[key]._availableTimes).filter(onlyUnique);
             }
         }
     }
-    map.timeDimension.setAvailableTimes(available_times, 'replace');
-    map.timeDimension.prepareNextTimes(5, 1, false)
+    layer_limits.min = available_times[0];
+    layer_limits.max = available_times[available_times.length - 1];
+
+    if(hasLayer) {
+        map.timeDimension.setAvailableTimes(available_times, 'replace');
+        map.timeDimension.prepareNextTimes(5, 1, false)
+
+        if (!map.timeDimension.getLowerLimit()) {
+            map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
+            map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
+
+        }
+            $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
+                " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
+    } else {
+        map.timeDimension.setAvailableTimes([null], "replace");
+        $(".timecontrol-date").html("Time not available")
+        $("#slider-range-txt").text('N/A to N/A');
+    }
 }
 
 /**
@@ -939,6 +959,96 @@ function initMap() {
     } catch (e) {
     }
     adjustLayerIndex();
+    const slider_range = '<div id="slider-range" onclick="open_range_picker()"' +
+        '><span id="slider-range-txt">N/A to N/A</span></div>'
+    $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
+}
+
+function open_range_picker(){
+	// open a dialog with 2 date fields, from and to (populated with current range) and
+	// an update range button which calls setRange(from, to)
+	// possibly a close button, but the [X] is likely enough
+	// maybe a "full range" or "remove range" button as well
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
+
+    let hasLayers = false;
+    for (let key in overlayMaps) {
+            if (overlayMaps.hasOwnProperty(key)) {
+                if (map.hasLayer(overlayMaps[key])) {
+                    hasLayers = true;
+                    break;
+                }
+            }
+        }
+    let range_picker;
+    if(hasLayers) {
+        let curent_min = "";
+        let current_max = "";
+        if(map.timeDimension.getLowerLimit()){
+            current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
+            current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
+        }
+        const min_date = moment.utc(layer_limits.min).format('YYYY-MM-DD');
+        const max_date = moment.utc(layer_limits.max).format('YYYY-MM-DD');
+        range_picker = '<p class="picker-text">Select start date and end date of the desired animation loop</p>';
+        range_picker += '<form id="range_picker_form" style="width:100%; height:100%; display: flex; align-items: center;" class="picker-text">';
+
+        range_picker += '<div class="form-group panel-buffer">';
+        range_picker += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+        range_picker += 'id="begin_range_date" value="' + current_min + '" min="' + min_date + '" max="' + max_date + '"';
+        range_picker += 'onchange="verify_range()">';
+        range_picker += '<div class="input-group-addon">to</div>';
+        range_picker += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+        range_picker += 'id="end_range_date" value="' + current_max + '" min="' + min_date + ' " max="' + max_date + '"';
+        range_picker += 'onchange="verify_range()">';
+        range_picker += '<label id="range-error" for="end_range_date"';
+        range_picker += 'style="color:#da2020; display: none;">End date must be equal or greater';
+        range_picker += 'than the start date</label></div>';
+        range_picker += '</form>';
+        range_picker += '<div class="just-buttons">';
+        range_picker += '<button style="width:45%" onclick="clearRange()">Clear Range</button>';
+        range_picker += '<button style="width:45%" onclick="setRange()">Set Range</button>';
+        range_picker += '</div>';
+    } else {
+        range_picker = '<p class="picker-text">You must add at least one layer to the map before you set an animation range</p>';
+    }
+
+    $("#dialog").html(range_picker);
+    $("#dialog").dialog({
+        title: "Range Picker",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: "auto",
+        open: function(event, ui){
+                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
+                               $('#dialog').dialog('close');
+                            })
+                        },
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
+    $('#range_picker_form').validate();
+}
+
+function setRange() {
+	const startTime = new Date($('#begin_range_date').val());
+	const endTime = new Date($('#end_range_date').val());
+	map.timeDimension.setLowerLimit(startTime);
+    map.timeDimension.setUpperLimit(endTime);
+    map.timeDimension.setCurrentTime(startTime);
+    $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
+                " to " + moment(endTime).utc().format('MM/DD/YYYY'));
+
+}
+
+function clearRange(){
+    map.timeDimension.setLowerLimit(false);
+    map.timeDimension.setUpperLimit(false);
 }
 
 function download_aoi() {
@@ -996,6 +1106,36 @@ function verify_ready() {
     } else {
         $("#download_aoi_holder").hide();
     }
+}
+
+function verify_range(){
+    let isReady = false;
+    let begin_range_date = document.getElementById("begin_range_date");
+    let end_range_date = document.getElementById("end_range_date");
+    if (begin_range_date.value && end_range_date.value) {
+        isReady = $(begin_range_date).valid({
+            rules: {
+                field: {
+                    required: true,
+                    dateISO: true
+                }
+            }
+        }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        if (isReady) {
+            // Also should confirm s < e;
+            if (moment(begin_range_date.value) > moment(end_range_date.value)) {
+                isReady = false;
+                $("#range-error").show();
+            } else {
+                $("#range-error").hide();
+            }
+        }
+
+    } else {
+        $(begin_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+    }
+    return isReady;
 }
 
 function collect_review_data() {
