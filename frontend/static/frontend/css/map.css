@@ -241,6 +241,10 @@ leaflet-bar leaflet-bar-horizontal leaflet-bar-timecontrol leaflet-control {
     opacity: .5;
 }
 
+.leaflet-draw-actions a {
+    color: #ffffff;
+}
+
 #slider-range {
     position: absolute;
     top: -32px;
