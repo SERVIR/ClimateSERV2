@@ -17,6 +17,8 @@ let retries = 0;
 let sidebar;
 let previous_chart;
 let layer_limits = {min: null, max: null}
+let queried_layers = [];
+let control_layer;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -43,10 +45,10 @@ function createLayer(item) {
     overlayMaps[item.id + "TimeLayer"].id = item.id;
 
     if (item.id.includes(passedLayer)) {
-        try {
-            document.getElementById(item.id).checked = true;
-            toggleLayer(item.id + "TimeLayer");
-        } catch (e) {
+        queried_layers.push(item.id)
+    } else {
+        if(!control_layer) {
+            control_layer = item.id;
         }
     }
 }
@@ -959,9 +961,11 @@ function initMap() {
     } catch (e) {
     }
     adjustLayerIndex();
+
     const slider_range = '<div id="slider-range" onclick="open_range_picker()"' +
         '><span id="slider-range-txt">N/A to N/A</span></div>'
     $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
+
 }
 
 function open_range_picker(){
@@ -2151,8 +2155,46 @@ $(function () {
     } catch (e) {
     }
 
+    load_queried_layers();
 
 });
+
+function load_queried_layers() {
+    if (map.timeDimension._checkSyncedLayersReady() && !map.timeDimension.isLoading() && map.timeDimension._initHooksCalled) {
+        console.log("all true");
+        for (let x = 0; x < queried_layers.length; x++) {
+            try {
+                document.getElementById(queried_layers[x]).checked = true;
+                toggleLayer(queried_layers[x] + "TimeLayer");
+                setTimeout(confirm_animation, 500);
+            } catch (e) {
+            }
+
+        }
+    } else {
+        try {
+            console.log("waited");
+            setTimeout(load_queried_layers, 500);
+        } catch (e) {
+        }
+    }
+}
+
+function confirm_animation() {
+    if(!map.timeDimension.getUpperLimit()){
+        for (let x = 0; x < queried_layers.length; x++) {
+            try {
+                console.log("flipping");
+                toggleLayer(queried_layers[x] + "TimeLayer");
+                setTimeout(confirm_animation, 500);
+            } catch (e) {
+            }
+
+        }
+    } else{
+        map.timeDimension.nextTime();
+    }
+}
 
 function layer_filter() {
     const input = document.getElementById('layer_filter');
