@@ -988,7 +988,7 @@ function open_range_picker(){
         }
     let range_picker;
     if(hasLayers) {
-        let curent_min = "";
+        let current_min = "";
         let current_max = "";
         if(map.timeDimension.getLowerLimit()){
             current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
