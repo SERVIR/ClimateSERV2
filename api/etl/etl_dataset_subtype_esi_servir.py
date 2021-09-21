@@ -369,6 +369,9 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                     ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
                     ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if ds.latitude.values[1] - ds.latitude.values[0] < 0:
+                        ds = ds.reindex(latitude=ds.latitude[::-1])
 
                     # print("E")
 
@@ -400,7 +403,12 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.esi.encoding = {'_FillValue': np.float32(-9999.0), 'missing_value': np.float32(-9999.0), 'dtype': np.dtype('float32')}
+                    ds.esi.encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32'),
+                        'chunksizes': (1, 256, 256)
+                    }
                     ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 

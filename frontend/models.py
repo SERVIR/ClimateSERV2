@@ -53,10 +53,12 @@ class DataLayer(models.Model):
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
     yAxis_Special_Formatting = models.TextField(
         help_text="Only include if your yAxis needs special formatting, this should be a json object with the key "
-                  "formatter: function () and the function should return the formatted value", default="")
+                  "formatter: function () and the function should return the formatted value", default="",
+        blank=True)
     graph_point_Special_Formatting = models.TextField(
         help_text="Only include if your graph point needs special formatting, , this should be a json object with the "
-                  "key {pointFormatter: function() nd the function should return the formatted value", default="")
+                  "key {pointFormatter: function() nd the function should return the formatted value", default="",
+        blank=True)
 
     def __str__(self):
         return f"{self.title}"

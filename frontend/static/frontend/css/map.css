@@ -4,22 +4,22 @@ html {
     overflow: hidden;
 }
 
-.popover.tour-tour{
-    z-index: 3000!important;
+.popover.tour-tour {
+    z-index: 3000 !important;
 }
 
 #isMobile {
-    display:none;
+    display: none;
 }
 
 @keyframes blink {
     0% {
         color: #ffffff;
     }
-    50%{
+    50% {
         color: #758055;
     }
-    100%{
+    100% {
         color: #ffffff;
     }
 }
@@ -36,10 +36,10 @@ html {
     0% {
         background-color: transparent;
     }
-    50%{
+    50% {
         background-color: #ffffff;
     }
-    100%{
+    100% {
         background-color: transparent;
     }
 }
@@ -52,17 +52,17 @@ html {
     animation-iteration-count: 2;
 }
 
-.tour_box_blink:hover{
+.tour_box_blink:hover {
     color: #fff;
-    background-color: #758055d1!important;
+    background-color: #758055d1 !important;
 }
 
-.popover-title{
-    color:#ffffff;
-    background-color: #758055!important;
+.popover-title {
+    color: #ffffff;
+    background-color: #758055 !important;
 }
 
-.example-style{
+.example-style {
     background-color: #909d6b94;
     color: white;
     line-height: 16px;
@@ -239,6 +239,43 @@ leaflet-bar leaflet-bar-horizontal leaflet-bar-timecontrol leaflet-control {
 .leaflet-touch .leaflet-draw-toolbar .leaflet-draw-edit-remove.leaflet-disabled {
     background-color: #909d6b;
     opacity: .5;
+}
+
+.leaflet-draw-actions a {
+    color: #ffffff;
+}
+
+#slider-range {
+    position: absolute;
+    top: -32px;
+    right: 0;
+    background-color: #909d6b94;
+    width: 231px;
+    line-height: 30px;
+    text-align: center;
+    border-top: 2px solid rgba(0, 0, 0, 0.2);
+    border-left: 2px solid rgba(0, 0, 0, 0.2);
+    border-right: 2px solid rgba(0, 0, 0, 0.2);
+}
+
+#slider-range:hover {
+    background-color: #758055d1;
+    color: white;
+    cursor: pointer;
+}
+
+.picker-text {
+    font-size: 1rem;
+    font-family: "Work Sans", Roboto;
+    color: #666666;
+}
+
+.just-buttons {
+    width: calc(100% - 10px);
+    position: relative;
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
 }
 
 body.dragging,
