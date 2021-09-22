@@ -118,17 +118,20 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Create the final nc4 filename
                 # ucsb-chirp.20210731T000000Z.global.0.05deg.daily.nc4
                 product = ''
+                temporal_resolution = 'daily'
                 if self.mode == 'chirp':
                     product = 'chirp'
                 elif self.mode == 'chirps':
                     product = 'chirps'
                 elif self.mode == 'chirps_gefs':
                     product = 'chirps-gefs'
-                final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.daily.nc4'.format(
+                    temporal_resolution = '10dy'
+                final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.{}.nc4'.format(
                     product,
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str
+                    current_day__DD_str,
+                    temporal_resolution
                 )
 
                 # Now get the remote File Paths (Directory) based on the date infos.
@@ -481,6 +484,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     yearStr = ''
                     monthStr = ''
                     dayStr = ''
+                    temporal_resolution = 'daily'
                     if self.mode == 'chirp':
                         TimeStrSplit    = geotiffFile_FullPath.split('.')
                         yearStr         = TimeStrSplit[1]
@@ -492,7 +496,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         monthStr        = TimeStrSplit[3]
                         dayStr          = TimeStrSplit[4]
                     elif self.mode == 'chirps_gefs':
-                        pass
+                        temporal_resolution = '10 days'
 
                     # Determine the timestamp for the data.
                     start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
@@ -527,7 +531,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', str(mode_var__precipAttr_comment))])
+                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
+                    if self.mode == "chirps_gefs":
+                        ds.precipitation_anomaly.attrs = OrderedDict([('long_name', 'precipitation_anomaly'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', 'Ensemble mean GEFS forecast bias corrected and converted into anomaly versus CHIRPS 2.0 climatology')])
                     ds.attrs = OrderedDict([
                         ('Description', str(mode_var__fileAttr_Description)),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
@@ -541,7 +547,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         ('NorthernmostLatitude', np.max(ds.latitude.values)),
                         ('WesternmostLongitude', np.min(ds.longitude.values)),
                         ('EasternmostLongitude', np.max(ds.longitude.values)),
-                        ('TemporalResolution', 'daily'),
+                        ('TemporalResolution', temporal_resolution),
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
@@ -551,6 +557,13 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         'dtype': np.dtype('float32'),
                         'chunksizes': (1, 256, 256)
                     }
+                    if self.mode == "chirps_gefs":
+                        ds.precipitation_anomaly.encoding = {
+                            '_FillValue': np.float32(-9999.0),
+                            'missing_value': np.float32(-9999.0),
+                            'dtype': np.dtype('float32'),
+                            'chunksizes': (1, 256, 256)
+                        }
                     ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
