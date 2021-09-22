@@ -92,6 +92,14 @@ case "$1" in
     stop
     start
     ;;
+  status)
+    if [ -f $PIDNAME ]; then
+      echo running
+    else
+      echo failed
+      exit 1
+    fi
+    ;;
   *)
     echo "Usage: $0 {start|stop|restart}"
 esac
