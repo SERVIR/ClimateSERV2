@@ -113,6 +113,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Create the base filename
                 base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.mode, datetime_obj=currentDate)
                 tif_filename = '{}.tif'.format(base_filename)
+                tif_gz_filename = '{}.tif.gz'.format(base_filename)
 
                 # Create the final nc4 filename
                 # ucsb-chirp.20210731T000000Z.global.0.05deg.daily.nc4
@@ -138,6 +139,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Getting full paths
                 remote_full_filepath_tif            = urllib.parse.urljoin(remote_directory_path, tif_filename)
                 local_full_filepath_tif             = os.path.join(self.temp_working_dir, tif_filename)
+                remote_full_filepath_tif_gz         = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
+                local_full_filepath_tif_gz          = os.path.join(self.temp_working_dir, tif_gz_filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -160,12 +163,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Filename and Granule Name info
                 current_obj['base_filename']            = base_filename
                 current_obj['tif_filename']             = tif_filename
+                current_obj['tif_gz_filename']          = tif_gz_filename
                 current_obj['final_nc4_filename']       = final_nc4_filename
                 current_obj['granule_name']             = final_nc4_filename
 
                 # Full Paths
                 current_obj['remote_full_filepath_tif'] = remote_full_filepath_tif
                 current_obj['local_full_filepath_tif'] = local_full_filepath_tif
+                current_obj['remote_full_filepath_tif_gz'] = remote_full_filepath_tif_gz
+                current_obj['local_full_filepath_tif_gz'] = local_full_filepath_tif_gz
                 current_obj['local_full_filepath_final_nc4_file'] = local_full_filepath_final_nc4_file
 
                 # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
@@ -268,20 +274,26 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
-                current_url_to_download     = urllib.parse.urljoin(remote_directory_path, tif_filename + '.gz')
-                local_full_filepath_tif     = expected_granule['local_full_filepath_tif'] + '.gz'
-
-                # Granule info
-                Granule_UUID    = expected_granule['Granule_UUID']
-                granule_name    = expected_granule['granule_name']
-
-                print(current_url_to_download)
+                tif_gz_filename             = expected_granule['tif_gz_filename']
+                local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                local_full_filepath_tif_gz  = expected_granule['local_full_filepath_tif_gz']
 
                 # Download the file - Actually do the download now
                 try:
+                    current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
+                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
-                    with open(local_full_filepath_tif, 'wb') as outfile:
-                        outfile.write(r.content)
+                    if r.ok:
+                        with open(local_full_filepath_tif_gz, 'wb') as outfile:
+                            outfile.write(r.content)
+                    elif r.status_code == 404:
+                        current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
+                        print(current_url_to_download)
+                        r = requests.get(current_url_to_download)
+                        with open(local_full_filepath_tif, 'wb') as outfile:
+                            outfile.write(r.content)
+                    else:
+                        r.raise_for_status()
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -336,20 +348,20 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
             for expected_granules_object in self._expected_granules:
 
-                local_full_filepath_download    = expected_granules_object['local_full_filepath_tif'] + '.gz'
+                local_full_filepath_tif_gz      = expected_granules_object['local_full_filepath_tif_gz']
                 local_extract_path              = expected_granules_object['local_extract_path']
                 extracted_tif_filename          = expected_granules_object['tif_filename']
                 local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
 
-                print(local_full_filepath_download)
-
-                if not os.path.isfile(local_full_filepath_download):
-                    continue
+                print(local_full_filepath_tif_gz)
 
                 try:
-                    with gzip.open(local_full_filepath_download, 'rb') as f_in:
-                        with open(local_extract_full_filepath, 'wb') as f_out:
-                            shutil.copyfileobj(f_in, f_out)
+                    if os.path.isfile(local_full_filepath_tif_gz):
+                        with gzip.open(local_full_filepath_tif_gz, 'rb') as f_in:
+                            with open(local_extract_full_filepath, 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                    else:
+                        continue
 
                 except Exception as e:
                     print(e)
