@@ -96,13 +96,8 @@ class ZMQCHIRPSDataWorker():
         self.__listen__()
 
     def doWork(self):
-        # self.logger.info("("+self.name+"):doWork: About to work on request: " +str(self.operatingData))
-        # self.logger.info("(" + self.name + "):doWork: About to work on request: " + str(self.operatingData))
+
         results = self.__doWork__()
-
-        # Add a few more params,
-
-        # Need to extend this 'results' object to include some more differentiating data types (if they exist)
         try:
             # Attempt to extend the results object
             if (self.operatingData['derived_product'] == True):
@@ -118,7 +113,6 @@ class ZMQCHIRPSDataWorker():
         results['workid'] = self.operatingData['workid']
         self.logger.debug("Worker (" + self.name + "): " + "Working on " + results['workid'])
         self.outputreceiver.send_string(json.dumps(results))
-        # self.logger.debug("Worker (" + self.name + "): " + " About to call __cleanup__")
         self.__cleanup__()
 
 

@@ -29,54 +29,29 @@ except:
     import file.ExtractTifFromH5 as extractTif
     import locallog.locallogging as llog
 import time
+import os
 
-
-
-
-
-# Monthly analysis section (stateless)  START
-# Monthly analysis section (stateless)  START
-# Monthly analysis section (stateless)  START
-
-
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     START
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     START
-# #  PHASE I SUPPORT - Head Processor, setting up incomming request..     START
-
-
-# Big picture Procedural Process
-# (1) Do some stuff for Chirps
-# (2) Do some stuff for Seasonal Forecast Models
-# (4) Combine it all together in a new dataset with multiple arrays (because we will have multiple graphs on the server later)
-# (5) Store it all in a way that can be easily retrieved (JSON, in a BSD) and sent back to the client
-
-# Settings - Dates for Chirps are hardcoded because we don't have a dynamic system for getting the dates.
-# # Also note, the date is a historical compilation, so this means adding another year won't change it by much
-# # To add another year, make sure we have the dataset and then just change the 'late' dates
-# # If we implement a system for keeping track of the temporal bounds of the datasets, then this can be dynamic as it should be.
-# Early == Start,   Late == End
-chirps_dateRange_earlyYear = "2020" # "2009" #"1981"  # 2009 is local test data   # 1981 is the live data
+chirps_dateRange_earlyYear = "1981" # "2009" #"1981"  # 2009 is local test data   # 1981 is the live data
 chirps_dateRange_earlyMonth = "01"
 chirps_dateRange_earlyDay = "01"
-chirps_dateRange_lateYear = "2020" # "2016"  #"2010" #"2016"   # 2010 is local test data  # 2016 is the live data
-chirps_dateRange_lateMonth = "02"  # "10"
-chirps_dateRange_lateDay = "01"    # "26"
+chirps_dateRange_lateYear = "2021" # "2016"  #"2010" #"2016"   # 2010 is local test data  # 2016 is the live data
+chirps_dateRange_lateMonth = "05"  # "10"
+chirps_dateRange_lateDay = "31"    # "26"
 chirps_dataType = 0
-seasonalForecast_dataType_list = [7, 9, 11, 13, 15, 17, 19, 21, 23, 25]  # ens01 - ens10 for Tempurature variables
+# seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89]
+
+seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 43, 45, 47, 49, 51]
 logger = llog.getNamedLogger("request_processor")
-# Decided to pull these in from the client (for flexibility)
-# def get_seasonalForecast_StartDate():
-#     pass
-# def get_seasonalForecast_EndDate():
-#     pass
 
 def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
     worklist = []
     sub_type_name = 'CHIRPS_REQUEST'  # Choices for now are: 'CHIRPS_REQUEST' and 'SEASONAL_FORECAST'
 
     datatype = chirps_dataType  # Much of the copy/paste code already references this as 'datatype'
-    begintime = chirps_dateRange_earlyMonth + "/" + chirps_dateRange_earlyDay + "/" + chirps_dateRange_earlyYear
-    endtime = chirps_dateRange_lateMonth + "/" + chirps_dateRange_lateDay + "/" + chirps_dateRange_lateYear
+    # begintime = chirps_dateRange_earlyMonth + "/" + chirps_dateRange_earlyDay + "/" + chirps_dateRange_earlyYear
+    # endtime = chirps_dateRange_lateMonth + "/" + chirps_dateRange_lateDay + "/" + chirps_dateRange_lateYear
+    begintime ="2018-01-01" #request['seasonal_start_date']""
+    endtime = "2020-12-01" #request['seasonal_end_date']
     intervaltype = 0    # Daily
     operation = "avg"  # 5 == average, 0 == max, 1 == min
 
@@ -85,50 +60,48 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
     if ('geometry' in request):
         # Get the polygon string
         polygonstring = request['geometry']
-        # Process input polygon string
-        geometry = geoutils.decodeGeoJSON(polygonstring)
-        # # this is not a download type or a climate model type  --START
         polygon_Str_ToPass = polygonstring
-        dates, operation, values, bounds = GetTDSData.get_aggregated_values(begintime, endtime,
-                                                                            'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', polygonstring,
-                                                                            uniqueid,
-                                                                            operation)
+        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
+
+        dates,values = GetTDSData.get_aggregated_values(begintime, endtime,
+                                                                            params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], polygonstring,
+                                                                                                                                                    operation, temp_file)
     # # this is not a download type or a climate model type  --END
     # User Selected a Feature
     elif ('layerid' in request):
         layerid = request['layerid']
         featureids = request['featureids']
         geometries = sf.getPolygons(layerid, featureids)
+        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
 
-        # # this is not a download type or a climate model type --START
-        bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
-        # # this is not a download type or a climate model type --END
+        dates,values = GetTDSData.get_aggregated_values(begintime, endtime,
+                                                                            params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], geometries,
+                                                                                                                                                    operation, temp_file)
 
     # Build the worklist for each date in the dates
     for dateIndex in range(len(dates)):
         workid = uu.getUUID()
         gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-        workdict = {'uid': uniqueid,
-                    'workid': workid,
-                    'datatype': datatype,
-                    'operationtype': 5,
-                    'intervaltype': intervaltype,
-                    'bounds': bounds,
-                    'polygon_Str_ToPass': polygon_Str_ToPass,
-                    'datatype_uuid_for_CHIRPS': datatype_uuid_for_CHIRPS,
-                    'datatype_uuid_for_SeasonalForecast': datatype_uuid_for_SeasonalForecast,
-                    'current_mask_and_storage_uuid': datatype_uuid_for_CHIRPS,                  # Only one chirps type request needed so using same uuid
-                    'sub_type_name': sub_type_name, 'derived_product': True, 'special_type': 'MonthlyRainfallAnalysis' }
+        workdict = {"uid": uniqueid,
+                    "workid": workid,
+                    "datatype": datatype,
+                    "operationtype": 5,
+                    "intervaltype": intervaltype,
+                    #'bounds': bounds,
+                    "polygon_Str_ToPass": polygon_Str_ToPass,
+                    "datatype_uuid_for_CHIRPS": datatype_uuid_for_CHIRPS,
+                    "datatype_uuid_for_SeasonalForecast": datatype_uuid_for_SeasonalForecast,
+                    "current_mask_and_storage_uuid": datatype_uuid_for_CHIRPS,                  # Only one chirps type request needed so using same uuid
+                    "sub_type_name": sub_type_name, "derived_product": True, "special_type": 'MonthlyRainfallAnalysis' }
         # Daily dates processing # if (intervaltype == 0):  # It is in this case, daily.
-        workdict['year'] = int(dates[dateIndex][0:4])
-        workdict['month'] = int(dates[dateIndex][5:7])
-        workdict['day'] = int(dates[dateIndex][8:10])
-        workdict['epochTime'] = gmt_midnight
-        workdict['value'] = {operation: values[dateIndex]}
-        dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'])
-        workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+        workdict["year"] = int(dates[dateIndex][0:4])
+        workdict["month"] = int(dates[dateIndex][5:7])
+        workdict["day"] = int(dates[dateIndex][8:10])
+        workdict["epochTime"] = gmt_midnight
+        workdict["value"] = {operation: values[dateIndex]}
+        dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
+        workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
         worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
-
     return worklist
 	
 def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
@@ -151,23 +124,28 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
         # Get the polygon string
         polygonstring = request['geometry']
         # Process input polygon string
-        geometry = geoutils.decodeGeoJSON(polygonstring)
         # # this is not a download type or a climate model type  --START
         polygon_Str_ToPass = polygonstring
-        dates, operation, values, bounds = GetTDSData.get_aggregated_values(begintime, endtime,
-                                                                            'ucsb-chirps-gefs_global_0.05deg_10dy.nc4',
-                                                                            'precipitation_amount', polygonstring,
-                                                                            uniqueid,
-                                                                            operation)
+        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
+
+        dates, values = GetTDSData.get_aggregated_values(begintime, endtime,params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], polygonstring,
+
+                                                                            operation,temp_file)
     # # this is not a download type or a climate model type  --END
     # User Selected a Feature
     elif ('layerid' in request):
         layerid = request['layerid']
         featureids = request['featureids']
         geometries = sf.getPolygons(layerid, featureids)
+        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
 
+        dates, values = GetTDSData.get_aggregated_values(begintime, endtime,
+                                                         'ucsb-chirps-gefs_global_0.05deg_10dy.nc4',
+                                                         'precipitation_amount', geometries,
+
+                                                         operation, temp_file)
         # # this is not a download type or a climate model type --START
-        bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
+        #bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
 
     # Build the worklist for each date in the dates
     for dateIndex in range(len(dates)):
@@ -178,7 +156,7 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
                     'datatype': datatype,
                     'operationtype': 5,
                     'intervaltype': intervaltype,
-                    'bounds': bounds,
+                    #'bounds': bounds,
                     'polygon_Str_ToPass': polygon_Str_ToPass,
                     'datatype_uuid_for_CHIRPS': datatype_uuid_for_CHIRPS,
                     'datatype_uuid_for_SeasonalForecast': datatype_uuid_for_SeasonalForecast,
@@ -201,16 +179,13 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
 def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
     worklist = []
     sub_type_name = 'SEASONAL_FORECAST'  # Choices for now are: 'CHIRPS_REQUEST' and 'SEASONAL_FORECAST'
-    seasonal_start_date = request['seasonal_start_date']
-    seasonal_end_date = request['seasonal_end_date']
-    begintime = str(seasonal_start_date.split('_')[1]) + "/" + str(seasonal_start_date.split('_')[2]) + "/" + str(seasonal_start_date.split('_')[0])
-    endtime = str(seasonal_end_date.split('_')[1]) + "/" + str(seasonal_end_date.split('_')[2]) + "/" + str(seasonal_end_date.split('_')[0])
+    # seasonal_start_date = request['seasonal_start_date']
+    # seasonal_end_date = request['seasonal_end_date']
+
+    # begintime = str(seasonal_start_date.split('_')[1]) + "/" + str(seasonal_start_date.split('_')[2]) + "/" + str(seasonal_start_date.split('_')[0])
+    # endtime = str(seasonal_end_date.split('_')[1]) + "/" + str(seasonal_end_date.split('_')[2]) + "/" + str(seasonal_end_date.split('_')[0])
     intervaltype = 0  # Daily
     operation = "avg"  # 5 == average, 0 == max, 1 == min
-    placeholder_datatype = seasonalForecast_dataType_list[0]
-    size = params.getGridDimension(int(placeholder_datatype))
-
-
     # Iterate through all seasonalForecast dataTypes
     for seasonalForecast_dataType in seasonalForecast_dataType_list:
         datatype = seasonalForecast_dataType  # Much of the copy/paste code already references this as 'datatype'
@@ -221,18 +196,18 @@ def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, 
         if ('geometry' in request):
             # Get the polygon string
             polygonstring = request['geometry']
-
-            dates, operation, values, bounds = GetTDSData.get_aggregated_values(begintime, endtime,
-                                                                                'ucsb-chirps-gefs_global_0.05deg_10dy.nc4',
-                                                                                'precipitation_amount', polygonstring,
-                                                                                uniqueid,
-                                                                                operation)
-
+            polygon_Str_ToPass = polygonstring
+            temp_file = params.dataTypes[int(datatype)]['inputDataLocation'] # name for temporary netcdf file
+            dates, values = GetTDSData.get_season_values(params.dataTypes[int(datatype)]['variable'], params.dataTypes[int(datatype)]['dataset_name']+".nc4", polygonstring, temp_file, request['uniqueid'])
 
         # User Selected a Feature
         elif ('layerid' in request):
             layerid = request['layerid']
             featureids = request['featureids']
+            geometries = sf.getPolygons(layerid, featureids)
+            temp_file = params.dataTypes[int(datatype)]['inputDataLocation']  # name for temporary netcdf file
+            dates, values = GetTDSData.get_season_values(params.dataTypes[int(datatype)]['variable'], params.dataTypes[int(datatype)]['dataset_name']+".nc4", geometries, temp_file, request['uniqueid'])
+
 
         current_mask_uuid_for_SeasonalForecast = uu.getUUID()
 
@@ -241,29 +216,27 @@ def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, 
         for dateIndex in range(len(dates)):
             gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
             workid = uu.getUUID()
-            workdict = {'uid': uniqueid,
-                        'workid': workid,
-                        'datatype': datatype,
-                        'operationtype': 5,
-                        'intervaltype': intervaltype,
-                        'bounds': bounds,
-                        'polygon_Str_ToPass': polygon_Str_ToPass,
-                        'datatype_uuid_for_CHIRPS': datatype_uuid_for_CHIRPS,
-                        'datatype_uuid_for_SeasonalForecast': datatype_uuid_for_SeasonalForecast,
-                        'current_mask_and_storage_uuid': current_mask_uuid_for_SeasonalForecast,
+            workdict = {"uid": uniqueid,
+                        "workid": workid,
+                        "datatype": datatype,
+                        "operationtype": 5,
+                        "intervaltype": intervaltype,
+                        "polygon_Str_ToPass": polygon_Str_ToPass,
+                        "datatype_uuid_for_CHIRPS": datatype_uuid_for_CHIRPS,
+                        "datatype_uuid_for_SeasonalForecast": datatype_uuid_for_SeasonalForecast,
+                        "current_mask_and_storage_uuid": current_mask_uuid_for_SeasonalForecast,
                         # Only one chirps type request needed so using same uuid
-                        'sub_type_name': sub_type_name, 'derived_product': True,
-                        'special_type': 'MonthlyRainfallAnalysis'}
+                        "sub_type_name": sub_type_name, "derived_product": True,
+                        "special_type": 'MonthlyRainfallAnalysis'}
             # Daily dates processing # if (intervaltype == 0):  # It is in this case, daily.
-            workdict['year'] = int(dates[dateIndex][0:4])
-            workdict['month'] = int(dates[dateIndex][5:7])
-            workdict['day'] = int(dates[dateIndex][8:10])
-            workdict['epochTime'] = gmt_midnight
-            workdict['value'] = {operation: values[dateIndex]}
-            dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'])
-            workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
+            workdict["year"] = int(dates[dateIndex][0:4])
+            workdict["month"] = int(dates[dateIndex][5:7])
+            workdict["day"] = int(dates[dateIndex][8:10])
+            workdict["epochTime"] = gmt_midnight
+            workdict["value"] = {operation: values[dateIndex]}
+            dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
+            workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
             worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
-
     return worklist
 
 def get_workList_for_headProcessor_for_MonthlyGEFSRainfallAnalysis_types(uniqueid, request):
@@ -452,12 +425,6 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
 
         for k in range(12):
-            col01_Month = ""
-            col02_MonthlyAverage = ""
-            col03_25thPercentile = ""
-            col04_75thPercentile = ""
-            col05_YearsInAnalysis = ""
-
             if mhits2[k] > 0:
                 col01_Month = k + 1
                 col02_MonthlyAverage = msum2[k] / (mhits2[k])
@@ -479,7 +446,6 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
                 'col05_YearsInAnalysis':str(col05_YearsInAnalysis)
             }
             avg_percentiles_dataLines.append(avg_percentiles_dataLine)
-
 
         dataset_info_obj = {
             'year_month_dataLines':year_month_dataLines,

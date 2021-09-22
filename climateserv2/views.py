@@ -9,9 +9,14 @@ from .db import DBMDbprocessing as dbmDb
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
+try:
+    import climateserv2.requestLog as reqLog
+except:
+    import requestLog as reqLog
 import zmq
+
+from datetime import datetime
 import sys
-from zipfile import ZipFile
 import os
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
@@ -73,6 +78,39 @@ def processCallBack(request, output, contenttype):
         except KeyError:
             return HttpResponse(output)
 
+# get the request logs from a given date range
+# Returns a list
+# def get_LogRequests_ByRange(earliest_DateTime, latest_DateTime):
+# Usage Example
+# theLogs = get_LogRequests_ByRange("2015", "10", "01", "2015", "10", "03")
+# logger.info("DEBUG: Get Request Logs result, : (str(theLogs)): " + str(theLogs))
+def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
+    # Parse start and end times into datetimes
+    dateTimeFormat = "%Y_%m_%d"
+    if (len(str(sMonth)) == 1):
+        sMonth = "0" + str(sMonth)
+    if (len(str(eMonth)) == 1):
+        eMonth = "0" + str(eMonth)
+    if (len(str(sDay)) == 1):
+        sDay = "0" + str(sDay)
+    if (len(str(eDay)) == 1):
+        eDay = "0" + str(eDay)
+    sDateTimeString = str(sYear) + "_" + str(sMonth) + "_" + str(sDay)
+    eDateTimeString = str(eYear) + "_" + str(eMonth) + "_" + str(eDay)
+    dateTime_Early = datetime.datetime.strptime(sDateTimeString, dateTimeFormat)
+    dateTime_Late = datetime.datetime.strptime(eDateTimeString, dateTimeFormat)
+
+    # Get the logs
+    retLogs = []  # Scoping
+    try:
+        rLog = reqLog.requestLog()
+        retLogs = rLog.get_RequestData_ByRange(dateTime_Early, dateTime_Late)
+    except:
+        e = sys.exc_info()[0]
+        errorMsg = "ERROR get_LogRequests_ByRange: There was an error trying to get the logs.  System error message: " + str(
+            e)
+        logger.error(errorMsg)
+    return retLogs
 
 # Logging
 # How to access the request stuff.
@@ -83,6 +121,7 @@ def processCallBack(request, output, contenttype):
 # global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 # Test url string
 # http://localhost:8000/getRequestLogs/?callback=success&sYear=2015&sMonth=10&sDay=01&eYear=2015&eMonth=10&eDay=04&tn=SomeRandomStringThatGoesHere
+
 @csrf_exempt
 def getRequestLogs(request):
     '''
@@ -350,12 +389,20 @@ def getClimateScenarioInfo(request):
     isError = False
     # Get list of datatype numbers that have the category of 'ClimateModel'
     climateModel_DataTypeNumbers = params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
-
     # Get all info from the Capabilities Data for each 'ClimateModel' datatype number
-    climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
+    #g#  climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
 
+    climateModel_DataType_Capabilities_List=[
+        {
+            "current_Capabilities":{
+                "startDateTime":"2021-09-01",
+                "endDateTime": "2022-03-31"
+            }
+        }
+    ]
     # 'data_category':'ClimateModel'
     climate_DatatypeMap = params.get_Climate_DatatypeMap()
+
 
     api_ReturnObject = {
         "RequestName": "getClimateScenarioInfo",
@@ -363,7 +410,7 @@ def getClimateScenarioInfo(request):
         "climate_DataTypeCapabilities": climateModel_DataType_Capabilities_List,
         "isError": isError
     }
-
+    # print(api_ReturnObject)
     # ip = get_client_ip(request)
     # return processCallBack(request,json.dumps(params.ClientSide_ClimateChangeScenario_Specs),"application/json")
     return processCallBack(request, json.dumps(api_ReturnObject), "application/javascript")
@@ -669,7 +716,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
             seasonal_start_date = seasonal_start_date[0:10]
             seasonal_end_date = seasonal_end_date[0:10]
         except KeyError:
-            logger.warn(
+            logger.warning(
                 "issue with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
             error.append(
                 "Error with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
@@ -694,7 +741,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 logger.debug("getMonthlyRainfallAnalysis: Loaded feature ids, featureids: " + str(featureids))
 
             except KeyError:
-                logger.warn("issue with finding geometry")
+                logger.warning("issue with finding geometry")
                 error.append("Error with finding geometry: layerid:" + str(layerid) + " featureid: " + str(featureids))
 
         else:
