@@ -38,7 +38,9 @@ chirps_dateRange_lateYear = "2021" # "2016"  #"2010" #"2016"   # 2010 is local t
 chirps_dateRange_lateMonth = "05"  # "10"
 chirps_dateRange_lateDay = "31"    # "26"
 chirps_dataType = 0
-seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89]
+# seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89]
+
+seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 43, 45, 47, 49, 51]
 logger = llog.getNamedLogger("request_processor")
 
 def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):

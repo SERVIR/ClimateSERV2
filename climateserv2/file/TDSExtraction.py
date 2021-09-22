@@ -70,8 +70,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
     json_aoi=json.dumps(jsonn)
-
-    if os.path.exists(temp_file):
+    if jsonn['features'][0]['geometry']['type']!="Point" and os.path.exists(temp_file):
 
         xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
 
@@ -119,7 +118,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
         try:
             coords = jsonn['features'][0]['geometry']['coordinates']
             lon, lat = coords[0], coords[1]
-            ds=xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/'+dataset+'.nc4')
+            ds=xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/'+dataset)
             point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
             dates=point.time.dt.strftime("%Y-%m-%d").values.tolist()
         except Exception as e:
@@ -158,7 +157,25 @@ def get_season_values(variable, dataset, geom,temp_file, uniqueid):
     west = aoi.total_bounds[0]
     north = aoi.total_bounds[3]
     # Extracting data from TDS and making local copy
-
+    if jsonn['features'][0]['geometry']['type']=="Point":
+        dates = []
+        try:
+            coords = jsonn['features'][0]['geometry']['coordinates']
+            lon, lat = coords[0], coords[1]
+            try:
+                ds=xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/'+dataset)
+            except:
+                ds = xr.open_dataset(
+                    'http://thredds.servirglobal.net/thredds/dodsC/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/' + dataset)
+            point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+            dates=point.time.dt.strftime("%Y-%m-%d").values.tolist()
+        except Exception as e:
+            logger.info(e)
+        values=np.array(point.values)
+        values = values[values != -999.0]
+        if len(values)==0:
+            return [],[]
+        return dates, values
     try:
         tds_request = "http://thredds.servirglobal.net/thredds/ncss/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/" + dataset + "?var=" + variable + "&north=" + str(
             north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(

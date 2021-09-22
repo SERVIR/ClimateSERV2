@@ -262,8 +262,6 @@ class ZMQCHIRPSHeadProcessor():
                 finished_sending_workingArray_data = True
             else:
                 current_workid_index = workingArray_guid_index_list[current_workingArray_index]
-                self.logger.info("^^^^")
-                self.logger.info(current_workid_index)
                 self.outputreceiver.send_string(json.dumps(str(workingArray[current_workid_index])) )# (workingArray[current_workingArray_index]))
                 self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(current_workingArray_index) + " of " + str(len(workingArray)))
                 current_workingArray_index = current_workingArray_index + 1
@@ -537,8 +535,16 @@ class ZMQCHIRPSHeadProcessor():
                 self.dj_OperationName = "NotDLoad"
                 self.derived_opname = "MonthlyRainfallAnalysis"
                 try:
+                    self.logger.info("from tdddd")
+                    if 'layerid' in request:
+                        layerid = request['layerid']
+                        featureids = request['featureids']
+                        geometries = sf.getPolygons(layerid, featureids)
+                        url = GetTDSData.get_tds_request("2018-01-01", "2020-12-01", 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', geometries)
+
+                    else:
                   #  url = GetTDSData.get_tds_request(request['seasonal_start_date'], request['seasonal_end_date'], 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', request['geometry'])
-                    url = GetTDSData.get_tds_request("2018-01-01", "2020-12-01", 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', request['geometry'])
+                        url = GetTDSData.get_tds_request("2018-01-01", "2020-12-01", 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', request['geometry'])
 
                     length = len(urllib.request.urlopen(url).read())
                     resp = urllib.request.urlopen(url)
@@ -745,9 +751,10 @@ class ZMQCHIRPSHeadProcessor():
                             if length:
                                 self.logger.info((size / length) * 20)
                                 self.__processProgress__((size / length) * 20)
-                        dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)
                     except:
                         self.logger.info("TDS URL Exception")
+                    dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)
+
 
             # User Selected a Feature
             elif ('layerid' in request):
@@ -849,10 +856,12 @@ class ZMQCHIRPSHeadProcessor():
                             if length:
                                 self.logger.info((size / length) * 20)
                                 self.__processProgress__((size / length) * 20)
-                        dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name,
-                                                                                            geometries,opn,temp_file)
+
                     except:
                         self.logger.info("TDS URL Exception")
+                    dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'],
+                                                                     dataset_name, variable_name,
+                                                                     geometries, opn, temp_file)
 
             current_mask_and_storage_uuid = uniqueid
             worklist = []
