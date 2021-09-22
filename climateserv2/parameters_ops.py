@@ -48,7 +48,7 @@ def get_ClimateChangeParam__inputDataLocation(ensembleName,variableName):
     return '/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
 def get_ClimateChangeParam__inputDataLocation_cfsv2(ensembleName,variableName):
     #return '/cserv2/tmp/data/nmme/nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
-    return '/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
+    return '/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
 
 
 def get_ClimateChangeParam__modelOutputLocal_BaseFolder():
