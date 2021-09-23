@@ -100,6 +100,11 @@ border-right: 1px solid #eee;
     width: 180px;
 }
 
+ul {
+    list-style: unset;
+    margin-left: 20px;
+}
+
 .map-help-img{
     margin: 40px 20px;
     max-width: 85%;
