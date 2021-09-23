@@ -113,21 +113,25 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Create the base filename
                 base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.mode, datetime_obj=currentDate)
                 tif_filename = '{}.tif'.format(base_filename)
+                tif_gz_filename = '{}.tif.gz'.format(base_filename)
 
                 # Create the final nc4 filename
                 # ucsb-chirp.20210731T000000Z.global.0.05deg.daily.nc4
                 product = ''
+                temporal_resolution = 'daily'
                 if self.mode == 'chirp':
                     product = 'chirp'
                 elif self.mode == 'chirps':
                     product = 'chirps'
                 elif self.mode == 'chirps_gefs':
                     product = 'chirps-gefs'
-                final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.daily.nc4'.format(
+                    temporal_resolution = '10dy'
+                final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.{}.nc4'.format(
                     product,
                     current_year__YYYY_str,
                     current_month__MM_str,
-                    current_day__DD_str
+                    current_day__DD_str,
+                    temporal_resolution
                 )
 
                 # Now get the remote File Paths (Directory) based on the date infos.
@@ -138,6 +142,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Getting full paths
                 remote_full_filepath_tif            = urllib.parse.urljoin(remote_directory_path, tif_filename)
                 local_full_filepath_tif             = os.path.join(self.temp_working_dir, tif_filename)
+                remote_full_filepath_tif_gz         = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
+                local_full_filepath_tif_gz          = os.path.join(self.temp_working_dir, tif_gz_filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
                 # print("DONE - Create a granule with all the above info")
@@ -160,12 +166,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Filename and Granule Name info
                 current_obj['base_filename']            = base_filename
                 current_obj['tif_filename']             = tif_filename
+                current_obj['tif_gz_filename']          = tif_gz_filename
                 current_obj['final_nc4_filename']       = final_nc4_filename
                 current_obj['granule_name']             = final_nc4_filename
 
                 # Full Paths
                 current_obj['remote_full_filepath_tif'] = remote_full_filepath_tif
                 current_obj['local_full_filepath_tif'] = local_full_filepath_tif
+                current_obj['remote_full_filepath_tif_gz'] = remote_full_filepath_tif_gz
+                current_obj['local_full_filepath_tif_gz'] = local_full_filepath_tif_gz
                 current_obj['local_full_filepath_final_nc4_file'] = local_full_filepath_final_nc4_file
 
                 # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
@@ -268,20 +277,26 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
-                current_url_to_download     = urllib.parse.urljoin(remote_directory_path, tif_filename + '.gz')
-                local_full_filepath_tif     = expected_granule['local_full_filepath_tif'] + '.gz'
-
-                # Granule info
-                Granule_UUID    = expected_granule['Granule_UUID']
-                granule_name    = expected_granule['granule_name']
-
-                print(current_url_to_download)
+                tif_gz_filename             = expected_granule['tif_gz_filename']
+                local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                local_full_filepath_tif_gz  = expected_granule['local_full_filepath_tif_gz']
 
                 # Download the file - Actually do the download now
                 try:
+                    current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
+                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
-                    with open(local_full_filepath_tif, 'wb') as outfile:
-                        outfile.write(r.content)
+                    if r.ok:
+                        with open(local_full_filepath_tif_gz, 'wb') as outfile:
+                            outfile.write(r.content)
+                    elif r.status_code == 404:
+                        current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
+                        print(current_url_to_download)
+                        r = requests.get(current_url_to_download)
+                        with open(local_full_filepath_tif, 'wb') as outfile:
+                            outfile.write(r.content)
+                    else:
+                        r.raise_for_status()
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -336,20 +351,20 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
             for expected_granules_object in self._expected_granules:
 
-                local_full_filepath_download    = expected_granules_object['local_full_filepath_tif'] + '.gz'
+                local_full_filepath_tif_gz      = expected_granules_object['local_full_filepath_tif_gz']
                 local_extract_path              = expected_granules_object['local_extract_path']
                 extracted_tif_filename          = expected_granules_object['tif_filename']
                 local_extract_full_filepath     = os.path.join(local_extract_path, extracted_tif_filename)
 
-                print(local_full_filepath_download)
-
-                if not os.path.isfile(local_full_filepath_download):
-                    continue
+                print(local_full_filepath_tif_gz)
 
                 try:
-                    with gzip.open(local_full_filepath_download, 'rb') as f_in:
-                        with open(local_extract_full_filepath, 'wb') as f_out:
-                            shutil.copyfileobj(f_in, f_out)
+                    if os.path.isfile(local_full_filepath_tif_gz):
+                        with gzip.open(local_full_filepath_tif_gz, 'rb') as f_in:
+                            with open(local_extract_full_filepath, 'wb') as f_out:
+                                shutil.copyfileobj(f_in, f_out)
+                    else:
+                        continue
 
                 except Exception as e:
                     print(e)
@@ -469,6 +484,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     yearStr = ''
                     monthStr = ''
                     dayStr = ''
+                    temporal_resolution = 'daily'
                     if self.mode == 'chirp':
                         TimeStrSplit    = geotiffFile_FullPath.split('.')
                         yearStr         = TimeStrSplit[1]
@@ -480,7 +496,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         monthStr        = TimeStrSplit[3]
                         dayStr          = TimeStrSplit[4]
                     elif self.mode == 'chirps_gefs':
-                        pass
+                        temporal_resolution = '10 days'
 
                     # Determine the timestamp for the data.
                     start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
@@ -515,7 +531,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', str(mode_var__precipAttr_comment))])
+                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
+                    if self.mode == "chirps_gefs":
+                        ds.precipitation_anomaly.attrs = OrderedDict([('long_name', 'precipitation_anomaly'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', 'Ensemble mean GEFS forecast bias corrected and converted into anomaly versus CHIRPS 2.0 climatology')])
                     ds.attrs = OrderedDict([
                         ('Description', str(mode_var__fileAttr_Description)),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
@@ -529,7 +547,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         ('NorthernmostLatitude', np.max(ds.latitude.values)),
                         ('WesternmostLongitude', np.min(ds.longitude.values)),
                         ('EasternmostLongitude', np.max(ds.longitude.values)),
-                        ('TemporalResolution', 'daily'),
+                        ('TemporalResolution', temporal_resolution),
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
@@ -539,6 +557,13 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         'dtype': np.dtype('float32'),
                         'chunksizes': (1, 256, 256)
                     }
+                    if self.mode == "chirps_gefs":
+                        ds.precipitation_anomaly.encoding = {
+                            '_FillValue': np.float32(-9999.0),
+                            'missing_value': np.float32(-9999.0),
+                            'dtype': np.dtype('float32'),
+                            'chunksizes': (1, 256, 256)
+                        }
                     ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
