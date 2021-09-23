@@ -119,7 +119,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         'date_MM': current_month__mm_str,
                         'date_DD': current_day__dd_str,
                         'local_extract_path': self.temp_working_dir,
-                        'local_final_load_path': self.temp_working_dir,
+                        'local_final_load_path': final_load_dir_path,
                         'remote_directory_path': remote_directory_path,
                         'base_filename': base_filename,
                         'tfw_filename': tfw_filename,
@@ -477,6 +477,10 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     # print("B")
 
+                    description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'
+                    if self.mode == 'imerg1dy_late':
+                        description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Late Run.'
+
                     # print("C")
 
                     ############################################################
@@ -527,7 +531,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
                     ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', 'IMERG 1-day accumulated rainfall, Early Run')])
                     ds.attrs = OrderedDict(
-                        [('Description', 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'),
+                        [('Description', description),
                          ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                          ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
                          ('Source', 'NASA GPM Precipitation Processing System; https://gpm.nasa.gov/data-access/downloads/gpm; ftp://jsimpson.pps.eosdis.nasa.gov:/data/imerg/gis/early'),
@@ -648,7 +652,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except:
+                except Exception as e:
+                    print(e)
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
