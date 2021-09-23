@@ -260,12 +260,8 @@ def read_DataType_Capabilities_For(dataTypeNumberList):
                     e))
             pass
 
-        # Close the bddb connection
         conn.close()
     except Exception as e:
-        # Catch an error?
-        # Error here indicates trouble connecting to the BD Database
-        # If trouble connect
         logger.warning("Error here indicates trouble connecting to the BD Database: " + str(e))
         pass
     logger.warning("No error was found, look some place else")
@@ -292,53 +288,33 @@ def getFileForJobID(request):
 
             expectedFileLocation = ""  # Full path including filename
             expectedFileName = ""  # Just the file name
+            ext=""
             try:
+                ext="zip"
                 expectedFileName = requestid + ".zip"
                 expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
                 doesFileExist = os.path.exists(expectedFileLocation)
+                if not doesFileExist:
+                    ext = "csv"
+                    expectedFileName = requestid + ".csv"
+                    expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
+                    print(expectedFileLocation)
+                    doesFileExist = os.path.exists(expectedFileLocation)
             except:
-                doesFileExist = False
+                    doesFileExist=False
 
             # Validate that a file actually exists where we say it is
             if (doesFileExist == True):
-
-                # If the above validation checks out, return the file contents
-                # theFile = FileWrapper(expectedFileLocation)
-                # FileWrapper()
-                # response = HttpResponse(wrapper, content_type='application/zip')
-                # theFileWrapper = FileWrapper.File
                 # Open the file
                 theFileToSend = open(expectedFileLocation, 'rb')
-                #theFileWrapper = FileWrapper(theFileToSend)
-                # zipObj = ZipFile(expectedFileLocation, 'w')
-                #     # Iterate over all the files in directory
-                # for folderName, subfolders, filenames in os.walk(params.zipFile_ScratchWorkspace_Path):
-                #     for filename in filenames:
-                #             # create complete filepath of file in directory
-                #         filePath = os.path.join(folderName, filename)
-                #             # Add file to zip
-                #         zipObj.write(filePath, basename(filePath))
-
-                # close the Zip File
-                print(expectedFileName)
-               # print(zipObj.read())
-                response = HttpResponse(theFileToSend, content_type='application/zip')
+                if ext=="csv":
+                    response = HttpResponse(theFileToSend, content_type='text/csv')
+                else:
+                    response = HttpResponse(theFileToSend, content_type='application/zip')
                 response['Content-Disposition'] = 'attachment; filename=' + str(
-                    expectedFileName)  # filename=myfile.zip'
-                #zipObj.close()
-
-                # Log the data
-                #dataThatWasLogged = set_LogRequest(request, get_client_ip(request))
+                    expectedFileName)
 
                 return response
-
-                # theFileData = "Return_ZipFile_Data_TODO"
-                #
-                ## TODO, Write file stream server.
-                ## Log the Request (This is normally done in the processCallBack function... however we won't be using that pipe to serve the file stream.
-                # dataThatWasLogged = set_LogRequest(request, get_client_ip(request))
-                # return processCallBack(request,json.dumps("_PLACEHOLDER THIS SHOULD BE THE FILE AND NOT THIS MESSAGE!! _PLACEHOLDER"),"application/json")
-                ##return processCallBack(request,json.dumps(theFileData),"application/json")
 
             else:
                 # File did not exist        // "File does not exist on server. Was this jobID associated with a server job that produces output as a file?"
@@ -359,13 +335,7 @@ def getFileForJobID(request):
                 "fileProgress": progress
             }
             return processCallBack(request, json.dumps(retObj), "application/json")
-
-    # except Exception as e:
     except Exception as e:
-       # e = sys.exc_info()[0]
-       # logger.warning("Problem with getFileForJobID: System Error Message: " + str(
-        #    e))  # +str(request.GET)+" "+str(e.errno)+" "+str(e.strerror))
- 	 #return processCallBack(request, json.dumps("Error Getting File"), "application/json")
         return processCallBack(request, json.dumps(str(e) ), "application/json")
 
 
