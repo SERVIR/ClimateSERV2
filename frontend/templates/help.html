@@ -100,17 +100,17 @@
     </div>
 
     <div id="user-interface-help-section" style="display: none;" class="p50">
-        <div class="row">
-            <div class="sidebar">
-                <ul class="nav-sidebar">
-                    <li class="active"><a href="#overview">Overview</a></li>
-                    <li><a href="#statistics">Statistics</a></li>
-                    <li><a href="#visualize">Visualize</a></li>
-                </ul>
-            </div>
+        <div class="row" style="margin-top: 0;">
+{#            <div class="sidebar">#}
+{#                <ul class="nav-sidebar">#}
+{#                    <li class="active"><a href="#overview">Overview</a></li>#}
+{#                    <li><a href="#statistics">Statistics</a></li>#}
+{#                    <li><a href="#visualize">Visualize</a></li>#}
+{#                </ul>#}
+{#            </div>#}
             <div class="col-12 main">
-                <div class="content">
-                    <h2 id="overview">Overview</h2>
+                <div class="ui-content summary">
+                    <h2 id="overview" class="data-title" style="padding: 0;">Overview</h2>
                     <p>
                         The ClimateSERV <a href="{% url 'ClimateSERV_UI:map' %}">map</a> provides tools to visualize
                         climate related datasets which help to identify where and
@@ -124,7 +124,7 @@
                         statistical
                         data, or even download the raw data for further analysis.
                     </p>
-                    <h2 id="statistics">Statistics</h2>
+                    <h2 id="statistics" class="data-title" style="padding: 1.25em 0 0 0;">Statistics</h2>
                     <p>
 
                         The ClimateSERV Statistical Query tool is a great way to identify and assess
@@ -152,11 +152,13 @@
                             Select one or more administrative units shown in the map.
                         </li>
                     </ul>
+                      <p style="text-align: center">
                     <img
                             src="{% static 'frontend/img/climateserv_statistical_query_tool.png' %}"
                             alt="ClimateSERV Statistical Query Tool"
                             class="map-help-img"
                     >
+                      </p>
                     <p>
                         Once you have selected your AOI, you can choose either to query a specific dataset or to
                         generate the Monthly Rainfall Analysis which is derived from a combination of CHIRPS historical
@@ -178,11 +180,13 @@
                     <p>
                         The final step here s to select the date range you would like to query and send the request.
                     </p>
+                      <p style="text-align: center">
                     <img
                             src="{% static 'frontend/img/climateserv_statistical_query_results.png' %}"
                             alt="ClimateSERV Statistical Query Results"
                             class="map-help-img"
                     >
+                      </p>
                     <p>
                         When your dataset query has finished processing you will be provided with an interactive graph
                         that you can mouse over each point to see values for specific dates.  Also at the top right
@@ -192,7 +196,7 @@
                         very convenient.
                     </p>
 
-                    <h2 id="visualize">Visualize</h2>
+                    <h2 id="visualize" class="data-title" style="padding: 1.25em 0 0 0;">Visualize</h2>
                     <p>
                         ClimateSERV is full of data layers that you can visualize on the interactive map.  This can
                         help you identify climate patterns and trends that can be difficult to see using tabular data.
@@ -211,11 +215,13 @@
                         placing the layer you want to be on top above the other layers.  You will see the layers change
                         in realtime as you drag them.
                     </p>
+                    <p style="text-align: center">
                     <img
                             src="{% static 'frontend/img/climateserv_visualize_data.png' %}"
                             alt="ClimateSERV Visualize data layers"
                             class="map-help-img"
                     >
+                    </p>
                     <p>
                         The layers all have default vision parameters, however you may want to adjust these to identify
                         specific features of the data better.  The gear icon in each of the layers will open a
@@ -224,11 +230,13 @@
                         settings are independent of the rest.  You will also notice there is an opacity slider that
                         allows you to dynamically adjust the opacity of the layer.
                     </p>
+                      <p style="text-align: center">
                      <img
                             src="{% static 'frontend/img/climateserv_visualize_animation.png' %}"
                             alt="ClimateSERV Visualize animation"
                             class="map-help-img"
                     >
+                      </p>
                     <p>
                         Last but not least, ClimateSERV allows you to animate the data layers over time.  At the bottom
                         of the map you will notice a timeline.  If there is a layer on the map the timeline is enabled.

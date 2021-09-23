@@ -101,7 +101,7 @@ border-right: 1px solid #eee;
 }
 
 .map-help-img{
-    margin: 20px;
+    margin: 40px 20px;
     max-width: 85%;
 }
 
@@ -336,6 +336,12 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     right: 20px;
 }
 
+.ui-content{
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 900px;
+}
+
 @media only screen and (max-width: 768px) {
     .image-200 {
         width:100%;
@@ -346,20 +352,14 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
 }
 
 @media screen and (min-width: 768px) {
-    .content {
-        width: 85%;
-    }
 
     .main {
         padding-right: 40px;
-        padding-left: 220px; /* 180 + 40 */
+        padding-left: 40px; /* 180 + 40 */
     }
 }
 
 @media only screen and (max-width: 768px) {
-    .sidebar{
-        display:none;
-    }
     .main {
         padding-right: 40px;
         padding-left: 40px; /* 180 + 40 */

@@ -294,13 +294,13 @@ $(function () {
 
 function fix_sidebar(){
      const $el = $('.sidebar');
-      const isPositionFixed = ($el.css('position') == 'fixed');
-      if ($(this).scrollTop() > 60 && !isPositionFixed){
-        $el.css({'position': 'fixed', 'top': '0px'});
-      }
-      if ($(this).scrollTop() < 60 && isPositionFixed){
-        $el.css({'position': 'absolute', 'top': '60px'});
-      }
+      // const isPositionFixed = ($el.css('position') == 'fixed');
+      // if ($(this).scrollTop() > 60 && !isPositionFixed){
+      //   $el.css({'position': 'fixed', 'top': '0px'});
+      // }
+      // if ($(this).scrollTop() < 60 && isPositionFixed){
+      //   $el.css({'position': 'absolute', 'top': '60px'});
+      // }
 
 
       if((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50)){
