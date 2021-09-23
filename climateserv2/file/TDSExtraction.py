@@ -131,7 +131,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
     else:
         return [],[],[]
 
-    if params.deletetempnetcdf == True:
+    if params.deletetempnetcdf == True and os.path.exists(temp_file):
         os.remove(temp_file)  # delete temporary file on server
 
 
