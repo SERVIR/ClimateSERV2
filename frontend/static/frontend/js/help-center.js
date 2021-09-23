@@ -267,4 +267,58 @@ $(function () {
     } catch (e) {
         console.log("aoiOptionToggle Failed");
     }
+    // try{
+    //       $("#helpCarousel").carousel({
+    //         interval: 5000,
+    //         transition: "transform 4s ease, opacity 2s ease-out"
+    //       });
+    // } catch(e){}
+    // try{
+    //     $('#help-text').html($('.active > .media-content').html());
+    //     $('.carousel').on('slide.bs.carousel', function () {
+    //         $('#help-text').fadeOut( "slow", function() {
+    //             // Animation complete.
+    //           });
+    //         });
+    //     $('.carousel').on('slid.bs.carousel', function () {
+    //         $('#help-text').html($('.active > .media-content').html()).show();
+    //         });
+    // } catch(e){}
+
+     fix_sidebar();
+
+    $(window).scroll(function(e){
+     fix_sidebar();
+    });
 });
+
+function fix_sidebar(){
+     const $el = $('.sidebar');
+      const isPositionFixed = ($el.css('position') == 'fixed');
+      if ($(this).scrollTop() > 60 && !isPositionFixed){
+        $el.css({'position': 'fixed', 'top': '0px'});
+      }
+      if ($(this).scrollTop() < 60 && isPositionFixed){
+        $el.css({'position': 'absolute', 'top': '60px'});
+      }
+
+
+      if((window.innerHeight + window.scrollY) >= (document.body.offsetHeight - 50)){
+          $el.css({'bottom': '50px'})
+      } else{
+          $el.css({'bottom': 0})
+      }
+}
+
+// jQuery(function ($) {
+//     $('.carousel').carousel();
+//     var caption = $('div.carousel-item:nth-child(1) .media-content');
+//     $('.new-caption-area').html(caption.html());
+//     caption.css('display', 'none');
+//
+//     $(".carousel").on('slide.bs.carousel', function (evt) {
+//         var caption = $('div.carousel-item:nth-child(' + ($(evt.relatedTarget).index() + 1) + ') .media-content');
+//         $('.new-caption-area').html(caption.html());
+//         caption.css('display', 'none');
+//     });
+// });
