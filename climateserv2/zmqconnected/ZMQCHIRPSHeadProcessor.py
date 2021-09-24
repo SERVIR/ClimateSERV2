@@ -11,8 +11,6 @@ import time
 import calendar
 import zmq
 import json
-import numpy as np
-from osgeo import ogr
 import shutil
 import io
 import urllib.request
@@ -22,29 +20,36 @@ from os.path import basename
 
 from copy import deepcopy
 from operator import itemgetter
-from shapely.geometry import shape
+
+# import sys
+# sys.path.append("/cserv2/django_app/ClimateSERV2/")
+# import django
+# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "climateserv2.settings")
+# django.setup()
+# from django.apps import apps
+# Request_Log = apps.get_model('api', 'Request_Log')
+# Request_Progress = apps.get_model('api', 'Request_Progress')
+
+
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
+
 try:
     import climateserv2.geoutils as geoutils
     import climateserv2.processtools.dateprocessor as dproc
     import climateserv2.file.TDSExtraction as GetTDSData
     import climateserv2.parameters as params
-    import climateserv2.file.npmemmapstorage as rp
-    import climateserv2.geo.clippedmaskgenerator as mg
     import climateserv2.file.dateutils as dateutils
-    import climateserv2.db.DBMDbprocessing as dbmDb
     import climateserv2.locallog.locallogging as llog
     import climateserv2.processtools.uutools as uu
-    import climateserv2.file.MaskTempStorage  as mst
     import climateserv2.geo.shapefile.readShapesfromFiles as sf
     import climateserv2.processtools.pMathOperations as pMath
     import climateserv2.requestLog as reqLog
-    import climateserv2.file.ExtractTifFromH5 as extractTif
     import climateserv2.processtools.AnalysisTools as analysisTools
     import climateserv2.geoutils as geoutils
     import climateserv2.parameters as params
@@ -55,19 +60,15 @@ except:
     import processtools.dateprocessor as dproc
     import file.TDSExtraction as GetTDSData
     import parameters as params
-    import file.npmemmapstorage as rp
-    import geo.clippedmaskgenerator as mg
     import file.dateutils as dateutils
-    import db.DBMDbprocessing as dbmDb
     import locallog.locallogging as llog
     import processtools.uutools as uu
-    import file.MaskTempStorage  as mst
     import geo.shapefile.readShapesfromFiles as sf
     import processtools.pMathOperations as pMath
     import requestLog as reqLog
-    import file.ExtractTifFromH5 as extractTif
     import processtools.AnalysisTools as analysisTools
     import file.fileutils
+
 
 
 class ZMQCHIRPSHeadProcessor():
@@ -162,7 +163,6 @@ class ZMQCHIRPSHeadProcessor():
                     self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Post_Processing a Download Data Job. " + str(request['uniqueid']))
                     theJobID = request['uniqueid']
                     # Zip the files
-                    # zipFilePath, errorMessage = extractTif.zip_Extracted_Tif_Files_Controller(theJobID)
                     if (self.zipFilePath != None):
                         self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Tif files have been zipped to: " + str(self.zipFilePath))
                     else:
@@ -180,13 +180,10 @@ class ZMQCHIRPSHeadProcessor():
         
     def processWork(self,request):
         self.request = request
-        
         # ks notes // Generate a list of work to be done (each item represents a time interval)
         error, workarray = self.__preProcessIncomingRequest__(request)
-        self.logger.info(workarray)
         # KS Refactor 2015 // Additional pre-setup items specific to download request types
         self.preProcessWork_ForDownloadTypes(request)
-        
         # ks notes // Dispatch that list of work through the output receiver (to be picked up by workers)
         if (error == None):
 
@@ -224,6 +221,7 @@ class ZMQCHIRPSHeadProcessor():
 
     # Use this when the size of the worklist is too large and we need to keep sending as some come in.
     def __watchForResults_and_keepSending__(self, workingArray, workingArray_guid_index_list):
+        self.logger.info("from watch for res")
 
         # Send the first 1000 items.
         # As new items come in for processing, send another item out.
@@ -292,6 +290,7 @@ class ZMQCHIRPSHeadProcessor():
             else:
                 # We are not done sending items... check to see if the last_current_progress changed..
                 #if(last_current_progress != self.progress):
+                #if(last_current_progress != self.progress):
 
                 if (self.progress > next_progress_threshold_to_check):
                     # progress has changed...
@@ -327,7 +326,6 @@ class ZMQCHIRPSHeadProcessor():
             self.finished_items=[]
         # Normal existing code pipeline.
         while (self.progress < 100.0):
-
             try:
                 results = json.loads(self.listenreceiver.recv())
             except:
@@ -416,14 +414,13 @@ class ZMQCHIRPSHeadProcessor():
         f = None
         
     def __insertProgressDb__(self,uniqueid):
-        conn = dbmDb.DBMConnector()
-        conn.setProgress(uniqueid, 0)
-        conn.close()
+        log = reqLog.Request_Progress(request_id=uniqueid, progress=0)
+        log.save()
         
     def __updateProgressDb__(self,uniqueid, progress):
-        conn = dbmDb.DBMConnector()
-        conn.setProgress(uniqueid, progress)
-        conn.close()
+        log = reqLog.Request_Progress.objects.get(request_id=uniqueid)
+        log.progress = progress
+        log.save()
         
     # KS Refactor 2015 - Adding ServerSide Job Log to request logs area - Log when Jobs are started.
     def __write_JobStarted_To_DB__(self,uniqueid, objectInfo):
@@ -527,8 +524,13 @@ class ZMQCHIRPSHeadProcessor():
                 # Following along the normal_ish code
                 uniqueid = request['uniqueid']
                 self.derived_product = True     # Signals the progress counter in a various way.
+                self.logger.info("before insert")
                 self.__insertProgressDb__(uniqueid)
+                self.logger.info("after insert")
+
                 self.__write_JobStarted_To_DB__(uniqueid, str(request))
+                self.logger.info("after write insert")
+
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(uniqueid))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(request))
                 self.logger.info(
@@ -660,9 +662,11 @@ class ZMQCHIRPSHeadProcessor():
             dates=[]
             values=[]
             if ('geometry' in request):
+
                 polygon_Str_ToPass=request['geometry']
+                jsonn = json.loads(str(polygon_Str_ToPass))
+
                 if self.isDownloadJob == True:
-                    jsonn = json.loads(str(polygon_Str_ToPass))
                     if  jsonn['features'][0]['geometry']['type'] != "Point":
                         try:
                             url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
@@ -747,28 +751,34 @@ class ZMQCHIRPSHeadProcessor():
 
                 else:
                     try:
-                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'])
-                        length = len(urllib.request.urlopen(url).read())
-                        resp = urllib.request.urlopen(url)
-                        temp_file = os.path.join(params.netCDFpath,request['uniqueid'])  # name for temporary netcdf file
-                        urllib.request.urlretrieve(url, temp_file)
-                        if length:
-                            length = int(length)
-                            blocksize = max(1024, length // 100)
-                        else:
-                            blocksize = 1000
+                        temp_file = os.path.join(params.netCDFpath,
+                                                 request['uniqueid'])  # name for temporary netcdf file
 
-                        buf = io.BytesIO()
-                        size = 0
-                        while True:
-                            buf1 = resp.read(blocksize)
-                            if not buf1:
-                                break
-                            buf.write(buf1)
-                            size += len(buf1)
+                        if jsonn['features'][0]['geometry']['type'] != "Point":
+                            url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'])
+                            length = len(urllib.request.urlopen(url).read())
+                            resp = urllib.request.urlopen(url)
+                            urllib.request.urlretrieve(url, temp_file)
                             if length:
-                                self.logger.info((size / length) * 20)
-                                self.__processProgress__((size / length) * 20)
+                                length = int(length)
+                                blocksize = max(1024, length // 100)
+                            else:
+                                blocksize = 1000
+
+                            buf = io.BytesIO()
+                            size = 0
+                            while True:
+                                buf1 = resp.read(blocksize)
+                                if not buf1:
+                                    break
+                                buf.write(buf1)
+                                size += len(buf1)
+                                if length:
+                                    self.logger.info((size / length) * 20)
+                                    self.__processProgress__((size / length) * 20)
+
+                        else:
+                            self.__processProgress__( 20)
                     except:
                         self.logger.info("TDS URL Exception")
                     dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)

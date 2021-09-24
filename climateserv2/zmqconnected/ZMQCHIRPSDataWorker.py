@@ -15,14 +15,10 @@ if module_path not in sys.path:
     sys.path.append(module_path)
 
 try:
-    from climateserv2.file import DataCalculator as dc
     from climateserv2.locallog import locallogging as llog
-    from climateserv2.file import MaskTempStorage  as mst
     import climateserv2.processtools.pMathOperations as pMath
 except:
-    import file.DataCalculator as dc
     import locallog.locallogging as llog
-    import file.MaskTempStorage  as mst
     import processtools.pMathOperations as pMath
     import parameters as params
 
@@ -44,6 +40,7 @@ class ZMQCHIRPSDataWorker():
         return self.name + ":(" + self.pid + ")"
 
     def __doWork__(self):
+
         self.operatingData=eval(self.operatingData)
 
         if (self.operatingData["intervaltype"] == 0):
@@ -71,8 +68,6 @@ class ZMQCHIRPSDataWorker():
             self.operatingData = request
             self.doWork()
 
-    def __readMask__(self, uid):
-        return mst.readHMaskFromTempStorage(uid)
 
     def __cleanup__(self):
 

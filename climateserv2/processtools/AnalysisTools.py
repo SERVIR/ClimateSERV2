@@ -8,11 +8,7 @@ try:
     import climateserv2.parameters as params
     import climateserv2.processtools.uutools as uu
     import climateserv2.file.dateutils as dateutils
-    import climateserv2.geo.clippedmaskgenerator as mg
     import climateserv2.geo.shapefile.readShapesfromFiles as sf
-    import climateserv2.file.MaskTempStorage  as mst
-    import climateserv2.file.npmemmapstorage as rp
-    import climateserv2.file.ExtractTifFromH5 as extractTif
     import climateserv2.file.TDSExtraction as GetTDSData
     import climateserv2.locallog.locallogging as llog
 except:
@@ -22,11 +18,7 @@ except:
     import configuration.parameters as params
     import processtools.uutools as uu
     import file.dateutils as dateutils
-    import geo.clippedmaskgenerator as mg
     import geo.shapefile.readShapesfromFiles as sf
-    import file.MaskTempStorage  as mst
-    import file.npmemmapstorage as rp
-    import file.ExtractTifFromH5 as extractTif
     import locallog.locallogging as llog
 import time
 import os
@@ -58,25 +50,14 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
     polygon_Str_ToPass = None
 
     if ('geometry' in request):
-        # Get the polygon string
         polygonstring = request['geometry']
         polygon_Str_ToPass = polygonstring
-        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
-
-        dates,values = GetTDSData.get_aggregated_values(begintime, endtime,
-                                                                            params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], polygonstring,
-                                                                                                                                                    operation, temp_file)
-    # # this is not a download type or a climate model type  --END
-    # User Selected a Feature
+        dates,values = GetTDSData.get_season_values('chirps',polygon_Str_ToPass, request['uniqueid'])
     elif ('layerid' in request):
         layerid = request['layerid']
         featureids = request['featureids']
         geometries = sf.getPolygons(layerid, featureids)
-        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
-
-        dates,values = GetTDSData.get_aggregated_values(begintime, endtime,
-                                                                            params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], geometries,
-                                                                                                                                                    operation, temp_file)
+        dates,values = GetTDSData.get_season_values( 'chirps',geometries, request['uniqueid'])
 
     # Build the worklist for each date in the dates
     for dateIndex in range(len(dates)):
@@ -187,56 +168,52 @@ def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, 
     intervaltype = 0  # Daily
     operation = "avg"  # 5 == average, 0 == max, 1 == min
     # Iterate through all seasonalForecast dataTypes
-    for seasonalForecast_dataType in seasonalForecast_dataType_list:
-        datatype = seasonalForecast_dataType  # Much of the copy/paste code already references this as 'datatype'
+    # for seasonalForecast_dataType in seasonalForecast_dataType_list:
+    # datatype = seasonalForecast_dataType  # Much of the copy/paste code already references this as 'datatype'
 
-        # PROCESS GEOMETRY STUFF NOW
-        polygon_Str_ToPass = None
+    # PROCESS GEOMETRY STUFF NOW
+    polygon_Str_ToPass = None
 
-        if ('geometry' in request):
-            # Get the polygon string
-            polygonstring = request['geometry']
-            polygon_Str_ToPass = polygonstring
-            temp_file = params.dataTypes[int(datatype)]['inputDataLocation'] # name for temporary netcdf file
-            dates, values = GetTDSData.get_season_values(params.dataTypes[int(datatype)]['variable'], params.dataTypes[int(datatype)]['dataset_name']+".nc4", polygonstring, temp_file, request['uniqueid'])
+    if ('geometry' in request):
+        # Get the polygon string
+        polygonstring = request['geometry']
+        polygon_Str_ToPass = polygonstring
+        dates, values = GetTDSData.get_season_values('nmme',polygonstring, request['uniqueid'])
 
-        # User Selected a Feature
-        elif ('layerid' in request):
-            layerid = request['layerid']
-            featureids = request['featureids']
-            geometries = sf.getPolygons(layerid, featureids)
-            temp_file = params.dataTypes[int(datatype)]['inputDataLocation']  # name for temporary netcdf file
-            dates, values = GetTDSData.get_season_values(params.dataTypes[int(datatype)]['variable'], params.dataTypes[int(datatype)]['dataset_name']+".nc4", geometries, temp_file, request['uniqueid'])
-
-
-        current_mask_uuid_for_SeasonalForecast = uu.getUUID()
+    # User Selected a Feature
+    elif ('layerid' in request):
+        layerid = request['layerid']
+        featureids = request['featureids']
+        geometries = sf.getPolygons(layerid, featureids)
+        dates, values = GetTDSData.get_season_values( 'nmme',geometries, request['uniqueid'])
+    current_mask_uuid_for_SeasonalForecast = uu.getUUID()
 
 
         # Build the worklist for each date in the dates
-        for dateIndex in range(len(dates)):
-            gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-            workid = uu.getUUID()
-            workdict = {"uid": uniqueid,
-                        "workid": workid,
-                        "datatype": datatype,
-                        "operationtype": 5,
-                        "intervaltype": intervaltype,
-                        "polygon_Str_ToPass": polygon_Str_ToPass,
-                        "datatype_uuid_for_CHIRPS": datatype_uuid_for_CHIRPS,
-                        "datatype_uuid_for_SeasonalForecast": datatype_uuid_for_SeasonalForecast,
-                        "current_mask_and_storage_uuid": current_mask_uuid_for_SeasonalForecast,
-                        # Only one chirps type request needed so using same uuid
-                        "sub_type_name": sub_type_name, "derived_product": True,
-                        "special_type": 'MonthlyRainfallAnalysis'}
-            # Daily dates processing # if (intervaltype == 0):  # It is in this case, daily.
-            workdict["year"] = int(dates[dateIndex][0:4])
-            workdict["month"] = int(dates[dateIndex][5:7])
-            workdict["day"] = int(dates[dateIndex][8:10])
-            workdict["epochTime"] = gmt_midnight
-            workdict["value"] = {operation: values[dateIndex]}
-            dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
-            workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
-            worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
+    for dateIndex in range(len(dates)):
+        gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
+        workid = uu.getUUID()
+        workdict = {"uid": uniqueid,
+                    "workid": workid,
+                    # "datatype": datatype,
+                    "operationtype": 5,
+                    "intervaltype": intervaltype,
+                    "polygon_Str_ToPass": polygon_Str_ToPass,
+                    "datatype_uuid_for_CHIRPS": datatype_uuid_for_CHIRPS,
+                    "datatype_uuid_for_SeasonalForecast": datatype_uuid_for_SeasonalForecast,
+                    "current_mask_and_storage_uuid": current_mask_uuid_for_SeasonalForecast,
+                    # Only one chirps type request needed so using same uuid
+                    "sub_type_name": sub_type_name, "derived_product": True,
+                    "special_type": 'MonthlyRainfallAnalysis'}
+        # Daily dates processing # if (intervaltype == 0):  # It is in this case, daily.
+        workdict["year"] = int(dates[dateIndex][0:4])
+        workdict["month"] = int(dates[dateIndex][5:7])
+        workdict["day"] = int(dates[dateIndex][8:10])
+        workdict["epochTime"] = gmt_midnight
+        workdict["value"] = {operation: values[dateIndex]}
+        dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
+        workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
+        worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
     return worklist
 
 def get_workList_for_headProcessor_for_MonthlyGEFSRainfallAnalysis_types(uniqueid, request):
@@ -279,193 +256,238 @@ def get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, r
 
 def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
-    # Data Buckets
-    # Need to resort the way this data is contained, so we can perform operations on various parts separately.
-    organized_container = {}
-    # First Pass, separate all datasets.
-    for raw_item in raw_items_list:
-        current_dataset_uuid = raw_item['current_mask_and_storage_uuid']
-        # Append the current item into the bucket, or create a new bucket and then append the current item into that bucket.
-        try:
-            organized_container[current_dataset_uuid].append(raw_item)
-        except:
-            organized_container[current_dataset_uuid] = []
-            organized_container[current_dataset_uuid].append(raw_item)
-
-    # List of strings that tell us which buckets exist so we can go over them one by one.
-    keys_for_organized_container = organized_container.keys()
-
-    return_dataset_info_list = []
-    # Iterate over each dataset and do the processing to them.
-    for dataset_key in keys_for_organized_container:
-
-        current_dataset = organized_container[dataset_key]  # current_dataset is an array of raw_items
-
-        # Let's go inside one item and grab some of the meta info.
-        out_datatype = ""
-        out_subTypeName = ""
-        out_storageUUID = ""
-        try:
-            #datatype, sub_type_name, current_mask_and_storage_uuid
-            out_datatype = current_dataset[0]['datatype']
-            out_subTypeName = current_dataset[0]['sub_type_name']
-            out_storageUUID = current_dataset[0]['current_mask_and_storage_uuid']
-        except:
-            pass
-
-        # Now set up Ashutosh's Numpy work right here.
-        # np
-
-        # SeasonalFcstAnalysis.py Line 42 - 46 translated/ported
-        #  set arrays
-        npList_mon = np.zeros(len(current_dataset), 'i')  # npList_mon was just mon # np was N # 'current_dataset' was 'datax'
-        npList_day = np.zeros(len(current_dataset), 'i')
-        npList_year = np.zeros(len(current_dataset), 'i')
-        npList_xtemps = np.zeros(len(current_dataset), 'd')
-
-        # SeasonalFcstAnalysis.py Line 53 - 59 translated/ported
-        for i in range(len(current_dataset)):
-            current_dataset_item = current_dataset[i]
-            current_full_date = current_dataset_item['date']
-            current_avg_value = current_dataset_item['value']['avg']
-            current_month = current_full_date.split('/')[0]
-            current_day = current_full_date.split('/')[1]
-            current_year = current_full_date.split('/')[2]
-
-            #data2 = datax[i].split('/')
-            npList_mon[i] = current_month #data2[0]
-            npList_day[i] = current_day #data2[1]
-            #data3 = data2[2].split(',')
-            npList_year[i] = current_year # data3[0]
-            npList_xtemps[i] = current_avg_value #data3[1]
-
-        # SeasonalFcstAnalysis.py Line 62 - 64 translated/ported
-        # find the min and max years
-        minyr = int(np.min(npList_year)) # minyr = int(N.min(year))
-        maxyr = int(np.max(npList_year)) # maxyr = int(N.max(year))
-
-        # SeasonalFcstAnalysis.py Line 67 - 73 translated/ported
-        # ________________________
-        #  Monthly summary statistics for EVERY year
-        # Set the statistics arrays. Set it for number of years (maxyr-minyr+1) and 12 months
-        temps = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
-        msum = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
-        mhits = np.zeros(((maxyr - minyr + 1), 12), dtype='i')
-        xline = np.zeros(12, dtype='i')
-
-        # SeasonalFcstAnalysis.py Line 74 - 78 translated/ported
-        #  Do the sums for the months of data for each month of each year
-        # for k in xrange(len(datax)):
-        #     temps[(year[k] - minyr), mon[k] - 1] = xtemps[k]
-        #     msum[(year[k] - minyr), mon[k] - 1] = msum[(year[k] - minyr), mon[k] - 1] + xtemps[k]
-        #     mhits[(year[k] - minyr), mon[k] - 1] = mhits[(year[k] - minyr), mon[k] - 1] + 1
-        for k in range(len(current_dataset)):
-            temps[(npList_year[k] - minyr), npList_mon[k] - 1] = npList_xtemps[k]
-            msum[(npList_year[k] - minyr), npList_mon[k] - 1] = msum[(npList_year[k] - minyr), npList_mon[k] - 1] + npList_xtemps[k]
-            mhits[(npList_year[k] - minyr), npList_mon[k] - 1] = mhits[(npList_year[k] - minyr), npList_mon[k] - 1] + 1
-
-        # SeasonalFcstAnalysis.py Line 80 - 86 translated/ported
-        # print/write the data out
-        # for j in xrange(maxyr - minyr + 1):
-        #     for k in xrange(12):
-        #         #    print minyr+j,k+1, msum[j,k],mhits[j,k]
-        #         xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
-        #         f.write(xprint)
-        #         f.write('\n')
-        # USED TO WRITE TO _SUMMARY.TXT
-        year_month_dataLines = []
-        for j in range(maxyr - minyr + 1):
-            for k in range(12):
-                minyr_j_col01 = str(minyr + j)
-                k_1_col02 = str(k + 1)
-                msum_j_k_col03 = str(msum[j, k])
-                mhits_j_k_col04 = str(mhits[j, k])
-                dataLine = {
-                    'minyr_j_col01':minyr_j_col01,
-                    'k_1_col02': k_1_col02,
-                    'msum_j_k_col03': msum_j_k_col03,
-                    'mhits_j_k_col04': mhits_j_k_col04
-                }
-                year_month_dataLines.append(dataLine)
-                # #    print minyr+j,k+1, msum[j,k],mhits[j,k]
-                # xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
-                # f.write(xprint)
-                # f.write('\n')
-
-        # SeasonalFcstAnalysis.py Line 88 - 97 translated/ported
-        # ___________________
-        # Monthy average Summary Statistics
-        # set up arrays
-        msum2 = np.zeros(12, dtype='d')
-        mhits2 = np.zeros(12, dtype='i')
-        p75 = np.zeros(12, dtype='d')
-        p25 = np.zeros(12, dtype='d')
-        x45 = np.zeros(18, dtype='d')
-        x45 = msum[:, 1]
-        # print x45
-
-
-        # SeasonalFcstAnalysis.py Line 99 - 104 translated/ported
-        # Compute percentiles
-        for k in range(12):
-            x45 = msum[:, k]
-            p75[k] = np.percentile(x45, 75)
-            p25[k] = np.percentile(x45, 25)
-            xline[k] = k + 1
-
-        # SeasonalFcstAnalysis.py Line 108 - 112 translated/ported
-        # Do the sums over the same month in all years
-        for j in range(12):
-            for k in range(maxyr - minyr + 1):
-                msum2[j] = msum2[j] + msum[k, j]
-                mhits2[j] = mhits2[j] + 1
-
-
         avg_percentiles_dataLines = []
         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
+        monthavg=[]
+        chirps_25=[]
+        chirps_50 = []
+        chirps_75 = []
+        months=[]
+        for item in raw_items_list:
+            if item["sub_type_name"] == 'CHIRPS_REQUEST':
+                current_full_date = item['date']
+                chirps25 = item['value']['avg'][0]
+                chirps50 = item['value']['avg'][1]
+                chirps75 = item['value']['avg'][2]
+                chirps_25.append(chirps25)
+                chirps_50.append(chirps50)
+                chirps_75.append(chirps75)
+                current_month = current_full_date.split('/')[0]
+            if item["sub_type_name"] == 'SEASONAL_FORECAST':
+                current_full_date = item['date']
+                monthavg.append(item['value']['avg'])
+                months.append( current_full_date.split('/')[0])
+        return_dataset_info_list=[]
 
-        for k in range(12):
-            if mhits2[k] > 0:
-                col01_Month = k + 1
-                col02_MonthlyAverage = msum2[k] / (mhits2[k])
-                col03_25thPercentile = p25[k]
-                col04_75thPercentile = p75[k]
-                col05_YearsInAnalysis = mhits2[k]
-            else:
-                col01_Month = k + 1
-                col02_MonthlyAverage = 0.0
-                col03_25thPercentile = 0.0
-                col04_75thPercentile = 0.0
-                col05_YearsInAnalysis = 0.0
-
+        for i in range(len(chirps_25)):
             avg_percentiles_dataLine = {
-                'col01_Month':str(col01_Month),
-                'col02_MonthlyAverage':str(col02_MonthlyAverage),
-                'col03_25thPercentile':str(col03_25thPercentile),
-                'col04_75thPercentile':str(col04_75thPercentile),
-                'col05_YearsInAnalysis':str(col05_YearsInAnalysis)
+                'col01_Month': str(months[i]),
+                'col02_MonthlyAverage': str(monthavg[i]),
+                'col03_25thPercentile': str(chirps_25[i]),
+                'col04_75thPercentile': str(chirps_75[i]),
+                'col05_50thPercentile': str(chirps_50[i])
             }
             avg_percentiles_dataLines.append(avg_percentiles_dataLine)
 
-        dataset_info_obj = {
-            'year_month_dataLines':year_month_dataLines,
-            'avg_percentiles_dataLines':avg_percentiles_dataLines,
-            'avg_percentiles_Headings':avg_percentiles_Headings,
-            'dataset_key':dataset_key,
-            'out_datatype':out_datatype,
-            'out_subTypeName':out_subTypeName,
-            'out_storageUUID':out_storageUUID
+
+        final_output = {
+            'avg_percentiles_dataLines': avg_percentiles_dataLines,
+            # 'separated_datasets':organized_container
+            # 'output_key':'output_value'
         }
-        return_dataset_info_list.append(dataset_info_obj)
 
+        return final_output
 
-    final_output = {
-        'dataset_info_list':return_dataset_info_list,
-        #'separated_datasets':organized_container
-        #'output_key':'output_value'
-    }
-
-    return final_output
+# def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
+#
+#     # Data Buckets
+#     # Need to resort the way this data is contained, so we can perform operations on various parts separately.
+#     organized_container = {}
+#     # First Pass, separate all datasets.
+#     for raw_item in raw_items_list:
+#         current_dataset_uuid = raw_item['current_mask_and_storage_uuid']
+#         # Append the current item into the bucket, or create a new bucket and then append the current item into that bucket.
+#         try:
+#             organized_container[current_dataset_uuid].append(raw_item)
+#         except:
+#             organized_container[current_dataset_uuid] = []
+#             organized_container[current_dataset_uuid].append(raw_item)
+#
+#     # List of strings that tell us which buckets exist so we can go over them one by one.
+#     keys_for_organized_container = organized_container.keys()
+#
+#     return_dataset_info_list = []
+#     # Iterate over each dataset and do the processing to them.
+#     for dataset_key in keys_for_organized_container:
+#
+#         current_dataset = organized_container[dataset_key]  # current_dataset is an array of raw_items
+#
+#         # Let's go inside one item and grab some of the meta info.
+#         out_datatype = ""
+#         out_subTypeName = ""
+#         out_storageUUID = ""
+#         try:
+#             #datatype, sub_type_name, current_mask_and_storage_uuid
+#             out_datatype = current_dataset[0]['datatype']
+#             out_subTypeName = current_dataset[0]['sub_type_name']
+#             out_storageUUID = current_dataset[0]['current_mask_and_storage_uuid']
+#         except:
+#             pass
+#         avg_percentiles_dataLines = []
+#         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
+#         # Now set up Ashutosh's Numpy work right here.
+#         # np
+#
+#         # SeasonalFcstAnalysis.py Line 42 - 46 translated/ported
+#         #  set arrays
+#         npList_mon = np.zeros(len(current_dataset), 'i')  # npList_mon was just mon # np was N # 'current_dataset' was 'datax'
+#         npList_day = np.zeros(len(current_dataset), 'i')
+#         npList_year = np.zeros(len(current_dataset), 'i')
+#         npList_xtemps = np.zeros(len(current_dataset), 'd')
+#
+#         # SeasonalFcstAnalysis.py Line 53 - 59 translated/ported
+#         for i in range(len(current_dataset)):
+#             current_dataset_item = current_dataset[i]
+#             current_full_date = current_dataset_item['date']
+#             current_avg_value = current_dataset_item['value']['avg']
+#             current_month = current_full_date.split('/')[0]
+#             current_day = current_full_date.split('/')[1]
+#             current_year = current_full_date.split('/')[2]
+#
+#             #data2 = datax[i].split('/')
+#             npList_mon[i] = current_month #data2[0]
+#             npList_day[i] = current_day #data2[1]
+#             #data3 = data2[2].split(',')
+#             npList_year[i] = current_year # data3[0]
+#             npList_xtemps[i] = current_avg_value #data3[1]
+#
+#         # SeasonalFcstAnalysis.py Line 62 - 64 translated/ported
+#         # find the min and max years
+#         minyr = int(np.min(npList_year)) # minyr = int(N.min(year))
+#         maxyr = int(np.max(npList_year)) # maxyr = int(N.max(year))
+#
+#         # SeasonalFcstAnalysis.py Line 67 - 73 translated/ported
+#         # ________________________
+#         #  Monthly summary statistics for EVERY year
+#         # Set the statistics arrays. Set it for number of years (maxyr-minyr+1) and 12 months
+#         temps = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
+#         msum = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
+#         mhits = np.zeros(((maxyr - minyr + 1), 12), dtype='i')
+#         xline = np.zeros(12, dtype='i')
+#
+#         # SeasonalFcstAnalysis.py Line 74 - 78 translated/ported
+#         #  Do the sums for the months of data for each month of each year
+#         # for k in xrange(len(datax)):
+#         #     temps[(year[k] - minyr), mon[k] - 1] = xtemps[k]
+#         #     msum[(year[k] - minyr), mon[k] - 1] = msum[(year[k] - minyr), mon[k] - 1] + xtemps[k]
+#         #     mhits[(year[k] - minyr), mon[k] - 1] = mhits[(year[k] - minyr), mon[k] - 1] + 1
+#         for k in range(len(current_dataset)):
+#             temps[(npList_year[k] - minyr), npList_mon[k] - 1] = npList_xtemps[k]
+#             msum[(npList_year[k] - minyr), npList_mon[k] - 1] = msum[(npList_year[k] - minyr), npList_mon[k] - 1] + npList_xtemps[k]
+#             mhits[(npList_year[k] - minyr), npList_mon[k] - 1] = mhits[(npList_year[k] - minyr), npList_mon[k] - 1] + 1
+#
+#         # SeasonalFcstAnalysis.py Line 80 - 86 translated/ported
+#         # print/write the data out
+#         # for j in xrange(maxyr - minyr + 1):
+#         #     for k in xrange(12):
+#         #         #    print minyr+j,k+1, msum[j,k],mhits[j,k]
+#         #         xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
+#         #         f.write(xprint)
+#         #         f.write('\n')
+#         # USED TO WRITE TO _SUMMARY.TXT
+#         year_month_dataLines = []
+#         for j in range(maxyr - minyr + 1):
+#             for k in range(12):
+#                 minyr_j_col01 = str(minyr + j)
+#                 k_1_col02 = str(k + 1)
+#                 msum_j_k_col03 = str(msum[j, k])
+#                 mhits_j_k_col04 = str(mhits[j, k])
+#                 dataLine = {
+#                     'minyr_j_col01':minyr_j_col01,
+#                     'k_1_col02': k_1_col02,
+#                     'msum_j_k_col03': msum_j_k_col03,
+#                     'mhits_j_k_col04': mhits_j_k_col04
+#                 }
+#                 year_month_dataLines.append(dataLine)
+#                 # #    print minyr+j,k+1, msum[j,k],mhits[j,k]
+#                 # xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
+#                 # f.write(xprint)
+#                 # f.write('\n')
+#
+#         # SeasonalFcstAnalysis.py Line 88 - 97 translated/ported
+#         # ___________________
+#         # Monthy average Summary Statistics
+#         # set up arrays
+#         msum2 = np.zeros(12, dtype='d')
+#         mhits2 = np.zeros(12, dtype='i')
+#         p75 = np.zeros(12, dtype='d')
+#         p25 = np.zeros(12, dtype='d')
+#         x45 = np.zeros(18, dtype='d')
+#         x45 = msum[:, 1]
+#         # print x45
+#
+#
+#         # SeasonalFcstAnalysis.py Line 99 - 104 translated/ported
+#         # Compute percentiles
+#         for k in range(12):
+#             x45 = msum[:, k]
+#             p75[k] = np.percentile(x45, 75)
+#             p25[k] = np.percentile(x45, 25)
+#             xline[k] = k + 1
+#
+#         # SeasonalFcstAnalysis.py Line 108 - 112 translated/ported
+#         # Do the sums over the same month in all years
+#         for j in range(12):
+#             for k in range(maxyr - minyr + 1):
+#                 msum2[j] = msum2[j] + msum[k, j]
+#                 mhits2[j] = mhits2[j] + 1
+#
+#
+#         avg_percentiles_dataLines = []
+#         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
+#
+#         for k in range(12):
+#             if mhits2[k] > 0:
+#                 col01_Month = k + 1
+#                 col02_MonthlyAverage = msum2[k] / (mhits2[k])
+#                 col03_25thPercentile = p25[k]
+#                 col04_75thPercentile = p75[k]
+#                 col05_YearsInAnalysis = mhits2[k]
+#             else:
+#                 col01_Month = k + 1
+#                 col02_MonthlyAverage = 0.0
+#                 col03_25thPercentile = 0.0
+#                 col04_75thPercentile = 0.0
+#                 col05_YearsInAnalysis = 0.0
+#
+#             avg_percentiles_dataLine = {
+#                 'col01_Month':str(col01_Month),
+#                 'col02_MonthlyAverage':str(col02_MonthlyAverage),
+#                 'col03_25thPercentile':str(col03_25thPercentile),
+#                 'col04_75thPercentile':str(col04_75thPercentile),
+#                 'col05_YearsInAnalysis':str(col05_YearsInAnalysis)
+#             }
+#             avg_percentiles_dataLines.append(avg_percentiles_dataLine)
+#
+#         dataset_info_obj = {
+#             'year_month_dataLines':year_month_dataLines,
+#             'avg_percentiles_dataLines':avg_percentiles_dataLines,
+#             'avg_percentiles_Headings':avg_percentiles_Headings,
+#             'dataset_key':dataset_key,
+#             'out_datatype':out_datatype,
+#             'out_subTypeName':out_subTypeName,
+#             'out_storageUUID':out_storageUUID
+#         }
+#         return_dataset_info_list.append(dataset_info_obj)
+#
+#
+#     final_output = {
+#         'dataset_info_list':return_dataset_info_list,
+#         #'separated_datasets':organized_container
+#         #'output_key':'output_value'
+#     }
+#
+#     return final_output
 
 # #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     END
 # #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     END

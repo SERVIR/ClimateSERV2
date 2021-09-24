@@ -1,23 +1,20 @@
-from os.path import basename
-from wsgiref.util import FileWrapper
-
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
-from .db import DBMDbprocessing as dbmDb
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
-try:
-    import climateserv2.requestLog as reqLog
-except:
-    import requestLog as reqLog
 import zmq
+import climateserv2.requestLog as requestLog
 
 from datetime import datetime
 import sys
 import os
+from django.apps import apps
+Request_Log = apps.get_model('api', 'Request_Log')
+Request_Progress = apps.get_model('api', 'Request_Progress')
+
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 #logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
 logger = logging.getLogger("request_processor")
@@ -41,13 +38,14 @@ def readProgress(uid):
     :param uid: unique identifier to find the correct result.
     :rtype: the progress associated with the unique id.
     '''
-    conn = dbmDb.DBMConnector()
     try:
-        value = conn.getProgress(str(uid))
-    except:
-        print('from exceptiom read progress')
-
-    conn.close()
+        print(uid)
+        res = Request_Progress.objects.get(request_id=str(uid))
+        print(res.progress)
+        value=res.progress
+    except Exception as e:
+        print(e)
+        print('from exception read progress')
     return value
 
 def processCallBack(request, output, contenttype):
@@ -103,8 +101,8 @@ def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
     # Get the logs
     retLogs = []  # Scoping
     try:
-        rLog = reqLog.requestLog()
-        retLogs = rLog.get_RequestData_ByRange(dateTime_Early, dateTime_Late)
+        # rLog = reqLog.requestLog()
+        retLogs = requestLog.get_RequestData_ByRange(dateTime_Early, dateTime_Late)
     except:
         e = sys.exc_info()[0]
         errorMsg = "ERROR get_LogRequests_ByRange: There was an error trying to get the logs.  System error message: " + str(
@@ -229,44 +227,6 @@ def getDataRequestProgress(request):
     except (Exception, OSError) as e :
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return processCallBack(request, json.dumps([-1]), "application/json")
-# def read_All_Climate_Capabilities(dataTypeNumberList):
-def read_DataType_Capabilities_For(dataTypeNumberList):
-    '''
-    Gets the capabilities from the bddb storage for a given list of DataType Numbers
-    :param request: list of data type numbers
-    :rtype: List of objects
-    returnList : (List)
-    returnList[n].dataTypeNumber : (int) Current datatype number
-    returnList[n].current_Capabilities : (string) (JSON Stringified Object) Current capabilities object, intention is that they are stored as JSON strings
-    '''
-    retList = []
-
-    try:
-        # Create a connection to the bddb
-        conn = dbmDb.DBMConnector_Capabilities()
-
-        # try and get data
-        try:
-            for currentDataTypeNumber in dataTypeNumberList:
-                currentValue = conn.get_Capabilities(currentDataTypeNumber)
-                appendObj = {
-                    "dataTypeNumber": currentDataTypeNumber,
-                    "current_Capabilities": currentValue
-                }
-                retList.append(appendObj)
-        except Exception as e:
-            logger.warning(
-                "Error here indicates trouble accessing data or possibly getting an individual capabilities item: " + str(
-                    e))
-            pass
-
-        conn.close()
-    except Exception as e:
-        logger.warning("Error here indicates trouble connecting to the BD Database: " + str(e))
-        pass
-    logger.warning("No error was found, look some place else")
-    # return the list!
-    return retList
 
 # getFileForJobID
 @csrf_exempt
