@@ -2112,15 +2112,6 @@ $(function () {
         console.log("upload handler Failed");
     }
     try {
-        $(".collapse").on('show.bs.collapse', function () {
-            $("#aoiOptionToggle").removeClass("fa-angle-down").addClass("fa-angle-up");
-        }).on('hide.bs.collapse', function () {
-            $("#aoiOptionToggle").removeClass("fa-angle-up").addClass("fa-angle-down");
-        });
-    } catch (e) {
-        console.log("aoiOptionToggle Failed");
-    }
-    try {
         $('#sourcemenu').change();
     } catch (e) {
     }

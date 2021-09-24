@@ -100,118 +100,205 @@
     </div>
 
     <div id="user-interface-help-section" style="display: none;" class="p50">
+        <div class="row" style="margin-top: 0;">
+{#            <div class="sidebar">#}
+{#                <ul class="nav-sidebar">#}
+{#                    <li class="active"><a href="#overview">Overview</a></li>#}
+{#                    <li><a href="#statistics">Statistics</a></li>#}
+{#                    <li><a href="#visualize">Visualize</a></li>#}
+{#                </ul>#}
+{#            </div>#}
+            <div class="col-12 main">
+                <div class="ui-content summary">
+                    <h2 id="overview" class="data-title" style="padding: 0;">Overview</h2>
+                    <p>
+                        The ClimateSERV <a href="{% url 'ClimateSERV_UI:map' %}">map</a> provides tools to visualize
+                        climate related datasets which help to identify where and
+                        when specific events happen around the world. Along with the visualization capabilities,
+                        ClimateSERV offers
+                        the Statistical Query tool which helps answer climate questions specific to your area of
+                        interest (AOI)
+                        through analysis and extraction of data subsets clipped to your AOI and filtered by the desired
+                        time range.
+                        This tool gives you the option to display the statistics in an interactive graph, download the
+                        statistical
+                        data, or even download the raw data for further analysis.
+                    </p>
+                    <h2 id="statistics" class="data-title" style="padding: 1.25em 0 0 0;">Statistics</h2>
+                    <p>
+
+                        The ClimateSERV Statistical Query tool is a great way to identify and assess
+                        climate related questions specific to your area of interest (AOI).  You can Query
+                        Countries, Administrative boundaries, or even draw your own AOI.  This tool is useful
+                        for generating Graphs that can be used by local decision makers when assessing situations
+                        such as large-scale rainfall patterns, predicting droughts, estimating crop yields, and more.
+                    </p>
+                    <p>
+                        To get started with this tool you will need to open the Statistical Query tab at the top left of
+                        the map.  Once there you will notice there are three ways to specify your AOI.
+                    </p>
+                    <ul>
+                        <li>
+                            Draw the area using the drawing tools available in the map area (you will be able to
+                            download your AOI as a GeoJson file after you perform the analysis)
+                        </li>
+                        <li>
+                            Upload a saved GeoJson file defining your AOI in lat, lon coordinates
+                            (coordinates must be expressed in decimal degrees). You may use third party tools
+                            to convert your geometry to geojson, or to draw and save your AOI -
+                            for example: <a href="https://geojson.io/">https://geojson.io/</a>
+                        </li>
+                        <li>
+                            Select one or more administrative units shown in the map.
+                        </li>
+                    </ul>
+                      <p style="text-align: center">
+                    <img
+                            src="{% static 'frontend/img/climateserv_statistical_query_tool.png' %}"
+                            alt="ClimateSERV Statistical Query Tool"
+                            class="map-help-img"
+                    >
+                      </p>
+                    <p>
+                        Once you have selected your AOI, you can choose either to query a specific dataset or to
+                        generate the Monthly Rainfall Analysis which is derived from a combination of CHIRPS historical
+                        data and current NMME Seasonal Forecast data.
+                    </p>
+                    <p>
+                        If you choose Monthly Rainfall Analysis there are
+                        no further steps needed, you may submit the query and wait for ClimateSERV to process the
+                        results for your AOI.
+                    </p>
+                    <p>
+                        If you choose dataset, you will next select a Data Source from the dropdown list.  After this
+                        selection you may request the calculation Average, Min, Max, or Download.  The first three
+                        options will generate a graph where the statistical data has that operation applied to it.  If
+                        you select download you will be presented with a link to download the raw data when precessing
+                        is complete.  For all AOI types except point(s) you will receive zipped tif files, for point
+                        you will receive a csv with the data values.
+                    </p>
+                    <p>
+                        The final step here s to select the date range you would like to query and send the request.
+                    </p>
+                      <p style="text-align: center">
+                    <img
+                            src="{% static 'frontend/img/climateserv_statistical_query_results.png' %}"
+                            alt="ClimateSERV Statistical Query Results"
+                            class="map-help-img"
+                    >
+                      </p>
+                    <p>
+                        When your dataset query has finished processing you will be provided with an interactive graph
+                        that you can mouse over each point to see values for specific dates.  Also at the top right
+                        corner of the graph is a menu which gives you options to "View in full screen", "Print chart",
+                        "Download PNG", "Download JPEG", "Download PDF", "Download SVG", "Download CSV",
+                        "Download XLS", or "View data table." These options make saving and sharing your findings
+                        very convenient.
+                    </p>
+
+                    <h2 id="visualize" class="data-title" style="padding: 1.25em 0 0 0;">Visualize</h2>
+                    <p>
+                        ClimateSERV is full of data layers that you can visualize on the interactive map.  This can
+                        help you identify climate patterns and trends that can be difficult to see using tabular data.
+                        Visually interacting with the different data in your AOI and time period make it possible to
+                        comprehend, obtain insight, and even make decisions much more quickly.  You can even see the
+                        data animate though time to help you pinpoint the exact moment an event happened.
+                    </p>
+                    <p>
+
+                        To get started with visualization you will need to open the Layers tab at the top left of
+                        the map.   Once open, you will notice a filter box that can help you quickly filter to the
+                        specific data you are interested in simply by typing a letter or two.  Of course you may just
+                        scroll through the layers as well.  Once you have found the data you would like, click the box
+                        next to it to enable it on the map.  You may add multiple layers to the map if you would like.
+                        To change the order of the layers on the map simply drag the layer by the handle up or down
+                        placing the layer you want to be on top above the other layers.  You will see the layers change
+                        in realtime as you drag them.
+                    </p>
+                    <p style="text-align: center">
+                    <img
+                            src="{% static 'frontend/img/climateserv_visualize_data.png' %}"
+                            alt="ClimateSERV Visualize data layers"
+                            class="map-help-img"
+                    >
+                    </p>
+                    <p>
+                        The layers all have default vision parameters, however you may want to adjust these to identify
+                        specific features of the data better.  The gear icon in each of the layers will open a
+                        settings panel where you can set the data min and max values to be displayed as well as the
+                        color scheme to use.  These settings will only apply to that specific layer, each layers
+                        settings are independent of the rest.  You will also notice there is an opacity slider that
+                        allows you to dynamically adjust the opacity of the layer.
+                    </p>
+                      <p style="text-align: center">
+                     <img
+                            src="{% static 'frontend/img/climateserv_visualize_animation.png' %}"
+                            alt="ClimateSERV Visualize animation"
+                            class="map-help-img"
+                    >
+                      </p>
+                    <p>
+                        Last but not least, ClimateSERV allows you to animate the data layers over time.  At the bottom
+                        of the map you will notice a timeline.  If there is a layer on the map the timeline is enabled.
+                        You can click play, play reverse, next frame, previous frame.  There are range sliders on the
+                        timeline where you can narrow the range of the animation, however for fine tuning you can
+                        click on the date range at the top left of the timeline and it will open the range picker.
+                        Here you can set the date range directly.  You will see the range sliders narrow to the range
+                        on the timeline and you when you play it will only play the data in that range.
+                    </p>
 
 
-        {#        <div class="row mx-auto my-auto">#}
-        {#            <h2 class="underline-header" id="user-interface">#}
-        {#                General#}
-        {#            </h2>#}
-        {#        </div>#}
-        {#        <p style="padding: 15px 15px 0 15px">General help topics about ClimateSERV#}
-        {#        </p>#}
-        {#        <div class="row mx-auto my-auto">#}
-        {#            <h2 class="underline-header" id="user-interface">#}
-        {#                Map page#}
-        {#            </h2>#}
-        {#        </div>#}
-
-        <button
-                type="button"
-                class="bread-crumb"
-                data-toggle="collapse"
-                data-target="#display-data"
-                onclick="$('.collapse').collapse('hide');">
-            Display data on map <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
-        </button>
-        <div id="display-data" class="collapse" style="padding: 0 10px 20px 20px; clear:both;">
-            <div class="ExpandableImage">
-                <img class="ExpandableImage__previewImg"
-                     src="{% static 'frontend/img/add_data.gif' %}"
-                     onclick="toggleHelpImage(this)">
-                <ol>
-                    <li>
-                        Select the layers icon at the top right of the panel
-                    </li>
-                    <li>
-                        Scroll until you find the desired data layer
-                    </li>
-                    <li>
-                        Check the box to add the layer to the display
-                    </li>
-                    <li>
-                        Uncheck the box to remove the layer
-                    </li>
-                    <li>
-                        Add as many layers as you find relevant to your study.
-                    </li>
-                </ol>
+                </div>
             </div>
-
-        </div>
-        <br>
-        <button
-                type="button"
-                class="bread-crumb"
-                data-toggle="collapse"
-                data-target="#animate-data"
-                onclick="$('.collapse').collapse('hide');">
-            Animate layer on map <i class="fa fa-angle-down"></i>
-        </button>
-        <div id="animate-data" class="collapse" style="padding: 0 10px 20px 20px; clear:both;">
-            <div class="ExpandableImage">
-                <img class="ExpandableImage__previewImg"
-                     src="{% static 'frontend/img/animate_layer.gif' %}"
-                     onclick="toggleHelpImage(this)">
-                <ol>
-                    <li>
-                        Add layer to the map
-                    </li>
-                    <li>
-                        Zoom in to the area you are interested in
-                    </li>
-                    <li>
-                        Click the play button on the timeline control
-                    </li>
-                    <li>
-                        You may also grab and slide the handle to the date/time you would like
-                    </li>
-                    <li>
-                        You may use the previous, pause, and next buttons as needed.
-                    </li>
-                    <li>
-                        You may add multiple datasets to animate, if the time intervals are different they will animate
-                        as such. The more layers you animate, the more your network bandwidth may effect.
-                    </li>
-                </ol>
-            </div>
-
         </div>
 
-        {#        <p style="padding: 15px 15px 0 15px">#}
-        {##}
-        {#            a bunch of stuff here including how to format geojson/json upload:#}
-        {##}
-        {##}
-        {#        <figure class="highlight" id="geojson"><pre><code class="language-json" data-lang="json"><span#}
-        {#                class="p">{</span><span class="w">#}
-        {#  </span><span class="s2">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Feature"</span><span#}
-        {#                class="p">,</span><span class="w">#}
-        {#  </span><span class="s2">"geometry"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span><span#}
-        {#                class="w">#}
-        {#    </span><span class="s2">"type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Point"</span><span#}
-        {#                class="p">,</span><span class="w">#}
-        {#    </span><span class="s2">"coordinates"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span#}
-        {#                class="mf">125.6</span><span class="p">,</span><span class="w"> </span><span class="mf">10.1</span><span#}
-        {#                class="p">]</span><span class="w">#}
-        {#  </span><span class="p">},</span><span class="w">#}
-        {#  </span><span class="s2">"properties"</span><span class="p">:</span><span class="w"> </span><span#}
-        {#                class="p">{</span><span class="w">#}
-        {#    </span><span class="s2">"name"</span><span class="p">:</span><span class="w"> </span><span class="s2">"Dinagat Islands"</span><span#}
-        {#                class="w">#}
-        {#  </span><span class="p">}</span><span class="w">#}
-        {#</span><span class="p">}</span></code></pre>#}
-        {#        </figure>#}
-        {#        </p>#}
+{#        <div id="help-text"></div>#}
+{#        <div id="helpCarousel" class="carousel slide carousel-fade" data-ride="carousel">#}
+{#            <div class="carousel-inner">#}
+{#                <div class="carousel-item active">#}
+{#                    <img class="d-block w-100" src="{% static 'frontend/img/statistical_query.png' %}"#}
+{#                         alt="First slide">#}
+{#                    <div class="media-content">#}
+{#                        <p class="media-credit"><i class="fas fa-camera"></i> <span class="name">Person</span> / <span#}
+{#                                class="agency">Agency</span></p>#}
+{#                        <div class="media-caption">#}
+{#                            <p>This is paragraph text that is the caption of the image. I wonder what happens if this#}
+{#                                caption is very long? For example, what does it do to the credit?</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="carousel-item">#}
+{#                    <img class="d-block w-100" src="{% static 'frontend/img/query_results.png' %}" alt="Second slide">#}
+{#                    <div class="media-content">#}
+{#                        <p class="media-credit"><i class="fas fa-camera"></i> <span class="name">Person</span> / <span#}
+{#                                class="agency">Agency</span></p>#}
+{#                        <div class="media-caption">#}
+{#                            <p>Second paragraph text that is the caption of the image. I wonder what happens if this#}
+{#                                caption is very long? For example, what does it do to the credit?</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#                <div class="carousel-item">#}
+{#                    <img class="d-block w-100" src="{% static 'frontend/img/download_results.png' %}" alt="Third slide">#}
+{#                    <div class="media-content">#}
+{#                        <p class="media-credit"><i class="fas fa-camera"></i> <span class="name">Person</span> / <span#}
+{#                                class="agency">Agency</span></p>#}
+{#                        <div class="media-caption">#}
+{#                            <p>Third text that is the caption of the image. I wonder what happens if this caption is#}
+{#                                very long? For example, what does it do to the credit?</p>#}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
+{#            <a class="carousel-control-prev" href="#helpCarousel" role="button" data-slide="prev">#}
+{#                <span class="carousel-control-prev-icon" aria-hidden="true"></span>#}
+{#                <span class="sr-only">Previous</span>#}
+{#            </a>#}
+{#            <a class="carousel-control-next" href="#helpCarousel" role="button" data-slide="next">#}
+{#                <span class="carousel-control-next-icon" aria-hidden="true"></span>#}
+{#                <span class="sr-only">Next</span>#}
+{#            </a>#}
+{#        </div>#}
     </div>
 
     <div id="api-help-section" style="display: none;" class="p50">

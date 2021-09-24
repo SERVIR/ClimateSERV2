@@ -119,7 +119,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                         'date_MM': current_month__mm_str,
                         'date_DD': current_day__dd_str,
                         'local_extract_path': self.temp_working_dir,
-                        'local_final_load_path': self.temp_working_dir,
+                        'local_final_load_path': final_load_dir_path,
                         'remote_directory_path': remote_directory_path,
                         'base_filename': base_filename,
                         'tfw_filename': tfw_filename,
@@ -217,8 +217,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
         detail_errors = []
 
         # Setting up for the periodic reporting on the terminal
-        expected_granules = self._expected_granules
-        num_of_objects_to_process = len(expected_granules)
+        num_of_objects_to_process = len(self._expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
         if modulus_size < 1:
@@ -262,7 +261,7 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
 
-        for expected_granule in expected_granules:
+        for expected_granule in self._expected_granules:
 
             try:
                 if (loop_counter + 1) % modulus_size == 0:
@@ -476,6 +475,14 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
 
                     print(final_nc4_filename)
 
+                    # print("B")
+
+                    description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'
+                    if self.mode == 'imerg1dy_late':
+                        description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Late Run.'
+
+                    # print("C")
+
                     ############################################################
                     # Start extracting data and creating output netcdf file.
                     ############################################################
@@ -486,100 +493,80 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     time_string = time_string_split[4].split('-')
                     yyyymmdd = time_string[0]
                     hhmmss = time_string[1]
-                    # Determine the timestamp for the data.
 
-                    # Determine starting and ending times. # Error with pandas.Timestamp function (Solution,
-                    # just use Datetime to parse this) startTime = pd.Timestamp.strptime(yyyymmdd + hhmmss,
-                    # '%Y%m%dS%H%M%S')   # pandas can't seem to use datetime to parse timestrings...
+                    # Determine the timestamp for the data.
                     start_time = datetime.datetime.strptime(yyyymmdd + hhmmss, '%Y%m%dS%H%M%S')
                     end_time = start_time + pd.Timedelta(minutes=29) + pd.Timedelta(seconds=59)  # 4 weeks (i.e. 28 days)
+
+                    # print("D")
 
                     ############################################################
                     # beginning extracting data and creating output netcdf file.
                     ############################################################
                     # 1) Read the geotiff data into an xarray data array
-                    tiff_data = xr.open_rasterio(expected_full_path_to_local_extracted_tif_file)
+                    da = xr.open_rasterio(expected_full_path_to_local_extracted_tif_file)
                     # Rescale to accumulated precipitation amount
-                    tiff_data = tiff_data / 10.0
+                    da = da / 10.0
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    imerg = tiff_data.rename('precipitation_amount').to_dataset()
+                    ds = da.rename('precipitation_amount').to_dataset()
                     # Handle selecting/adding the dimesions
-                    imerg = imerg.isel(band=0).reset_coords('band', drop=True)
+                    ds = ds.isel(band=0).reset_coords('band', drop=True)
                     # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
-                    imerg = imerg.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    imerg['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
-
+                    ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
-                    # # Error, 'inplace' has been removed from xarray.
-                    # imerg.rename({'y': 'latitude', 'x': 'longitude'}, inplace=True)  # rename lat/lon
-                    # Now making the assignment (look like the above ones)
-                    imerg = imerg.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if ds.latitude.values[1] - ds.latitude.values[0] < 0:
+                        ds = ds.reindex(latitude=ds.latitude[::-1])
 
-                    # Lat/Lon/Time dictionaries.
-                    # Use Ordered dict
+                    # print("E")
 
-                    # missing_data/_FillValue , relative time units etc. are handled as
-                    # part of the encoding dictionary used in to_netcdf() call.
-                    # 'zlib' and 'complevel' are added to generate compression and reduce file size
                     # Set the Attributes
-                    imerg.latitude.attrs = OrderedDict([('long_name', 'latitude'),
-                                                        ('units', 'degrees_north'),
-                                                        ('axis', 'Y')])
-                    imerg.longitude.attrs = OrderedDict([('long_name', 'longitude'),
-                                                         ('units', 'degrees_east'),
-                                                         ('axis', 'X')])
-                    imerg.time.attrs = OrderedDict([('long_name', 'time'),
-                                                    ('axis', 'T'),
-                                                    ('bounds', 'time_bnds')])
-                    imerg.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    imerg.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'),
-                                                                    ('units', 'mm'),
-                                                                    ('accumulation_interval', '1 day'),
-                                                                    ('comment',
-                                                                     'IMERG 1-day accumulated rainfall,'
-                                                                     ' Early Run')])
-                    imerg.attrs = OrderedDict(
-                        [('Description',
-                          'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'),
+                    ds.latitude.attrs = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
+                    ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
+                    ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
+                    ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
+                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', '1 day'), ('comment', 'IMERG 1-day accumulated rainfall, Early Run')])
+                    ds.attrs = OrderedDict(
+                        [('Description', description),
                          ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                          ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
-                         ('Source', 'NASA GPM Precipitation Processing System; '
-                                    'https://gpm.nasa.gov/data-access/downloads/gpm; '
-                                    'ftp://jsimpson.pps.eosdis.nasa.gov:/data/imerg/gis/early'),
+                         ('Source', 'NASA GPM Precipitation Processing System; https://gpm.nasa.gov/data-access/downloads/gpm; ftp://jsimpson.pps.eosdis.nasa.gov:/data/imerg/gis/early'),
                          ('Version', time_string_split[6]),
-                         ('Reference', 'G. Huffman, D. Bolvin, D. Braithwaite, K. Hsu, R. Joyce, P. Xie, '
-                                       '2014: Integrated Multi-satellitE Retrievals for GPM (IMERG), version 4.4. '
-                                       'NASAs Precipitation Processing Center.'),
+                         ('Reference', 'G. Huffman, D. Bolvin, D. Braithwaite, K. Hsu, R. Joyce, P. Xie, 2014: Integrated Multi-satellitE Retrievals for GPM (IMERG), version 4.4. NASAs Precipitation Processing Center.'),
                          ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
                          ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
-                         ('SouthernmostLatitude', np.min(imerg.latitude.values)),
-                         ('NorthernmostLatitude', np.max(imerg.latitude.values)),
-                         ('WesternmostLongitude', np.min(imerg.longitude.values)),
-                         ('EasternmostLongitude', np.max(imerg.longitude.values)),
+                         ('SouthernmostLatitude', np.min(ds.latitude.values)),
+                         ('NorthernmostLatitude', np.max(ds.latitude.values)),
+                         ('WesternmostLongitude', np.min(ds.longitude.values)),
+                         ('EasternmostLongitude', np.max(ds.longitude.values)),
                          ('TemporalResolution', '1-day'), ('SpatialResolution', '0.1deg')])
-
                     # Set the Endcodings
-                    imerg.precipitation_amount.encoding = {
+                    ds.precipitation_amount.encoding = {
                         '_FillValue': np.uint16(29999),
                         'missing_value': np.uint16(29999),
                         'dtype': np.dtype('uint16'),
+                        'chunksizes': (1, 256, 256),
                         'scale_factor': 0.1,
                         'add_offset': 0.0,
                         'zlib': True,
-                        'complevel': 7}
-                    imerg.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    imerg.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                        'complevel': 7
+                    }
+                    ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                    ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
                     # print("F")
 
                     # 5) Output File
-                    imerg.to_netcdf(os.path.join(local_extract_path, final_nc4_filename), unlimited_dims='time')
+                    outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
+                    ds.to_netcdf(outputFile_FullPath, unlimited_dims='time')
 
                     # print("G")
 
-                    print(final_nc4_filename)
+                    print(outputFile_FullPath)
 
                 except Exception as e:
                     print(e)
@@ -665,7 +652,8 @@ class ETL_Dataset_Subtype_IMERG_1_DAY(ETL_Dataset_Subtype_Interface):
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except:
+                except Exception as e:
+                    print(e)
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)

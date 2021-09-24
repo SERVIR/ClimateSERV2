@@ -81,8 +81,46 @@
     margin-bottom: 15px;
 }
 
+.content {
+        width: 95%;
+    }
+
+.sidebar {
+position: fixed;
+top: 60px;
+bottom: 50px;
+left: 0;
+z-index: 1000;
+display: block;
+padding: 20px;
+overflow-x: hidden;
+overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+background-color: #f5f5f5;
+border-right: 1px solid #eee;
+    width: 180px;
+}
+
+ul {
+    list-style: unset;
+    margin-left: 20px;
+}
+
+.map-help-img{
+    margin: 40px 20px;
+    max-width: 85%;
+}
+
 .card {
     cursor: pointer;
+}
+
+.bottom-margin{
+    margin-bottom: 25px;
+}
+
+.image-200{
+    width: 200px;
+    margin: 20px;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -252,4 +290,84 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     content: "";
     display: block;
     clear: both;
+}
+
+.media-gallery {
+    font-family: "Arial";
+    font-size: 14px;
+}
+
+
+.carousel-caption {
+    position: relative;
+    border: 1px solid black;
+    top: 0;
+    left: 0;
+    color: black;
+    text-align: left;
+    padding: 20px;
+}
+
+.carousel .carousel-control-next,
+.carousel .carousel-control-prev {
+    z-index: 999;
+    width: 45px;
+    height: 45px;
+    font-size: 30px;
+    background: rgba(255, 255, 255, 0.25) none repeat scroll 0 0;
+    border-radius: 100%;
+    padding: 0 0 10px 0px;
+    line-height: 20px;
+    -webkit-transform: translateY(-50%);
+    transform: translateY(-50%);
+}
+
+.carousel .carousel-control-prev,
+.carousel .carousel-control-next {
+    top: 50%;
+    bottom: 50%;
+    width: 5%;
+    opacity: 1;
+    position: absolute;
+}
+
+.carousel .carousel-control-prev,
+.carousel .carousel-control-next {
+    font-size: 30px;
+    background: none;
+}
+
+.carousel .carousel-control-next {
+    right: 20px;
+}
+
+.ui-content{
+    margin-right: auto;
+    margin-left: auto;
+    max-width: 900px;
+}
+
+@media only screen and (max-width: 768px) {
+    .image-200 {
+        width:100%;
+        float: unset!important;
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
+
+@media screen and (min-width: 768px) {
+
+    .main {
+        padding-right: 40px;
+        padding-left: 40px; /* 180 + 40 */
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .main {
+        padding-right: 40px;
+        padding-left: 40px; /* 180 + 40 */
+    }
+
 }
