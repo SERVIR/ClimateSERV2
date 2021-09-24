@@ -59,7 +59,7 @@ def get_tds_request(start_date, end_date, dataset, variable, geom):
 
 def get_aggregated_values(start_date, end_date, dataset, variable, geom, operation, temp_file):
     try:
-        st = datetime.strptime(start_date, '%m/%d/%Y')
+        # st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
         start_date = datetime.strftime(st, '%Y-%m-%d')
         end_date = datetime.strftime(et, '%Y-%m-%d')
@@ -155,20 +155,18 @@ def get_chirps_climatology(month_nums):
 
 
 def get_nmme_data(total_bounds):
-    logger.info(total_bounds)
     lon1, lat1, lon2, lat2 = total_bounds
     numEns = 5  # set number of ensembles to use from each dataset.
     ccsm4 = []
     cfsv2 = []
     for iens in np.arange(numEns):
-        logger.info(iens)
 
         ccsm4.append(xr.open_dataset(
-            '/cserv2/tmp/data/nmme/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
+            '/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
             longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
                                                                                  axis=0))
         cfsv2.append(xr.open_dataset(
-            '/cserv2/tmp/data/nmme/nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
+            '/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
             longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
                                                                                  axis=0))
     cfsv2 = xr.merge(cfsv2)
@@ -184,7 +182,7 @@ def get_nmme_data(total_bounds):
 
 def get_season_values( type, geom, uniqueid):
 
-    nc_file = xr.open_dataset('/cserv2/tmp/data/nmme/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4')
+    nc_file = xr.open_dataset('/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4')
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
