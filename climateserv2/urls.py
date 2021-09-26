@@ -49,7 +49,6 @@ urlpatterns = [
     url(r'api/getFeatureLayers/', getFeatureLayers),
     # url(r'^/api/getCapabilitiesForDataset/', getCapabilitiesForDataset),
     url('api/getClimateScenarioInfo/', getClimateScenarioInfo),
-    # ks refactor 2015 // New API Hook getClimateScenarioInfo
     url(r'api/getRequestLogs/', getRequestLogs),  # ks refactor 2015 // New API Hook getRequestLogs
     url('api/getFileForJobID/', getFileForJobID),
     # url(r'^/api/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),

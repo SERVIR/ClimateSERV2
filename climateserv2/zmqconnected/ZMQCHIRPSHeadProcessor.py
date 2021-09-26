@@ -21,16 +21,6 @@ from os.path import basename
 from copy import deepcopy
 from operator import itemgetter
 
-# import sys
-# sys.path.append("/cserv2/django_app/ClimateSERV2/")
-# import django
-# os.environ.setdefault("DJANGO_SETTINGS_MODULE", "climateserv2.settings")
-# django.setup()
-# from django.apps import apps
-# Request_Log = apps.get_model('api', 'Request_Log')
-# Request_Progress = apps.get_model('api', 'Request_Progress')
-
-
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
@@ -41,10 +31,11 @@ sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 
 try:
     import climateserv2.geoutils as geoutils
+    import climateserv2.file.dateutils as dateutils
+
     import climateserv2.processtools.dateprocessor as dproc
     import climateserv2.file.TDSExtraction as GetTDSData
     import climateserv2.parameters as params
-    import climateserv2.file.dateutils as dateutils
     import climateserv2.locallog.locallogging as llog
     import climateserv2.processtools.uutools as uu
     import climateserv2.geo.shapefile.readShapesfromFiles as sf
@@ -57,10 +48,11 @@ try:
 except:
     import parameters as params
     import geoutils as geoutils
+    import file.dateutils as dateutils
+
     import processtools.dateprocessor as dproc
     import file.TDSExtraction as GetTDSData
     import parameters as params
-    import file.dateutils as dateutils
     import locallog.locallogging as llog
     import processtools.uutools as uu
     import geo.shapefile.readShapesfromFiles as sf

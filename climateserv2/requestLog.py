@@ -1,7 +1,6 @@
 import datetime
 import sys
 import os
-# from api.models.requests_model import Request_Progress,Request_Log
 import django
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "climateserv2.settings")
 django.setup()
@@ -53,16 +52,13 @@ class requestLog:
         
         return retLogs
 
-    # This is where we decide what we are storing
     def decode_Request_For_Logging(self, theRequest, theIP):
-        #request.REQUEST
-        
+
         reqParams = None
         httpUserAgent = None
         apiURLPath = None
         
-        # Note on all the try/except.  Not sure if these fail or simply return None.. so just trying to keep the code from breaking here..
-        
+
         # reqParams
         try:
             reqParams = str(theRequest.REQUEST)  # Should contain list of params passed in.
@@ -81,10 +77,8 @@ class requestLog:
         except:
             pass
     
-        # Just pass this one in (better function for it found in the views.py file
         #client_IP = get_client_ip(theRequest)
-        
-        
+
         retObj = {
                   "RequestParams":reqParams,
                   "httpUserAgent":httpUserAgent,
@@ -94,13 +88,9 @@ class requestLog:
         
         return retObj
     
-    # ks Update - We also need to log certain serverside events
     # Mapping serverside request fields to existing client side fields
     def decode_ServerSideRequest_For_Logging(self, theServerSide_Request):
-        # Extra Params that go into a normal clientside request
-        
-        
-        retObj = None
+
         try:
             retObj = {
                       "RequestParams":theServerSide_Request['Additional_Notes'],
@@ -136,7 +126,6 @@ class requestLog:
         # Create a new serverside request object
         serverRequestObject = self.get_ServerSide_RequestParams_FromInputs(theJobID, server_OneWord_JobStatusNote, server_AdditionalNotes_String)
         readyToLogObj = self.decode_ServerSideRequest_For_Logging(serverRequestObject)
-        # self.add_New_Request(readyToLogObj)
 
         log = Request_Log(unique_id=currentDateTime_Str, log=readyToLogObj)
         log.save()
@@ -153,16 +142,13 @@ class requestLog:
         return baseFileName
 
     def get_RequestLogs_ForDatetimeRange(self, earliest_UTC_DateTime, latest_UTC_DateTime):
-
         # First, validate that the search range
         rightNow = datetime.datetime.utcnow()
         if (earliest_UTC_DateTime < self.earliest_Possible_DateTime):
-            # We are searching for dates way before any of these logs existed.
             # Set the beginning of the range to the first possible log date
             earliest_UTC_DateTime = self.earliest_Possible_DateTime
 
         if (latest_UTC_DateTime > rightNow):
-            # We are searching for dates that are into the future!
             # set the end of the range to the last possible log date (Today's date)
             latest_UTC_DateTime = rightNow
 
@@ -172,7 +158,6 @@ class requestLog:
         intervalType = intervalString.split(" ")[1]
         time_DeltaArgs = {intervalType: intervalValue}
 
-        # This step basically creates a truncated version of the start datetime which only includes years,months and days of the earliest date time passed in
         dailyFormatString = self.db_BaseFileName_DateFormat
         tempDateTime_str = earliest_UTC_DateTime.strftime(dailyFormatString)
         reusable_Interval_DateTime = datetime.datetime.strptime(tempDateTime_str, dailyFormatString)
@@ -195,9 +180,6 @@ class requestLog:
             # Increment the reusable datetime by 1 day
             reusable_Interval_DateTime = reusable_Interval_DateTime + datetime.timedelta(**time_DeltaArgs)
 
-        # Now go through and grab all the logs.
-        # Optimization, do 2 sets of compares, if the list only contains a single file, check each log entry against both datetimes in the range, if the list has 2 or more items, then the compare is done by looking at the earliest date for the first file and the latest date for the last file, if the current log file in the list is not the first or last item, don't compare anything, just grab all the logs
-        # Optimization, only do compares on the first and last file in the list
         logEntriesToReturn = []
 
         # Only proceed if the list of files is not empty
@@ -214,12 +196,10 @@ class requestLog:
 
                 try:
                     currentData = self.get_All_Data_From_DB_ForFile(current_DB_FileName)
-                    # for simplicity.. for now.. just dump everything from the current data into the log entires to return
                     for currentData_Item in currentData:
                         logEntriesToReturn.append(
-                            currentData_Item)  # Doing it with only this line of code, we have props called, 'key' and 'value'.. and thats it!
+                            currentData_Item)  # 'key' and 'value'
                 except:
-                    # Possible that the file does not exist?
                     pass
 
         return logEntriesToReturn

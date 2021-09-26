@@ -1,10 +1,4 @@
-'''
-Created on Jun 26, 2014
-
-@author: jeburks
-'''
 import numpy as np
-#[0,'max',"Max"],[1,'min',"Min"],[2,'median',"Median"],[3,'range',"Range"],[4,'sum',"Sum"]
 
 def arraymax(array):
     '''

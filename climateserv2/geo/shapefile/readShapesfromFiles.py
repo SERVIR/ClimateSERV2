@@ -1,8 +1,3 @@
-'''
-Created on Jun 4, 2014
-
-@author: jeburks
-'''
 import os
 import sys
 import json
@@ -40,7 +35,6 @@ def getPolygon(shapefilePath, layer_id, fid):
 
 def getPolygons(layer_id, feat_ids):
     path = getShapefilePath(layer_id)
-    output = []
     output = {"type": "FeatureCollection", "features": []}
     for feature in feat_ids:
         geometry = getPolygon(path, str(layer_id), int(feature))

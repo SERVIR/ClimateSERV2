@@ -7,16 +7,16 @@ from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
 import zmq
 import climateserv2.requestLog as requestLog
-
-from datetime import datetime
 import sys
+import pandas as pd
 import os
+import xarray as xr
+from datetime import datetime,timedelta
 from django.apps import apps
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
-#logging.basicConfig(level=logging.DEBUG,format='%(asctime)s %(name)s.%(funcName)s +%(lineno)s: %(levelname)-8s [%(process)d] %(message)s', )
 logger = logging.getLogger("request_processor")
 
 def readResults(uid):
@@ -39,13 +39,10 @@ def readProgress(uid):
     :rtype: the progress associated with the unique id.
     '''
     try:
-        print(uid)
         res = Request_Progress.objects.get(request_id=str(uid))
-        print(res.progress)
         value=res.progress
     except Exception as e:
         print(e)
-        print('from exception read progress')
     return value
 
 def processCallBack(request, output, contenttype):
@@ -111,15 +108,6 @@ def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
     return retLogs
 
 # Logging
-# How to access the request stuff.
-# logger.info("DEBUG: request: " + str(request))
-# req_Data_ToLog = decode_Request_For_Logging(request, get_client_ip(request))
-
-# Handler for getting request log data
-# global_CONST_LogToken = "SomeRandomStringThatGoesHere"
-# Test url string
-# http://localhost:8000/getRequestLogs/?callback=success&sYear=2015&sMonth=10&sDay=01&eYear=2015&eMonth=10&eDay=04&tn=SomeRandomStringThatGoesHere
-
 @csrf_exempt
 def getRequestLogs(request):
     '''
@@ -212,8 +200,6 @@ def getDataRequestProgress(request):
     '''
 
     logger.debug("Getting Data Request Progress")
-    # print "Request for progress on id ",requestid
-    ###Check request status and then respond with the
     try:
         requestid = request.GET["id"]
         progress = readProgress(requestid)
@@ -223,12 +209,10 @@ def getDataRequestProgress(request):
             return processCallBack(request, json.dumps([-1]), "application/json")
         else:
             return processCallBack(request, json.dumps([float(progress)]), "application/json")
-        ## return processCallBack(request,json.dumps([jsonresults['progress']]),"application/json")
     except (Exception, OSError) as e :
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return processCallBack(request, json.dumps([-1]), "application/json")
 
-# getFileForJobID
 @csrf_exempt
 def getFileForJobID(request):
     '''
@@ -244,8 +228,6 @@ def getFileForJobID(request):
 
         # Validate that progress is at 100%
         if (float(progress) == 100.0):
-            doesFileExist = False
-
             expectedFileLocation = ""  # Full path including filename
             expectedFileName = ""  # Just the file name
             ext=""
@@ -258,7 +240,6 @@ def getFileForJobID(request):
                     ext = "csv"
                     expectedFileName = requestid + ".csv"
                     expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
-                    print(expectedFileLocation)
                     doesFileExist = os.path.exists(expectedFileLocation)
             except:
                     doesFileExist=False
@@ -298,15 +279,6 @@ def getFileForJobID(request):
     except Exception as e:
         return processCallBack(request, json.dumps(str(e) ), "application/json")
 
-
-# ks refactor 2015 // New API Hook getClimateScenarioInfo
-# Note: Each individual capabilities entry is already wrapped as a JSON String
-#        This means that those elements need to be individually unwrapped in client code.
-#        Here is an example in JavaScript
-#    // JavaScript code that sends the api return into an object called 'apiReturnData'
-#    var testCapabilities_JSONString = apiReturnData.climate_DataTypeCapabilities[1].current_Capabilities
-#    testCapabilities_Unwrapped = JSON.parse(testCapabilities_JSONString)
-#    // At this point, 'testCapabilities_Unwrapped' should be a fully unwrapped JavaScript object.
 @csrf_exempt
 def getClimateScenarioInfo(request):
     '''
@@ -314,25 +286,22 @@ def getClimateScenarioInfo(request):
     :param request: in coming request, but don't need anything from the request.
     returns an object
     '''
-
-    # Error Tracking
+    nc_file = xr.open_dataset('/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4') # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+    start_date = nc_file["time"].values.min()
+    t = pd.to_datetime(str(start_date))
+    start_date = t.strftime('%Y-%m-%d')
+    ed = datetime.strptime(start_date, '%Y-%m-%d') + timedelta(days=180)
+    end_date = ed.strftime('%Y-%m-%d')
     isError = False
-    # Get list of datatype numbers that have the category of 'ClimateModel'
-    climateModel_DataTypeNumbers = params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
-    # Get all info from the Capabilities Data for each 'ClimateModel' datatype number
-    #g#  climateModel_DataType_Capabilities_List = read_DataType_Capabilities_For(climateModel_DataTypeNumbers)
-
     climateModel_DataType_Capabilities_List=[
         {
             "current_Capabilities":{
-                "startDateTime":"2021-09-01",
-                "endDateTime": "2022-03-31"
+                "startDateTime":start_date,
+                "endDateTime": end_date
             }
         }
     ]
-    # 'data_category':'ClimateModel'
     climate_DatatypeMap = params.get_Climate_DatatypeMap()
-
 
     api_ReturnObject = {
         "RequestName": "getClimateScenarioInfo",
@@ -340,11 +309,8 @@ def getClimateScenarioInfo(request):
         "climate_DataTypeCapabilities": climateModel_DataType_Capabilities_List,
         "isError": isError
     }
-    # print(api_ReturnObject)
-    # ip = get_client_ip(request)
-    # return processCallBack(request,json.dumps(params.ClientSide_ClimateChangeScenario_Specs),"application/json")
+
     return processCallBack(request, json.dumps(api_ReturnObject), "application/javascript")
-    # TODO!! Change the above return statement to return the proper object that the client can use to determine which options are available specifically for climate change scenario types.
 
 @csrf_exempt
 def submitDataRequest(request):
@@ -393,7 +359,6 @@ def submitDataRequest(request):
         geometry = None
         featureList = False
         if request.POST.get("layerid") is not None:
-            print(request.POST.get("layerid"))
             try:
                 layerid = str(request.POST["layerid"])
                 fids = str(request.POST["featureids"]).split(',')
@@ -415,7 +380,6 @@ def submitDataRequest(request):
         else:
             try:
                 polygonstring = request.POST["geometry"]
-                #geometry = decodeGeoJSON(polygonstring);
             # create geometry
             except KeyError:
                 logger.warning("Problem with geometry")
@@ -536,24 +500,10 @@ def submitMonthlyRainfallAnalysisRequest(request):
     :param request:   layerid, featureids, geometry,
     :return:
     '''
-
-    # COMPLETELY ISOLATED SETUP FOR MONTHLY ANALYSIS TYPES - ALL REQUESTS ARE MONTHLY ANALYSIS UNTIL I GET IT ALL FIXED AND WORKING RIGHT..
-    # print("RIGHT NOW, ALL JOBS ARE: MonthlyRainfallAnalysis TYPES.  NEED TO FIX THIS WHEN I WRITE THE JAVASCRIPT/AJAX code on the client AND THE API RECEIVER CODE HERE ")
-
-    # if(custom_job_type == "MonthlyRainfallAnalysis"):
-    #     uniqueid = uutools.getUUID()
-    #
-    # # END, ISOLATED MONTHLY ANALYSIS CODE
-    #
-    #
-    # # ORGINAL, EXISTING, WORKING CODE BELOW.. (pre MonthlyAnalysisFeature)
-
     custom_job_type = "MonthlyRainfallAnalysis"  # String used as a key in the head processor to identify this type of job.
     logger.info("Submitting Data Request for Monthly Rainfall Analysis")
     error = []
 
-    # Seasonal Forecast Start/End Dates (Pulled in from client) (allows greater request flexibility
-    # &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28
     seasonal_start_date = ""
     seasonal_end_date = ""
     if request.method == 'POST':
@@ -628,7 +578,6 @@ def submitMonthlyRainfallAnalysisRequest(request):
             else:
                 dictionary['geometry'] = polygonstring
 
-            ##logger.info("submitting ",dictionary)
             context = zmq.Context()
             sender = context.socket(zmq.PUSH)
             sender.connect("ipc:///tmp/servir/Q1/input")
@@ -710,7 +659,6 @@ def submitMonthlyRainfallAnalysisRequest(request):
             else:
                 dictionary['geometry'] = polygonstring
 
-            ##logger.info("submitting ",dictionary)
             context = zmq.Context()
             sender = context.socket(zmq.PUSH)
             sender.connect("ipc:///cserv2/tmp/servir/Q1/input")

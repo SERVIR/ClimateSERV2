@@ -6,8 +6,8 @@ import climateserv2.processtools.dateIndexTools as dit
 
 
 def breakApartEsiName(filename):
-    ''' 
-    
+    '''
+
     :param filename:
     '''
     parts = filename.split(".")
@@ -30,7 +30,7 @@ def breakApartEsiName(filename):
 
 def breakApartChripsName(filename):
     '''
-    
+
     :param filename:
     '''
     parts = filename.split(".")
@@ -74,7 +74,7 @@ def breakApartGEFSName(filename):
 
 def breakApartemodisName(filename):
     '''
-    
+
     :param filename:
     '''
     parts = filename.split(".")
@@ -93,7 +93,7 @@ def breakApartemodisName(filename):
 
 def breakApartemodisNameAdjust(filename, adjust):
     '''
-    
+
     :param filename:
     '''
     parts = filename.split(".")
@@ -112,7 +112,7 @@ def breakApartemodisNameAdjust(filename, adjust):
 
 def convertTimeToEpoch(timein, interval):
     '''
-    
+
     :param timein:
     :param interval:
     '''
@@ -123,7 +123,7 @@ def convertTimeToEpoch(timein, interval):
 
 def extractYear(time):
     '''
-    
+
     :param time:
     '''
     pattern = re.compile("(\d{4})")
@@ -131,7 +131,7 @@ def extractYear(time):
 
 def extractMonth(time):
     '''
-    
+
     :param time:
     '''
     pattern = re.compile("(\d{4})")
@@ -139,7 +139,7 @@ def extractMonth(time):
 
 def getListOfTimes(begintime, endtime, interval):
     '''
-    
+
     :param begintime:
     :param endtime:
     :param interval:
@@ -151,7 +151,7 @@ def getListOfTimes(begintime, endtime, interval):
 
 def createDateFromYear(year):
     '''
-    
+
     :param year:
     '''
     return datetime.date(year, 1, 1)
@@ -159,7 +159,7 @@ def createDateFromYear(year):
 
 def createDateFromYearMonth(year, month):
     '''
-    
+
     :param year:
     :param month:
     '''
@@ -168,7 +168,7 @@ def createDateFromYearMonth(year, month):
 
 def createDateFromYearMonthDay(year, month, day):
     '''
-    
+
     :param year:
     :param month:
     :param day:

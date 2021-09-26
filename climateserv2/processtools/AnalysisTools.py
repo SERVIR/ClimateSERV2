@@ -1,6 +1,3 @@
-# Kris Stanton (Cris Squared)
-# 2017
-import numpy as np
 import calendar
 try:
     import climateserv2.geoutils as geoutils
@@ -15,7 +12,7 @@ except:
     import file.TDSExtraction as GetTDSData
     import geoutils as geoutils
     import processtools.dateprocessor as dproc
-    import configuration.parameters as params
+    import parameters as params
     import processtools.uutools as uu
     import file.dateutils as dateutils
     import geo.shapefile.readShapesfromFiles as sf
@@ -30,22 +27,14 @@ chirps_dateRange_lateYear = "2021" # "2016"  #"2010" #"2016"   # 2010 is local t
 chirps_dateRange_lateMonth = "05"  # "10"
 chirps_dateRange_lateDay = "31"    # "26"
 chirps_dataType = 0
-# seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 43, 45, 47, 49, 51, 53, 55, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79, 81, 83, 85, 87, 89]
-
-seasonalForecast_dataType_list = [ 7, 9, 11, 13, 15, 43, 45, 47, 49, 51]
 logger = llog.getNamedLogger("request_processor")
 
 def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
     worklist = []
-    sub_type_name = 'CHIRPS_REQUEST'  # Choices for now are: 'CHIRPS_REQUEST' and 'SEASONAL_FORECAST'
-
-    datatype = chirps_dataType  # Much of the copy/paste code already references this as 'datatype'
-    # begintime = chirps_dateRange_earlyMonth + "/" + chirps_dateRange_earlyDay + "/" + chirps_dateRange_earlyYear
-    # endtime = chirps_dateRange_lateMonth + "/" + chirps_dateRange_lateDay + "/" + chirps_dateRange_lateYear
-    begintime ="2018-01-01" #request['seasonal_start_date']""
-    endtime = "2020-12-01" #request['seasonal_end_date']
-    intervaltype = 0    # Daily
-    operation = "avg"  # 5 == average, 0 == max, 1 == min
+    sub_type_name = 'CHIRPS_REQUEST'
+    datatype = chirps_dataType
+    intervaltype = 0
+    operation = "avg"
 
     polygon_Str_ToPass = None
 
@@ -68,7 +57,6 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
                     "datatype": datatype,
                     "operationtype": 5,
                     "intervaltype": intervaltype,
-                    #'bounds': bounds,
                     "polygon_Str_ToPass": polygon_Str_ToPass,
                     "datatype_uuid_for_CHIRPS": datatype_uuid_for_CHIRPS,
                     "datatype_uuid_for_SeasonalForecast": datatype_uuid_for_SeasonalForecast,
@@ -82,37 +70,30 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
         workdict["value"] = {operation: values[dateIndex]}
         dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
         workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
-        worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
+        worklist.extend([workdict])
     return worklist
 	
 def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
     worklist = []
-    sub_type_name = 'SEASONAL_FORECAST'  # Choices for now are: 'CHIRPS_REQUEST' and 'SEASONAL_FORECAST'
+    sub_type_name = 'SEASONAL_FORECAST'
 
-    datatype = 32  # Much of the copy/paste code already references this as 'datatype'
+    datatype = 32
     begintime = chirps_dateRange_earlyMonth + "/" + chirps_dateRange_earlyDay + "/" + chirps_dateRange_earlyYear
     endtime = chirps_dateRange_lateMonth + "/" + chirps_dateRange_lateDay + "/" + chirps_dateRange_lateYear
     intervaltype = 0    # Daily
-    operation =   "avg" #5 == average, 0 == max, 1 == min
+    operation =   "avg"
 
-    size = params.getGridDimension(int(datatype))
-
-
-    #bounds = None
-    #mask = None
     polygon_Str_ToPass = None
     if ('geometry' in request):
         # Get the polygon string
         polygonstring = request['geometry']
-        # Process input polygon string
-        # # this is not a download type or a climate model type  --START
+
         polygon_Str_ToPass = polygonstring
         temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
 
         dates, values = GetTDSData.get_aggregated_values(begintime, endtime,params.dataTypes[int(datatype)]['dataset_name']+'.nc4', params.dataTypes[int(datatype)]['variable'], polygonstring,
 
                                                                             operation,temp_file)
-    # # this is not a download type or a climate model type  --END
     # User Selected a Feature
     elif ('layerid' in request):
         layerid = request['layerid']
@@ -125,8 +106,6 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
                                                          'precipitation_amount', geometries,
 
                                                          operation, temp_file)
-        # # this is not a download type or a climate model type --START
-        #bounds, mask = mg.rasterizePolygons(geotransform, size[0], size[1], geometries)
 
     # Build the worklist for each date in the dates
     for dateIndex in range(len(dates)):
@@ -151,8 +130,7 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
         workdict['value'] = {operation: values[dateIndex]}
         dateObject = dateutils.createDateFromYearMonthDay(workdict['year'], workdict['month'], workdict['day'])
         workdict['isodate'] = dateObject.strftime(params.intervals[0]['pattern'])
-        worklist.extend([workdict])  # Basically adds the entire workdict object to the worklist (could also be written as, worklist.append(workdict)
-
+        worklist.extend([workdict])
     return worklist
 
 
@@ -160,18 +138,8 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_GEFS_workList(uniqueid, request, datat
 def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
     worklist = []
     sub_type_name = 'SEASONAL_FORECAST'  # Choices for now are: 'CHIRPS_REQUEST' and 'SEASONAL_FORECAST'
-    # seasonal_start_date = request['seasonal_start_date']
-    # seasonal_end_date = request['seasonal_end_date']
-
-    # begintime = str(seasonal_start_date.split('_')[1]) + "/" + str(seasonal_start_date.split('_')[2]) + "/" + str(seasonal_start_date.split('_')[0])
-    # endtime = str(seasonal_end_date.split('_')[1]) + "/" + str(seasonal_end_date.split('_')[2]) + "/" + str(seasonal_end_date.split('_')[0])
     intervaltype = 0  # Daily
-    operation = "avg"  # 5 == average, 0 == max, 1 == min
-    # Iterate through all seasonalForecast dataTypes
-    # for seasonalForecast_dataType in seasonalForecast_dataType_list:
-    # datatype = seasonalForecast_dataType  # Much of the copy/paste code already references this as 'datatype'
-
-    # PROCESS GEOMETRY STUFF NOW
+    operation = "avg"
     polygon_Str_ToPass = None
 
     if ('geometry' in request):
@@ -195,7 +163,6 @@ def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, 
         workid = uu.getUUID()
         workdict = {"uid": uniqueid,
                     "workid": workid,
-                    # "datatype": datatype,
                     "operationtype": 5,
                     "intervaltype": intervaltype,
                     "polygon_Str_ToPass": polygon_Str_ToPass,
@@ -245,7 +212,7 @@ def get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, r
     worklist = []
     datatype_uuid_for_CHIRPS = uu.getUUID()
     datatype_uuid_for_SeasonalForecast = uu.getUUID()
-    # (A) Process incoming params
+    # Process incoming params
     worklist_CHIRPS             = _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
 
     worklist_SeasonalForecast   = _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast)
@@ -257,7 +224,6 @@ def get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, r
 def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
         avg_percentiles_dataLines = []
-        avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
         monthavg=[]
         chirps_25=[]
         chirps_50 = []
@@ -277,7 +243,6 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
                 current_full_date = item['date']
                 monthavg.append(item['value']['avg'])
                 months.append( current_full_date.split('/')[0])
-        return_dataset_info_list=[]
 
         for i in range(len(chirps_25)):
             avg_percentiles_dataLine = {
@@ -292,265 +257,6 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
 
         final_output = {
             'avg_percentiles_dataLines': avg_percentiles_dataLines,
-            # 'separated_datasets':organized_container
-            # 'output_key':'output_value'
         }
 
         return final_output
-
-# def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
-#
-#     # Data Buckets
-#     # Need to resort the way this data is contained, so we can perform operations on various parts separately.
-#     organized_container = {}
-#     # First Pass, separate all datasets.
-#     for raw_item in raw_items_list:
-#         current_dataset_uuid = raw_item['current_mask_and_storage_uuid']
-#         # Append the current item into the bucket, or create a new bucket and then append the current item into that bucket.
-#         try:
-#             organized_container[current_dataset_uuid].append(raw_item)
-#         except:
-#             organized_container[current_dataset_uuid] = []
-#             organized_container[current_dataset_uuid].append(raw_item)
-#
-#     # List of strings that tell us which buckets exist so we can go over them one by one.
-#     keys_for_organized_container = organized_container.keys()
-#
-#     return_dataset_info_list = []
-#     # Iterate over each dataset and do the processing to them.
-#     for dataset_key in keys_for_organized_container:
-#
-#         current_dataset = organized_container[dataset_key]  # current_dataset is an array of raw_items
-#
-#         # Let's go inside one item and grab some of the meta info.
-#         out_datatype = ""
-#         out_subTypeName = ""
-#         out_storageUUID = ""
-#         try:
-#             #datatype, sub_type_name, current_mask_and_storage_uuid
-#             out_datatype = current_dataset[0]['datatype']
-#             out_subTypeName = current_dataset[0]['sub_type_name']
-#             out_storageUUID = current_dataset[0]['current_mask_and_storage_uuid']
-#         except:
-#             pass
-#         avg_percentiles_dataLines = []
-#         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
-#         # Now set up Ashutosh's Numpy work right here.
-#         # np
-#
-#         # SeasonalFcstAnalysis.py Line 42 - 46 translated/ported
-#         #  set arrays
-#         npList_mon = np.zeros(len(current_dataset), 'i')  # npList_mon was just mon # np was N # 'current_dataset' was 'datax'
-#         npList_day = np.zeros(len(current_dataset), 'i')
-#         npList_year = np.zeros(len(current_dataset), 'i')
-#         npList_xtemps = np.zeros(len(current_dataset), 'd')
-#
-#         # SeasonalFcstAnalysis.py Line 53 - 59 translated/ported
-#         for i in range(len(current_dataset)):
-#             current_dataset_item = current_dataset[i]
-#             current_full_date = current_dataset_item['date']
-#             current_avg_value = current_dataset_item['value']['avg']
-#             current_month = current_full_date.split('/')[0]
-#             current_day = current_full_date.split('/')[1]
-#             current_year = current_full_date.split('/')[2]
-#
-#             #data2 = datax[i].split('/')
-#             npList_mon[i] = current_month #data2[0]
-#             npList_day[i] = current_day #data2[1]
-#             #data3 = data2[2].split(',')
-#             npList_year[i] = current_year # data3[0]
-#             npList_xtemps[i] = current_avg_value #data3[1]
-#
-#         # SeasonalFcstAnalysis.py Line 62 - 64 translated/ported
-#         # find the min and max years
-#         minyr = int(np.min(npList_year)) # minyr = int(N.min(year))
-#         maxyr = int(np.max(npList_year)) # maxyr = int(N.max(year))
-#
-#         # SeasonalFcstAnalysis.py Line 67 - 73 translated/ported
-#         # ________________________
-#         #  Monthly summary statistics for EVERY year
-#         # Set the statistics arrays. Set it for number of years (maxyr-minyr+1) and 12 months
-#         temps = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
-#         msum = np.zeros(((maxyr - minyr + 1), 12), dtype='d')
-#         mhits = np.zeros(((maxyr - minyr + 1), 12), dtype='i')
-#         xline = np.zeros(12, dtype='i')
-#
-#         # SeasonalFcstAnalysis.py Line 74 - 78 translated/ported
-#         #  Do the sums for the months of data for each month of each year
-#         # for k in xrange(len(datax)):
-#         #     temps[(year[k] - minyr), mon[k] - 1] = xtemps[k]
-#         #     msum[(year[k] - minyr), mon[k] - 1] = msum[(year[k] - minyr), mon[k] - 1] + xtemps[k]
-#         #     mhits[(year[k] - minyr), mon[k] - 1] = mhits[(year[k] - minyr), mon[k] - 1] + 1
-#         for k in range(len(current_dataset)):
-#             temps[(npList_year[k] - minyr), npList_mon[k] - 1] = npList_xtemps[k]
-#             msum[(npList_year[k] - minyr), npList_mon[k] - 1] = msum[(npList_year[k] - minyr), npList_mon[k] - 1] + npList_xtemps[k]
-#             mhits[(npList_year[k] - minyr), npList_mon[k] - 1] = mhits[(npList_year[k] - minyr), npList_mon[k] - 1] + 1
-#
-#         # SeasonalFcstAnalysis.py Line 80 - 86 translated/ported
-#         # print/write the data out
-#         # for j in xrange(maxyr - minyr + 1):
-#         #     for k in xrange(12):
-#         #         #    print minyr+j,k+1, msum[j,k],mhits[j,k]
-#         #         xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
-#         #         f.write(xprint)
-#         #         f.write('\n')
-#         # USED TO WRITE TO _SUMMARY.TXT
-#         year_month_dataLines = []
-#         for j in range(maxyr - minyr + 1):
-#             for k in range(12):
-#                 minyr_j_col01 = str(minyr + j)
-#                 k_1_col02 = str(k + 1)
-#                 msum_j_k_col03 = str(msum[j, k])
-#                 mhits_j_k_col04 = str(mhits[j, k])
-#                 dataLine = {
-#                     'minyr_j_col01':minyr_j_col01,
-#                     'k_1_col02': k_1_col02,
-#                     'msum_j_k_col03': msum_j_k_col03,
-#                     'mhits_j_k_col04': mhits_j_k_col04
-#                 }
-#                 year_month_dataLines.append(dataLine)
-#                 # #    print minyr+j,k+1, msum[j,k],mhits[j,k]
-#                 # xprint = str(minyr + j) + ' ' + str(k + 1) + ' ' + str(msum[j, k]) + ' ' + str(mhits[j, k])
-#                 # f.write(xprint)
-#                 # f.write('\n')
-#
-#         # SeasonalFcstAnalysis.py Line 88 - 97 translated/ported
-#         # ___________________
-#         # Monthy average Summary Statistics
-#         # set up arrays
-#         msum2 = np.zeros(12, dtype='d')
-#         mhits2 = np.zeros(12, dtype='i')
-#         p75 = np.zeros(12, dtype='d')
-#         p25 = np.zeros(12, dtype='d')
-#         x45 = np.zeros(18, dtype='d')
-#         x45 = msum[:, 1]
-#         # print x45
-#
-#
-#         # SeasonalFcstAnalysis.py Line 99 - 104 translated/ported
-#         # Compute percentiles
-#         for k in range(12):
-#             x45 = msum[:, k]
-#             p75[k] = np.percentile(x45, 75)
-#             p25[k] = np.percentile(x45, 25)
-#             xline[k] = k + 1
-#
-#         # SeasonalFcstAnalysis.py Line 108 - 112 translated/ported
-#         # Do the sums over the same month in all years
-#         for j in range(12):
-#             for k in range(maxyr - minyr + 1):
-#                 msum2[j] = msum2[j] + msum[k, j]
-#                 mhits2[j] = mhits2[j] + 1
-#
-#
-#         avg_percentiles_dataLines = []
-#         avg_percentiles_Headings = 'Month, MonthlyAverage, 25thPercentile, 75thPercentile, #YearsInAnalysis'
-#
-#         for k in range(12):
-#             if mhits2[k] > 0:
-#                 col01_Month = k + 1
-#                 col02_MonthlyAverage = msum2[k] / (mhits2[k])
-#                 col03_25thPercentile = p25[k]
-#                 col04_75thPercentile = p75[k]
-#                 col05_YearsInAnalysis = mhits2[k]
-#             else:
-#                 col01_Month = k + 1
-#                 col02_MonthlyAverage = 0.0
-#                 col03_25thPercentile = 0.0
-#                 col04_75thPercentile = 0.0
-#                 col05_YearsInAnalysis = 0.0
-#
-#             avg_percentiles_dataLine = {
-#                 'col01_Month':str(col01_Month),
-#                 'col02_MonthlyAverage':str(col02_MonthlyAverage),
-#                 'col03_25thPercentile':str(col03_25thPercentile),
-#                 'col04_75thPercentile':str(col04_75thPercentile),
-#                 'col05_YearsInAnalysis':str(col05_YearsInAnalysis)
-#             }
-#             avg_percentiles_dataLines.append(avg_percentiles_dataLine)
-#
-#         dataset_info_obj = {
-#             'year_month_dataLines':year_month_dataLines,
-#             'avg_percentiles_dataLines':avg_percentiles_dataLines,
-#             'avg_percentiles_Headings':avg_percentiles_Headings,
-#             'dataset_key':dataset_key,
-#             'out_datatype':out_datatype,
-#             'out_subTypeName':out_subTypeName,
-#             'out_storageUUID':out_storageUUID
-#         }
-#         return_dataset_info_list.append(dataset_info_obj)
-#
-#
-#     final_output = {
-#         'dataset_info_list':return_dataset_info_list,
-#         #'separated_datasets':organized_container
-#         #'output_key':'output_value'
-#     }
-#
-#     return final_output
-
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     END
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     END
-# #  PHASE III SUPPORT - Head Processor, Read 'self.finished_items' array and convert it to actionable data to be output and ready to be graphed.     END
-
-
-# Monthly analysis section (stateless)  END
-# Monthly analysis section (stateless)  END
-# Monthly analysis section (stateless)  END
-
-
-
-
-# OLDER STUFF (around March 2017 time frame) BELOW  (MAYBE SOME OF IT WILL BE USABLE?)
-
-
-# So, here is how this is all going to work..
-
-# (SINGLE THREAD)
-# First, The head worker reads in the ZMQ data from the API,
-# # During that read, job tasks are split up and sent to the worker queues.
-# # # HeadProcessor should assign worker tasks to do ALL of the following, (Get ALL Chirps Data), (Get ALL Seasonal Forecast Data)
-
-# (MULTIPLE THREADS - Parallel)
-# Second, All the "components" get executed one by one.
-# # This means, getting all chirps data, getting all ensemble data, etc
-
-# (SINGLE THREAD)
-# Third, All of those threads complete, and a final process gets called which ?sets the completed job status to 100%?
-# # This means collating all data into a single return object.
-
-# In short, we can intercept ALL of these processes and have the code execute from here (including responsibility of updating status)
-# # Perhaps, some of those processes can still execute in the head and worker threads.. and just different parts get called here..
-
-# Called from the Head Processor during receive function
-def execute_part_1_of_3_analysis_tools_adapter():
-    pass
-
-# Called from the Worker Threads, (This may not even be necessary??  or maybe just expose a bunch of useful functions that support what the workers are doing?.)
-def execute_part_2_of_3_analysis_tools_adapter():
-    pass
-
-# Called from the Head Processor, after any worker thread jobs are done.  This may be a good place to collate all the data together.
-def execute_part_3_of_3_analysis_tools_adapter():
-    pass
-
-def test_function():
-    '''
-    Just to make sure the module is properly imported.
-    '''
-    return 'test_function reached the end'
-
-def test_function2():
-    '''
-    Just to make sure the module is properly imported.
-    '''
-    return 'test_function2 reached the end'
-
-
-
-
-# Console Test Notes
-#  Open Console
-#  sys.path.append('/Users/ks/ALL/CrisSquared/SoftwareProjects/SERVIR/ClimateSERV/Chirps/serviringest')
-#  import CHIRPS.utils.processtools.AnalysisTools as at
-#  at.test_function2() # Or whatever function we need to test..

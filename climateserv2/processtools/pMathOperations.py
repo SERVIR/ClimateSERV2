@@ -1,8 +1,3 @@
-'''
-Created on Mar 4, 2015
-
-@author: jeburks
-'''
 import numpy as np
 import sys
 from climateserv2.locallog import locallogging as llog

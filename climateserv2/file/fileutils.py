@@ -1,8 +1,3 @@
-'''
-Created on Jun 30, 2014
-
-@author: jeburks
-'''
 import fileinput
 import os
 import sys
@@ -17,12 +12,7 @@ try:
 except:
     import parameters as params
 
-
 def readFile(filename):
-    '''
-    
-    :param filename:
-    '''
     output = "";
     for line in fileinput.input(filename):
         output = output+line

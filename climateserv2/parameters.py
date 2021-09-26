@@ -1,32 +1,5 @@
-'''
-Created on Jun 3, 2014
-@author: jeburks
-
-Modified starting from Sept 2015
-@author: Kris Stanton
-'''
-import socket
-
 isDebug = True
 isDev = False
-# def checkDev():
-#    if (socket.gethostname().startswith('chirps') == False):
-#        return True
-#    else :
-#        return False
-# isDev = checkDev()
-
-# if (isDev == True):
-
-# ks refactor 2015 // Alternative development configuration
-# Add Alternative dev machines here
-#    if ( (socket.gethostname().startswith('nswsmac-2315955') == True) or (socket.gethostname().startswith('nsstcpcp174485pcs.ndc.nasa.gov')) ):
-#        import parameters_local_ks as params
-
-#    else:
-#        import parameters_local as params
-
-# else:
 import sys
 import os
 PACKAGE_PARENT = '..'
@@ -44,7 +17,6 @@ dbfilepath = params.dbfilepath
 newdbfilepath = params.newdbfilepath
 capabilities_db_filepath = params.capabilities_db_filepath
 requestLog_db_basepath = params.requestLog_db_basepath
-# zipFile_MediumTermStorage_Path = params.zipFile_MediumTermStorage_Path
 zipFile_ScratchWorkspace_Path = params.zipFile_ScratchWorkspace_Path
 logfilepath = params.logfilepath
 workpath = params.workpath
@@ -60,6 +32,8 @@ ageInDaysToPurgeData = params.ageInDaysToPurgeData
 netCDFpath=params.tempnetcdfpath
 deletetempnetcdf=params.deletetempnetcdf
 pythonpath=params.pythonpath
+nmme_csfv2_path=params.nmme_csfv2_path
+nmme_ccsm4_path=params.nmme_ccsm4_path
 
 resultsdir = params.resultsdir
 
@@ -71,9 +45,6 @@ def getResultsFilename(id):
     filename = resultsdir + id + ".txt"
     return filename
 
-
-##Regular grid. the grid x,y,day of year. But the day of the year assumes that each month has 31. This is done to make the grid regular
-##All dates that are non represented are filled with fill value.
 ##This allows quick slicing of the grid using indexes
 def getFilename(dataType, year):
     '''
@@ -119,7 +90,6 @@ def get_DataTypeNumber_List_By_DataCategory(dataCateogrySearchValue):
                 if str(current_DataCategory).lower() == str(dataCateogrySearchValue).lower():
                     resultList.append(currentDataType['number'])
             except:
-                # the current data type object probably is missing the data category?
                 pass
     except:
         pass
@@ -127,9 +97,6 @@ def get_DataTypeNumber_List_By_DataCategory(dataCateogrySearchValue):
 
 
 # Get a list of all datatypesnumbers by a custom property    ("data_category", "climatemodel")
-# Test :
-# params.get_DataTypeNumber_List_By_Property("variable", "tref")
-# params.get_DataTypeNumber_List_By_Property("data_category", "climatemodel")
 def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
     resultList = []
     try:
@@ -165,30 +132,15 @@ def get_ClimateEnsemble_List():
     return resultList
 
 
-# Get a list of variables for an ensemble
-# With the function below ( get_Climate_DatatypeMap ) There is really no need for this one.
-# def get_ClimateVariable_List_For_Ensemble(ensembleValue):
-#    resultList = []
-#    return resultList
 
 
 # Get Climate Datatype Map (A list of objects that contains a unique ensemble name and a list of variables for that ensemble)
-# Current Version returns something that looks like this
-# Returns object with these props
-# obj : (List of objects)
-# obj[n].climate_Ensemble : (string)
-# obj[n].climate_DataTypes : (list of objects)
-# obj[n].climate_DataTypes[m].climate_Ensemble : (string, should be == to obj[n].climate_Ensemble)
-# obj[n].climate_DataTypes[m].climate_Variable : (string)
-# obj[n].climate_DataTypes[m].dataType_Number : (int)
-# obj[n].climate_DataTypes[m].OTHER_PROPERTIES : (Expand this function here to expose any other datatype properties the API/Client would need)
 def get_Climate_DatatypeMap():
     resultList = []
 
     # Get the list of ensembles
     ensembleList = get_ClimateEnsemble_List()
 
-    # Note: There is plenty of room for optimization here... probably don't need to
     # Iterate through each ensemble
     for currentEnsemble in ensembleList:
         currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
@@ -197,9 +149,6 @@ def get_Climate_DatatypeMap():
             currentVariable = params.dataTypes[currentEnsemble_DataTypeNumber]['variable']
             currentEnsembleLabel = params.dataTypes[currentEnsemble_DataTypeNumber]['ensemble_Label']
             currentVariableLabel = params.dataTypes[currentEnsemble_DataTypeNumber]['variable_Label']
-
-            # obj[n].climate_DataTypes[m].OTHER_PROPERTIES : (Expand this function here to expose any other datatype properties the API/Client would need)
-
             # Create an object that maps the variable, ensemble with datatype number
             ensembleVariableObject = {
                 "dataType_Number": currentEnsemble_DataTypeNumber,
@@ -219,8 +168,6 @@ def get_Climate_DatatypeMap():
 
     return resultList
 
-
-# This is environment independent (ops or local, doesn't matter)
 # We have some of the data hardcoded in here as a fallback in
 def get_HC_Fallback_ClimateCapabilities_Object():
     hardcoded_Capabilities_Object = {
@@ -245,9 +192,3 @@ def get_HC_Fallback_ClimateCapabilities_Object():
         '8': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens02 Temperature", "description": "Climate Change Scenario: ens02 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens02"}',
         '10': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens03 Temperature", "description": "Climate Change Scenario: ens03 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens03"}'}
     return hardcoded_Capabilities_Object
-#
-#
-# #print "Fill Value =",getFillValue(0)
-# #print "filename =",getFilename(0,2010)
-# #print "getGridDimension",getGridDimension(0)
-# #print getFillValue(0)

@@ -1,9 +1,3 @@
-'''
-Created on Jun 24, 2014
-
-@author: jeburks
-'''
-
 from datetime import date
 try:
     import climateserv2.parameters as params
