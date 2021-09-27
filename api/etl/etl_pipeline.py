@@ -12,7 +12,7 @@ from .etl_dataset_subtype_esi import ETL_Dataset_Subtype_ESI
 from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_nmme import ETL_Dataset_Subtype_NMME
 from .etl_dataset_subtype_nmme_cfsv2 import ETL_Dataset_Subtype_NMME_CFSV2
-from .etl_dataset_subtype_imerg_1_day import ETL_Dataset_Subtype_IMERG_1_DAY
+from .etl_dataset_subtype_imerg_1day import ETL_Dataset_Subtype_IMERG_1DAY
 from .etl_dataset_subtype_usda_smap import ETL_Dataset_Subtype_USDA_SMAP
 # from .etl_dataset_subtype_nsidc_smap_36km import ETL_Dataset_Subtype_NSIDC_SMAP_36KM
 # from .etl_dataset_subtype_nsidc_smap_9km import ETL_Dataset_Subtype_NSIDC_SMAP_9KM
@@ -277,8 +277,8 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, dataset_subtype)
             elif dataset_subtype in ('imerg_early', 'imerg_late'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
-            elif dataset_subtype in ('imerg1dy_early', 'imerg1dy_late'):
-                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1_DAY(self, dataset_subtype)
+            elif dataset_subtype in ('imerg_1dy_early', 'imerg_1dy_late'):
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1DAY(self, dataset_subtype)
             elif dataset_subtype == 'nmme':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NMME(self)
             elif dataset_subtype == 'nmme_cfsv2':
