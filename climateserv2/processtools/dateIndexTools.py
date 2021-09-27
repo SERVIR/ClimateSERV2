@@ -2,15 +2,19 @@ import math
 import time
 import datetime 
 
+# To convert epoch time to Julian day number
 def convertEpochToJulianDay(epochTime):
     return int(time.strftime("%j",time.gmtime(epochTime)))
 
+# To convert given day, month, year to epoch value
 def convertDayMonthYearToEpoch(day,month,year):
     return float(datetime.date(year, month, day).strftime("%s"))
 
+# To convert given month, year to epoch value
 def convertMonthYearToEpoch(month,year):
     return float(datetime.date(year, month, 1).strftime("%s"))
 
+# To retrieve last day of month in an year
 def getLastDayOfMonth(month,year):
     monthToProcess = month+1
     yearToProcess = year
@@ -19,8 +23,8 @@ def getLastDayOfMonth(month,year):
         yearToProcess = year+1
     epochTime = float(datetime.date(yearToProcess, monthToProcess, 1).strftime("%s"))-86400
     return int(time.strftime("%d",time.gmtime(epochTime)))
-    
 
+# Indexing on daily basis
 class DailyIndex:
     
     def getIndexesBasedOnEpoch(self,startEpochTime, endEpochTime):
@@ -43,8 +47,8 @@ class DailyIndex:
     
     def cullDateList(self,dates):
         return dates
-        
-        
+
+# Indexing every five days
 class EveryFiveDaysIndex:
     def getIndexesBasedOnEpoch(self,startEpochTime, endEpochTime):
         jStart = convertEpochToJulianDay(startEpochTime)
@@ -93,7 +97,8 @@ class EveryFiveDaysIndex:
             ++count
         dates.sort()
         return dates
-    
+
+# Indexing every ten days
 class EveryTenDaysIndex:
     def getIndexesBasedOnEpoch(self,startEpochTime, endEpochTime):
         jStart = convertEpochToJulianDay(startEpochTime)
@@ -138,6 +143,7 @@ class EveryTenDaysIndex:
         dates.sort()
         return dates
 
+# Indexing every decad
 class DecadalIndex:
 
     def getIndexesBasedOnEpoch(self, startEpochTime, endEpochTime):
@@ -217,7 +223,7 @@ class DecadalIndex:
 # Just adding a 'months' member to the datetime.timedelta class as a subclass.
 class TimeDeltaWithMonths(datetime.timedelta):
     months = 0
-class TimeDeltaProcessing: #ISOTimeCodeProcessing:
+class TimeDeltaProcessing: #ISOTimeCodeProcessing
     
     def _chew_ISO8601_String_And_GetValue(self, currentISOString, testSplitValueString):
         if (testSplitValueString in currentISOString) and (len(currentISOString) > 0):
@@ -231,15 +237,8 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
     # Expects iso8601_Code to be a string that starts with P and in this format: P[n]Y[n]M[n]DT[n]H[n]M[n]S
     # Returns a TimeDelta Object and NumberOfMonths interval (representation of the ISO8601 Interval PnTn Code format)
     def get_TimeDeltaWithMonths_From_ISO8601_Code(self, iso8601_Code):
-        # Convert Any ISO8601 Interval Code to a TimeDeltaWithMonths object and return it
-        
-        # TimeDeltaWithMonths uses the following
-        # weeks, days, hours, minutes, seconds    And now extended to hold months also
-        
-        # Default value
+        # years, months, weeks, days, hours, minutes, seconds
         default_Value = 1
-        
-        # Values we need at the end
         final_Years = 0
         final_Months = 0
         final_Weeks = 0
@@ -247,17 +246,13 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
         final_Minutes = 0
         final_Seconds = 0
         
-        # Simplifies the parsing a bit
         try:
-            # Convert to uppercase
             iso8601_Code = iso8601_Code.upper()
             
             # Validate the Code (Make sure the first letter is a P)
             if(iso8601_Code[0] == "P"):
                 # The reason to do it this way, is because we can't know the number of digits for any given number in the parsing.
                 parsing_Step1 = iso8601_Code.split("P")[1] # expected result: [n]Y[n]M[n]DT[n]H[n]M[n]S
-                
-                dateString = None
                 timeString = None
                 
                 # Break the date and time parts into 2 (because they both could share a common letter 'M')
@@ -267,7 +262,6 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
                 else:
                     dateString = parsing_Step1  # expected result: [n]Y[n]M[n]D
                     
-                # Check for Date
                 if dateString == None:
                     final_Years = 0
                     final_Months = 0
@@ -275,15 +269,12 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
                     final_Days = 0
                 else:
                     # Parse the Date String
-                    currentDateString = dateString  # As we progress forward, this will get smaller and smaller
-                        
-                    # Process the Parts
-                    final_Years, currentDateString = self._chew_ISO8601_String_And_GetValue(currentDateString, "Y")  
+                    currentDateString = dateString
+                    final_Years, currentDateString = self._chew_ISO8601_String_And_GetValue(currentDateString, "Y")
                     final_Months, currentDateString = self._chew_ISO8601_String_And_GetValue(currentDateString, "M") 
                     final_Weeks, currentDateString = self._chew_ISO8601_String_And_GetValue(currentDateString, "W")
                     final_Days, currentDateString = self._chew_ISO8601_String_And_GetValue(currentDateString, "D")
-                    
-                
+
                 # Check for Time
                 if timeString == None:
                     final_Hours = 0
@@ -292,8 +283,6 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
                 else:
                     # Parse the Time String
                     currentTimeString = timeString
-                    
-                    # Process the Parts
                     final_Hours, currentTimeString = self._chew_ISO8601_String_And_GetValue(currentTimeString, "H")
                     final_Minutes, currentTimeString = self._chew_ISO8601_String_And_GetValue(currentTimeString, "M")
                     final_Seconds, currentTimeString = self._chew_ISO8601_String_And_GetValue(currentTimeString, "S") 
@@ -303,11 +292,10 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
         except:
             final_Days = default_Value
         
-        # Last Validation, if all values are 0, set the days to 1  # I did find one test that actually made it through all if statements and validation checks with all 0's and no errors.. so thats why this is here.
+        # If all values are 0, set the days to 1
         if ((final_Years == 0) and (final_Months == 0) and (final_Weeks == 0) and (final_Days == 0) and (final_Hours == 0) and (final_Minutes == 0) and (final_Seconds == 0)):
-            final_Days = default_Value  # Default 1
+            final_Days = default_Value
         
-        # Load the args
         time_DeltaArgs = {
                           "weeks":final_Weeks,
                           "days":final_Days,
@@ -315,25 +303,21 @@ class TimeDeltaProcessing: #ISOTimeCodeProcessing:
                           "minutes":final_Minutes,
                           "seconds":final_Seconds,
                           }
-        #ret_TimeDeltaWithMonths = TimeDeltaWithMonths(weeks=1, days=1, hours=1, minutes=1, seconds=1)
         ret_TimeDeltaWithMonths = TimeDeltaWithMonths(**time_DeltaArgs)
         ret_TimeDeltaWithMonths.months = final_Months
-        #print("DEBUG: time_DeltaArgs " + str(time_DeltaArgs))
         return ret_TimeDeltaWithMonths
 
-# if there is need for something out of the ordinary (like decadal or based on a monthly dataset) than we will need updates to this class or even a new class to handle those types which acts as a hybrid.
+# If there is need for something out of the ordinary (like decadal or based on a monthly dataset)
 class DynamicIndex:
     _iso8601_IntervalCode = "P1D"
     _timeDelta_WithMonths = None
     _yearlyOffsetSeconds = 0.0 # Number of seconds that a dataset is offset by in any given year
     def __init__(self, iso8601_IntervalCode = "P1D"):
-        # Store the Code and timeDelta_WithMonths object. (timeDelta object used by all the new code that does index processing on intervals between 1 second and 1 day
         self._iso8601_IntervalCode = iso8601_IntervalCode
         tdProcessingObject = TimeDeltaProcessing()
         self._timeDelta_WithMonths = tdProcessingObject.get_TimeDeltaWithMonths_From_ISO8601_Code(self._iso8601_IntervalCode)
         self._yearlyOffsetSeconds = 0.0
         
-    # Moving external functions into this class as private members
     def _convertEpochToJulianDay(self, epochTime):
         return int(time.strftime("%j",time.gmtime(epochTime)))
     def _convertDayMonthYearToEpoch(self, day,month,year):
@@ -341,13 +325,9 @@ class DynamicIndex:
     def _convertDayMonthYearHourMinSecondToEpoch(self, day,month,year,hour,minute,second):
         return float(datetime.datetime(year, month, day, hour, minute, second).strftime("%s"))
 
-
-
-    # Get the Year from EpochTime
     def _getYearFromEpochTime(self, epochTime):
         return time.gmtime(epochTime).tm_year
     
-    # Are the Epoch Ranges passed in within the same year?
     def _isEpochTimeRangeInSameYear(self, startEpochTime, endEpochTime):
         year_Start = self._getYearFromEpochTime(startEpochTime)
         year_End = self._getYearFromEpochTime(endEpochTime)
@@ -356,7 +336,6 @@ class DynamicIndex:
         else:
             return False
         
-    # Get the epochTime for Index 0 for given year.
     def _getEpochTime_Of_Index_0_ForYear(self,currentYear): #,epochTime):
         firstEpoch_ForYear = float(datetime.date(currentYear, 1, 1).strftime("%s"))
         epoch_Index_0_ForYear = firstEpoch_ForYear + self._yearlyOffsetSeconds
@@ -382,7 +361,6 @@ class DynamicIndex:
         # Validate that endEpochTime is greater than startEpochTime
         if(endEpochTime < startEpochTime):
             return []
-        
         
         # Get the Year from one of the EpochTimes
         theYear = self._getYearFromEpochTime(startEpochTime)
@@ -414,27 +392,17 @@ class DynamicIndex:
             
             # Check if Start epoch is found.
             if (is_StartEpoch_Found == True):
-                # Start Epoch already found, 
-                
-                # Add this index to the list
                 ret_List.append(yearIndexCounter)
-                
-                # Now check to see if this is the end epoch.
                 if(endEpochTime < currentEpochToCheck):
-                    # We already added it to the list, so no need to add again, just set the flag
                     is_EndEpoch_Found = True
                     
             else:
-                # Start Epoch not yet found, check to see if this index is it.
                 if(startEpochTime < currentEpochToCheck):
                     # Just found the start epoch, add it and change the flag
                     ret_List.append(yearIndexCounter)
                     is_StartEpoch_Found = True
-            
-            # move on to the next index
             yearIndexCounter += 1
 
-        # return the list
         return ret_List
 
     # Find the index from the given epochTime
@@ -445,26 +413,15 @@ class DynamicIndex:
         
         # Find the EpochTime for Index 0 of the current year
         epoch_index_0_Position_ForCurrentYear = self._getEpochTime_Of_Index_0_ForYear(theYear)
-        
-        # Get the number of seconds from the timeDeltaObject
         interval_TotalSeconds = self._getTotalIntervalSeconds()
-        
-        # Get the max expected indexes for a year
         est_Max_Indexes = self._getEstNumberOfIndexes_In_A_SingleYear()
         
-        # Iterate through the possible indexes for the year starting with the zero point and return the index once it is found
         for i in range(0, est_Max_Indexes):
-            
-            # Checking the NEXT index
             currentEpochToCheck =  (interval_TotalSeconds * (i + 1)) + epoch_index_0_Position_ForCurrentYear
-            
             if(epochTime < currentEpochToCheck):
                 return i
-            
-        # if the index is not found in the above loop, return 0 (not sure what else to do in this situation honestly)
         return 0
 
-    
     # Using default values on new params so we can maintain backwards compatibility with existing datasets
     def getIndexBasedOnDate(self,day,month,year, hours=0, minutes=0, seconds=0):
         return self.getIndexBasedOnEpoch(self._convertDayMonthYearHourMinSecondToEpoch(day,month,year, hours, minutes, seconds))
@@ -477,27 +434,19 @@ class DynamicIndex:
 
     def getDateBasedOnIndex(self,index,year):
 
-        # Get the number of seconds from the timeDeltaObject
         interval_TotalSeconds = self._getTotalIntervalSeconds()
-
-        # Calculate the number of seconds from the zero point of the year to this index.
         seconds_FromYearZeroPoint = (interval_TotalSeconds * index) + self._yearlyOffsetSeconds
-        
+
         # Make a datetime that represents the absolute zero point for the whole year and add the seconds to it.
         ret_DateTime_Obj = datetime.datetime(year, 1, 1) + datetime.timedelta(seconds = seconds_FromYearZeroPoint)
-    
-        # Finally, return the 'Date' (the datetime object)    
         return ret_DateTime_Obj
 
-    # Just making this to sooth my naming convention a bit
     def getDateTimeBasedOnIndex(self,index,year):
         return self.getDateBasedOnIndex(index,year)
     
     def cullDateList(self,dates):
         indexList = []
-        # Get index and store Year info in the index list
         for date in dates:
-
             # Gather the inputs
             theDay = date[0]
             theMonth = date[1]
@@ -505,17 +454,14 @@ class DynamicIndex:
             theHour = 0
             theMinute = 0
             theSecond = 0
-            # Second attempt,
             # Get Index based on Date
             theIndex = self.getIndexBasedOnDate(theDay, theMonth, theYear, theHour, theMinute, theSecond)
              
             # Build the index list with _Year appended to each index string
             index_String_To_Add = str(theIndex) + "_" + str(theYear)
             try:
-                # If this line fails, the index is not already part of the list.  If it succeeds, we skip adding
                 indexList.index(index_String_To_Add)
             except:
-                # So then we add it here
                 indexList.append(index_String_To_Add)
 
         # Now use the index and years list (unique list) to 
@@ -524,5 +470,4 @@ class DynamicIndex:
             parts = item.split("_")
             validated_Date = self.getDateBasedOnIndex( int(parts[0]), int(parts[1]) )  
             ret_Dates.append( [validated_Date.day, validated_Date.month, validated_Date.year ])
-            
         return ret_Dates

@@ -1,5 +1,6 @@
 import sys
 import os
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
@@ -9,51 +10,48 @@ except:
     from .processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
-
 logToConsole = True
 serviringestroot = '''/cserv2/tmp/data/pythonCode/serviringest/'''
-dbfilepath = '''/cserv2/tmp/servirchirps.db'''#'''/data/data/db/servirchirps.db'''
-newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db''' #newdbfilepath = '''/data/data/db/servirchirps_bsddb.db'''
-capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db''' #/data/data/db/servirchirps_bsd_capabilities.db'''
-requestLog_db_basepath = '''/cserv2/tmp/''' #'''/data/data/db/requestLog/'''
-zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''  # TODO!! ADD AUTO FOLDER CREATION FOR THIS FOLDER
-logfilepath = '''/cserv2/tmp/'''#'''/data/data/logs/'''
-workpath = '''/cserv2/tmp/'''#'''/data/data/work'''
-shapefilepath = '''/cserv2/tmp/mapfiles/''' #'''/data/data/gis/mapfiles/'''
+dbfilepath = '''/cserv2/tmp/servirchirps.db'''
+newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db'''
+capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db'''
+requestLog_db_basepath = '''/cserv2/tmp/'''
+zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''
+logfilepath = '''/cserv2/tmp/'''
+workpath = '''/cserv2/tmp/'''
+shapefilepath = '''/cserv2/tmp/mapfiles/'''
 shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
 tempnetcdfpath= '''/cserv2/tmp/netCDFs/'''
 deletetempnetcdf=False
-pythonpath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/''' #''''/usr/bin/'''
+pythonpath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/'''
 nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/''' #'''/cserv2/tmp/data/nmme/'''
 nmme_csfv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
 
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 
-
-# # KS Refactor // Adding Climate Change Model datatype param getter functions
-def get_ClimateChangeParam__directory(ensembleName, variableName):
-    return '/data/data/image/processed/nmme/' + str(ensembleName) + '/' + str(variableName) + '/'
-
-
-def get_ClimateChangeParam__inputDataLocation(ensembleName,variableName):
+# To get the file path of a CCSM4 file
+def get_ClimateChangeParam__inputDataLocation(ensembleName):
     return nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
-def get_ClimateChangeParam__inputDataLocation_cfsv2(ensembleName,variableName):
+
+# To get the file path of a CSFV2 file
+def get_ClimateChangeParam__inputDataLocation_cfsv2(ensembleName):
     return nmme_csfv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
 
+# To get size
 def get_ClimateChangeParam__size():
     return [720, 360]
 
-
+# to get fill value
 def get_ClimateChangeParam__fillValue():
     return -9999.
 
-
+# To get an indexer
 def get_ClimateChangeParam__indexer():
     return dit.DailyIndex()
 
-
+# to get number of forecast days
 def get_ClimateChangeParam__number_Of_ForecastDays():
     return 180
 
@@ -138,7 +136,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens01 Temperature',
         'description': 'Climate Change Scenario: ens01 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens001', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens001'),
         'size': get_ClimateChangeParam__size(),  # [720,360]
         'fillValue': get_ClimateChangeParam__fillValue(),  # -9999.,
         'indexer': get_ClimateChangeParam__indexer(),  # dit.DailyIndex(),
@@ -154,7 +152,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens01 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens001', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens001'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -170,7 +168,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens02 Temperature',
         'description': 'Climate Change Scenario: ens02 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens002', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens002'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -185,7 +183,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 02', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens02 Precipitation',
         'description': 'Climate Change Scenario: ens02 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens002', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens002'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -201,7 +199,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 03', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens03 Temperature',
         'description': 'Climate Change Scenario: ens03 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens003', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens003'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -216,7 +214,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 03', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens03 Precipitation',
         'description': 'Climate Change Scenario: ens03 Variable: Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens003', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens003'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -232,7 +230,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 04', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens04 Temperature',
         'description': 'Climate Change Scenario: ens04 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens004', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens004'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -247,7 +245,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 04', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens04 Precipitation',
         'description': 'Climate Change Scenario: ens04 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens004', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens004'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -263,7 +261,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 05', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens05 Temperature',
         'description': 'Climate Change Scenario: ens05 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens005', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens005'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -278,7 +276,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 05', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens05 Precipitation',
         'description': 'Climate Change Scenario: ens05 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens005', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens005'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -294,7 +292,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 06', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens06 Temperature',
         'description': 'Climate Change Scenario: ens06 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens006', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens006'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -309,7 +307,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 06', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens06 Precipitation',
         'description': 'Climate Change Scenario: ens06 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens006', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens006'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -325,7 +323,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 07', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens07 Temperature',
         'description': 'Climate Change Scenario: ens07 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens007', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens007'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -340,7 +338,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 07', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens07 Precipitation',
         'description': 'Climate Change Scenario: ens07 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens007', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens007'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -356,7 +354,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 08', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens08 Temperature',
         'description': 'Climate Change Scenario: ens08 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens008', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens008'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -371,7 +369,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 08', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens08 Precipitation',
         'description': 'Climate Change Scenario: ens08 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens008', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens008'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -387,7 +385,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 09', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens09 Temperature',
         'description': 'Climate Change Scenario: ens09 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens009', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens009'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -402,7 +400,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 09', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens09 Precipitation',
         'description': 'Climate Change Scenario: ens09 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens009', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens009'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -418,7 +416,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 10', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens010', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens010'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -433,7 +431,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 10', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens10 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens010', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation('ens010'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -612,7 +610,7 @@ dataTypes = [
      'variable': 'susma',
      'dataset_name': 'usda-smap_global_10km_3dy',
      },
-    #cfsv2 data
+    # cfsv2 data
     {
         'number': 42,
         'data_category': 'ClimateModel',
@@ -620,7 +618,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 01', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens01 Temperature',
         'description': 'Climate Change Scenario: ens01 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens001', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens001'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -634,7 +632,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens01 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens001', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens001'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -648,7 +646,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens02 Temperature',
         'description': 'Climate Change Scenario: ens02 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens002', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens002'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -662,7 +660,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 02', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens02 Precipitation',
         'description': 'Climate Change Scenario: ens02 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens002', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens002'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -676,7 +674,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 03', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens03 Temperature',
         'description': 'Climate Change Scenario: ens03 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens003', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens003'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -690,7 +688,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 03', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens03 Precipitation',
         'description': 'Climate Change Scenario: ens03 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens003', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens003'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -704,7 +702,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 04', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens04 Temperature',
         'description': 'Climate Change Scenario: ens04 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens004', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens004'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -718,7 +716,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 04', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens04 Precipitation',
         'description': 'Climate Change Scenario: ens04 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens004', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens004'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -732,7 +730,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 05', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens05 Temperature',
         'description': 'Climate Change Scenario: ens05 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens005', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens005'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -746,7 +744,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 05', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens05 Precipitation',
         'description': 'Climate Change Scenario: ens05 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens005', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens005'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -760,7 +758,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 06', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens06 Temperature',
         'description': 'Climate Change Scenario: ens06 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens006', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens006'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -774,7 +772,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 06', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens06 Precipitation',
         'description': 'Climate Change Scenario: ens06 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens006', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens006'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -788,7 +786,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 07', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens07 Temperature',
         'description': 'Climate Change Scenario: ens07 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens007', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens007'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -802,7 +800,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 07', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens07 Precipitation',
         'description': 'Climate Change Scenario: ens07 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens007', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens007'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -816,7 +814,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 08', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens08 Temperature',
         'description': 'Climate Change Scenario: ens08 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens008', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens008'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -830,7 +828,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 08', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens08 Precipitation',
         'description': 'Climate Change Scenario: ens08 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens008', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens008'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -844,7 +842,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 09', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens009', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens009'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -858,7 +856,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens009', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens009'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -872,7 +870,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens010', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens010'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -886,7 +884,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 10', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens10 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens010', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens010'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -900,7 +898,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 11', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens11 Temperature',
         'description': 'Climate Change Scenario: ens11 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens011', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens011'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -914,7 +912,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 11', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens11 Precipitation',
         'description': 'Climate Change Scenario: ens11 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens011', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens011'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -928,7 +926,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 12', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens12 Temperature',
         'description': 'Climate Change Scenario: ens12 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens012', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens012'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -942,7 +940,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 12', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens12 Precipitation',
         'description': 'Climate Change Scenario: ens12 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens012', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens012'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -956,7 +954,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 13', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens13 Temperature',
         'description': 'Climate Change Scenario: ens13 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens013', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens013'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -970,7 +968,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 13', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens13 Precipitation',
         'description': 'Climate Change Scenario: ens13 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens013', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens013'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -984,7 +982,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 14', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens14 Temperature',
         'description': 'Climate Change Scenario: ens14 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens014', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens014'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -998,7 +996,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 14', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens14 Precipitation',
         'description': 'Climate Change Scenario: ens14 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens014', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens014'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1012,7 +1010,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 15', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens15 Temperature',
         'description': 'Climate Change Scenario: ens15 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens015', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens015'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1026,7 +1024,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 15', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens15 Precipitation',
         'description': 'Climate Change Scenario: ens15 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens015', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens015'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1040,7 +1038,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 16', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens16 Temperature',
         'description': 'Climate Change Scenario: ens16 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens016', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens016'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1054,7 +1052,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 16', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens16 Precipitation',
         'description': 'Climate Change Scenario: ens16 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens016', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens016'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1068,7 +1066,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 17', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens17 Temperature',
         'description': 'Climate Change Scenario: ens17 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens017', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens017'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1082,7 +1080,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 17', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens17 Precipitation',
         'description': 'Climate Change Scenario: ens17 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens017', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens017'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1096,7 +1094,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 18', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens18 Temperature',
         'description': 'Climate Change Scenario: ens18 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens018', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens018'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1110,7 +1108,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 18', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens18 Precipitation',
         'description': 'Climate Change Scenario: ens18 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens018', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens018'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1124,7 +1122,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 19', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens19 Temperature',
         'description': 'Climate Change Scenario: ens19 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens019', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens019'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1138,7 +1136,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 19', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens19 Precipitation',
         'description': 'Climate Change Scenario: ens19 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens019', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens019'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1152,7 +1150,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 20', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens20 Temperature',
         'description': 'Climate Change Scenario: ens20 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens020', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens020'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1166,7 +1164,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 20', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens20 Precipitation',
         'description': 'Climate Change Scenario: ens20 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens020', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens020'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1180,7 +1178,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 21', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens21 Temperature',
         'description': 'Climate Change Scenario: ens21 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens021', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens021'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1194,7 +1192,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 21', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens21 Precipitation',
         'description': 'Climate Change Scenario: ens21 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens021', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens021'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1208,7 +1206,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 22', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens22 Temperature',
         'description': 'Climate Change Scenario: ens22 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens022', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens022'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1222,7 +1220,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 22', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens22 Precipitation',
         'description': 'Climate Change Scenario: ens22 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens022', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens022'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1236,7 +1234,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 23', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens23 Temperature',
         'description': 'Climate Change Scenario: ens23 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens023', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens023'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1250,7 +1248,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 23', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens23 Precipitation',
         'description': 'Climate Change Scenario: ens23 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens023', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens023'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1264,7 +1262,7 @@ dataTypes = [
         'ensemble_Label': 'ensemble 24', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens24 Temperature',
         'description': 'Climate Change Scenario: ens24 Temperature',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens024', 'tref'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens024'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),
@@ -1278,7 +1276,7 @@ dataTypes = [
         'ensemble_Label': 'Ensemble 24', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens24 Precipitation',
         'description': 'Climate Change Scenario: ens24 Precipitation',
-        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens024', 'prcp'),
+        'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens024'),
         'size': get_ClimateChangeParam__size(), 'fillValue': get_ClimateChangeParam__fillValue(),
         'indexer': get_ClimateChangeParam__indexer(),
         'number_Of_ForecastDays': get_ClimateChangeParam__number_Of_ForecastDays(),

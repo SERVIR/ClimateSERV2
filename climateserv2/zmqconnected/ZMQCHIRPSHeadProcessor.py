@@ -1,9 +1,3 @@
-'''
-Created on Jan 30, 2015
-
-@author: jeburks
-@author: Kris Stanton
-'''
 import csv
 import os
 import sys
@@ -17,7 +11,6 @@ import urllib.request
 import subprocess
 from zipfile import ZipFile
 from os.path import basename
-
 from copy import deepcopy
 from operator import itemgetter
 
@@ -27,7 +20,6 @@ if module_path not in sys.path:
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
-
 
 try:
     import climateserv2.geoutils as geoutils
@@ -39,7 +31,6 @@ try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.processtools.uutools as uu
     import climateserv2.geo.shapefile.readShapesfromFiles as sf
-    import climateserv2.processtools.pMathOperations as pMath
     import climateserv2.requestLog as reqLog
     import climateserv2.processtools.AnalysisTools as analysisTools
     import climateserv2.geoutils as geoutils
@@ -49,22 +40,17 @@ except:
     import parameters as params
     import geoutils as geoutils
     import file.dateutils as dateutils
-
     import processtools.dateprocessor as dproc
     import file.TDSExtraction as GetTDSData
     import parameters as params
     import locallog.locallogging as llog
     import processtools.uutools as uu
     import geo.shapefile.readShapesfromFiles as sf
-    import processtools.pMathOperations as pMath
     import requestLog as reqLog
     import processtools.AnalysisTools as analysisTools
     import file.fileutils
 
-
-
 class ZMQCHIRPSHeadProcessor():
-    
     logger = llog.getNamedLogger("request_processor")
     workToBeDone = {}
     workDone = []
@@ -84,11 +70,10 @@ class ZMQCHIRPSHeadProcessor():
     process_start_time =0
     mathop = None
     zipFilePath=None
-    
-    # KS Refactor 2015  # Some items related to download data jobs
     isDownloadJob = False
-    dj_OperationName = "download"  # Needed by   # "if results['value'][opname] != missingValue:"
-    
+    dj_OperationName = "download"
+
+    # To initialize connections and start watching for inputs
     def __init__(self, name, inputconn, outputconn, listenconn):
         self.name = name
         self.inputconn = inputconn
@@ -96,19 +81,15 @@ class ZMQCHIRPSHeadProcessor():
         self.listeningconn = listenconn
         self.logger.info("Creating Processor named: "+self.name+" listening on port: "+self.inputconn+" outputting to port: "+self.outputconn+"  listening for output on: "+self.listeningconn)
         try:
-            self.logger.info("Making directories..")
+            self.logger.info("Making directories that do not exist..")
             fileutils.makeParamsFilePaths()
         except:
-            self.logger.info("Could not make directories..Please check disk space/permissions..")
-
-
-        ##Connect to the source
+            self.logger.info("Could not make directories.. Please check the parameters_ops.py file for paths")
         self.__beginWatching__()
-   
+
+    # ZMQ Connection to watch for inputs
     def __beginWatching__(self):
-       
         context = zmq.Context()
-        
         self.inputreceiver = context.socket(zmq.PULL)
         self.inputreceiver.connect(self.inputconn)
         self.outputreceiver = context.socket(zmq.PUSH)
@@ -117,7 +98,8 @@ class ZMQCHIRPSHeadProcessor():
         self.listenreceiver.connect(self.listeningconn)
         self.logger.info("Processor ("+self.name+")  Connected and Ready")
         self.__watchAgain__()
-        
+
+    # To load the data received from ZMQ connection, start processing and updating progress
     def __watchAgain__(self):
         while(True):
             self.logger.info("HeadProcessor ("+self.name+"): Waiting for input")
@@ -128,64 +110,31 @@ class ZMQCHIRPSHeadProcessor():
             self.__processProgress__(self.progress)
             time_total = time.time()-self.process_start_time
             self.logger.info("Total time: "+str(time_total))
-        
-    # For download dataset types..
-    def preProcessWork_ForDownloadTypes(self, request):
-        if (self.isDownloadJob == True ):
-            if (self.dj_OperationName == "download"):
-                theJobID = None
-                self.logger.info("("+self.name+"):preProcessWork_ForDownloadTypes: Pre_Processing a Download Data Job. " + str(request['uniqueid']))
-                theJobID = request['uniqueid']
-
-
-            elif (self.dj_OperationName == "download_all_climate_datasets"):
-                # Placeholder for download_all_climate_datasets operations.... not even sure if going to use this here..
-                pass
-        else:
-            # This is a statistical  do nothing
-            return
     
-    # After all the tif extracting is done, need to zip them all up in a single operation
+    # Tp log the path of Zip file having tifs
     def postProcessWork_ForDownloadTypes(self, request):
         if (self.isDownloadJob == True ):
-            if (self.dj_OperationName == "download"):
+            if (self.zipFilePath != None):
+                self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Tif files have been zipped to: " + str(self.zipFilePath))
+            else:
+                self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: ERROR ZIPPING TIF FILES.")
 
-                theJobID = None
-                try:
-                    self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Post_Processing a Download Data Job. " + str(request['uniqueid']))
-                    theJobID = request['uniqueid']
-                    # Zip the files
-                    if (self.zipFilePath != None):
-                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: Tif files have been zipped to: " + str(self.zipFilePath))
-                    else:
-                        self.logger.info("("+self.name+"):postProcessWork_ForDownloadTypes: ERROR ZIPPING TIF FILES.")
-                        
-                except:
-                    pass
-            elif (self.dj_OperationName == "download_all_climate_datasets"):
-                # Placeholder for download_all_climate_datasets operations.... not even sure if going to use this here..
-                pass
-        else:
-            return
-        pass
-    
-        
+    # To process the request and watch for results
     def processWork(self,request):
         self.request = request
-        # ks notes // Generate a list of work to be done (each item represents a time interval)
+        # Get the worklist by doing some prerocessing
         error, workarray = self.__preProcessIncomingRequest__(request)
-        # KS Refactor 2015 // Additional pre-setup items specific to download request types
-        self.preProcessWork_ForDownloadTypes(request)
-        # ks notes // Dispatch that list of work through the output receiver (to be picked up by workers)
         if (error == None):
-
+            # Workarray will be empty if there are no dates/values
             if len(workarray) == 0:
                 self.progress=100.0
             else:
                 self.worklist_length = len(workarray)
                 self.total_task_count = len(workarray)
+                # Dataset processing progress based on the worklist
                 if self.isDownloadJob == False:
                     self.progress = 20 +(float(self.finished_task_count) / float(self.total_task_count)) * 80.
+                # Monthly analysis processing progress based on the worklist
                 if (self.derived_product == True):
                     self.progress = 20 + (float(self.finished_task_count) / float(self.total_task_count)) * 80.
             workingArray_guid_index_list = []
@@ -202,55 +151,43 @@ class ZMQCHIRPSHeadProcessor():
             except:
                 theJobID = ""
             self.__write_JobError_To_DB__(theJobID, str(error), str(request))
-            
+            # If there is any error during processing, progress is -1 indicating a processing error
             self.progress = -1
             self.__cleanup__()
             self.__processProgress__(self.progress)
+            # Continue watching for more inputs
             self.__watchAgain__()
-            
         self.logger.info("("+self.name+"):processWork: Process Work has reached the end!")
 
-
-    # Use this when the size of the worklist is too large and we need to keep sending as some come in.
+    # Divide into chunks based on size of worklist and process it
     def __watchForResults_and_keepSending__(self, workingArray, workingArray_guid_index_list):
-        self.logger.info("from watch for res")
-
-        # Send the first 1000 items.
-        # As new items come in for processing, send another item out.
-
-        # Break the workingArray into chunks of this size. (so only this many get sent at a time.
+        # Break the workingArray into chunks of this size
         message_chunkSize = 5000
 
-        # If the working array is already less than the max chunksize, use the original existing method
+        # If the working array is already less than the chunksize
         if(len(workingArray) < message_chunkSize):
-            # Send all the messages, and then call the original mehtod, then return so none of the below stuff happens.
             self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: About to do 'for item in workingArray' (len(workingArray)): " + str(len(workingArray)))
             item_counter = 0
             for item in workingArray:
                 self.outputreceiver.send_string(json.dumps(str(workingArray[item])))
                 self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(item_counter) + " of " + str(len(workingArray)))
                 item_counter = item_counter + 1
-
             self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: About to call __watchForResults__ ")
             self.__watchForResults__()
             return
 
-        # How many thresholds should we be checking.
+        # How many progress thresholds should we be checking
         number_of_progress_thresholds = (len(workingArray) / message_chunkSize) + 1
         current_workingArray_index = 0
         finished_sending_workingArray_data = False
 
-        # Debug reporting
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: message_chunkSize : " + str(message_chunkSize))
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: len(workingArray) : " + str(len(workingArray)))
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: number_of_progress_thresholds : " + str(number_of_progress_thresholds))
 
-
         # Send in the first chunk.
         for i in range(0, message_chunkSize):
             if (current_workingArray_index >= len(workingArray)):
-
-                # Don't try and send this index as it does not exist!!!, just set the 'done' flag to true.
                 finished_sending_workingArray_data = True
             else:
                 current_workid_index = workingArray_guid_index_list[current_workingArray_index]
@@ -258,7 +195,6 @@ class ZMQCHIRPSHeadProcessor():
                 self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(current_workingArray_index) + " of " + str(len(workingArray)))
                 current_workingArray_index = current_workingArray_index + 1
 
-        #last_current_progress
         last_chunk_sent = 1
         next_progress_threshold_to_check = ((80.0 / number_of_progress_thresholds) * last_chunk_sent)
 
@@ -266,9 +202,9 @@ class ZMQCHIRPSHeadProcessor():
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: last_chunk_sent: " + str(last_chunk_sent))
         self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: next_progress_threshold_to_check: " + str(next_progress_threshold_to_check))
 
-        # Start listening, and sending in future chunks.
+        # Start listening, and sending in future chunks
         while (self.progress < 100):
-            # Normal receiving operation.
+            # Normal receiving operation
             results = json.loads(self.listenreceiver.recv())
             self.processFinishedData(results)
             self.logger.info("("+self.name+"):__watchForResults_and_keepSending__: self.progress: " + str(self.progress))
@@ -277,17 +213,9 @@ class ZMQCHIRPSHeadProcessor():
             if(finished_sending_workingArray_data == True):
                 self.progress=100.0
                 self.__processProgress__(self.progress)
-                # Done sending worklist items, do nothing
                 pass
             else:
-                # We are not done sending items... check to see if the last_current_progress changed..
-                #if(last_current_progress != self.progress):
-                #if(last_current_progress != self.progress):
-
                 if (self.progress > next_progress_threshold_to_check):
-                    # progress has changed...
-                    # Set the next progress to check
-                    #last_current_progress = self.progress
                     last_chunk_sent = last_chunk_sent + 1
                     next_progress_threshold_to_check = ((80.0 / number_of_progress_thresholds) * last_chunk_sent)
 
@@ -296,10 +224,9 @@ class ZMQCHIRPSHeadProcessor():
                     self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: next_progress_threshold_to_check: " + str(next_progress_threshold_to_check))
                     self.logger.info("(" + self.name + "):__watchForResults_and_keepSending__: About to send in another chunk..")
 
-                    # Send more workingArray items to be processed.
+                    # workingArray items to be processed
                     for i in range(0, message_chunkSize):
                         if (current_workingArray_index >= len(workingArray)):
-                            # Don't try and send this index as it does not exist!!!, just set the 'done' flag to true.
                             finished_sending_workingArray_data = True
                         else:
                             current_workid_index = workingArray_guid_index_list[current_workingArray_index]
@@ -308,15 +235,12 @@ class ZMQCHIRPSHeadProcessor():
                                 "(" + self.name + "):__watchForResults_and_keepSending__: outputreceiver.send for item " + str(
                                     current_workingArray_index) + " of " + str(len(workingArray)))
                             current_workingArray_index = current_workingArray_index + 1
-
         self.__finishJob__()
-    # Original 'watchForResults' function
-    # This is the part of the code that listens for workers to be done with their processing.
-    # Once finished, it fires off the __finishJob__ method which completes the job.
+
+    # To listen for workers to be done with their processing
     def __watchForResults__(self):
         if self.progress ==100.0:
             self.finished_items=[]
-        # Normal existing code pipeline.
         while (self.progress < 100.0):
             try:
                 results = json.loads(self.listenreceiver.recv())
@@ -325,31 +249,24 @@ class ZMQCHIRPSHeadProcessor():
             self.processFinishedData(results)
             self.logger.info("("+self.name+"):__watchForResults__: self.progress: " + str(self.progress))
         self.__finishJob__()
-        
+
+    # To add the results to self.finished_items and update progress to database
     def processFinishedData(self, results):
-        opname=""
-        # self.finished_items=[]
         self.finished_task_count = self.finished_task_count +1
         self.workToBeDone.pop(results['workid'], None)
-        missingValue=None
-        if (self.isDownloadJob == True):
-            # For Download Jobs.
-            # Need to figure out why we use 'self.finished_items' and what happens if I just skip it..
-            if results['value'] is not None:
-                self.finished_items.append(results)
-        else:
-            if results['value'] is not None:
-                self.finished_items.append(results)
-            #missingValue = params.dataTypes[self.request['datatype']]['fillValue']
-            # opname =params.operationTypes[self.request['operationtype']][1]
-            # if results['value'][opname] != missingValue:
-            #     self.finished_items.append(results)
+        if results['value'] is not None:
+            if (self.isDownloadJob == True):
+                    self.finished_items.append(results)
+            else:
+                    self.finished_items.append(results)
         self.__updateProgress__()
-            
+
+    # To sort results based on epoch time
     def __sortData__(self,array):
         newlist = sorted(array, key=itemgetter('epochTime'))
         return newlist
-        
+
+    # To update the progress to database
     def __updateProgress__(self,output_full=False):
         if self.total_task_count ==0:
             self.progress = 100
@@ -358,35 +275,33 @@ class ZMQCHIRPSHeadProcessor():
         if (self.progress < 100 or output_full == True):
             self.__processProgress__(self.progress)
 
-    # When this function is called, we KNOW that all the worklist items have been completed
-    # We can find the values for every job inside the variable called,
-    # # self.finished_items = []
+    # To indicate that the processing of worklist is finished
     def __finishJob__(self):
-        # Pipe the request into the postprocess for download pipeline
         self.postProcessWork_ForDownloadTypes(self.request)
-
         try:
             theJobID = str(self.request['uniqueid'])
         except:
             theJobID = ""
+
+        # Update the logging database indicating job is complete
         self.__write_JobCompleted_To_DB__(theJobID, str(self.request))
 
+        # Need not sort the results if it is a download job as it has only path to downloaded file
         if (self.isDownloadJob == False):
             if len(self.finished_items)>0:
                 self.finished_items = self.__sortData__(self.finished_items)
-#         ##Output Data
+
         if (self.derived_product == True):
-            # Special output formatting for Monthly Analysis (we don't necessarily want all the raw data (maybe we do!?)
             self.__outputDataForMonthlyAnalysis__()
         else:
-            # Normal output formatting
             self.__outputData__()
-#         ##Update Progress
+
+        # If there are finished items, output is considered full and progress is updated to 100%
         if len(self.finished_items) > 0:
             self.__updateProgress__(output_full=True)
         self.__cleanup__()
-#         ###Back to looking for work.
 
+    # Clear the objects/data arrays
     def __cleanup__(self):
         self.total_task_count = 0
         self.worklist_length = 0
@@ -395,26 +310,22 @@ class ZMQCHIRPSHeadProcessor():
         self.finished_items = []
         # For derived product types.
         self.derived_product = False
-        self.sub_types_finished = True  # When this is False, the function that watches for finished worker progress keeps running
+        self.sub_types_finished = True
         self.derived_opname = "Unset"
 
+    # To write results of a request with unique id to a file
     def __writeResults__(self,uniqueid,results):
         filename = params.getResultsFilename(uniqueid)
         f = open(filename, 'w+')
         json.dump(results,f)
         f.close()
-        f = None
-        
+
+    # To insert the progress corresponding to unique id
     def __insertProgressDb__(self,uniqueid):
         log = reqLog.Request_Progress(request_id=uniqueid, progress=0)
         log.save()
         
-    def __updateProgressDb__(self,uniqueid, progress):
-        log = reqLog.Request_Progress.objects.get(request_id=uniqueid)
-        log.progress = progress
-        log.save()
-        
-    # KS Refactor 2015 - Adding ServerSide Job Log to request logs area - Log when Jobs are started.
+    # To log if the requested job has started
     def __write_JobStarted_To_DB__(self,uniqueid, objectInfo):
         try:
             theID = uniqueid
@@ -426,8 +337,7 @@ class ZMQCHIRPSHeadProcessor():
         except:
             pass
         
-    
-    # KS Refactor 2015 - Adding ServerSide Job Log to request logs area - Log when Jobs are completed
+    # To log if the requested job has errors
     def __write_JobError_To_DB__(self,uniqueid,errorMessage, objectInfo):
         try:
             theID = uniqueid
@@ -439,8 +349,7 @@ class ZMQCHIRPSHeadProcessor():
         except:
             pass
         
-        
-    # KS Refactor 2015 - Adding ServerSide Job Log to request logs area - Log when Jobs are completed
+    # To log after the requested job is completed
     def __write_JobCompleted_To_DB__(self,uniqueid, objectInfo):
         try:
             theID = uniqueid
@@ -452,35 +361,26 @@ class ZMQCHIRPSHeadProcessor():
         except:
             pass
 
+    # To return True for a monthly analysis GEFS request
     def __is_custom_job_type__MonthlyGEFSRainfallAnalysis__(self, request):
-        # # Inputs: From ZMQ (from the API Layer):      ( A location, ( (layerid + featureids) OR ( geometry ) ), custom_job_type ( Hard coded String "MonthlyRainfallAnalysis" ), uniqueid  )
         try:
-
-            # self.logger.info(
-            #     "TODO, FINISH THE custom_job_type PART OF THIS PREPROCESS_INCOMING_REQUEST PIPELINE....remove the return statement before finishing.")
             if 'custom_job_type' in request:
                 custom_job_type = request['custom_job_type']
                 if (custom_job_type == "MonthlyGEFSRainfallAnalysis"):
                     return True
                 else:
-                    return False #None
+                    return False
             else:
                 return False
-
         except Exception as e:
             uniqueid = request['uniqueid']
             self.logger.warning("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
                 uniqueid) + " Exception Error Message: " + str(e))
-            return e, False  # REMOVE THIS RETURN PATH, POSSIBLE EXISTING BEHAVIOR SHOULD HAPPEN HERE.
-
         return False
-		
-    def __is_custom_job_type__MonthlyRainfallAnalysis__(self, request):
-        # # Inputs: From ZMQ (from the API Layer):      ( A location, ( (layerid + featureids) OR ( geometry ) ), custom_job_type ( Hard coded String "MonthlyRainfallAnalysis" ), uniqueid  )
-        try:
 
-            # self.logger.info(
-            #     "TODO, FINISH THE custom_job_type PART OF THIS PREPROCESS_INCOMING_REQUEST PIPELINE....remove the return statement before finishing.")
+	# To return True for a monthly analysis request
+    def __is_custom_job_type__MonthlyRainfallAnalysis__(self, request):
+        try:
             self.logger.info(request)
             if 'custom_job_type' in request:
                 custom_job_type = request['custom_job_type']
@@ -489,40 +389,58 @@ class ZMQCHIRPSHeadProcessor():
                 else:
                     return False
             else:
-                return False #None
-
+                return False
         except Exception as e:
             uniqueid = request['uniqueid']
             self.logger.warning("(" + self.name + "):Couldn't find custom_job_type in '__is_custom_job_type__MonthlyRainfallAnalysis__' in HeadProcessor: uniqueid: " + str(
                 uniqueid) + " Exception Error Message: " + str(e))
-            return e, False  # REMOVE THIS RETURN PATH, POSSIBLE EXISTING BEHAVIOR SHOULD HAPPEN HERE.
-
         return False
 
-    def __preProcessIncomingRequest__(self, request):
+    # Add tifs to zip update self.zipFilePath and cleanup of files
+    def addToZip(self,request,dataset_name, variable_name, clipped_dataset):
+        os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
+        os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
+        os.chmod(params.shell_script, 0o777)
+        clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
+        os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
+        t = subprocess.check_output(
+            params.pythonpath + 'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
+            shell=True,
+            text=True)
+        clipped_dates = t.split()
+        for i in range(len(clipped_dates)):
+            self.progress = 20 + 80 * ((i + 1) / len(clipped_dates))
+            self.__processProgress__(self.progress)
+            p = subprocess.check_call(
+                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
+                 variable_name,
+                 params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
+        with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
+            # Iterate over all the files in zipFile_ScratchWorkspace_Path
+            for folderName, subfolders, filenames in os.walk(
+                    params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
+                for filename in filenames:
+                    # create complete filepath of file in zipFile_ScratchWorkspace_Path
+                    filePath = os.path.join(folderName, filename)
+                    # Add each file to zip
+                    zipObj.write(filePath, basename(filePath))
+        zipObj.close()
+        os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
+        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
+        self.zipFilePath = params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
 
-        # Check for Custom Job Type Here.
-        self.derived_product = False  # Default
-        is_job_type__MonthlyRainfallAnalysis = self.__is_custom_job_type__MonthlyRainfallAnalysis__(request) #False
+    # To process the request based on the type and return worklist in order to process and retrieve resultant data
+    def __preProcessIncomingRequest__(self, request):
+        self.derived_product = False
+        is_job_type__MonthlyRainfallAnalysis = self.__is_custom_job_type__MonthlyRainfallAnalysis__(request)
         is_job_type__MonthlyGEFSRainfallAnalysis = self.__is_custom_job_type__MonthlyGEFSRainfallAnalysis__(request) 
         if(is_job_type__MonthlyRainfallAnalysis == True):
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: This IS a 'MonthlyRainfallAnalysis' type.  ")
-
-            # Set up the Monthly Rainfall Analysis type here. (Note, there are return statements on both of these paths.. this should probably be moved to a separate pipeline.
             try:
-                # Monthly Rainfall Analysis Setup.
-                # So far, all we get as inputs from the client are the uniqueid and a geometry.
-
-                # Following along the normal_ish code
                 uniqueid = request['uniqueid']
-                self.derived_product = True     # Signals the progress counter in a various way.
-                self.logger.info("before insert")
+                self.derived_product = True
                 self.__insertProgressDb__(uniqueid)
-                self.logger.info("after insert")
-
                 self.__write_JobStarted_To_DB__(uniqueid, str(request))
-                self.logger.info("after write insert")
-
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(uniqueid))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyRainfallAnalysis_Type): uniqueid: " + str(request))
                 self.logger.info(
@@ -530,116 +448,52 @@ class ZMQCHIRPSHeadProcessor():
                 self.isDownloadJob = False
                 self.dj_OperationName = "NotDLoad"
                 self.derived_opname = "MonthlyRainfallAnalysis"
-                try:
-                    if 'layerid' in request:
-                        layerid = request['layerid']
-                        featureids = request['featureids']
-                        geometries = sf.getPolygons(layerid, featureids)
-                        url = GetTDSData.get_tds_request("2018-01-01", "2020-12-01", 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', geometries)
-
-                    else:
-                  #  url = GetTDSData.get_tds_request(request['seasonal_start_date'], request['seasonal_end_date'], 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', request['geometry'])
-                        url = GetTDSData.get_tds_request("2018-01-01", "2020-12-01", 'ucsb-chirps_global_0.05deg_daily.nc4', 'precipitation_amount', request['geometry'])
-
-                    length = len(urllib.request.urlopen(url).read())
-                    resp = urllib.request.urlopen(url)
-                    temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
-
-                    urllib.request.urlretrieve(url, temp_file)
-                    if length:
-                        length = int(length)
-                        blocksize = max(1024, length // 100)
-                    else:
-                        blocksize = 1000
-
-                    buf = io.BytesIO()
-                    size = 0
-                    while True:
-                        buf1 = resp.read(blocksize)
-                        if not buf1:
-                            break
-                        buf.write(buf1)
-                        size += len(buf1)
-                        if length:
-                            self.logger.info((size / length) * 20)
-                            self.__processProgress__((size / length) * 20)
-                except:
-                    self.logger.info("MonthlyRainfallAnalysis: TDS URL Exception")
+                self.__processProgress__(20.0)
+                # Method retrieves NMME and CHIRPS data
                 worklist = analysisTools.get_workList_for_headProcessor_for_MonthlyRainfallAnalysis_types(uniqueid, request)
-
-
-
-
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : (MonthlyRainfallAnalysis_Type): worklist length array value: " + str(len(worklist)))
-                # With these two lines here, everything just goes into the ether.
-
                 return None, worklist
-
             except Exception as e:
                 self.logger.warning("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
                     uniqueid) + " Exception Error Message: " + str(e))
                 return e, None
         elif (is_job_type__MonthlyGEFSRainfallAnalysis == True):
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: This IS a 'CHIRPS-GEFS MonthlyRainfallAnalysis' type.  ")
-            # Set up the Monthly Rainfall Analysis type here. (Note, there are return statements on both of these paths.. this should probably be moved to a separate pipeline.
             try:
-                # Monthly Rainfall Analysis Setup.
-                # So far, all we get as inputs from the client are the uniqueid and a geometry.
-
-                # Following along the normal_ish code
                 uniqueid = request['uniqueid']
-                self.derived_product = True     # Signals the progress counter in a various way.
+                self.derived_product = True
                 self.__insertProgressDb__(uniqueid)
                 self.__write_JobStarted_To_DB__(uniqueid, str(request))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyGEFSRainfallAnalysis_Type): uniqueid: " + str(uniqueid))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: (MonthlyGEFSRainfallAnalysis_Type): uniqueid: " + str(request))
 
-                #self.mathop = pMath.mathOperations(operationtype, 1, params.dataTypes[datatype]['fillValue'], None)
                 self.logger.info(
                     "(" + self.name + "):__preProcessIncomingRequest__: (MonthlyGEFSRainfallAnalysis_Type): Don't forget about this: self.mathop, it is used again in the finish job code.   ")
                 self.isDownloadJob = False
                 self.dj_OperationName = "NotDLoad"
                 self.derived_opname = "MonthlyGEFSRainfallAnalysis"
-
-                # HERE IS WHAT WE ACTUALLY NEED TO RETURN...
-                # Some processing of all the input params (logging things along the way)
-                # # Geometry one is a little complex but the example below does work.
-                # Then A bunch of stuff to setup a worklist
-                # return None, worklist
-
-                #worklist = []
                 worklist = analysisTools.get_workList_for_headProcessor_for_MonthlyGEFSRainfallAnalysis_types(uniqueid, request)
-                # if (params.DEBUG_LIVE == True):
-                #     self.logger.debug(
-                #         "(" + self.name + "):__preProcessIncomingRequest__ : (MonthlyRainfallAnalysis_Type): worklist array value: " + str(worklist))
                 self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : (MonthlyRainfallAnalysis_Type): worklist length array value: " + str(len(worklist)))
-                # With these two lines here, everything just goes into the ether.
-
-                #not_finished_yet = "TODO! NOT FINISHED YET!"
-                #return not_finished_yet, None
-
-                # Sets off the job task runners.
                 return None, worklist
-
             except Exception as e:
                 self.logger.warning("(" + self.name + "): MonthlyRainfallAnalysis_Type: Error processing Request in HeadProcessor: uniqueid: " + str(
                     uniqueid) + " Exception Error Message: " + str(e))
                 return e, None
         else:
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__: This is NOT a 'MonthlyRainfallAnalysis' type.  ")
-
         try:
+            # Get values from request
             uniqueid = request['uniqueid']
-            self.__insertProgressDb__(uniqueid)
-            self.__write_JobStarted_To_DB__(uniqueid, str(request))  # Log when Job has started.
-            self.logger.info("("+self.name+"):__preProcessIncomingRequest__: uniqueid: "+str(uniqueid))
-            
             datatype = request['datatype']
             begintime = request['begintime']
             endtime = request['endtime']
             intervaltype = request['intervaltype']
             operationtype = request['operationtype']
-            opn=params.parameters[operationtype][1]
+
+            # Some database updation and logging of progress
+            self.__insertProgressDb__(uniqueid)
+            self.__write_JobStarted_To_DB__(uniqueid, str(request))
+            self.logger.info("("+self.name+"):__preProcessIncomingRequest__: uniqueid: "+str(uniqueid))
 
             if(params.parameters[operationtype][1] == 'download'):
                 self.isDownloadJob = True 
@@ -647,27 +501,34 @@ class ZMQCHIRPSHeadProcessor():
             else:
                 self.isDownloadJob = False
                 self.dj_OperationName = "NotDLoad"
+
             polygon_Str_ToPass = None
+
+            # Get some values from parameters_ops
+            opn=params.parameters[operationtype][1]
             dataTypeCategory = params.dataTypes[datatype]['data_category']
             dataset_name = params.dataTypes[int(datatype)]['dataset_name'] + ".nc4"
             variable_name = params.dataTypes[int(datatype)]['variable']
+
             dates=[]
             values=[]
-            if ('geometry' in request):
 
+            # processing based on the geometry/shapefile
+            if ('geometry' in request):
                 polygon_Str_ToPass=request['geometry']
                 jsonn = json.loads(str(polygon_Str_ToPass))
 
+                # processsing based on operation
                 if self.isDownloadJob == True:
+                    # processing based on geometry and update progress to 20%
                     if  jsonn['features'][0]['geometry']['type'] != "Point":
                         try:
                             url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
                                                              variable_name, request['geometry'])
-
                             length = len(urllib.request.urlopen(url).read())
                             resp = urllib.request.urlopen(url)
-                            temp_file = os.path.join(params.netCDFpath,request['uniqueid'])  # name for temporary netcdf file
-
+                            # name for temporary netcdf file
+                            temp_file = os.path.join(params.netCDFpath,request['uniqueid'])
                             urllib.request.urlretrieve(url, temp_file)
                             if length:
                                 length = int(length)
@@ -683,48 +544,15 @@ class ZMQCHIRPSHeadProcessor():
                                     break
                                 buf.write(buf1)
                                 size += len(buf1)
-                                print(size)
                                 if length:
                                     self.__processProgress__((size / length) * 20)
+
+                            # Retrieve dataset after mapping the geometry
                             clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, temp_file)
-
-                            os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
-                            os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
-                            os.chmod(params.shell_script, 0o777)
-                            clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
-                            os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
-                            t = subprocess.check_output(
-                                params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
-                                text=True)
-                            clipped_dates = t.split()
-                            for i in range(len(clipped_dates)):
-                                self.progress = 20+ 80*((i + 1) / len(clipped_dates))
-                                self.__processProgress__(self.progress)
-                                p = subprocess.check_call(
-                                    [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-                                     variable_name,
-                                     params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
-                            # p = subprocess.check_call(
-                            #     [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset, variable,
-                            #      params.zipFile_ScratchWorkspace_Path + task_id + '/'])
-                            with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
-                                # Iterate over all the files in directory
-                                for folderName, subfolders, filenames in os.walk(
-                                        params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
-                                    for filename in filenames:
-                                        # create complete filepath of file in directory
-                                        filePath = os.path.join(folderName, filename)
-                                        # Add file to zip
-                                        zipObj.write(filePath, basename(filePath))
-
-                            # close the Zip File
-                            zipObj.close()
-                            os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
-                            shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
-                            self.zipFilePath= params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
+                            self.addToZip(request,dataset_name, variable_name, clipped_dataset)
                         except:
                             self.zipFilePath=None
-                            self.logger.info("TDS URL Exception")
+                            self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                     else:
                         dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,"")
                         keylist = ["Date", "Value"]
@@ -740,12 +568,12 @@ class ZMQCHIRPSHeadProcessor():
                         self.zipFilePath =params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.csv'
                         if os.path.exists(self.zipFilePath):
                             self.__processProgress__(20)
-
                 else:
                     try:
-                        temp_file = os.path.join(params.netCDFpath,
-                                                 request['uniqueid'])  # name for temporary netcdf file
+                        # name for temporary netcdf file
+                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
 
+                        # download netcdf for the polygon geometry and progress will be 20% here
                         if jsonn['features'][0]['geometry']['type'] != "Point":
                             url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'])
                             length = len(urllib.request.urlopen(url).read())
@@ -768,32 +596,27 @@ class ZMQCHIRPSHeadProcessor():
                                 if length:
                                     self.logger.info((size / length) * 20)
                                     self.__processProgress__((size / length) * 20)
-
                         else:
                             self.__processProgress__( 20)
                     except:
-                        self.logger.info("TDS URL Exception")
+                        self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                     dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)
-
 
             # User Selected a Feature
             elif ('layerid' in request):
-                if(params.DEBUG_LIVE == True):
-                    self.logger.info("("+self.name+"):__preProcessIncomingRequest__: DEBUG: LAYERID FOUND (FEATURE SELECTED BY USER)")
-                
                 layerid = request['layerid']
                 featureids = request['featureids']
                 geometries  = sf.getPolygons(layerid, featureids)
 
                 if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
                     try:
-                    # Convert all the geometries to the rounded polygon string, and then pass that through the system
                         polygon_Str_ToPass = geometries
                         url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
                                                          variable_name, geometries)
                         length = len(urllib.request.urlopen(url).read())
                         resp = urllib.request.urlopen(url)
-                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
+                        # name for temporary netcdf file
+                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
 
                         urllib.request.urlretrieve(url, temp_file)
                         if length:
@@ -812,52 +635,22 @@ class ZMQCHIRPSHeadProcessor():
                             size += len(buf1)
                             if length:
                                 self.__processProgress__((size / length) * 20)
+                        # get dataset after mapping geometry
                         clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                     request['endtime'], dataset_name,
                                                                                     variable_name, geometries,opn,temp_file)
-
-                        os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
-                        os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
-                        os.chmod(params.shell_script, 0o777)
-                        clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
-                        os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
-                        t = subprocess.check_output(
-                            params.pythonpath+'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name, shell=True,
-                            text=True)
-                        clipped_dates = t.split()
-                        for i in range(len(clipped_dates)):
-                            self.progress = 20 + 80*((i + 1) / len(clipped_dates))
-                            self.__processProgress__(self.progress)
-                            p = subprocess.check_call(
-                                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-                                 variable_name,
-                                 params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
-                        with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
-                            # Iterate over all the files in directory
-                            for folderName, subfolders, filenames in os.walk(
-                                    params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
-                                for filename in filenames:
-                                    # create complete filepath of file in directory
-                                    filePath = os.path.join(folderName, filename)
-                                    # Add file to zip
-                                    zipObj.write(filePath, basename(filePath))
-
-                        # close the Zip File
-                        zipObj.close()
-                        os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
-                        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
-                        self.zipFilePath = params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
+                        self.addToZip(request, dataset_name, variable_name, clipped_dataset)
                     except:
                         self.zipFilePath=None
-                        self.logger.info("TDS URL Exception")
+                        self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                 else:
                     try:
                         url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
                                                          variable_name, geometries)
                         length = len(urllib.request.urlopen(url).read())
                         resp = urllib.request.urlopen(url)
-                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])  # name for temporary netcdf file
-
+                        # name for temporary netcdf file
+                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
                         urllib.request.urlretrieve(url, temp_file)
                         if length:
                             length = int(length)
@@ -878,17 +671,17 @@ class ZMQCHIRPSHeadProcessor():
                                 self.__processProgress__((size / length) * 20)
 
                     except:
-                        self.logger.info("TDS URL Exception")
+                        self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                     dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'],
                                                                      dataset_name, variable_name,
                                                                      geometries, opn, temp_file)
 
             current_mask_and_storage_uuid = uniqueid
             worklist = []
+
+            # Finalize the worklist to be returned based on the operation
             if (self.dj_OperationName != "download"):
-
                 for dateIndex in range(len(dates)):
-
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
                     workdict = {"uid":uniqueid, "current_mask_and_storage_uuid":current_mask_and_storage_uuid, "workid":workid,"datatype":datatype,"operationtype":operationtype, "intervaltype":intervaltype, "polygon_Str_ToPass":polygon_Str_ToPass, "derived_product": False}
@@ -911,10 +704,9 @@ class ZMQCHIRPSHeadProcessor():
                     workdict = {'uid': uniqueid, 'workid': workid, 'current_mask_and_storage_uuid': uniqueid,
                                 'intervaltype': intervaltype, 'datatype': datatype, 'operationtype': operationtype,
                                 'polygon_Str_ToPass': polygon_Str_ToPass, 'derived_product': False,
-                                'value': {opn: self.zipFilePath}}  # 'geometryToClip':geometry_ToPass}
+                                'value': {opn: self.zipFilePath}}
                     worklist.extend([workdict])
                 else:
-                    self.logger.info("Noneeeee")
                     return "download_error", []
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['begintime']: " + str(begintime))
             self.logger.info("(" + self.name + "):__preProcessIncomingRequest__ : request['endtime']: " + str(endtime))
@@ -923,37 +715,27 @@ class ZMQCHIRPSHeadProcessor():
         except Exception as e:
             self.logger.warning("("+self.name+"):Error processing Request in HeadProcessor: uniqueid: "+str(uniqueid)+" Exception Error Message: "+str(e))
             return e,None
-        
+
+    # To update progress corresponding to uniqueid to the database
     def __processProgress__(self, progress):
-        self.__updateProgressDb__(self.request['uniqueid'],progress)
-        
+        log = reqLog.Request_Progress.objects.get(request_id=self.request['uniqueid'])
+        log.progress = progress
+        log.save()
+
+    # To write results of the dataset request to a file with uniqueid
     def __outputData__(self):
         self.logger.info("outputting data for "+self.request['uniqueid'])
         output = {'data':self.finished_items}
         self.__writeResults__(self.request['uniqueid'], output)
 
+    # To write results of the monthly analysis request to a file with uniqueid
     def __outputDataForMonthlyAnalysis__(self):
-        # This is the place where we KNOW the worklist is completed, and now we can do the derived product info on it.
-        # Then we can output a specifically formatted array of objects that the client is ready to graph.
-        # TODO! Right here, formout final output for derived product!
-        #derived_product_output_list = [{"testObjectKey":"testObjectValue_TODO_FINISH_THIS_CODE"}]
         derived_product_output = analysisTools.get_output_for_MonthlyRainfallAnalysis_from(self.finished_items)
-        # So in short, we want to do something like this.
-        # derived_product_output_list = AnalysisTools.get_output_for_MonthlyAnalysis(self.finished_items)
-        #
-        # Debug, testing to see what one item from 'self.finished_items' looks like
-        self.logger.info("Example of: self.finished_items[0]: " + str(self.finished_items[0]) )
-
         self.logger.info("outputting data for "+self.request['uniqueid'])
-
-        # FOR TESTING (Outputs Raw Data AND MonthlyAnalysisChart data)
         output = {'data':self.finished_items, 'MonthlyAnalysisOutput': derived_product_output}
-
-        # FOR PRODUCTION (Only outputs the stuff we need for the MonthlyAnalysisChart)
-        #output = {'MonthlyAnalysisOutput': derived_product_output}
-
         self.__writeResults__(self.request['uniqueid'], output)
-        
+
+    # To log any errors
     def __processErrors__(self, errors):
         self.logger.info("Errors  ",errors)
         

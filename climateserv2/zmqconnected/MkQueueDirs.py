@@ -1,8 +1,3 @@
-'''
-Created on Feb 13, 2015
-
-@author: jeburks
-'''
 import os
 
 def makeFilePath(dir,filename):

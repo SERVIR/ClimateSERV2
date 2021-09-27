@@ -2,9 +2,11 @@ isDebug = True
 isDev = False
 import sys
 import os
+
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
 try:
     import climateserv2.parameters_ops as params
 except:
@@ -37,66 +39,16 @@ nmme_ccsm4_path=params.nmme_ccsm4_path
 
 resultsdir = params.resultsdir
 
+# To get the file name wth unique id
 def getResultsFilename(id):
-    '''
-
-    :param id:
-    '''
     filename = resultsdir + id + ".txt"
     return filename
 
-##This allows quick slicing of the grid using indexes
+# This allows quick slicing of the grid using indexes
 def getFilename(dataType, year):
-    '''
-
-    :param dataType:
-    :param year:
-    '''
     return dataTypes[int(dataType)]['directory'] + str(year) + '.np'
 
-
-def getHDFFilename(dataType, year):
-    '''
-
-    :param dataType:
-    :param year:
-    '''
-    return dataTypes[int(dataType)]['directory'] + str(year) + '.hdf'
-
-
-def getFillValue(dataType):
-    '''
-
-    :param dataType:
-    '''
-    return dataTypes[int(dataType)]['fillValue']
-
-
-def getGridDimension(dataType):
-    '''
-
-    :param dataType:
-    '''
-    return dataTypes[int(dataType)]['size']
-
-
-# Get a list of all datatypesnumbers by their data_category property
-def get_DataTypeNumber_List_By_DataCategory(dataCateogrySearchValue):
-    resultList = []
-    try:
-        for currentDataType in params.dataTypes:
-            try:
-                current_DataCategory = currentDataType['data_category']
-                if str(current_DataCategory).lower() == str(dataCateogrySearchValue).lower():
-                    resultList.append(currentDataType['number'])
-            except:
-                pass
-    except:
-        pass
-    return resultList
-
-
-# Get a list of all datatypesnumbers by a custom property    ("data_category", "climatemodel")
+# To get a list of all datatypes numbers by a custom property
 def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
     resultList = []
     try:
@@ -106,15 +58,12 @@ def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
                 if str(current_PropValue).lower() == str(propertySearchValue).lower():
                     resultList.append(currentDataType['number'])
             except:
-                # Usually the datatype object is missing the property (not all datatypes have all properties)
                 pass
     except:
-        # Something in the whole loop broke
         pass
     return resultList
 
-
-# Get a list of unique ensembles
+# To get a list of unique ensembles
 def get_ClimateEnsemble_List():
     resultList = []
     try:
@@ -131,16 +80,11 @@ def get_ClimateEnsemble_List():
     resultList = list(tempSet)
     return resultList
 
-
-
-
-# Get Climate Datatype Map (A list of objects that contains a unique ensemble name and a list of variables for that ensemble)
+# To get Climate Datatype Map (A list of objects that contains a unique ensemble name and a list of variables for that ensemble)
 def get_Climate_DatatypeMap():
     resultList = []
-
     # Get the list of ensembles
     ensembleList = get_ClimateEnsemble_List()
-
     # Iterate through each ensemble
     for currentEnsemble in ensembleList:
         currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
@@ -159,7 +103,7 @@ def get_Climate_DatatypeMap():
             }
             currentEnsembleObject_List.append(ensembleVariableObject)
 
-        # Create an object that connects the current ensemble to the list of objects that map the variable with datatype number
+        # An object that connects the current ensemble to the list of objects that map the variable with datatype number
         currentEnsembleObject = {
             "climate_Ensemble": currentEnsemble,
             "climate_DataTypes": currentEnsembleObject_List
@@ -167,28 +111,3 @@ def get_Climate_DatatypeMap():
         resultList.append(currentEnsembleObject)
 
     return resultList
-
-# We have some of the data hardcoded in here as a fallback in
-def get_HC_Fallback_ClimateCapabilities_Object():
-    hardcoded_Capabilities_Object = {
-        '11': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens03 Precipitation", "description": "Climate Change Scenario: ens03 Variable: Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens03"}',
-        '24': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens10 Temperature", "description": "Climate Change Scenario: ens10 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens10"}',
-        '13': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens04 Precipitation", "description": "Climate Change Scenario: ens04 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens04"}',
-        '12': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens04 Temperature", "description": "Climate Change Scenario: ens04 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens04"}',
-        '15': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens05 Precipitation", "description": "Climate Change Scenario: ens05 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens05"}',
-        '14': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens05 Temperature", "description": "Climate Change Scenario: ens05 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens05"}',
-        '17': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens06 Precipitation", "description": "Climate Change Scenario: ens06 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens06"}',
-        '23': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens09 Precipitation", "description": "Climate Change Scenario: ens09 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens09"}',
-        '19': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens07 Precipitation", "description": "Climate Change Scenario: ens07 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens07"}',
-        '18': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens07 Temperature", "description": "Climate Change Scenario: ens07 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens07"}',
-        '16': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens06 Temperature", "description": "Climate Change Scenario: ens06 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens06"}',
-        '22': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens09 Temperature", "description": "Climate Change Scenario: ens09 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens09"}',
-        '21': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens08 Precipitation", "description": "Climate Change Scenario: ens08 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens08"}',
-        '20': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens08 Temperature", "description": "Climate Change Scenario: ens08 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens08"}',
-        '25': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens10 Precipitation", "description": "Climate Change Scenario: ens10 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens10"}',
-        '7': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens01 Precipitation", "description": "Climate Change Scenario: ens01 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens01"}',
-        '6': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens01 Temperature", "description": "Climate Change Scenario: ens01 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens01"}',
-        '9': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "prcp", "variable_Label": "Precipitation", "size": [720, 360], "name": "Climate Change Scenario: ens02 Precipitation", "description": "Climate Change Scenario: ens02 Precipitation", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens02"}',
-        '8': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens02 Temperature", "description": "Climate Change Scenario: ens02 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens02"}',
-        '10': '{"fillValue": -9999.0, "projection": "GEOGCS[\\"WGS 84\\",DATUM[\\"WGS_1984\\",SPHEROID[\\"WGS 84\\",6378137,298.257223563,AUTHORITY[\\"EPSG\\",\\"7030\\"]],AUTHORITY[\\"EPSG\\",\\"6326\\"]],PRIMEM[\\"Greenwich\\",0],UNIT[\\"degree\\",0.0174532925199433],AUTHORITY[\\"EPSG\\",\\"4326\\"]]", "startDateTime": "2015_10_01", "grid": [0.0, 0.5, 0.0, 90.0, 0.0, -0.5], "variable": "tref", "variable_Label": "Temperature", "size": [720, 360], "name": "Climate Change Scenario: ens03 Temperature", "description": "Climate Change Scenario: ens03 Temperature", "endDateTime": "2016_03_29", "date_FormatString_For_ForecastRange": "%Y_%m_%d", "data_category": "ClimateModel", "number_Of_ForecastDays": 180, "ensemble": "ens03"}'}
-    return hardcoded_Capabilities_Object

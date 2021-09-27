@@ -1,6 +1,7 @@
 import os
 import sys
 
+# To assign permissions to a file
 def makeFileGroupReadable(filename):
     print("Changing Permissions:",filename)
     os.chmod(filename,0o0766)

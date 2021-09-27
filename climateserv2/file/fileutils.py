@@ -1,23 +1,27 @@
 import fileinput
 import os
 import sys
+
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
+
 try:
     import climateserv2.parameters as params
 except:
     import parameters as params
 
+# To read a file and return contents
 def readFile(filename):
     output = "";
     for line in fileinput.input(filename):
         output = output+line
     return output
 
+# To create directories if those do not exist
 def makeParamsFilePaths():
     if not os.path.exists(params.workpath):
         makePath(params.workpath)
@@ -34,7 +38,7 @@ def makeParamsFilePaths():
     if not os.path.exists(params.serviringestroot):
         makePath(params.serviringestroot)
 
-
+# To create paths and files if those did not exist
 def makeFilePath(dirLoc,filename):
     str = "/"
     pathToFile = str.join([dirLoc,filename])
@@ -46,14 +50,12 @@ def makeFilePath(dirLoc,filename):
         f.close()
     else:
         print(pathToFile+" already exists ")
-    
+
+# To make directory if it did not exist
 def makePath(dirLoc):
     if not os.path.exists(dirLoc):
         print("Making dir: "+dirLoc)
         os.makedirs(dirLoc)
-     
-
-
 
 if __name__ == '__main__':
     if (len(sys.argv) ==3):

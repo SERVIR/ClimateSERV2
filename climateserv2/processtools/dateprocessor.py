@@ -1,72 +1,47 @@
 from datetime import date
+import time
+import logging
+
 try:
     import climateserv2.parameters as params
 except:
     import parameters as params
-import time
-import logging
-import math
+
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
+# To check if day, month, year form a valid date
 def checkDayValid(day,month,year):
-    '''
-    
-    :param day:
-    :param month:
-    :param year:
-    '''
     try:
         value= date(year,month,day)
         return True
     except ValueError:
         return False
-    
+
+# To create a list based on a range of months in an year
 def createListMonthPlusYear(beginmonth,endmonth,year):
-    '''
-    
-    :param beginmonth:
-    :param endmonth:
-    :param year:
-    '''
     list=[]
     for x in range(beginmonth,endmonth+1):
         list.extend([[x,year]])
     return list
 
+# To create a list based on a range of days in a month of an year
 def createListDayPlusMonthYear(beginday,endday,month, year):
-    '''
-    
-    :param beginday:
-    :param endday:
-    :param month:
-    :param year:
-    '''
     list=[]
     for x in range(beginday,endday+1):
         if (checkDayValid(x,month,year)):
             list.extend([[x,month,year]])
     return list
 
+# To get list of years based on a range
 def getListOfYears(beginyear,endyear):
-    '''
-    
-    :param beginyear:
-    :param endyear:
-    '''
     return range(beginyear,endyear+1)
 
+# To get list of months based on start month/year and end month/year
 def getListOfMonths(beginmonthyear,endmonthyear):
-    '''
-    
-    :param beginmonthyear:
-    :param endmonthyear:
-    '''
     years = getListOfYears(beginmonthyear[1],endmonthyear[1])
     firstyear = list(years).pop(0)
-
-
     output = []
     if (len(years)==0):
         item = createListMonthPlusYear(beginmonthyear[0],endmonthyear[0],firstyear)
@@ -82,20 +57,13 @@ def getListOfMonths(beginmonthyear,endmonthyear):
         item3 = createListMonthPlusYear(1,endmonthyear[0],lastyear)
         output.extend(item3)
         return output
-    
+
+# To get list of days based on start day/month/year and end day/month/year
 def getListOfDays(begindaymonthyear,enddaymonthyear):
-    '''
-    
-    :param begindaymonthyear:
-    :param enddaymonthyear:
-    '''
-    days=[]
     try:
         listofmonths = getListOfMonths([begindaymonthyear[1],begindaymonthyear[2]],[enddaymonthyear[1],enddaymonthyear[2]])
-
         firstmonth = list(listofmonths).pop(0)
     except:
-        print("from pofpdo")
         print(listofmonths)
     if (len(listofmonths) ==0) :
         lastmonth = firstmonth                
@@ -116,15 +84,10 @@ def getListOfDays(begindaymonthyear,enddaymonthyear):
         output.extend(item3)
         return output
 
+# To get date based on a date string and interval type
 def breakApartDate(datestring,intervaltype):
-    '''
-    
-    :param datestring:
-    :param intervaltype:
-    '''
     interval = params.intervals[0]
     timedecoded = time.strptime(datestring, interval['pattern'])
-    #logger.debug(timedecoded)
     if (intervaltype == 0):
         return [timedecoded[2],timedecoded[1],timedecoded[0]]
     elif (intervaltype ==1):
@@ -132,12 +95,8 @@ def breakApartDate(datestring,intervaltype):
     elif (intervaltype ==2):
         return [timedecoded[0]]
 
+# to get list of times based on range of dates and interval type
 def getListOfTimes(beginstring,endstring,intervaltype):
-    '''
-    :param beginstring:
-    :param endstring:
-    :param intervaltype:
-    '''
     startDate = breakApartDate(beginstring,intervaltype)
     endDate = breakApartDate(endstring,intervaltype)
     if (intervaltype == 0):

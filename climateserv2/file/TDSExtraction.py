@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 import geopandas as gpd
-import urllib
 import numpy as np
 import os
 import xarray as xr
@@ -11,86 +10,85 @@ from shapely.geometry import mapping
 try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.parameters as params
-
 except:
     import locallog.locallogging as llog
     import parameters as params
+
 logger=llog.getNamedLogger("request_processor")
-lat, lon = 0, 0
+
+# To retrieve the THREDDS URL to download netcdf file corresponding to the dataset, variable, dates and geometry
 def get_tds_request(start_date, end_date, dataset, variable, geom):
+    tds_request=""
     jsonn = json.loads(str(geom))
+    # add properties to geometry json if it did not exist
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
-    json_aoi = json.dumps(jsonn)
-    try:
-        # aoi = gpd.GeoDataFrame.from_features(json_aoi, crs="EPSG:4326")
-        aoi = gpd.read_file(json_aoi)  # using geopandas to get the bounds
-    except Exception as e:
-        logger.info(e)
+    # Convert dates to %Y-%m-%d format for THREDDS URL
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
         start_date = datetime.strftime(st, '%Y-%m-%d')
         end_date = datetime.strftime(et, '%Y-%m-%d')
     except:
-        start_date = start_date
-        end_date = end_date
+        # If there is an exception with date format while converting, we can just ignore the conversion and use the passed dates
+        pass
+
+    # THREDDS URL takes latitude and longitude for a point and bounds for a polygon
     if jsonn['features'][0]['geometry']['type'] == "Point":
-        count = 9
         coords = jsonn['features'][0]['geometry']['coordinates']
         lat, lon = coords[0], coords[1]
         tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&latitude=" + str(
             lat) + "&longitude=" + str(
             lon) + "&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&accept=netcdf"
-        logger.info(tds_request)
-        #tds_request ='http://thredds.servirglobal.net/thredds/dodsC/Agg/ucsb-chirps_global_0.05deg_daily.nc4'
     else:
-        # The netcdf files use a global lat/lon so adjust values accordingly
-        east = aoi.total_bounds[2]
-        south = aoi.total_bounds[1]
-        west = aoi.total_bounds[0]
-        north = aoi.total_bounds[3]
-        # Extracting data from TDS and making local copy
-        tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
-            north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
-            south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
+        try:
+            json_aoi = json.dumps(jsonn)
+            # Using geopandas to get the bounds
+            aoi = gpd.read_file(json_aoi)
+            east = aoi.total_bounds[2]
+            south = aoi.total_bounds[1]
+            west = aoi.total_bounds[0]
+            north = aoi.total_bounds[3]
+
+            tds_request = "http://thredds.servirglobal.net/thredds/ncss/Agg/" + dataset + "?var=" + variable + "&north=" + str(
+                north) + "&west=" + str(west) + "&east=" + str(east) + "&south=" + str(
+                south) + "&disableProjSubset=on&horizStride=1&time_start=" + start_date + "T00%3A00%3A00Z&time_end=" + end_date + "T00%3A00%3A00Z&timeStride=1"
+        except Exception as e:
+            logger.info(e)
     return tds_request
 
+# To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_aggregated_values(start_date, end_date, dataset, variable, geom, operation, temp_file):
+    # Convert dates to %Y-%m-%d format for THREDDS URL
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
         start_date = datetime.strftime(st, '%Y-%m-%d')
         end_date = datetime.strftime(et, '%Y-%m-%d')
     except:
-        start_date = start_date
-        end_date = end_date
+        # If there is an exception with date format while converting, we can just ignore the conversion and use the passed dates
+        pass
     jsonn =json.loads(str(geom))
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
-    json_aoi=json.dumps(jsonn)
+
+    # If the geometry is not a point, map the area of interest to the netCDF and extract values
+    # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
     if jsonn['features'][0]['geometry']['type']!="Point" and os.path.exists(temp_file):
-
-        xds = xr.open_dataset(temp_file)  # using xarray to open the temporary netcdf
-
+        # using xarray to open the temporary netcdf
+        xds = xr.open_dataset(temp_file)
         xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
-
         xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-
         xds.rio.write_crs("EPSG:4326", inplace=True)
 
+        # get the dataset clipped to the area of interest using geopandas and xarray
+        json_aoi = json.dumps(jsonn)
         geodf = gpd.read_file(json_aoi)
-
         clipped_dataset = xds.rio.clip(geodf.geometry.apply(mapping), geodf.crs)
 
-        time_var = xds[[variable]].time
-        new_data = []
-
-        for x in time_var:
-            temp = pd.Timestamp(np.datetime64(x.time.values)).to_pydatetime()
-            new_data.append(temp.strftime("%Y-%m-%d"))
+        # Get dates and values based on the operation (min/max/average). Download operation returns the dataset itself.
         if operation == "min":
             min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
             dates = []
@@ -120,23 +118,30 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             coords = jsonn['features'][0]['geometry']['coordinates']
             lon, lat = coords[0], coords[1]
             ds=xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/'+dataset)
+
+            # get the dataset that has sliced data based on dates and geometry
             point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+
             dates=point.time.dt.strftime("%Y-%m-%d").values.tolist()
+
+            # min/max/avg return same values for a point geometry
+            values=np.array(point.values)
+            values = values[values != -999.0]
         except Exception as e:
             logger.info(e)
-        values=np.array(point.values)
-        values = values[values != -999.0]
         if len(values)==0:
             return [],[]
         return dates, values
     else:
         return [],[],[]
 
+    # delete temporary netCDF file on server if flag is set to True
     if params.deletetempnetcdf == True and os.path.exists(temp_file):
-        os.remove(temp_file)  # delete temporary file on server
+        os.remove(temp_file)
 
+# To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
+# Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
 def get_chirps_climatology(month_nums):
-    vals = []
     basepath='http://thredds.servirglobal.net/thredds/dodsC/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology'
     ext='.nc4'
     ds = xr.open_dataset(basepath + ext)
@@ -152,13 +157,16 @@ def get_chirps_climatology(month_nums):
               list(value[month_nums[4] - 1]), list(value[month_nums[5] - 1])]
     return resarr
 
+# To retrieve NMME data from start date of the netCDF to 180 days from start date
+# Requires bounds of the geometry to get the data from CCSM4 and CFSV2 sensor files.
+# Uses first five ensembles from both sensors
 def get_nmme_data(total_bounds):
     lon1, lat1, lon2, lat2 = total_bounds
-    numEns = 5  # set number of ensembles to use from each dataset.
+    # set number of ensembles to use from each dataset.
+    numEns = 5
     ccsm4 = []
     cfsv2 = []
     for iens in np.arange(numEns):
-
         ccsm4.append(xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
             longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
                                                                                  axis=0))
@@ -167,34 +175,41 @@ def get_nmme_data(total_bounds):
                                                                                  axis=0))
     cfsv2 = xr.merge(cfsv2)
     ccsm4 = xr.merge(ccsm4)
+
+    # Combine the files from CCSM4 and CSFV2 sensors
     combined=xr.concat([ccsm4,cfsv2.assign_coords(ensemble=cfsv2.ensemble+5) ],dim='ensemble')
+
+    # Retrieves the avg values of precipitation
     return combined.precipitation.resample(time='1M',label='left',loffset='1D').sum().mean(dim=['ensemble','latitude','longitude']).values
 
-def get_season_values( type, geom, uniqueid):
-
+# To retrieve months list and data of CHIRPS/NMME for Monthly Analysis
+def get_season_values(type, geom):
+    # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4')
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
     ed = datetime.strptime(start_date,'%Y-%m-%d') +  timedelta(days = 180)
     end_date = ed.strftime('%Y-%m-%d')
+
     month_list = [i.strftime("%Y-%m-%d") for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
     month_nums =[int(i.strftime("%m")) for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
-    jsonn = json.loads(str(geom))
-    for x in range(len(jsonn["features"])):
-        if "properties" not in jsonn["features"][x]:
-            jsonn["features"][x]["properties"] = {}
-    json_aoi = json.dumps(jsonn)
+
     try:
-        # aoi = gpd.GeoDataFrame.from_features(json_aoi, crs="EPSG:4326")
-        aoi = gpd.read_file(json_aoi)  # using geopandas to get the bounds
+        # add properties to geometry json if it did not exist
+        jsonn = json.loads(str(geom))
+        for x in range(len(jsonn["features"])):
+            if "properties" not in jsonn["features"][x]:
+                jsonn["features"][x]["properties"] = {}
+        json_aoi = json.dumps(jsonn)
+        # using geopandas to get the bounds
+        aoi = gpd.read_file(json_aoi)
+
+        # Get CHIRPS 40 year historical data and NMME 180 day forecast
+        if type== "chirps":
+            data = get_chirps_climatology(month_nums)
+        elif type == "nmme":
+            data = get_nmme_data(aoi.total_bounds)
     except Exception as e:
         logger.info(e)
-    if type== "chirps":
-        data = get_chirps_climatology(month_nums)
-        logger.info(data)
-    elif type == "nmme":
-        data = get_nmme_data(aoi.total_bounds)
-        logger.info(data)
-    logger.info(month_list)
     return month_list,data
