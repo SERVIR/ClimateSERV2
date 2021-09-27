@@ -73,8 +73,8 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
                 tif_filepath_list = response.text.split()
                 for tif_filepath in tif_filepath_list:
                     tif_filename = tif_filepath.split('/')[-1]
-                    tfw_filename = tif_filename.replace('.tif', '.tfw')
-                    tfw_filepath = tif_filepath.replace('.tif', '.tfw')
+                    # tfw_filename = tif_filename.replace('.tif', '.tfw')
+                    # tfw_filepath = tif_filepath.replace('.tif', '.tfw')
                     current_day = tif_filename.split('.')[4][6:8]
                     if self.DD__Day__Start < int(current_day) > self.DD__Day__End:
                         continue
@@ -95,13 +95,13 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
                         'local_extract_path': self.temp_working_dir,
                         'local_final_load_path': final_load_dir_path,
                         'tif_filename': tif_filename,
-                        'tfw_filename': tfw_filename,
+                        # 'tfw_filename': tfw_filename,
                         'final_nc4_filename': final_nc4_filename,
                         'granule_name': final_nc4_filename,
                         'remote_full_filepath_tif': urllib.parse.urljoin(self.current_root_http_path, tif_filepath),
-                        'remote_full_filepath_tfw': urllib.parse.urljoin(self.current_root_http_path, tfw_filepath),
+                        # 'remote_full_filepath_tfw': urllib.parse.urljoin(self.current_root_http_path, tfw_filepath),
                         'local_full_filepath_tif': os.path.join(self.temp_working_dir, tif_filename),
-                        'local_full_filepath_tfw': os.path.join(self.temp_working_dir, tfw_filename),
+                        # 'local_full_filepath_tfw': os.path.join(self.temp_working_dir, tfw_filename),
                         'local_full_filepath_final_nc4_file': os.path.join(final_load_dir_path, final_nc4_filename)
                     }
 
@@ -204,9 +204,11 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
 
                 # Current Granule to download
                 remote_full_filepath_tif = expected_granule['remote_full_filepath_tif']
-                remote_full_filepath_tfw = expected_granule['remote_full_filepath_tfw']
+                # remote_full_filepath_tfw = expected_granule['remote_full_filepath_tfw']
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
-                local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
+                # local_full_filepath_tfw     = expected_granule['local_full_filepath_tfw']
+
+                print(remote_full_filepath_tif)
 
                 # Download the file - Actually do the download now
                 try:
@@ -218,9 +220,9 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
                     r = session.get(remote_full_filepath_tif)
                     with open(local_full_filepath_tif, 'wb') as outfile:
                         outfile.write(r.content)
-                    r = session.get(remote_full_filepath_tfw)
-                    with open(local_full_filepath_tfw, 'wb') as outfile:
-                        outfile.write(r.content)
+                    # r = session.get(remote_full_filepath_tfw)
+                    # with open(local_full_filepath_tfw, 'wb') as outfile:
+                    #     outfile.write(r.content)
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -323,8 +325,9 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
                     hhmmss = time_string[1]
 
                     # Determine the timestamp for the data.
-                    start_time = datetime.datetime.strptime(yyyymmdd + hhmmss, '%Y%m%dS%H%M%S')
-                    end_time = start_time + pd.Timedelta(minutes=29) + pd.Timedelta(seconds=59)  # 4 weeks (i.e. 28 days)
+                    start_time = datetime.datetime.strptime(yyyymmdd + 'S000000', '%Y%m%dS%H%M%S')
+                    middle_time = datetime.datetime.strptime(yyyymmdd + 'S120000', '%Y%m%dS%H%M%S')
+                    end_time = start_time + pd.Timedelta(hours=23) + pd.Timedelta(minutes=59) + pd.Timedelta(seconds=59)
 
                     # print("D")
 
@@ -341,7 +344,7 @@ class ETL_Dataset_Subtype_IMERG_1DAY(ETL_Dataset_Subtype_Interface):
                     ds = ds.isel(band=0).reset_coords('band', drop=True)
                     # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
-                    ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=middle_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
                     ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset.
