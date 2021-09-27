@@ -196,6 +196,7 @@ def get_season_values(type, geom):
     month_nums =[int(i.strftime("%m")) for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
 
     try:
+        print("get_season_values - TRY")
         # add properties to geometry json if it did not exist
         jsonn = json.loads(str(geom))
         for x in range(len(jsonn["features"])):

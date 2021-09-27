@@ -41,8 +41,8 @@ def getDatesAndValues(type,request):
         layerid = request['layerid']
         featureids = request['featureids']
         polygon_Str_ToPass = sf.getPolygons(layerid, featureids)
-    polygon_Str_ToPass, dates, values = GetTDSData.get_season_values(type, polygon_Str_ToPass)
-    return dates, values
+    dates, values = GetTDSData.get_season_values(type, polygon_Str_ToPass)
+    return polygon_Str_ToPass,dates, values
 
 # To retrieve CHIRPS data for monthly analysis
 def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):

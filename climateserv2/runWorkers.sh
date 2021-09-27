@@ -15,7 +15,6 @@ export PYTHONPATH=${PYTHONPATH}:${rootdir}
 
 launch() {
 	echo 'python: ' + $python
-	$python db/DBMDbprocessing.py
 	$python file/fileutils.py /cserv2/tmp/servir/Q1 input
 	
 	$python file/fileutils.py /cserv2/tmp/servir/Q1 output

@@ -1218,7 +1218,7 @@ function sendRequest() {
         formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
         formData.append("intervaltype", 0);
         formData.append("operationtype", $("#operationmenu").val());
-        formData.append("dateType_Category", "default");
+        formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
         formData.append("isZip_CurrentDataType", false);
         if (highlightedIDs.length > 0) {
             formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
@@ -1296,8 +1296,8 @@ function sendRequest() {
         }
 
 
-        const csi = JSON.parse(climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities);
-        let url = api_url + "/api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
+        const csi = climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities;
+        let url = "api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
         url += "seasonal_start_date=" + csi.startDateTime;
         url += "&seasonal_end_date=" + csi.endDateTime;
         url += geometry_params;
@@ -1405,7 +1405,7 @@ function pollForProgress(id, isClimate) {
         }
     });
 }
-
+let debugjson;
 
 function handleSourceSelected(which) {
     which = which.toString();
@@ -1439,7 +1439,7 @@ function handleSourceSelected(which) {
 
 
         $.ajax({
-            url: api_url + "/api/getClimateScenarioInfo/" +
+            url: "api/getClimateScenarioInfo/" +
                 id,
             type: "GET",
             async: true,
@@ -1450,14 +1450,15 @@ function handleSourceSelected(which) {
             if (sdata.errMsg) {
                 console.info(sdata.errMsg);
             } else {
+                debugjson = sdata;
                 const data = JSON.parse(sdata);
-                const cc = JSON.parse(data.climate_DataTypeCapabilities[0].current_Capabilities);
+                const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
                 cc.startDateTime;
 
-                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replace("_", "/").substr(0, cc.startDateTime.lastIndexOf("_")) + '</option>');
+                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
 
                 // create date dropdowns
-                mformat = cc.date_FormatString_For_ForecastRange.replace("%Y", "YYYY").replace("%m", "MM").replace("%d", "DD")
+                const mformat = "YYYY-MM-DD"
                 let sdate = moment(cc.startDateTime, mformat);
                 let edate = moment(cc.endDateTime, mformat);
                 let count = 1;
@@ -1466,7 +1467,7 @@ function handleSourceSelected(which) {
                 $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
 
                 do {
-                    console.log("f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD'));
+                   // console.log("f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD'));
 
                     $("#forecastfrommenu")
                         .append
@@ -1560,11 +1561,11 @@ function open_previous_chart(){
 
 function getIndex(which) {
     switch (which) {
-        case 'LongTermAverage':
+        case 'col02_MonthlyAverage':
             return 0;
-        case 'SeasonalFcstAvg':
+        case 'col05_50thPercentile':
             return 1;
-        case '25thPercentile':
+        case 'col03_25thPercentile':
             return 2;
         default:
             return 3;
@@ -1649,7 +1650,8 @@ function getDataFromRequest(id, isClimate) {
             console.info(data.errMsg);
         } else {
             if (isClimate) {
-                const graph_obj = build_MonthlyRainFall_Analysis_Graphable_Object(JSON.parse(data));
+
+                const graph_obj = JSON.parse(data).MonthlyAnalysisOutput.avg_percentiles_dataLines;
                 // i will have to make an array of objects that look like
                 /*
                 seriesOptions[i] = {
@@ -1678,11 +1680,30 @@ function getDataFromRequest(id, isClimate) {
                 const xaxis = {
                     categories: []
                 }
-                graph_obj.forEach(o => {
-                    if (!xaxis.categories.includes(o.Month_Year)) {
-                        xaxis.categories.push(o.Month_Year);
+                let start_month = 13;
+                graph_obj.forEach((o, i) => {
+                    let month_year;
+                    //new Date().getFullYear()
+                    if (i === 0) {
+                        start_month = parseInt(o.col01_Month);
+                        month_year = o.col01_Month + "-" + new Date().getFullYear();
+                    } else {
+                        if (start_month < parseInt(o.col01_Month)) {
+                            month_year = o.col01_Month + "-" + new Date().getFullYear();
+                        } else {
+                            const date = new Date();
+                            date.setFullYear(date.getFullYear() + 1);
+                            month_year = o.col01_Month + "-" + date.getFullYear();
+                        }
                     }
-                    rainfall_data[getIndex(o.data_series_type)].data.push(o.Monthly_Rainfall_mm);
+                    if (!xaxis.categories.includes(month_year)) {
+                        xaxis.categories.push(month_year);
+                    }
+
+                    rainfall_data[0].data.push(Number.parseFloat(o.col02_MonthlyAverage));
+                    rainfall_data[1].data.push(Number.parseFloat(o.col05_50thPercentile));
+                    rainfall_data[2].data.push(Number.parseFloat(o.col03_25thPercentile));
+                    rainfall_data[3].data.push(Number.parseFloat(o.col04_75thPercentile));
 
                 });
                 inti_chart_dialog();
@@ -1855,10 +1876,12 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     chart_obj.chart = {
         events: {
             redraw: function (e) {
-                img.translate(
-                    this.chartWidth - originalWidth,
-                    this.chartHeight - originalHeight
-                );
+                try {
+                    img.translate(
+                        this.chartWidth - originalWidth,
+                        this.chartHeight - originalHeight
+                    );
+                } catch(e){}
             }
         }
     };
@@ -1963,7 +1986,7 @@ let climateModelInfo;
 function getClimateScenarioInfo() {
 
     $.ajax({
-        url: "https://climateserv.servirglobal.net/chirps/getClimateScenarioInfo/",
+        url: "api/getClimateScenarioInfo/",
         type: "GET",
         async: true,
         crossDomain: true
