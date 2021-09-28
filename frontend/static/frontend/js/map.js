@@ -1153,6 +1153,15 @@ function collect_review_data() {
     } else {
         $("#geometry").text('{"type":"FeatureCollection","features":[]}');
     }
+    if($("#geometry").text().indexOf("Point") > -1){
+        $("#operation_max").hide();
+        $("#operation_min").hide();
+        $("#operation_average").text("Timeseries");
+    } else {
+        $("#operation_max").show();
+        $("#operation_min").show();
+        $("#operation_average").text("Average");
+    }
 }
 
 function getEnsDataType() {
