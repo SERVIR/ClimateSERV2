@@ -1183,6 +1183,9 @@ function handle_initial_request_data(data, isClimate) {
                                $('#dialog').dialog('close');
                             })
                         },
+        close: function(event, ui){
+            clearTimeout(polling_timeout);
+        },
         position: {
             my: "center",
             at: "center",
@@ -1193,6 +1196,7 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
+    clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
@@ -1328,6 +1332,8 @@ function updateProgress(val) {
     $("#txtpercent").text(parseInt(val) + '%');
 }
 
+let polling_timeout;
+
 function pollForProgress(id, isClimate) {
     $.ajax({
         url: "/api/getDataRequestProgress/?id=" +
@@ -1345,7 +1351,7 @@ function pollForProgress(id, isClimate) {
             if (val !== -1 && val !== 100) {
                 retries = 0;
                 updateProgress(val);
-                setTimeout(function () {
+                polling_timeout = setTimeout(function () {
                     pollForProgress(id, isClimate);
                 }, 500);
 
