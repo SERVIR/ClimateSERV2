@@ -401,7 +401,11 @@ class ZMQCHIRPSHeadProcessor():
         os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
         os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
         os.chmod(params.shell_script, 0o777)
-        clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
+        try:
+            clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
+        except Exception as e:
+            print(str(e))
+
         os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
         t = subprocess.check_output(
             params.pythonpath + 'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
@@ -520,35 +524,13 @@ class ZMQCHIRPSHeadProcessor():
 
                 # processsing based on operation
                 if self.isDownloadJob == True:
-                    # processing based on geometry and update progress to 20%
+                   # processing based on geometry and update progress to 20%
                     if  jsonn['features'][0]['geometry']['type'] != "Point":
                         try:
-                            url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
-                                                             variable_name, request['geometry'])
-                            length = len(urllib.request.urlopen(url).read())
-                            resp = urllib.request.urlopen(url)
-                            # name for temporary netcdf file
-                            temp_file = os.path.join(params.netCDFpath,request['uniqueid'])
-                            urllib.request.urlretrieve(url, temp_file)
-                            if length:
-                                length = int(length)
-                                blocksize = max(1024, length // 100)
-                            else:
-                                blocksize = 1000
-
-                            buf = io.BytesIO()
-                            size = 0
-                            while True:
-                                buf1 = resp.read(blocksize)
-                                if not buf1:
-                                    break
-                                buf.write(buf1)
-                                size += len(buf1)
-                                if length:
-                                    self.__processProgress__((size / length) * 20)
-
+                            self.__processProgress__(20)
                             # Retrieve dataset after mapping the geometry
-                            clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, temp_file)
+                            clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, "")
+                            print('hhhjgh jfghjfhg jfgh')
                             self.addToZip(request,dataset_name, variable_name, clipped_dataset)
                         except:
                             self.zipFilePath=None
@@ -569,38 +551,10 @@ class ZMQCHIRPSHeadProcessor():
                         if os.path.exists(self.zipFilePath):
                             self.__processProgress__(20)
                 else:
-                    try:
-                        # name for temporary netcdf file
-                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
+                    self.__processProgress__( 20)
+                    print("ggg ggg poly")
 
-                        # download netcdf for the polygon geometry and progress will be 20% here
-                        if jsonn['features'][0]['geometry']['type'] != "Point":
-                            url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'])
-                            length = len(urllib.request.urlopen(url).read())
-                            resp = urllib.request.urlopen(url)
-                            urllib.request.urlretrieve(url, temp_file)
-                            if length:
-                                length = int(length)
-                                blocksize = max(1024, length // 100)
-                            else:
-                                blocksize = 1000
-
-                            buf = io.BytesIO()
-                            size = 0
-                            while True:
-                                buf1 = resp.read(blocksize)
-                                if not buf1:
-                                    break
-                                buf.write(buf1)
-                                size += len(buf1)
-                                if length:
-                                    self.logger.info((size / length) * 20)
-                                    self.__processProgress__((size / length) * 20)
-                        else:
-                            self.__processProgress__( 20)
-                    except:
-                        self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
-                    dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,temp_file)
+                    dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,"")
 
             # User Selected a Feature
             elif ('layerid' in request):
@@ -608,79 +562,26 @@ class ZMQCHIRPSHeadProcessor():
                 featureids = request['featureids']
                 geometries  = sf.getPolygons(layerid, featureids)
 
-                if((self.dj_OperationName == "download") | (dataTypeCategory == 'ClimateModel')):
+                if self.isDownloadJob == True:
                     try:
-                        polygon_Str_ToPass = geometries
-                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
-                                                         variable_name, geometries)
-                        length = len(urllib.request.urlopen(url).read())
-                        resp = urllib.request.urlopen(url)
-                        # name for temporary netcdf file
-                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
-
-                        urllib.request.urlretrieve(url, temp_file)
-                        if length:
-                            length = int(length)
-                            blocksize = max(1024, length // 100)
-                        else:
-                            blocksize = 1000
-
-                        buf = io.BytesIO()
-                        size = 0
-                        while True:
-                            buf1 = resp.read(blocksize)
-                            if not buf1:
-                                break
-                            buf.write(buf1)
-                            size += len(buf1)
-                            if length:
-                                self.__processProgress__((size / length) * 20)
+                        self.__processProgress__(20)
                         # get dataset after mapping geometry
                         clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                     request['endtime'], dataset_name,
-                                                                                    variable_name, geometries,opn,temp_file)
+                                                                                    variable_name, geometries,opn,"")
                         self.addToZip(request, dataset_name, variable_name, clipped_dataset)
                     except:
                         self.zipFilePath=None
                         self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                 else:
-                    try:
-                        url = GetTDSData.get_tds_request(request['begintime'], request['endtime'], dataset_name,
-                                                         variable_name, geometries)
-                        length = len(urllib.request.urlopen(url).read())
-                        resp = urllib.request.urlopen(url)
-                        # name for temporary netcdf file
-                        temp_file = os.path.join(params.netCDFpath, request['uniqueid'])
-                        urllib.request.urlretrieve(url, temp_file)
-                        if length:
-                            length = int(length)
-                            blocksize = max(1024, length // 100)
-                        else:
-                            blocksize = 1000
-
-                        buf = io.BytesIO()
-                        size = 0
-                        while True:
-                            buf1 = resp.read(blocksize)
-                            if not buf1:
-                                break
-                            buf.write(buf1)
-                            size += len(buf1)
-                            if length:
-                                self.logger.info((size / length) * 20)
-                                self.__processProgress__((size / length) * 20)
-
-                    except:
-                        self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
-                    dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'],
-                                                                     dataset_name, variable_name,
-                                                                     geometries, opn, temp_file)
+                    self.__processProgress__(20)
+                    dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, geometries, opn, "")
 
             current_mask_and_storage_uuid = uniqueid
             worklist = []
 
             # Finalize the worklist to be returned based on the operation
-            if (self.dj_OperationName != "download"):
+            if (self.isDownloadJob != True):
                 for dateIndex in range(len(dates)):
                     workid = uu.getUUID()
                     gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))

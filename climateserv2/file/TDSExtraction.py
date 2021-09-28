@@ -76,51 +76,89 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
 
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
-    if jsonn['features'][0]['geometry']['type']!="Point" and os.path.exists(temp_file):
-        # using xarray to open the temporary netcdf
-        xds = xr.open_dataset(temp_file)
-        xds = xds[[variable]].transpose('time', 'latitude', 'longitude')
-        xds.rio.set_spatial_dims(x_dim="longitude", y_dim="latitude", inplace=True)
-        xds.rio.write_crs("EPSG:4326", inplace=True)
-
-        # get the dataset clipped to the area of interest using geopandas and xarray
+    if jsonn['features'][0]['geometry']['type']!="Point":
         json_aoi = json.dumps(jsonn)
         geodf = gpd.read_file(json_aoi)
-        clipped_dataset = xds.rio.clip(geodf.geometry.apply(mapping), geodf.crs)
+        lon1, lat1, lon2, lat2 = geodf.total_bounds
+        if "nmme-ccsm4" in dataset:
+            try:
+                nc_file = xr.open_dataset(params.nmme_ccsm4_path + dataset)
+            except Exception as e :
+                print(str(e))
+                return [],[]
+            data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+            dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
 
-        # Get dates and values based on the operation (min/max/average). Download operation returns the dataset itself.
-        if operation == "min":
-            min_values = clipped_dataset.min(dim=["latitude", "longitude"], skipna=True)
-            dates = []
-            for i in min_values[variable]:
-                temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
-                dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(min_values[variable].values)
-        elif operation == "avg":
-            avg_values = clipped_dataset.mean(dim=["latitude", "longitude"], skipna=True)
-            dates = []
-            for i in avg_values[variable]:
-                temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
-                dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(avg_values[variable].values)
-        elif operation == "max":
-            max_values = clipped_dataset.max(dim=["latitude", "longitude"], skipna=True)
-            dates = []
-            for i in max_values[variable]:
-                temp = pd.Timestamp(np.datetime64(i.time.values)).to_pydatetime()
-                dates.append(temp.strftime("%Y-%m-%d"))
-            return np.array(dates), np.array(max_values[variable].values)
-        elif operation == "download":
-            return clipped_dataset
+            if operation == "min":
+                return dates,data.min(dim=['latitude','longitude']).values
+            elif operation == "avg":
+                return dates,data.mean(dim=['latitude','longitude']).values
+            elif operation == "max":
+                return dates,data.max(dim=['latitude','longitude']).values
+            else:
+                return data
+        elif "nmme-cfsv2" in dataset:
+            try:
+                nc_file = xr.open_dataset(params.nmme_cfsv2_path + dataset)
+            except Exception as e :
+                print(str(e))
+                return [],[]
+            data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+            dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
+
+            if operation == "min":
+                return dates,data.min(dim=['latitude','longitude']).values
+            elif operation == "avg":
+                return dates,data.mean(dim=['latitude','longitude']).values
+            elif operation == "max":
+                return dates,data.max(dim=['latitude','longitude']).values
+            elif operation == "download":
+                return data
+
+        else:
+            # using xarray to open the temporary netcdf
+            try:
+                days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
+                file_list=[]
+                dsname=dataset.split('_')
+                for day in days_list:
+                    name=params.chirps_path + dsname[0]+"."+day+"T000000Z.global."+dsname[2]+".daily.nc4"
+                    file_list.append(name)
+                nc_file = xr.open_mfdataset(file_list)
+
+            except Exception as e :
+                print(str(e))
+                return [],[]
+            print(geodf.total_bounds)
+            data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+            dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
+            print(dates)
+            print(operation)
+            print(data)
+            if operation == "min":
+                return dates,data.min(dim=['latitude','longitude']).values
+            elif operation == "avg":
+                return dates,data.mean(dim=['latitude','longitude']).values
+            elif operation == "max":
+                print(data.max(dim=['latitude','longitude']))
+                return dates,data.max(dim=['latitude','longitude']).values
+            elif operation == "download":
+                return data
     elif jsonn['features'][0]['geometry']['type']=="Point":
         dates = []
         try:
             coords = jsonn['features'][0]['geometry']['coordinates']
             lon, lat = coords[0], coords[1]
-            ds=xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/'+dataset)
-
-            # get the dataset that has sliced data based on dates and geometry
-            point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+            if "nmme-ccsm4" in dataset:
+                ds = xr.open_dataset(params.nmme_ccsm4_path + dataset)
+                point = ds[variable].sel(time=slice(start_date, end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+            elif "nmme-cfsv2" in dataset:
+                ds = xr.open_dataset(params.nmme_cfsv2_path + dataset)
+                point = ds[variable].sel(time=slice(start_date, end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+            else:
+                ds = xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/' + dataset)
+                # get the dataset that has sliced data based on dates and geometry
+                point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
 
             dates=point.time.dt.strftime("%Y-%m-%d").values.tolist()
 
@@ -149,13 +187,15 @@ def get_chirps_climatology(month_nums):
     precip = ds.precipitation_amount.sel(latitude=slice(-5, 5), longitude=slice(25, 30)).mean(
         dim=['latitude', 'longitude'])
 
-    precip.groupby('time.month').mean(dim='time').values  # this give the mean climatology for the spatial averages
+    LTA=precip.groupby('time.month').mean(dim='time').values  # this give the mean climatology for the spatial averages
+    print('LTA')
+    print(LTA)
 
     value = precip.chunk(dict(time=-1)).groupby('time.month').quantile(q=[0.25, 0.50, 0.75], dim='time').values
 
     resarr = [list(value[month_nums[0] - 1]), list(value[month_nums[1] - 1]), list(value[month_nums[2] - 1]), list(value[month_nums[3] - 1]),
               list(value[month_nums[4] - 1]), list(value[month_nums[5] - 1])]
-    return resarr
+    return resarr,LTA
 
 # To retrieve NMME data from start date of the netCDF to 180 days from start date
 # Requires bounds of the geometry to get the data from CCSM4 and CFSV2 sensor files.
@@ -166,11 +206,12 @@ def get_nmme_data(total_bounds):
     numEns = 5
     ccsm4 = []
     cfsv2 = []
+    LTA=[]
     for iens in np.arange(numEns):
         ccsm4.append(xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
             longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
                                                                                  axis=0))
-        cfsv2.append(xr.open_dataset(params.nmme_csfv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
+        cfsv2.append(xr.open_dataset(params.nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
             longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
                                                                                  axis=0))
     cfsv2 = xr.merge(cfsv2)
@@ -180,7 +221,7 @@ def get_nmme_data(total_bounds):
     combined=xr.concat([ccsm4,cfsv2.assign_coords(ensemble=cfsv2.ensemble+5) ],dim='ensemble')
 
     # Retrieves the avg values of precipitation
-    return combined.precipitation.resample(time='1M',label='left',loffset='1D').sum().mean(dim=['ensemble','latitude','longitude']).values
+    return combined.precipitation.resample(time='1M',label='left',loffset='1D').sum().mean(dim=['ensemble','latitude','longitude']).values,LTA
 
 # To retrieve months list and data of CHIRPS/NMME for Monthly Analysis
 def get_season_values(type, geom):
@@ -208,9 +249,10 @@ def get_season_values(type, geom):
 
         # Get CHIRPS 40 year historical data and NMME 180 day forecast
         if type== "chirps":
-            data = get_chirps_climatology(month_nums)
+            data,LTA = get_chirps_climatology(month_nums)
         elif type == "nmme":
-            data = get_nmme_data(aoi.total_bounds)
+            data,LTA = get_nmme_data(aoi.total_bounds)
+            print('after nmme')
     except Exception as e:
         logger.info(e)
-    return month_list,data
+    return month_list,data, LTA

@@ -26,8 +26,8 @@ tempnetcdfpath= '''/cserv2/tmp/netCDFs/'''
 deletetempnetcdf=False
 pythonpath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/'''
 nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/''' #'''/cserv2/tmp/data/nmme/'''
-nmme_csfv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
-
+nmme_cfsv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
+chirps_path='''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 
@@ -37,7 +37,7 @@ def get_ClimateChangeParam__inputDataLocation(ensembleName):
 
 # To get the file path of a CSFV2 file
 def get_ClimateChangeParam__inputDataLocation_cfsv2(ensembleName):
-    return nmme_csfv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
+    return nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
 
 # To get size
 def get_ClimateChangeParam__size():
@@ -132,7 +132,7 @@ dataTypes = [
     {
         'number': 6,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens01',
+        'ensemble': 'ccsm4_ens01',
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens01 Temperature',
         'description': 'Climate Change Scenario: ens01 Temperature',
@@ -148,7 +148,7 @@ dataTypes = [
     {
         'number': 7,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens01',
+        'ensemble': 'ccsm4_ens01',
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens01 Precipitation',
@@ -164,7 +164,7 @@ dataTypes = [
     {
         'number': 8,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens02',
+        'ensemble': 'ccsm4_ens02',
         'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens02 Temperature',
         'description': 'Climate Change Scenario: ens02 Temperature',
@@ -179,7 +179,7 @@ dataTypes = [
     {
         'number': 9,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens02',
+        'ensemble': 'ccsm4_ens02',
         'ensemble_Label': 'Ensemble 02', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens02 Precipitation',
         'description': 'Climate Change Scenario: ens02 Precipitation',
@@ -195,7 +195,7 @@ dataTypes = [
     {
         'number': 10,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens03',
+        'ensemble': 'ccsm4_ens03',
         'ensemble_Label': 'ensemble 03', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens03 Temperature',
         'description': 'Climate Change Scenario: ens03 Temperature',
@@ -210,7 +210,7 @@ dataTypes = [
     {
         'number': 11,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens03',
+        'ensemble': 'ccsm4_ens03',
         'ensemble_Label': 'Ensemble 03', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens03 Precipitation',
         'description': 'Climate Change Scenario: ens03 Variable: Precipitation',
@@ -226,7 +226,7 @@ dataTypes = [
     {
         'number': 12,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens04',
+        'ensemble': 'ccsm4_ens04',
         'ensemble_Label': 'ensemble 04', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens04 Temperature',
         'description': 'Climate Change Scenario: ens04 Temperature',
@@ -241,7 +241,7 @@ dataTypes = [
     {
         'number': 13,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens04',
+        'ensemble': 'ccsm4_ens04',
         'ensemble_Label': 'Ensemble 04', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens04 Precipitation',
         'description': 'Climate Change Scenario: ens04 Precipitation',
@@ -257,7 +257,7 @@ dataTypes = [
     {
         'number': 14,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens05',
+        'ensemble': 'ccsm4_ens05',
         'ensemble_Label': 'ensemble 05', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens05 Temperature',
         'description': 'Climate Change Scenario: ens05 Temperature',
@@ -272,7 +272,7 @@ dataTypes = [
     {
         'number': 15,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens05',
+        'ensemble': 'ccsm4_ens05',
         'ensemble_Label': 'Ensemble 05', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens05 Precipitation',
         'description': 'Climate Change Scenario: ens05 Precipitation',
@@ -288,7 +288,7 @@ dataTypes = [
     {
         'number': 16,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens06',
+        'ensemble': 'ccsm4_ens06',
         'ensemble_Label': 'ensemble 06', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens06 Temperature',
         'description': 'Climate Change Scenario: ens06 Temperature',
@@ -303,7 +303,7 @@ dataTypes = [
     {
         'number': 17,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens06',
+        'ensemble': 'ccsm4_ens06',
         'ensemble_Label': 'Ensemble 06', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens06 Precipitation',
         'description': 'Climate Change Scenario: ens06 Precipitation',
@@ -319,7 +319,7 @@ dataTypes = [
     {
         'number': 18,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens07',
+        'ensemble': 'ccsm4_ens07',
         'ensemble_Label': 'ensemble 07', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens07 Temperature',
         'description': 'Climate Change Scenario: ens07 Temperature',
@@ -334,7 +334,7 @@ dataTypes = [
     {
         'number': 19,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens07',
+        'ensemble': 'ccsm4_ens07',
         'ensemble_Label': 'Ensemble 07', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens07 Precipitation',
         'description': 'Climate Change Scenario: ens07 Precipitation',
@@ -350,7 +350,7 @@ dataTypes = [
     {
         'number': 20,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens08',
+        'ensemble': 'ccsm4_ens08',
         'ensemble_Label': 'ensemble 08', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens08 Temperature',
         'description': 'Climate Change Scenario: ens08 Temperature',
@@ -365,7 +365,7 @@ dataTypes = [
     {
         'number': 21,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens08',
+        'ensemble': 'ccsm4_ens08',
         'ensemble_Label': 'Ensemble 08', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens08 Precipitation',
         'description': 'Climate Change Scenario: ens08 Precipitation',
@@ -381,7 +381,7 @@ dataTypes = [
     {
         'number': 22,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens09',
+        'ensemble': 'ccsm4_ens09',
         'ensemble_Label': 'ensemble 09', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens09 Temperature',
         'description': 'Climate Change Scenario: ens09 Temperature',
@@ -396,7 +396,7 @@ dataTypes = [
     {
         'number': 23,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens09',
+        'ensemble': 'ccsm4_ens09',
         'ensemble_Label': 'Ensemble 09', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens09 Precipitation',
         'description': 'Climate Change Scenario: ens09 Precipitation',
@@ -412,7 +412,7 @@ dataTypes = [
     {
         'number': 24,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens10',
+        'ensemble': 'ccsm4_ens10',
         'ensemble_Label': 'ensemble 10', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
@@ -427,7 +427,7 @@ dataTypes = [
     {
         'number': 25,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens10',
+        'ensemble': 'ccsm4_ens10',
         'ensemble_Label': 'Ensemble 10', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens10 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
@@ -614,7 +614,7 @@ dataTypes = [
     {
         'number': 42,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens01',
+        'ensemble': 'cfsv2_ens01',
         'ensemble_Label': 'ensemble 01', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens01 Temperature',
         'description': 'Climate Change Scenario: ens01 Temperature',
@@ -628,7 +628,7 @@ dataTypes = [
     {
         'number': 43,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens01',
+        'ensemble': 'cfsv2_ens01',
         'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens01 Precipitation',
@@ -642,7 +642,7 @@ dataTypes = [
     {
         'number': 44,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens02',
+        'ensemble': 'cfsv2_ens02',
         'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens02 Temperature',
         'description': 'Climate Change Scenario: ens02 Temperature',
@@ -656,7 +656,7 @@ dataTypes = [
     {
         'number': 45,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens02',
+        'ensemble': 'cfsv2_ens02',
         'ensemble_Label': 'Ensemble 02', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens02 Precipitation',
         'description': 'Climate Change Scenario: ens02 Precipitation',
@@ -670,7 +670,7 @@ dataTypes = [
     {
         'number': 46,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens03',
+        'ensemble': 'cfsv2_ens03',
         'ensemble_Label': 'ensemble 03', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens03 Temperature',
         'description': 'Climate Change Scenario: ens03 Temperature',
@@ -684,7 +684,7 @@ dataTypes = [
     {
         'number': 47,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens03',
+        'ensemble': 'cfsv2_ens03',
         'ensemble_Label': 'Ensemble 03', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens03 Precipitation',
         'description': 'Climate Change Scenario: ens03 Precipitation',
@@ -698,7 +698,7 @@ dataTypes = [
     {
         'number': 48,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens04',
+        'ensemble': 'cfsv2_ens04',
         'ensemble_Label': 'ensemble 04', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens04 Temperature',
         'description': 'Climate Change Scenario: ens04 Temperature',
@@ -712,7 +712,7 @@ dataTypes = [
     {
         'number': 49,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens04',
+        'ensemble': 'cfsv2_ens04',
         'ensemble_Label': 'Ensemble 04', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens04 Precipitation',
         'description': 'Climate Change Scenario: ens04 Precipitation',
@@ -726,7 +726,7 @@ dataTypes = [
     {
         'number': 50,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens05',
+        'ensemble': 'cfsv2_ens05',
         'ensemble_Label': 'ensemble 05', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens05 Temperature',
         'description': 'Climate Change Scenario: ens05 Temperature',
@@ -740,7 +740,7 @@ dataTypes = [
     {
         'number': 51,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens05',
+        'ensemble': 'cfsv2_ens05',
         'ensemble_Label': 'Ensemble 05', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens05 Precipitation',
         'description': 'Climate Change Scenario: ens05 Precipitation',
@@ -754,7 +754,7 @@ dataTypes = [
     {
         'number': 52,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens06',
+        'ensemble': 'cfsv2_ens06',
         'ensemble_Label': 'ensemble 06', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens06 Temperature',
         'description': 'Climate Change Scenario: ens06 Temperature',
@@ -768,7 +768,7 @@ dataTypes = [
     {
         'number': 53,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens06',
+        'ensemble': 'cfsv2_ens06',
         'ensemble_Label': 'Ensemble 06', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens06 Precipitation',
         'description': 'Climate Change Scenario: ens06 Precipitation',
@@ -782,7 +782,7 @@ dataTypes = [
     {
         'number': 54,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens07',
+        'ensemble': 'cfsv2_ens07',
         'ensemble_Label': 'ensemble 07', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens07 Temperature',
         'description': 'Climate Change Scenario: ens07 Temperature',
@@ -796,7 +796,7 @@ dataTypes = [
     {
         'number': 55,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens07',
+        'ensemble': 'cfsv2_ens07',
         'ensemble_Label': 'Ensemble 07', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens07 Precipitation',
         'description': 'Climate Change Scenario: ens07 Precipitation',
@@ -810,7 +810,7 @@ dataTypes = [
     {
         'number': 56,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens08',
+        'ensemble': 'cfsv2_ens08',
         'ensemble_Label': 'ensemble 08', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens08 Temperature',
         'description': 'Climate Change Scenario: ens08 Temperature',
@@ -824,7 +824,7 @@ dataTypes = [
     {
         'number': 57,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens08',
+        'ensemble': 'cfsv2_ens08',
         'ensemble_Label': 'Ensemble 08', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens08 Precipitation',
         'description': 'Climate Change Scenario: ens08 Precipitation',
@@ -838,7 +838,7 @@ dataTypes = [
     {
         'number': 58,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens09',
+        'ensemble': 'cfsv2_ens09',
         'ensemble_Label': 'ensemble 09', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
@@ -852,8 +852,8 @@ dataTypes = [
     {
         'number': 59,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens01',
-        'ensemble_Label': 'Ensemble 01', 'variable_Label': 'Precipitation',
+        'ensemble': 'cfsv2_ens09',
+        'ensemble_Label': 'Ensemble 09', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens01 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
         'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens009'),
@@ -866,8 +866,8 @@ dataTypes = [
     {
         'number': 60,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens02',
-        'ensemble_Label': 'ensemble 02', 'variable_Label': 'Temperature',
+        'ensemble': 'cfsv2_ens10',
+        'ensemble_Label': 'ensemble 10', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens10 Temperature',
         'description': 'Climate Change Scenario: ens10 Temperature',
         'inputDataLocation': get_ClimateChangeParam__inputDataLocation_cfsv2('ens010'),
@@ -880,7 +880,7 @@ dataTypes = [
     {
         'number': 61,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens10',
+        'ensemble': 'cfsv2_ens10',
         'ensemble_Label': 'Ensemble 10', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens10 Precipitation',
         'description': 'Climate Change Scenario: ens10 Precipitation',
@@ -894,7 +894,7 @@ dataTypes = [
     {
         'number': 62,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens11',
+        'ensemble': 'cfsv2_ens11',
         'ensemble_Label': 'ensemble 11', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens11 Temperature',
         'description': 'Climate Change Scenario: ens11 Temperature',
@@ -908,7 +908,7 @@ dataTypes = [
     {
         'number': 63,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens11',
+        'ensemble': 'cfsv2_ens11',
         'ensemble_Label': 'Ensemble 11', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens11 Precipitation',
         'description': 'Climate Change Scenario: ens11 Precipitation',
@@ -922,7 +922,7 @@ dataTypes = [
     {
         'number': 64,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens12',
+        'ensemble': 'cfsv2_ens12',
         'ensemble_Label': 'ensemble 12', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens12 Temperature',
         'description': 'Climate Change Scenario: ens12 Temperature',
@@ -936,7 +936,7 @@ dataTypes = [
     {
         'number': 65,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens12',
+        'ensemble': 'cfsv2_ens12',
         'ensemble_Label': 'Ensemble 12', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens12 Precipitation',
         'description': 'Climate Change Scenario: ens12 Precipitation',
@@ -950,7 +950,7 @@ dataTypes = [
     {
         'number': 66,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens13',
+        'ensemble': 'cfsv2_ens13',
         'ensemble_Label': 'ensemble 13', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens13 Temperature',
         'description': 'Climate Change Scenario: ens13 Temperature',
@@ -964,7 +964,7 @@ dataTypes = [
     {
         'number': 67,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens13',
+        'ensemble': 'cfsv2_ens13',
         'ensemble_Label': 'Ensemble 13', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens13 Precipitation',
         'description': 'Climate Change Scenario: ens13 Precipitation',
@@ -978,7 +978,7 @@ dataTypes = [
     {
         'number': 68,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens14',
+        'ensemble': 'cfsv2_ens14',
         'ensemble_Label': 'ensemble 14', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens14 Temperature',
         'description': 'Climate Change Scenario: ens14 Temperature',
@@ -992,7 +992,7 @@ dataTypes = [
     {
         'number': 69,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens14',
+        'ensemble': 'cfsv2_ens14',
         'ensemble_Label': 'Ensemble 14', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens14 Precipitation',
         'description': 'Climate Change Scenario: ens14 Precipitation',
@@ -1006,7 +1006,7 @@ dataTypes = [
     {
         'number': 70,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens15',
+        'ensemble': 'cfsv2_ens15',
         'ensemble_Label': 'ensemble 15', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens15 Temperature',
         'description': 'Climate Change Scenario: ens15 Temperature',
@@ -1020,7 +1020,7 @@ dataTypes = [
     {
         'number': 71,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens15',
+        'ensemble': 'cfsv2_ens15',
         'ensemble_Label': 'Ensemble 15', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens15 Precipitation',
         'description': 'Climate Change Scenario: ens15 Precipitation',
@@ -1034,7 +1034,7 @@ dataTypes = [
     {
         'number': 72,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens16',
+        'ensemble': 'cfsv2_ens16',
         'ensemble_Label': 'ensemble 16', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens16 Temperature',
         'description': 'Climate Change Scenario: ens16 Temperature',
@@ -1048,7 +1048,7 @@ dataTypes = [
     {
         'number': 73,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens16',
+        'ensemble': 'cfsv2_ens16',
         'ensemble_Label': 'Ensemble 16', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens16 Precipitation',
         'description': 'Climate Change Scenario: ens16 Precipitation',
@@ -1062,7 +1062,7 @@ dataTypes = [
     {
         'number': 74,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens17',
+        'ensemble': 'cfsv2_ens17',
         'ensemble_Label': 'ensemble 17', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens17 Temperature',
         'description': 'Climate Change Scenario: ens17 Temperature',
@@ -1076,7 +1076,7 @@ dataTypes = [
     {
         'number': 75,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens17',
+        'ensemble': 'cfsv2_ens17',
         'ensemble_Label': 'Ensemble 17', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens17 Precipitation',
         'description': 'Climate Change Scenario: ens17 Precipitation',
@@ -1090,7 +1090,7 @@ dataTypes = [
     {
         'number': 76,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens18',
+        'ensemble': 'cfsv2_ens18',
         'ensemble_Label': 'ensemble 18', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens18 Temperature',
         'description': 'Climate Change Scenario: ens18 Temperature',
@@ -1104,7 +1104,7 @@ dataTypes = [
     {
         'number': 77,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens018',
+        'ensemble': 'cfsv2_ens18',
         'ensemble_Label': 'Ensemble 18', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens18 Precipitation',
         'description': 'Climate Change Scenario: ens18 Precipitation',
@@ -1118,7 +1118,7 @@ dataTypes = [
     {
         'number': 78,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens19',
+        'ensemble': 'cfsv2_ens19',
         'ensemble_Label': 'ensemble 19', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens19 Temperature',
         'description': 'Climate Change Scenario: ens19 Temperature',
@@ -1132,7 +1132,7 @@ dataTypes = [
     {
         'number': 79,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens19',
+        'ensemble': 'cfsv2_ens19',
         'ensemble_Label': 'Ensemble 19', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens19 Precipitation',
         'description': 'Climate Change Scenario: ens19 Precipitation',
@@ -1146,7 +1146,7 @@ dataTypes = [
     {
         'number': 80,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens20',
+        'ensemble': 'cfsv2_ens20',
         'ensemble_Label': 'ensemble 20', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens20 Temperature',
         'description': 'Climate Change Scenario: ens20 Temperature',
@@ -1160,7 +1160,7 @@ dataTypes = [
     {
         'number': 81,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens20',
+        'ensemble': 'cfsv2_ens20',
         'ensemble_Label': 'Ensemble 20', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens20 Precipitation',
         'description': 'Climate Change Scenario: ens20 Precipitation',
@@ -1174,7 +1174,7 @@ dataTypes = [
     {
         'number': 82,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens21',
+        'ensemble': 'cfsv2_ens21',
         'ensemble_Label': 'ensemble 21', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens21 Temperature',
         'description': 'Climate Change Scenario: ens21 Temperature',
@@ -1188,7 +1188,7 @@ dataTypes = [
     {
         'number': 83,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens21',
+        'ensemble': 'cfsv2_ens21',
         'ensemble_Label': 'Ensemble 21', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens21 Precipitation',
         'description': 'Climate Change Scenario: ens21 Precipitation',
@@ -1202,7 +1202,7 @@ dataTypes = [
     {
         'number': 84,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens22',
+        'ensemble': 'cfsv2_ens22',
         'ensemble_Label': 'ensemble 22', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens22 Temperature',
         'description': 'Climate Change Scenario: ens22 Temperature',
@@ -1216,7 +1216,7 @@ dataTypes = [
     {
         'number': 85,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens22',
+        'ensemble': 'cfsv2_ens22',
         'ensemble_Label': 'Ensemble 22', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens22 Precipitation',
         'description': 'Climate Change Scenario: ens22 Precipitation',
@@ -1230,7 +1230,7 @@ dataTypes = [
     {
         'number': 86,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens23',
+        'ensemble': 'cfsv2_ens23',
         'ensemble_Label': 'ensemble 23', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens23 Temperature',
         'description': 'Climate Change Scenario: ens23 Temperature',
@@ -1244,7 +1244,7 @@ dataTypes = [
     {
         'number': 87,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens23',
+        'ensemble': 'cfsv2_ens23',
         'ensemble_Label': 'Ensemble 23', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens23 Precipitation',
         'description': 'Climate Change Scenario: ens23 Precipitation',
@@ -1258,7 +1258,7 @@ dataTypes = [
     {
         'number': 88,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens23',
+        'ensemble': 'cfsv2_ens24',
         'ensemble_Label': 'ensemble 24', 'variable_Label': 'Temperature',
         'name': 'Climate Change Scenario: ens24 Temperature',
         'description': 'Climate Change Scenario: ens24 Temperature',
@@ -1272,7 +1272,7 @@ dataTypes = [
     {
         'number': 89,
         'data_category': 'ClimateModel',
-        'ensemble': 'ens24',
+        'ensemble': 'cfsv2_ens24',
         'ensemble_Label': 'Ensemble 24', 'variable_Label': 'Precipitation',
         'name': 'Climate Change Scenario: ens24 Precipitation',
         'description': 'Climate Change Scenario: ens24 Precipitation',

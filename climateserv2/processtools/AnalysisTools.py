@@ -41,8 +41,8 @@ def getDatesAndValues(type,request):
         layerid = request['layerid']
         featureids = request['featureids']
         polygon_Str_ToPass = sf.getPolygons(layerid, featureids)
-    dates, values = GetTDSData.get_season_values(type, polygon_Str_ToPass)
-    return polygon_Str_ToPass,dates, values
+    dates, values, LTA = GetTDSData.get_season_values(type, polygon_Str_ToPass)
+    return polygon_Str_ToPass,dates, values, LTA
 
 # To retrieve CHIRPS data for monthly analysis
 def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_uuid_for_CHIRPS, datatype_uuid_for_SeasonalForecast):
@@ -51,7 +51,7 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
     datatype = chirps_dataType
     intervaltype = 0
     operation = "avg"
-    polygon_Str_ToPass, dates, values = getDatesAndValues("chirps", request)
+    polygon_Str_ToPass, dates, values,LTA = getDatesAndValues("chirps", request)
     # Build the worklist for each date in the dates
     for dateIndex in range(len(dates)):
         workid = uu.getUUID()
@@ -70,7 +70,7 @@ def _MonthlyRainfallAnalysis__make_CHIRPS_workList(uniqueid, request, datatype_u
         workdict["month"] = int(dates[dateIndex][5:7])
         workdict["day"] = int(dates[dateIndex][8:10])
         workdict["epochTime"] = gmt_midnight
-        workdict["value"] = {operation: values[dateIndex]}
+        workdict["value"] = {operation: [values[dateIndex],LTA[dateIndex]]}
         dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
         workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
         worklist.extend([workdict])
@@ -143,7 +143,7 @@ def _MonthlyRainfallAnalysis__make_SeasonalForecast_workList(uniqueid, request, 
     sub_type_name = 'SEASONAL_FORECAST'
     intervaltype = 0  # Daily
     operation = "avg"
-    polygon_Str_ToPass, dates, values = getDatesAndValues("nmme", request)
+    polygon_Str_ToPass, dates, values, LTA = getDatesAndValues("nmme", request)
     current_mask_uuid_for_SeasonalForecast = uu.getUUID()
 
     # Build the worklist for each date in the dates
@@ -198,14 +198,14 @@ def get_output_for_MonthlyRainfallAnalysis_from(raw_items_list):
         avg_percentiles_dataLines = []
         monthavg=[]
         chirps_25=[]
-        chirps_50 = []
+        chirps_50 = []#LTA
         chirps_75 = []
         months=[]
         for item in raw_items_list:
             if item["sub_type_name"] == 'CHIRPS_REQUEST':
-                chirps25 = item['value']['avg'][0]
+                chirps25 = item['value']['avg'][0][0]
                 chirps50 = item['value']['avg'][1]
-                chirps75 = item['value']['avg'][2]
+                chirps75 = item['value']['avg'][0][2]
                 chirps_25.append(chirps25)
                 chirps_50.append(chirps50)
                 chirps_75.append(chirps75)
