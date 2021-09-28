@@ -1830,6 +1830,10 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         text: title
     };
 
+    chart_obj. chart = {
+            zoomType: 'x'
+      };
+
     chart_obj.subtitle = {
         text: 'Source: climateserv.servirglobal.net'
     };
@@ -2158,6 +2162,7 @@ $(function () {
         }
     } catch (e) {
     }
+    $('#sourcemenu').val(0);
     try {
         getClimateScenarioInfo();
     } catch (e) {
