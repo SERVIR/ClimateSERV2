@@ -645,6 +645,7 @@ function clearAOISelections() {
 }
 
 function triggerUpload(e) {
+    document.getElementById("upload_files").value = "";
     e.preventDefault();
     $("#upload_files").trigger('click');
 }
@@ -653,29 +654,45 @@ function triggerUpload(e) {
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
+    console.log("enableUpload")
+     const targetEl = document.getElementById("drop-container");
+    if (uploadLayer) {
+        uploadLayer.clearLayers();
+        uploadLayer.remove();
+        uploadLayer = null;
+        targetEl.removeEventListener("dragenter", prevent);
+        targetEl.removeEventListener("dragover", prevent);
+
+        targetEl.removeEventListener("drop", handleFiles);
+        console.log("removed");
+    }
+console.log("event added");
+        targetEl.addEventListener("dragenter", prevent);
+        targetEl.addEventListener("dragover", prevent);
+
+        targetEl.addEventListener("drop", handleFiles);
+
     uploadLayer = L.geoJson().addTo(map);
 
-    const targetEl = document.getElementById("drop-container");
-    targetEl.addEventListener("dragenter", function (e) {
-        e.preventDefault();
-    });
-    targetEl.addEventListener("dragover", function (e) {
-        e.preventDefault();
-    });
 
-    targetEl.addEventListener("drop", function (e) {
-        handleFiles(e);
-    });
+}
+
+function prevent(e){
+    e.preventDefault();
 }
 
 function handleFiles(e) {
+    console.log("files");
     e.preventDefault();
     const reader = new FileReader();
     reader.onloadend = function () {
         try {
+            console.log("reading");
             const data = JSON.parse(this.result);
+            console.log(data);
             uploadLayer.clearLayers();
             uploadLayer.addData(data);
+
             map.fitBounds(uploadLayer.getBounds());
             $("#upload_error").hide();
             collect_review_data();
@@ -1718,8 +1735,8 @@ function getDataFromRequest(id, isClimate) {
                         xaxis.categories.push(month_year);
                     }
 
-                    rainfall_data[0].data.push(Number.parseFloat(o.col02_MonthlyAverage));
-                    rainfall_data[1].data.push(Number.parseFloat(o.col05_50thPercentile));
+                    rainfall_data[0].data.push(Number.parseFloat(o.col05_50thPercentile));
+                    rainfall_data[1].data.push(Number.parseFloat(o.col02_MonthlyAverage));
                     rainfall_data[2].data.push(Number.parseFloat(o.col03_25thPercentile));
                     rainfall_data[3].data.push(Number.parseFloat(o.col04_75thPercentile));
 
