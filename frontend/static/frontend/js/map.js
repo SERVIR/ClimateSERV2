@@ -11,8 +11,11 @@ let baseLayers;
 let drawnItems;
 let drawToolbar;
 let styleOptions = [];
-const api_url = "https://climateserv2.servirglobal.net/" //http://192.168.1.132:8003"; //  "http://127.0.0.1:8000/"; //
-const admin_layer_url = "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100";
+const admin_layer_url = location.hostname === "localhost" ||
+                        location.hostname === "127.0.0.1" ||
+                        location.hostname === "192.168.1.132"
+    ? "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100"
+    : "servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
 let sidebar;
 let previous_chart;
@@ -1153,6 +1156,15 @@ function collect_review_data() {
     } else {
         $("#geometry").text('{"type":"FeatureCollection","features":[]}');
     }
+    if($("#geometry").text().indexOf("Point") > -1){
+        $("#operation_max").hide();
+        $("#operation_min").hide();
+        $("#operation_average").text("Timeseries");
+    } else {
+        $("#operation_max").show();
+        $("#operation_min").show();
+        $("#operation_average").text("Average");
+    }
 }
 
 function getEnsDataType() {
@@ -1183,6 +1195,9 @@ function handle_initial_request_data(data, isClimate) {
                                $('#dialog').dialog('close');
                             })
                         },
+        close: function(event, ui){
+            clearTimeout(polling_timeout);
+        },
         position: {
             my: "center",
             at: "center",
@@ -1193,6 +1208,7 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
+    clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
@@ -1328,6 +1344,8 @@ function updateProgress(val) {
     $("#txtpercent").text(parseInt(val) + '%');
 }
 
+let polling_timeout;
+
 function pollForProgress(id, isClimate) {
     $.ajax({
         url: "/api/getDataRequestProgress/?id=" +
@@ -1345,7 +1363,7 @@ function pollForProgress(id, isClimate) {
             if (val !== -1 && val !== 100) {
                 retries = 0;
                 updateProgress(val);
-                setTimeout(function () {
+                polling_timeout = setTimeout(function () {
                     pollForProgress(id, isClimate);
                 }, 500);
 
