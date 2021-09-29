@@ -4,7 +4,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 from datetime import datetime,timedelta
-
+import os
 try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.parameters as params
@@ -126,7 +126,11 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
         else:
             # using xarray to open the temporary netcdf
             try:
-                file_list=get_filelist(dataset,datatype,start_date,end_date)
+                file_list=[]
+                flist=get_filelist(dataset,datatype,start_date,end_date)
+                for file in flist:
+                    if os.path.exists(file):
+                        file_list.append(file)
                 nc_file = xr.open_mfdataset(file_list)
             except Exception as e :
                 print(str(e))
