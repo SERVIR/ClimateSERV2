@@ -113,14 +113,21 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
                 print(str(e))
                 return [],[]
             data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+
             dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
 
             if operation == "min":
-                return dates,data.min(dim=['latitude','longitude']).values
+                ds_vals = data.min(dim=['latitude','longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates,ds_vals
             elif operation == "avg":
-                return dates,data.mean(dim=['latitude','longitude']).values
+                ds_vals = data.mean(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "max":
-                return dates,data.max(dim=['latitude','longitude']).values
+                ds_vals = data.max(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             else:
                 return data
         else:
@@ -138,12 +145,17 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
             dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
             if operation == "min":
-                return dates,data.min(dim=['latitude','longitude']).values
+                ds_vals = data.min(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "avg":
-                return dates,data.mean(dim=['latitude','longitude']).values
+                ds_vals = data.mean(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "max":
-                print(data.max(dim=['latitude','longitude']))
-                return dates,data.max(dim=['latitude','longitude']).values
+                ds_vals = data.max(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "download":
                 return data
     elif jsonn['features'][0]['geometry']['type']=="Point":
