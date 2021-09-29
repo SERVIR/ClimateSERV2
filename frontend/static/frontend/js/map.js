@@ -1735,10 +1735,10 @@ function getDataFromRequest(id, isClimate) {
                         xaxis.categories.push(month_year);
                     }
 
-                    rainfall_data[0].data.push(Number.parseFloat(o.col05_50thPercentile));
-                    rainfall_data[1].data.push(Number.parseFloat(o.col02_MonthlyAverage));
-                    rainfall_data[2].data.push(Number.parseFloat(o.col03_25thPercentile));
-                    rainfall_data[3].data.push(Number.parseFloat(o.col04_75thPercentile));
+                    rainfall_data[0].data.push(value_or_null(o.col05_50thPercentile));
+                    rainfall_data[1].data.push(value_or_null(o.col02_MonthlyAverage));
+                    rainfall_data[2].data.push(value_or_null(o.col03_25thPercentile));
+                    rainfall_data[3].data.push(value_or_null(o.col04_75thPercentile));
 
                 });
                 inti_chart_dialog();
@@ -1777,6 +1777,11 @@ function getDataFromRequest(id, isClimate) {
                             }
                             darray.push(val);
                             compiledData.push(darray); // i can likely store min and max here
+                        } else{
+                            const null_array = [];
+                            null_array.push(parseInt(d.epochTime) * 1000);
+                            null_array.push(null);
+                            compiledData.push(null_array); // i can likely store min and max here
                         }
                     });
                     from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
@@ -1816,6 +1821,14 @@ console.log(point_format)
     });
 };
 
+function value_or_null(value){
+    if(value > -9000){
+        return Number.parseFloat(value);
+    } else{
+        return null;
+    }
+}
+
 function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, yAxis_format, point_format) {
     previous_chart = {
         "compiled_series": compiled_series,
@@ -1829,10 +1842,6 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     chart_obj.title = {
         text: title
     };
-
-    chart_obj. chart = {
-            zoomType: 'x'
-      };
 
     chart_obj.subtitle = {
         text: 'Source: climateserv.servirglobal.net'
@@ -1913,6 +1922,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         }
     };
     chart_obj.chart = {
+        zoomType: 'xy',
         events: {
             redraw: function (e) {
                 try {
