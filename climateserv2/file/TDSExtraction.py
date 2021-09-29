@@ -4,7 +4,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 from datetime import datetime,timedelta
-
+import os
 try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.parameters as params
@@ -113,20 +113,31 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
                 print(str(e))
                 return [],[]
             data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+
             dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
 
             if operation == "min":
-                return dates,data.min(dim=['latitude','longitude']).values
+                ds_vals = data.min(dim=['latitude','longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates,ds_vals
             elif operation == "avg":
-                return dates,data.mean(dim=['latitude','longitude']).values
+                ds_vals = data.mean(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "max":
-                return dates,data.max(dim=['latitude','longitude']).values
+                ds_vals = data.max(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             else:
                 return data
         else:
             # using xarray to open the temporary netcdf
             try:
-                file_list=get_filelist(dataset,datatype,start_date,end_date)
+                file_list=[]
+                flist=get_filelist(dataset,datatype,start_date,end_date)
+                for file in flist:
+                    if os.path.exists(file):
+                        file_list.append(file)
                 nc_file = xr.open_mfdataset(file_list)
             except Exception as e :
                 print(str(e))
@@ -134,12 +145,17 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
             dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
             if operation == "min":
-                return dates,data.min(dim=['latitude','longitude']).values
+                ds_vals = data.min(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "avg":
-                return dates,data.mean(dim=['latitude','longitude']).values
+                ds_vals = data.mean(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "max":
-                print(data.max(dim=['latitude','longitude']))
-                return dates,data.max(dim=['latitude','longitude']).values
+                ds_vals = data.max(dim=['latitude', 'longitude']).values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             elif operation == "download":
                 return data
     elif jsonn['features'][0]['geometry']['type']=="Point":
