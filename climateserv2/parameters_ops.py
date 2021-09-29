@@ -27,9 +27,26 @@ deletetempnetcdf=False
 pythonpath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/'''
 nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/''' #'''/cserv2/tmp/data/nmme/'''
 nmme_cfsv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
-chirps_path='''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
+base_data_path='/mnt/climateserv/'#'''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
+def get_dataLocation(type):
+    if type=="ucsb-chirps" or type=="ucsb-chirp" or type=="ucsb-chirps-gefs":
+        path = type+'/global/0.05deg/daily/'
+    elif type=="nmme-ccsm4_bcsd" or type=="nmme-cfsv2_bcsd":
+        path =  type + '/global/0.05deg/daily/latest/'
+    elif type=="usda-smap":
+        path =  type + '/global/10km/3dy/'
+    elif type=="emodis-ndvi/centralasia" or "emodis-ndvi/westafrica" or "emodis-ndvi/eastafrica" or "emodis-ndvi/southafrica":
+        path= type + '/250m/10dy/'
+    elif type=="sport-esi/12wk":
+        path= type + '/global/0.05deg/12wk/'
+    elif type=="sport-esi/4wk":
+        path= type + '/global/0.05deg/4wk/'
+    elif type=="nasa-imerg-late" or type=="nasa-imerg-early":
+        path=type+'/global/0.1deg/1dy/'
+    return base_data_path + path
+
 
 # To get the file path of a CCSM4 file
 def get_ClimateChangeParam__inputDataLocation(ensembleName):
@@ -62,7 +79,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/chirps/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),
-     'inputDataLocation': '/data/data/image/input/chirps/global/',
+     'inputDataLocation': get_dataLocation("ucsb-chirps"),
      'data_category': 'CHIRPS',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirps_global_0.05deg_daily',
@@ -75,7 +92,7 @@ dataTypes = [
      'directory': '/data/data/image/processed/eMODIS/ndvi-westafrica/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data/image/input/emodis/westafrica/',
+     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_westafrica_250m_10dy',
@@ -88,7 +105,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-eastafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data2/image/input/emodis/eastafrica/',
+     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_eastafrica_250m_10dy',
@@ -121,7 +138,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-southafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data2/imagef/input/emodis/southafrica/',
+     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_southafrica_250m_10dy',
@@ -449,7 +466,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/IMERG1Day/',
      'fillValue': 9999.,
      'indexer': dit.DynamicIndex("P1D"),
-     'inputDataLocation': '/data/imerglate/',
+     'inputDataLocation': get_dataLocation("nasa-imerg-late"),
      'data_category': 'IMERG',
      'variable': 'precipitation_amount',
      'dataset_name': 'nasa-imerg-late_global_0.1deg_1dy',
@@ -460,7 +477,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-afghanistan/np/',
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
-     'inputDataLocation': '/data/data2/image/input/emodis/afghanistan/',
+     'inputDataLocation':get_dataLocation("emodis-ndvi/centralasia"),
      'data_category': 'NDVI',
      },
     {'number': 28, 'name': 'NDVI MODIS-Asia',
@@ -469,7 +486,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-asia/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data2/image/input/emodis/asia/',
+     'inputDataLocation': get_dataLocation("emodis-ndvi/centralasia"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_centralasia_250m_10dy',
@@ -480,7 +497,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/esi/4WK/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
-     'inputDataLocation': '/data/data/image/input/esi/4WK/',
+     'inputDataLocation': get_dataLocation("sport-esi"),
      'data_category': 'ESI',
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_4wk',
@@ -497,7 +514,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/gefs_anom/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': '/data/data3/image/input/gefs_anom/',
+     'inputDataLocation': get_dataLocation("ucsb-chirps-gefs"),
      'data_category': 'CHIRPS',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
@@ -508,7 +525,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/gefs_precip/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
-     'inputDataLocation': '/data/data3/image/input/gefs_precip/',
+     'inputDataLocation': get_dataLocation("ucsb-chirps-gefs"),
      'data_category': 'CHIRPS',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
@@ -520,7 +537,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/esi/12WK/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
-     'inputDataLocation': '/data/data/image/input/esi/12WK/',
+     'inputDataLocation':get_dataLocation("sport-esi"),
      'data_category': 'ESI',
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_12wk',
@@ -532,7 +549,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/IMERGTest/',
      'fillValue': 9999.,
      'indexer': dit.DynamicIndex("P1D"),
-     'inputDataLocation': '/data/data2/image/input/IMERGTest/',
+     'inputDataLocation': get_dataLocation("nasa-imerg-late"),
      'data_category': 'IMERG'
      },
     {'number': 35,
@@ -541,7 +558,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/gefs_precip_25/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
-     'inputDataLocation': '/data/data3/image/input/gefs_precip_25/',
+     'inputDataLocation': get_dataLocation("ucsb-chirps-gefs"),
      'data_category': 'CHIRPS',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
@@ -552,7 +569,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/gefs_precip_75/',
      'fillValue': -9999.,
      'indexer': dit.DailyIndex(),  # dit.DecadalIndex(),
-     'inputDataLocation': '/data/data3/image/input/gefs_precip_75/',
+     'inputDataLocation': get_dataLocation("ucsb-chirps-gefs"),
      'data_category': 'CHIRPS'
      },
     {'number': 37,
@@ -561,7 +578,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/usda_smap/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex('P3D'),
-     'inputDataLocation': '/cserv2/tmp/data/smapfinal/',
+     'inputDataLocation': get_dataLocation("usda-smap"),
      'data_category': 'SMAP',
      'variable': 'smp',
      'dataset_name': 'usda-smap_global_10km_3dy',
@@ -572,7 +589,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/usda_smap/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex('P3D'),
-     'inputDataLocation': '/cserv2/tmp/data/smapfinal/',
+     'inputDataLocation': get_dataLocation("usda-smap"),
      'data_category': 'SMAP',
      'variable': 'ssm',
      'dataset_name': 'usda-smap_global_10km_3dy',
@@ -583,7 +600,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/usda_smap/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex('P3D'),
-     'inputDataLocation': '/cserv2/tmp/data/smapfinal/',
+     'inputDataLocation': get_dataLocation("usda-smap"),
      'data_category': 'SMAP',
      'variable': 'ssma',
      'dataset_name': 'usda-smap_global_10km_3dy',
@@ -594,7 +611,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/usda_smap/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex('P3D'),
-     'inputDataLocation': '/cserv2/tmp/data/smapfinal/',
+     'inputDataLocation': get_dataLocation("usda-smap"),
      'data_category': 'SMAP',
      'variable': 'susm',
      'dataset_name': 'usda-smap_global_10km_3dy',
@@ -605,7 +622,7 @@ dataTypes = [
      'directory': '/cserv2/tmp/usda_smap/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex('P3D'),
-     'inputDataLocation': '/cserv2/tmp/data/smapfinal/',
+     'inputDataLocation': get_dataLocation("usda-smap"),
      'data_category': 'SMAP',
      'variable': 'susma',
      'dataset_name': 'usda-smap_global_10km_3dy',

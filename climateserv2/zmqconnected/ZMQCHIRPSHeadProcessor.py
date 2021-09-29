@@ -6,13 +6,13 @@ import calendar
 import zmq
 import json
 import shutil
-import io
-import urllib.request
+import numpy as np
 import subprocess
 from zipfile import ZipFile
 from os.path import basename
 from copy import deepcopy
 from operator import itemgetter
+import rasterio as rio
 
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
@@ -263,7 +263,10 @@ class ZMQCHIRPSHeadProcessor():
 
     # To sort results based on epoch time
     def __sortData__(self,array):
-        newlist = sorted(array, key=itemgetter('epochTime'))
+        try:
+            newlist = sorted(array, key=itemgetter('epochTime'))
+        except:
+            return array
         return newlist
 
     # To update the progress to database
@@ -396,42 +399,53 @@ class ZMQCHIRPSHeadProcessor():
                 uniqueid) + " Exception Error Message: " + str(e))
         return False
 
-    # Add tifs to zip update self.zipFilePath and cleanup of files
-    def addToZip(self,request,dataset_name, variable_name, clipped_dataset):
-        os.makedirs(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', exist_ok=True)
-        os.chmod(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', 0o777)
+    def writeToTiff(self, uniqueid,dataObj):
+        print('wwrite ito tif')
+        os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid + '/', exist_ok=True)
+        os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid + '/', 0o777)
         os.chmod(params.shell_script, 0o777)
-        try:
-            clipped_dataset.to_netcdf(params.zipFile_ScratchWorkspace_Path + "/" + 'clipped_' + dataset_name)
-        except Exception as e:
-            print(str(e))
+        os.chdir(params.zipFile_ScratchWorkspace_Path + uniqueid + '/')
+        fileName = 'precip.' + dataObj.time.dt.strftime('%Y%m%dT%H%M%S').values[0] + '.tif'
+        print(fileName)
+        width = dataObj.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+        height = dataObj.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+        dataType = str(dataObj.dtype)
+        missingValue = np.nan  # This could change if we are not using float arrays.
+        crs = 'EPSG:4326'
+        xres = np.abs(
+            dataObj.longitude.values[1] - dataObj.longitude.values[0])  # again, could change if using 2D coord arrays.
+        yres = np.abs(
+            dataObj.latitude.values[1] - dataObj.latitude.values[0])  # again, could change if using 2D coord arrays.
+        xmin = dataObj.longitude.values.min() - xres / 2.0  # shift to corner by 1/2 grid cell res
+        ymax = dataObj.latitude.values.max() + yres / 2.0  # shift to corner by 1/2 grid cell res
+        affTransform = rio.transform.from_origin(xmin, ymax, xres, yres)
+        # Open the file.
+        dst = rio.open(fileName, 'w', driver='GTiff', dtype=dataType, nodata=missingValue, \
+                       width=width, height=height, count=1, \
+                       crs=crs, transform=affTransform, \
+                       compress='lzw')
+        # Write the data.
+        dst.write(np.flip(dataObj.values,
+                          axis=1))  # Note, we  flip the data along the latitude dimension so that is is monotonically decreasing (i.e. N to S)
+        # Close the file.
+        dst.close()
+        print('after tiff')
 
-        os.chdir(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/')
-        t = subprocess.check_output(
-            params.pythonpath + 'cdo showdate ' + params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-            shell=True,
-            text=True)
-        clipped_dates = t.split()
-        for i in range(len(clipped_dates)):
-            self.progress = 20 + 80 * ((i + 1) / len(clipped_dates))
-            self.__processProgress__(self.progress)
-            p = subprocess.check_call(
-                [params.shell_script, params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name,
-                 variable_name,
-                 params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/', clipped_dates[i], str(i + 1)])
-        with ZipFile(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip', 'w') as zipObj:
+
+    # Add tifs to zip update self.zipFilePath and cleanup of files
+    def addToZip(self,uniqueid):
+        with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
             # Iterate over all the files in zipFile_ScratchWorkspace_Path
             for folderName, subfolders, filenames in os.walk(
-                    params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '/'):
+                    params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
                 for filename in filenames:
                     # create complete filepath of file in zipFile_ScratchWorkspace_Path
                     filePath = os.path.join(folderName, filename)
                     # Add each file to zip
                     zipObj.write(filePath, basename(filePath))
         zipObj.close()
-        os.remove(params.zipFile_ScratchWorkspace_Path + '/clipped_' + dataset_name)
-        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(request['uniqueid']), ignore_errors=True)
-        self.zipFilePath = params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.zip'
+        shutil.rmtree(params.zipFile_ScratchWorkspace_Path + str(uniqueid), ignore_errors=True)
+        self.zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
 
     # To process the request based on the type and return worklist in order to process and retrieve resultant data
     def __preProcessIncomingRequest__(self, request):
@@ -529,14 +543,14 @@ class ZMQCHIRPSHeadProcessor():
                         try:
                             self.__processProgress__(20)
                             # Retrieve dataset after mapping the geometry
-                            clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, "")
-                            print('hhhjgh jfghjfhg jfgh')
-                            self.addToZip(request,dataset_name, variable_name, clipped_dataset)
+                            clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,datatype)
+                            [self.writeToTiff(uniqueid,clipped_dataset.sel(time=[x])) for x in clipped_dataset.time.values]
+                            self.addToZip(uniqueid)
                         except:
                             self.zipFilePath=None
                             self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                     else:
-                        dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,"")
+                        dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, datatype)
                         keylist = ["Date", "Value"]
                         dct={}
                         for ind in range(len(dates)):
@@ -552,9 +566,7 @@ class ZMQCHIRPSHeadProcessor():
                             self.__processProgress__(20)
                 else:
                     self.__processProgress__( 20)
-                    print("ggg ggg poly")
-
-                    dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn,"")
+                    dates, values= GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, request['geometry'], opn, datatype)
 
             # User Selected a Feature
             elif ('layerid' in request):
@@ -568,14 +580,15 @@ class ZMQCHIRPSHeadProcessor():
                         # get dataset after mapping geometry
                         clipped_dataset = GetTDSData.get_aggregated_values(request['begintime'],
                                                                                     request['endtime'], dataset_name,
-                                                                                    variable_name, geometries,opn,"")
-                        self.addToZip(request, dataset_name, variable_name, clipped_dataset)
+                                                                                    variable_name, geometries,opn,datatype)
+                        [self.writeToTiff(uniqueid, clipped_dataset.sel(time=[x])) for x in clipped_dataset.time.values]
+                        self.addToZip(uniqueid)
                     except:
                         self.zipFilePath=None
                         self.logger.info("__preProcessIncomingRequest__: TDS URL Exception")
                 else:
                     self.__processProgress__(20)
-                    dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, geometries, opn, "")
+                    dates, values = GetTDSData.get_aggregated_values(request['begintime'], request['endtime'], dataset_name, variable_name, geometries, opn, datatype)
 
             current_mask_and_storage_uuid = uniqueid
             worklist = []

@@ -36,7 +36,6 @@ deletetempnetcdf=params.deletetempnetcdf
 pythonpath=params.pythonpath
 nmme_cfsv2_path=params.nmme_cfsv2_path
 nmme_ccsm4_path=params.nmme_ccsm4_path
-chirps_path=params.chirps_path
 
 resultsdir = params.resultsdir
 
