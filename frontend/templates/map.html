@@ -296,12 +296,17 @@
                                         </div>
                                         <div class="form-group panel-buffer">
                                             <label for="ensemblemenu">Select a model ensemble</label>
-                                            <select name="ensemblemenu" class="form-control" id="ensemblemenu">
+                                            <select name="ensemblemenu"
+                                                    class="form-control" id="ensemblemenu"
+                                                    onchange="verify_ready()" >
                                             </select>
                                         </div>
                                         <div class="form-group panel-buffer">
                                             <label for="ensemblevarmenu">Select a variable</label>
-                                            <select name="ensemblevarmenu" class="form-control" id="ensemblevarmenu">
+                                            <select name="ensemblevarmenu"
+                                                    class="form-control"
+                                                    id="ensemblevarmenu"
+                                                    onchange="verify_ready()">
                                             </select>
                                         </div>
                                         <h2 class="text-center">Select Forecast Range</h2>
@@ -311,7 +316,7 @@
                                             <select name="forecastfrommenu"
                                                     id="forecastfrommenu"
                                                     class="form-control"
-                                                    onchange="syncDates()"
+                                                    onchange="syncDates(); verify_ready()"
                                             >
                                             </select>
                                         </div>
@@ -321,7 +326,7 @@
                                             <select name="forecasttomenu"
                                                     id="forecasttomenu"
                                                     class="form-control"
-                                                    onchange="syncDates()"
+                                                    onchange="syncDates(); verify_ready()"
                                             >
                                             </select>
                                         </div>
