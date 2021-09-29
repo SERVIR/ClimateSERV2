@@ -645,6 +645,7 @@ function clearAOISelections() {
 }
 
 function triggerUpload(e) {
+    document.getElementById("upload_files").value = "";
     e.preventDefault();
     $("#upload_files").trigger('click');
 }
@@ -653,29 +654,45 @@ function triggerUpload(e) {
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
+    console.log("enableUpload")
+     const targetEl = document.getElementById("drop-container");
+    if (uploadLayer) {
+        uploadLayer.clearLayers();
+        uploadLayer.remove();
+        uploadLayer = null;
+        targetEl.removeEventListener("dragenter", prevent);
+        targetEl.removeEventListener("dragover", prevent);
+
+        targetEl.removeEventListener("drop", handleFiles);
+        console.log("removed");
+    }
+console.log("event added");
+        targetEl.addEventListener("dragenter", prevent);
+        targetEl.addEventListener("dragover", prevent);
+
+        targetEl.addEventListener("drop", handleFiles);
+
     uploadLayer = L.geoJson().addTo(map);
 
-    const targetEl = document.getElementById("drop-container");
-    targetEl.addEventListener("dragenter", function (e) {
-        e.preventDefault();
-    });
-    targetEl.addEventListener("dragover", function (e) {
-        e.preventDefault();
-    });
 
-    targetEl.addEventListener("drop", function (e) {
-        handleFiles(e);
-    });
+}
+
+function prevent(e){
+    e.preventDefault();
 }
 
 function handleFiles(e) {
+    console.log("files");
     e.preventDefault();
     const reader = new FileReader();
     reader.onloadend = function () {
         try {
+            console.log("reading");
             const data = JSON.parse(this.result);
+            console.log(data);
             uploadLayer.clearLayers();
             uploadLayer.addData(data);
+
             map.fitBounds(uploadLayer.getBounds());
             $("#upload_error").hide();
             collect_review_data();
@@ -1718,10 +1735,10 @@ function getDataFromRequest(id, isClimate) {
                         xaxis.categories.push(month_year);
                     }
 
-                    rainfall_data[0].data.push(Number.parseFloat(o.col02_MonthlyAverage));
-                    rainfall_data[1].data.push(Number.parseFloat(o.col05_50thPercentile));
-                    rainfall_data[2].data.push(Number.parseFloat(o.col03_25thPercentile));
-                    rainfall_data[3].data.push(Number.parseFloat(o.col04_75thPercentile));
+                    rainfall_data[0].data.push(value_or_null(o.col05_50thPercentile));
+                    rainfall_data[1].data.push(value_or_null(o.col02_MonthlyAverage));
+                    rainfall_data[2].data.push(value_or_null(o.col03_25thPercentile));
+                    rainfall_data[3].data.push(value_or_null(o.col04_75thPercentile));
 
                 });
                 inti_chart_dialog();
@@ -1760,6 +1777,11 @@ function getDataFromRequest(id, isClimate) {
                             }
                             darray.push(val);
                             compiledData.push(darray); // i can likely store min and max here
+                        } else{
+                            const null_array = [];
+                            null_array.push(parseInt(d.epochTime) * 1000);
+                            null_array.push(null);
+                            compiledData.push(null_array); // i can likely store min and max here
                         }
                     });
                     from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
@@ -1798,6 +1820,14 @@ console.log(point_format)
         }
     });
 };
+
+function value_or_null(value){
+    if(value > -9000){
+        return Number.parseFloat(value);
+    } else{
+        return null;
+    }
+}
 
 function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, yAxis_format, point_format) {
     previous_chart = {
@@ -1892,6 +1922,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         }
     };
     chart_obj.chart = {
+        zoomType: 'xy',
         events: {
             redraw: function (e) {
                 try {
@@ -2141,6 +2172,7 @@ $(function () {
         }
     } catch (e) {
     }
+    $('#sourcemenu').val(0);
     try {
         getClimateScenarioInfo();
     } catch (e) {
