@@ -1519,7 +1519,7 @@ function handleSourceSelected(which) {
                 cc.endDateTime;
                 cc.date_FormatString_For_ForecastRange;
                 cc.number_Of_ForecastDays;
-
+                $("#ensemblevarmenu").empty();
                 data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
                     // add variable with label to select
 
