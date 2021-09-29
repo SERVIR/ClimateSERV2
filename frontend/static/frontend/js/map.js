@@ -1796,7 +1796,10 @@ function getDataFromRequest(id, isClimate) {
                         ) || client_layers.find(
                             (item) => item.app_id === $("#ensemblemenu").val()
                         );
-                        const units = layer.units;
+                        const units = layer.units.includes("|units|")
+                            ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
+                            : layer.units
+                        //const units = layer.units;  // if layer units contains |units| split, then index
 console.log(layer)
 
                         const yAxis_format = layer.yAxis_format || null;
