@@ -31,7 +31,9 @@ base_data_path='/mnt/climateserv/'#'''/mnt/climateserv/ucsb-chirps/global/0.05de
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 def get_dataLocation(type):
-    if type=="ucsb-chirps" or type=="ucsb-chirp" or type=="ucsb-chirps-gefs":
+    if type=="ucsb-chirps":
+        path = 'process_tmp/fast_chirps/'
+    elif type=="ucsb-chirp" or type=="ucsb-chirps-gefs":
         path = type+'/global/0.05deg/daily/'
     elif type=="nmme-ccsm4_bcsd" or type=="nmme-cfsv2_bcsd":
         path =  type + '/global/0.05deg/daily/latest/'
@@ -1300,6 +1302,17 @@ dataTypes = [
         'variable': 'precipitation',
         'dataset_name': 'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens024',
     },
+    {'number': 90,
+     'name': 'Chirp', 'description': 'CHIRP Dataset ',
+     'size': [7200, 2000],
+     'directory': '/cserv2/tmp/chirp/',
+     'fillValue': -9999.,
+     'indexer': dit.DailyIndex(),
+     'inputDataLocation': get_dataLocation("ucsb-chirp"),
+     'data_category': 'CHIRP',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'ucsb-chirp_global_0.05deg_daily',
+     },
 ]
 dataTypeInfo = [{'path': '/cserv2/tmp/mapfiles', 'layer': 'county'}]
 shapefileName = [{'id': 'country',

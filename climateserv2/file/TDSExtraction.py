@@ -15,26 +15,34 @@ except:
 logger=llog.getNamedLogger("request_processor")
 
 def get_filelist(dataset,datatype,start_date,end_date):
+    year_nums = range( datetime.strptime(start_date, '%Y-%m-%d').year,  datetime.strptime(end_date, '%Y-%m-%d').year+1)
     filelist=[]
     dsname = dataset.split('_')
-    days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
-    print(days_list)
-    for day in days_list:
-        if "gefs" in dataset:
-            name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z.global.nc4"
-        elif "chirp" in dataset:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
-        elif "usda-smap" in dataset:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".3dy.nc4"
-        elif "ndvi" in dataset:
-            name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".nc4"
-        elif "sport-esi" in dataset and "12wk" in dataset:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
-        elif "sport-esi" in dataset and "4wk" in dataset:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".4wk.nc4"
-        elif "imerg" in dataset:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".1dy.nc4"
-        filelist.append(name)
+    if "chirp" in dataset:
+        for year in year_nums:
+            name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dsname[
+                2] + ".daily."+str(year)+".nc4"
+            filelist.append(name)
+    else:
+        days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
+        for day in days_list:
+            if "gefs" in dataset:
+                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z.global.nc4"
+            # elif "chirp" in dataset:
+            #     name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
+            elif "usda-smap" in dataset:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".3dy.nc4"
+            elif "ndvi" in dataset:
+                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".nc4"
+            elif "sport-esi" in dataset and "12wk" in dataset:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
+            elif "sport-esi" in dataset and "4wk" in dataset:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".4wk.nc4"
+            elif "imerg" in dataset:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".1dy.nc4"
+            filelist.append(name)
+
+
     return filelist
 
 # To retrieve the THREDDS URL to download netcdf file corresponding to the dataset, variable, dates and geometry
@@ -97,113 +105,87 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
 
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
-    if jsonn['features'][0]['geometry']['type']!="Point":
-        json_aoi = json.dumps(jsonn)
-        geodf = gpd.read_file(json_aoi)
-        lon1, lat1, lon2, lat2 = geodf.total_bounds
-        if "nmme" in dataset:
-            try:
-                if "nmme-ccsm4" in dataset:
-                    nc_file = xr.open_dataset(params.nmme_ccsm4_path + dataset)
-
-                elif "nmme-cfsv2" in dataset:
-                    nc_file = xr.open_dataset(params.nmme_cfsv2_path + dataset)
-
-            except Exception as e :
-                print(str(e))
-                return [],[]
-            data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
-
-            dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
-
-            if operation == "min":
-                ds_vals = data.min(dim=['latitude','longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates,ds_vals
-            elif operation == "avg":
-                ds_vals = data.mean(dim=['latitude', 'longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates, ds_vals
-            elif operation == "max":
-                ds_vals = data.max(dim=['latitude', 'longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates, ds_vals
-            else:
-                return data
-        else:
-            # using xarray to open the temporary netcdf
-            try:
-                file_list=[]
-                flist=get_filelist(dataset,datatype,start_date,end_date)
-                for file in flist:
-                    if os.path.exists(file):
-                        file_list.append(file)
-                nc_file = xr.open_mfdataset(file_list)
-            except Exception as e :
-                print(str(e))
-                return [],[]
-            data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
-            dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
-            if operation == "min":
-                ds_vals = data.min(dim=['latitude', 'longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates, ds_vals
-            elif operation == "avg":
-                ds_vals = data.mean(dim=['latitude', 'longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates, ds_vals
-            elif operation == "max":
-                ds_vals = data.max(dim=['latitude', 'longitude']).values
-                ds_vals[np.isnan(ds_vals)] = -9999
-                return dates, ds_vals
-            elif operation == "download":
-                return data
-    elif jsonn['features'][0]['geometry']['type']=="Point":
-        dates = []
+    json_aoi = json.dumps(jsonn)
+    geodf = gpd.read_file(json_aoi)
+    lon1, lat1, lon2, lat2 = geodf.total_bounds
+    if "nmme" in dataset:
         try:
-            coords = jsonn['features'][0]['geometry']['coordinates']
-            lon, lat = coords[0], coords[1]
             if "nmme-ccsm4" in dataset:
-                ds = xr.open_dataset(params.nmme_ccsm4_path  + dataset)
-                point = ds[variable].sel(time=slice(start_date, end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+                nc_file = xr.open_dataset(params.nmme_ccsm4_path + dataset)
+
             elif "nmme-cfsv2" in dataset:
-                ds = xr.open_dataset(params.nmme_cfsv2_path  + dataset)
-                point = ds[variable].sel(time=slice(start_date, end_date)).sel(longitude=lon,latitude=lat,method='nearest')
-            else:
-                ds = xr.open_dataset('http://thredds.servirglobal.net/thredds/dodsC/Agg/' + dataset)
-                # get the dataset that has sliced data based on dates and geometry
-                point = ds[variable].sel(time=slice(start_date,end_date)).sel(longitude=lon,latitude=lat,method='nearest')
+                nc_file = xr.open_dataset(params.nmme_cfsv2_path + dataset)
 
-            dates=point.time.dt.strftime("%Y-%m-%d").values.tolist()
-
-            # min/max/avg return same values for a point geometry
-            values=np.array(point.values)
-            values = values[values != -999.0]
-        except Exception as e:
-            logger.info(e)
-        if len(values)==0:
+        except Exception as e :
+            print(str(e))
             return [],[]
-        return dates, values
+        data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+
+        dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
+
+        if operation == "min":
+            ds_vals = data.min(dim=['latitude','longitude']).values
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates,ds_vals
+        elif operation == "avg":
+            ds_vals = data.mean(dim=['latitude', 'longitude']).values
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates, ds_vals
+        elif operation == "max":
+            ds_vals = data.max(dim=['latitude', 'longitude']).values
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates, ds_vals
+        else:
+            return data
     else:
-        return [],[],[]
+        # using xarray to open the temporary netcdf
+        try:
+            file_list=[]
+            flist=get_filelist(dataset,datatype,start_date,end_date)
+            for file in flist:
+                if os.path.exists(file):
+                    file_list.append(file)
+            nc_file = xr.open_mfdataset(file_list)
+        except Exception as e :
+            print(str(e))
+            return [],[]
+        lat_bounds = nc_file.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+        lon_bounds = nc_file.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+        latSlice = slice(lat_bounds[0], lat_bounds[1])
+        lonSlice = slice(lon_bounds[0], lon_bounds[1])
+        data = nc_file[variable].sel(longitude=lonSlice,latitude=latSlice).sel(time=slice(start_date,end_date))
+        dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
+        if operation == "min":
+            ds_vals = data.min(dim=['latitude', 'longitude']).values
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates, ds_vals
+        elif operation == "avg":
+            print('from avg')
+            ds_vals = data.mean(dim=['latitude', 'longitude']).values
+            print(ds_vals)
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates, ds_vals
+        elif operation == "max":
+            ds_vals = data.max(dim=['latitude', 'longitude']).values
+            ds_vals[np.isnan(ds_vals)] = -9999
+            return dates, ds_vals
+        elif operation == "download":
+            return data
 
 # To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
 # Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
-def get_chirps_climatology(month_nums,total_bounds,point,coords):
+def get_chirps_climatology(month_nums,total_bounds):
 
     basepath='http://thredds.servirglobal.net/thredds/dodsC/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology'
     ext='.nc4'
     ds = xr.open_dataset(basepath + ext)
-    if point == True:
-        lon, lat = coords[0], coords[1]
-        try:
-            precip = ds.precipitation_amount.sel(longitude=lon,latitude=lat,method='nearest')
-        except Exception as e:
-            print(e)
-    else:
-        lon1, lat1, lon2, lat2 = total_bounds
-        precip = ds.precipitation_amount.sel(longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).mean(
-            dim=['latitude', 'longitude'])
+
+    lon1, lat1, lon2, lat2 = total_bounds
+    lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+    lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+    latSlice = slice(lat_bounds[0], lat_bounds[1])
+    lonSlice = slice(lon_bounds[0], lon_bounds[1])
+    precip = ds.precipitation_amount.sel(longitude=lonSlice,latitude=latSlice).mean(dim=['latitude', 'longitude'])
     LTA=precip.groupby('time.month').mean(dim='time').values  # this give the mean climatology for the spatial averages
     LTA[np.isnan(LTA)] = -9999
     value = precip.chunk(dict(time=-1)).groupby('time.month').quantile(q=[0.25, 0.50, 0.75], dim='time').values
@@ -216,39 +198,34 @@ def get_chirps_climatology(month_nums,total_bounds,point,coords):
 # To retrieve NMME data from start date of the netCDF to 180 days from start date
 # Requires bounds of the geometry to get the data from CCSM4 and CFSV2 sensor files.
 # Uses first five ensembles from both sensors
-def get_nmme_data(total_bounds,point,coords):
+def get_nmme_data(total_bounds):
     # set number of ensembles to use from each dataset.
     numEns = 5
     ccsm4 = []
     cfsv2 = []
     LTA=[]
     for iens in np.arange(numEns):
-        if point == True:
-            lon, lat = coords[0], coords[1]
-            try:
-                ccsm4.append(xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(longitude=lon,latitude=lat,method='nearest').expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                         axis=0))
+        lon1, lat1, lon2, lat2 = total_bounds
 
-                cfsv2.append(xr.open_dataset(params.nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(longitude=lon,latitude=lat,method='nearest').expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                         axis=0))
-            except Exception as e:
-                print(e)
-        else:
-            lon1, lat1, lon2, lat2 = total_bounds
-            ccsm4.append(xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
-                longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                     axis=0))
-            cfsv2.append(xr.open_dataset(params.nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4').sel(
-                longitude=slice(lon1, lon2), latitude=slice(lat1, lat2)).expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                     axis=0))
+        ds1=xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4')
+        lat_bounds = ds1.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+        lon_bounds = ds1.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+        latSlice = slice(lat_bounds[0], lat_bounds[1])
+        lonSlice = slice(lon_bounds[0], lon_bounds[1])
+        ccsm4.append(ds1.sel(longitude=lonSlice,latitude=latSlice).expand_dims(dim={'ensemble': np.array([iens + 1])},
+                                                                                 axis=0))
+        ds2=xr.open_dataset(params.nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4')
+        lat_bounds = ds2.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+        lon_bounds = ds2.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+        latSlice = slice(lat_bounds[0], lat_bounds[1])
+        lonSlice = slice(lon_bounds[0], lon_bounds[1])
+        cfsv2.append(ds2.sel(longitude=lonSlice,latitude=latSlice).expand_dims(dim={'ensemble': np.array([iens + 1])},
+                                                                                 axis=0))
     cfsv2 = xr.merge(cfsv2)
     ccsm4 = xr.merge(ccsm4)
     # Combine the files from CCSM4 and CSFV2 sensors
     combined=xr.concat([ccsm4,cfsv2.assign_coords(ensemble=cfsv2.ensemble+5) ],dim='ensemble')
-    if point == True:
-        nmme_values = combined.precipitation.resample(time='1M',label='left',loffset='1D').sum(skipna=True).mean(dim=['ensemble'], skipna=True).values
-    else:
-        nmme_values = combined.precipitation.resample(time='1M',label='left',loffset='1D').sum(skipna=True).mean(dim=['ensemble','latitude','longitude'], skipna=True).values
+    nmme_values = combined.precipitation.resample(time='1M',label='left',loffset='1D').sum(skipna=True).mean(dim=['ensemble','latitude','longitude'], skipna=True).values
     nmme_values[np.isnan(nmme_values)] = -9999
     return nmme_values,LTA
 
@@ -268,7 +245,6 @@ def get_season_values(type, geom):
 
     try:
         print("get_season_values - TRY")
-        coords=[]
         # add properties to geometry json if it did not exist
         jsonn = json.loads(str(geom))
         for x in range(len(jsonn["features"])):
@@ -278,15 +254,11 @@ def get_season_values(type, geom):
         # using geopandas to get the bounds
         aoi = gpd.read_file(json_aoi)
         point=False
-        if jsonn['features'][0]['geometry']['type'] == "Point":
-            point=True
-            coords = jsonn['features'][0]['geometry']['coordinates']
-
         # Get CHIRPS 40 year historical data and NMME 180 day forecast
         if type== "chirps":
-            data,LTA = get_chirps_climatology(month_nums,aoi.total_bounds,point,coords)
+            data,LTA = get_chirps_climatology(month_nums,aoi.total_bounds)
         elif type == "nmme":
-            data,LTA = get_nmme_data(aoi.total_bounds,point,coords)
+            data,LTA = get_nmme_data(aoi.total_bounds)
     except Exception as e:
         logger.info(e)
     return month_list,data, LTA
