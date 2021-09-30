@@ -272,16 +272,12 @@ class ETL_Pipeline():
             # Create dataset instance
             if dataset_subtype in ('chirp', 'chirps'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, dataset_subtype)
-            if dataset_subtype == 'chirps_gefs':
+            elif dataset_subtype == 'chirps_gefs':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS_GEFS(self, dataset_subtype)
             elif dataset_subtype == 'emodis':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_EMODIS(self)
             elif dataset_subtype in ('esi_4week', 'esi_12week'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI(self, dataset_subtype)
-            # elif dataset_subtype in ('imerg_early', 'imerg_late'):
-            #     self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
-            # elif dataset_subtype in ('imerg_1dy_early', 'imerg_1dy_late'):
-            #     self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG_1DAY(self, dataset_subtype)
             elif dataset_subtype in ('imerg_early_30min', 'imerg_late_30min', 'imerg_early_1dy', 'imerg_late_1dy'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_IMERG(self, dataset_subtype)
             elif dataset_subtype == 'nmme':
