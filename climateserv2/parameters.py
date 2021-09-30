@@ -23,7 +23,6 @@ zipFile_ScratchWorkspace_Path = params.zipFile_ScratchWorkspace_Path
 logfilepath = params.logfilepath
 workpath = params.workpath
 shapefilepath = params.shapefilepath
-shell_script=params.shell_script
 parameters = params.parameters
 dataTypes = params.dataTypes
 dataTypeInfo = params.dataTypeInfo
@@ -31,9 +30,6 @@ shapefileName = params.shapefileName
 operationTypes = params.operationTypes
 intervals = params.intervals
 ageInDaysToPurgeData = params.ageInDaysToPurgeData
-netCDFpath=params.tempnetcdfpath
-deletetempnetcdf=params.deletetempnetcdf
-pythonpath=params.pythonpath
 nmme_cfsv2_path=params.nmme_cfsv2_path
 nmme_ccsm4_path=params.nmme_ccsm4_path
 

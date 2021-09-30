@@ -20,11 +20,7 @@ zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''
 logfilepath = '''/cserv2/tmp/'''
 workpath = '''/cserv2/tmp/'''
 shapefilepath = '''/cserv2/tmp/mapfiles/'''
-shell_script=os.getcwd()+'/exportTIFFs.sh'
 ageInDaysToPurgeData = 7
-tempnetcdfpath= '''/cserv2/tmp/netCDFs/'''
-deletetempnetcdf=False
-pythonpath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/'''
 nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/''' #'''/cserv2/tmp/data/nmme/'''
 nmme_cfsv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
 base_data_path='/mnt/climateserv/'#'''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
@@ -45,9 +41,9 @@ def get_dataLocation(type):
     elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southafrica":
         path= type + '/250m/10dy/'
     elif type=="sport-esi/12wk":
-        path= type + '/global/0.05deg/12wk/'
+        path= 'sport-esi/global/0.05deg/12wk/'
     elif type=="sport-esi/4wk":
-        path= type + '/global/0.05deg/4wk/'
+        path= 'sport-esi/global/0.05deg/4wk/'
     elif type=="nasa-imerg-late" or type=="nasa-imerg-early":
         path=type+'/global/0.1deg/1dy/'
     return base_data_path + path
@@ -502,7 +498,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/esi/4WK/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
-     'inputDataLocation': get_dataLocation("sport-esi"),
+     'inputDataLocation': get_dataLocation("sport-esi/4wk"),
      'data_category': 'ESI',
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_4wk',
@@ -542,7 +538,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/esi/12WK/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
-     'inputDataLocation':get_dataLocation("sport-esi"),
+     'inputDataLocation':get_dataLocation("sport-esi/12wk"),
      'data_category': 'ESI',
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_12wk',

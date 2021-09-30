@@ -400,13 +400,10 @@ class ZMQCHIRPSHeadProcessor():
         return False
 
     def writeToTiff(self, uniqueid,dataObj):
-        print('wwrite ito tif')
         os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid + '/', exist_ok=True)
         os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid + '/', 0o777)
-        os.chmod(params.shell_script, 0o777)
         os.chdir(params.zipFile_ScratchWorkspace_Path + uniqueid + '/')
-        fileName = 'precip.' + dataObj.time.dt.strftime('%Y%m%dT%H%M%S').values[0] + '.tif'
-        print(fileName)
+        fileName = dataObj.time.dt.strftime('%Y%m%dT%H%M%S').values[0] + '.tif'
         width = dataObj.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
         height = dataObj.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
         dataType = str(dataObj.dtype)
@@ -429,7 +426,6 @@ class ZMQCHIRPSHeadProcessor():
                           axis=1))  # Note, we  flip the data along the latitude dimension so that is is monotonically decreasing (i.e. N to S)
         # Close the file.
         dst.close()
-        print('after tiff')
 
 
     # Add tifs to zip update self.zipFilePath and cleanup of files
