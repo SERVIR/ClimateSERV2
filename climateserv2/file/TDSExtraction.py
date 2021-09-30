@@ -18,7 +18,7 @@ def get_filelist(dataset,datatype,start_date,end_date):
     year_nums = range( datetime.strptime(start_date, '%Y-%m-%d').year,  datetime.strptime(end_date, '%Y-%m-%d').year+1)
     filelist=[]
     dsname = dataset.split('_')
-    if "chirp" in dataset:
+    if "ucsb-chirps"==dsname[0]:
         for year in year_nums:
             name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dsname[
                 2] + ".daily."+str(year)+".nc4"
@@ -26,10 +26,10 @@ def get_filelist(dataset,datatype,start_date,end_date):
     else:
         days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
         for day in days_list:
-            if "gefs" in dataset:
-                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z.global.nc4"
-            # elif "chirp" in dataset:
-            #     name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
+            if "ucsb-chirp"==dsname[0]:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
+            elif "ucsb-chirps-gefs"==dsname[0]:
+                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global.nc4"
             elif "usda-smap" in dataset:
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".3dy.nc4"
             elif "ndvi" in dataset:
@@ -160,9 +160,7 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             ds_vals[np.isnan(ds_vals)] = -9999
             return dates, ds_vals
         elif operation == "avg":
-            print('from avg')
             ds_vals = data.mean(dim=['latitude', 'longitude']).values
-            print(ds_vals)
             ds_vals[np.isnan(ds_vals)] = -9999
             return dates, ds_vals
         elif operation == "max":
@@ -244,7 +242,6 @@ def get_season_values(type, geom):
     month_nums =[int(i.strftime("%m")) for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
 
     try:
-        print("get_season_values - TRY")
         # add properties to geometry json if it did not exist
         jsonn = json.loads(str(geom))
         for x in range(len(jsonn["features"])):

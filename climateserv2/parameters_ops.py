@@ -31,15 +31,18 @@ base_data_path='/mnt/climateserv/'#'''/mnt/climateserv/ucsb-chirps/global/0.05de
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download']]
 def get_dataLocation(type):
+    path=""
     if type=="ucsb-chirps":
         path = 'process_tmp/fast_chirps/'
-    elif type=="ucsb-chirp" or type=="ucsb-chirps-gefs":
+    elif type=="ucsb-chirp":
         path = type+'/global/0.05deg/daily/'
+    elif type=="ucsb-chirps-gefs":
+        path = type+'/global/0.05deg/10dy/'
     elif type=="nmme-ccsm4_bcsd" or type=="nmme-cfsv2_bcsd":
         path =  type + '/global/0.05deg/daily/latest/'
     elif type=="usda-smap":
         path =  type + '/global/10km/3dy/'
-    elif type=="emodis-ndvi/centralasia" or "emodis-ndvi/westafrica" or "emodis-ndvi/eastafrica" or "emodis-ndvi/southafrica":
+    elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southafrica":
         path= type + '/250m/10dy/'
     elif type=="sport-esi/12wk":
         path= type + '/global/0.05deg/12wk/'
@@ -1312,6 +1315,18 @@ dataTypes = [
      'data_category': 'CHIRP',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirp_global_0.05deg_daily',
+     },
+    {'number': 91,
+     'name': 'IMERG 1 Day',
+     'description': 'GPM IMERG Daily Accumulation Precip',
+     'size': [3600, 1800],
+     'directory': '/data/data2/image/processed/IMERG1Day/',
+     'fillValue': 9999.,
+     'indexer': dit.DynamicIndex("P1D"),
+     'inputDataLocation': get_dataLocation("nasa-imerg-early"),
+     'data_category': 'IMERG',
+     'variable': 'precipitation_amount',
+     'dataset_name': 'nasa-imerg-early_global_0.1deg_1dy',
      },
 ]
 dataTypeInfo = [{'path': '/cserv2/tmp/mapfiles', 'layer': 'county'}]
