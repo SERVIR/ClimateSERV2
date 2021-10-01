@@ -1067,7 +1067,7 @@ function open_range_picker(){
 }
 
 function setup_dialog_close_button() {
-    console.log("setting up");
+    alert("setting up");
     $(".ui-dialog-titlebar-close")[0].removeEventListener("click", close_dialog_event);
     $(".ui-dialog-titlebar-close span").off("click")
     $(".ui-dialog-titlebar-close")[0].addEventListener("click", close_dialog_event);
@@ -1075,6 +1075,7 @@ function setup_dialog_close_button() {
 }
 
 function close_dialog_event(){
+    alert("clicked");
     $('#dialog').dialog('close');
 }
 
