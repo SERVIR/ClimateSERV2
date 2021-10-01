@@ -374,7 +374,12 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
 
                     # 1) Read the geotiff data into an xarray data array
                     da = xr.open_rasterio(geotiffFile_FullPath)
-                    da1 = xr.open_rasterio(geotiffFile_FullPath1) if os.path.isfile(geotiffFile_FullPath1) else deepcopy(da)
+                    da1 = None
+                    if os.path.isfile(geotiffFile_FullPath1):
+                        da1 = xr.open_rasterio(geotiffFile_FullPath1)
+                    else:
+                        da1 = deepcopy(da)
+                        da1.values[:] = np.nan
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
                     # ds = da.rename('precipitation_amount').to_dataset()
                     # 2) Merge both into a dataset
@@ -405,7 +410,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                         ('Description', str(mode_var__fileAttr_Description)),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                         ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
-                        ('Source', 'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'),
+                        ('Source', 'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; https://data.chc.ucsb.edu/products/EWX/data/forecasts/CHIRPS-GEFS_precip_v12/10day/precip_mean/'),
                         ('Version', str(mode_var__fileAttr_Version)),
                         ('Reference', 'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'),
                         ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
