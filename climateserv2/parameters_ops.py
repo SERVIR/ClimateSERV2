@@ -106,7 +106,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-eastafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
+     'inputDataLocation': get_dataLocation("emodis-ndvi/eastafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_eastafrica_250m_10dy',

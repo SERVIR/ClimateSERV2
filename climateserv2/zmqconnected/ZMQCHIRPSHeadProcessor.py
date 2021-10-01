@@ -554,9 +554,11 @@ class ZMQCHIRPSHeadProcessor():
                         with open(params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.csv', "w") as file:
                             outfile = csv.DictWriter(file, fieldnames=keylist)
                             outfile.writeheader()
-
-                            for k, v in dct.items():
-                                outfile.writerow({"Date": k, "Value": v})
+                            if len(dates)==0:
+                                outfile.writerow({"Date": 'No data', "Value": 'No data'})
+                            else:
+                                for k, v in dct.items():
+                                    outfile.writerow({"Date": k, "Value": v})
                         self.zipFilePath =params.zipFile_ScratchWorkspace_Path + request['uniqueid'] + '.csv'
                         if os.path.exists(self.zipFilePath):
                             self.__processProgress__(20)
