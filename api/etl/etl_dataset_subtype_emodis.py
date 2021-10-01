@@ -1,5 +1,4 @@
-import datetime, os, re, shutil, sys, zipfile
-from urllib import request as urllib_request
+import datetime, os, re, requests, shutil, sys, zipfile
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -59,14 +58,14 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
     def get_roothttp_for_regioncode(self, region_code):
         ret_roothttp = self.etl_parent_pipeline_instance.dataset.source_url
         if region_code == 'ea':
-            ret_roothttp = os.path.join(ret_roothttp, 'africa/east')
+            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/east')
         elif region_code == 'wa':
-            ret_roothttp = os.path.join(ret_roothttp, 'africa/west')
+            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/west')
         elif region_code == 'sa':
-            ret_roothttp = os.path.join(ret_roothttp, 'africa/southern')
+            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/southern')
         elif region_code == 'cta':
-            ret_roothttp = os.path.join(ret_roothttp, 'asia/centralasia')
-        ret_roothttp = os.path.join(ret_roothttp, 'dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/')
+            ret_roothttp = '{}/{}'.format(ret_roothttp, '/asia/centralasia')
+        ret_roothttp = '{}/{}'.format(ret_roothttp, '/dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/')
         return ret_roothttp
 
     # Whatever Month we are in, multiple by 3  and then subtract 2, (Jan would be 1 (3 - 2), Dec would be 34 (36 - 2) )
@@ -339,7 +338,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # final_load_dir_path
-        final_load_dir_path  = self.get_root_local_temp_working_dir(region_code=self.XX__Region_Code)
+        final_load_dir_path  = self.get_final_load_dir(region_code=self.XX__Region_Code)
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
         if is_error_creating_directory == True:
             error_JSON = {}
@@ -397,12 +396,17 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                 current_url_to_download                             = expected_remote_file_path_object['remote_full_filepath']
                 current_download_destination_local_full_file_path   = expected_remote_file_path_object['local_full_filepath']
 
-                # Actually do the download now
-                try:
-                    urllib_request.urlretrieve(current_url_to_download, current_download_destination_local_full_file_path) # urllib_request.urlretrieve(url, endfilename)
-                    #print(" - (GRANULE LOGGING) Log Each Download into the Granule Storage Area: (current_download_destination_local_full_file_path): " + str(current_download_destination_local_full_file_path))
+                print(current_url_to_download)
 
-                    download_counter = download_counter + 1
+                # Download the file - Actually do the download now
+                try:
+                    r = requests.get(current_url_to_download)
+                    if r.ok:
+                        with open(current_download_destination_local_full_file_path, 'wb') as outfile:
+                            outfile.write(r.content)
+                        download_counter = download_counter + 1
+                    else:
+                        r.raise_for_status()
                 except:
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
@@ -544,7 +548,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                     # Getting info ready for the current granule.
                     local_extract_path = expected_granules_object['local_extract_path']
                     tif_filename = expected_granules_object['tif_filename']
-                    tif_filename = tif_filename.split('.')[0] + 'm.' + tif_filename.split('.')[1]
+                    # tif_filename = tif_filename.split('.')[0] + 'm.' + tif_filename.split('.')[1]
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file = os.path.join(local_extract_path, tif_filename)
 
