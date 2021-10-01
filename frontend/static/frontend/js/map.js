@@ -402,11 +402,7 @@ function openSettings(which) {
         resizable: {handles: "se"},
         width: "auto",
         height: "auto",
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         position: {
             my: "center",
             at: "center",
@@ -466,11 +462,7 @@ function openLegend(which) {
         resizable: {handles: "se"},
         width: 169,
         height: 322,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         position: {
             my: "center",
             at: "center",
@@ -1045,11 +1037,7 @@ function open_range_picker(){
         resizable: false,
         width: $(window).width() / 2,
         height: "auto",
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         position: {
             my: "center",
             at: "center",
@@ -1057,6 +1045,16 @@ function open_range_picker(){
         }
     });
     $('#range_picker_form').validate();
+}
+
+function setup_dialog_close_button() {
+    console.log("setting up");
+    $(".ui-dialog-titlebar-close")[0].removeEventListener("click", close_dialog_event);
+    $(".ui-dialog-titlebar-close")[0].addEventListener("click", close_dialog_event);
+}
+
+function close_dialog_event(){
+    $('#dialog').dialog('close');
 }
 
 function setRange() {
@@ -1207,11 +1205,7 @@ function handle_initial_request_data(data, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         close: function(event, ui){
             clearTimeout(polling_timeout);
         },
@@ -1294,11 +1288,7 @@ function sendRequest() {
                             at: "center",
                             of: window
                         },
-                        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+                        open: setup_dialog_close_button,
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
                         }
@@ -1425,11 +1415,7 @@ function pollForProgress(id, isClimate) {
                             at: "center",
                             of: window
                         },
-                        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+                        open: setup_dialog_close_button,
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
                         }
@@ -1563,9 +1549,7 @@ function inti_chart_dialog() {
             window.dispatchEvent(new Event('resize'));
         },
         open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            });
+                            setup_dialog_close_button();
                             window.dispatchEvent(new Event('resize'));
                         },
         position: $("#isMobile").css("display") === "block" ? {
@@ -1627,11 +1611,7 @@ function getDownLoadLink(id) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         position: {
             my: "center",
             at: "center",
@@ -1660,11 +1640,7 @@ function getDataFromRequest(id, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
+        open: setup_dialog_close_button,
         position: {
             my: "center",
             at: "center",
