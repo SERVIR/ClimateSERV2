@@ -994,7 +994,7 @@ function open_range_picker(){
         dialog.html("");
         dialog.dialog({
             title: "setup",
-            resizable: {handles: "se"},
+            resizable: false,
             width: "auto",
             height: "auto",
             open: setup_dialog_close_button,
