@@ -1034,7 +1034,7 @@ function open_range_picker(){
     $("#dialog").html(range_picker);
     $("#dialog").dialog({
         title: "Range Picker",
-        resizable: false,
+        resizable: {handles: "se"},
         width: $(window).width() / 2,
         height: "auto",
         open: setup_dialog_close_button,
