@@ -979,7 +979,7 @@ function initMap() {
     $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
 
 }
-
+let first_pass = true;
 function open_range_picker(){
 	// open a dialog with 2 date fields, from and to (populated with current range) and
 	// an update range button which calls setRange(from, to)
@@ -987,8 +987,25 @@ function open_range_picker(){
 	// maybe a "full range" or "remove range" button as well
     if ($("#dialog").dialog()) {
         $("#dialog").dialog("close");
-    } else{
-        $("#dialog").dialog();
+    }
+    if(first_pass){
+        console.log("first");
+        let dialog = $("#dialog");
+        dialog.html("");
+        dialog.dialog({
+            title: "setup",
+            resizable: {handles: "se"},
+            width: "auto",
+            height: "auto",
+            open: setup_dialog_close_button,
+            position: {
+                my: "center",
+                at: "center",
+                of: window
+            }
+        });
+        $("#dialog").dialog("close");
+        first_pass = false;
     }
 
     let hasLayers = false;
