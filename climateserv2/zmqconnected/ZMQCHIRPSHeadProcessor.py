@@ -162,7 +162,7 @@ class ZMQCHIRPSHeadProcessor():
     # Divide into chunks based on size of worklist and process it
     def __watchForResults_and_keepSending__(self, workingArray, workingArray_guid_index_list):
         # Break the workingArray into chunks of this size
-        message_chunkSize = 5000
+        message_chunkSize = 20000
 
         # If the working array is already less than the chunksize
         if(len(workingArray) < message_chunkSize):

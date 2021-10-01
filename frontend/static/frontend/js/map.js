@@ -106,7 +106,6 @@ function buildStyles() {
                     });
                 }
             } catch (e) {
-                console.log("caught");
                 const backup = [
                     {
                         "Name": "boxfill/apcp_surface",
@@ -402,11 +401,6 @@ function openSettings(which) {
         resizable: {handles: "se"},
         width: "auto",
         height: "auto",
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         position: {
             my: "center",
             at: "center",
@@ -427,9 +421,6 @@ function openSettings(which) {
     } else {
         apply_settings(which, active_layer);
     }
-    $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
-        $("#dialog").dialog('close');
-    });
 }
 
 /**
@@ -466,11 +457,6 @@ function openLegend(which) {
         resizable: {handles: "se"},
         width: 169,
         height: 322,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         position: {
             my: "center",
             at: "center",
@@ -478,9 +464,6 @@ function openLegend(which) {
         }
     });
     $(".ui-dialog-title").attr("title", active_layer.title);
-    $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
-        $("#dialog").dialog('close');
-    });
 }
 
 /**
@@ -654,7 +637,6 @@ function triggerUpload(e) {
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
-    console.log("enableUpload")
      const targetEl = document.getElementById("drop-container");
     if (uploadLayer) {
         uploadLayer.clearLayers();
@@ -664,9 +646,7 @@ function enableUpload() {
         targetEl.removeEventListener("dragover", prevent);
 
         targetEl.removeEventListener("drop", handleFiles);
-        console.log("removed");
     }
-console.log("event added");
         targetEl.addEventListener("dragenter", prevent);
         targetEl.addEventListener("dragover", prevent);
 
@@ -682,14 +662,11 @@ function prevent(e){
 }
 
 function handleFiles(e) {
-    console.log("files");
     e.preventDefault();
     const reader = new FileReader();
     reader.onloadend = function () {
         try {
-            console.log("reading");
             const data = JSON.parse(this.result);
-            console.log(data);
             uploadLayer.clearLayers();
             uploadLayer.addData(data);
 
@@ -1038,18 +1015,13 @@ function open_range_picker(){
     } else {
         range_picker = '<p class="picker-text">You must add at least one layer to the map before you set an animation range</p>';
     }
-
-    $("#dialog").html(range_picker);
-    $("#dialog").dialog({
+    let dialog = $("#dialog");
+    dialog.html(range_picker);
+    dialog.dialog({
         title: "Range Picker",
         resizable: false,
         width: $(window).width() / 2,
         height: "auto",
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         position: {
             my: "center",
             at: "center",
@@ -1057,6 +1029,10 @@ function open_range_picker(){
         }
     });
     $('#range_picker_form').validate();
+}
+
+function close_dialog_event(){
+    $('#dialog').dialog('close');
 }
 
 function setRange() {
@@ -1207,11 +1183,6 @@ function handle_initial_request_data(data, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         close: function(event, ui){
             clearTimeout(polling_timeout);
         },
@@ -1293,11 +1264,6 @@ function sendRequest() {
                             my: "center",
                             at: "center",
                             of: window
-                        },
-                        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
                         },
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
@@ -1425,11 +1391,6 @@ function pollForProgress(id, isClimate) {
                             at: "center",
                             of: window
                         },
-                        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
                         close: function( event, ui ) {
                             $("#btnRequest").prop("disabled", false);
                         }
@@ -1502,9 +1463,7 @@ function handleSourceSelected(which) {
                 $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
 
                 do {
-                   // console.log("f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD'));
-
-                    $("#forecastfrommenu")
+                   $("#forecastfrommenu")
                         .append
                         (
                             '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
@@ -1563,9 +1522,6 @@ function inti_chart_dialog() {
             window.dispatchEvent(new Event('resize'));
         },
         open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            });
                             window.dispatchEvent(new Event('resize'));
                         },
         position: $("#isMobile").css("display") === "block" ? {
@@ -1587,7 +1543,6 @@ function inti_chart_dialog() {
 
 function open_previous_chart(){
     if(previous_chart){
-        console.log(previous_chart);
          inti_chart_dialog();
          finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
 
@@ -1627,11 +1582,6 @@ function getDownLoadLink(id) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         position: {
             my: "center",
             at: "center",
@@ -1660,11 +1610,6 @@ function getDataFromRequest(id, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        open: function(event, ui){
-                            $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
-                               $('#dialog').dialog('close');
-                            })
-                        },
         position: {
             my: "center",
             at: "center",
@@ -1800,11 +1745,9 @@ function getDataFromRequest(id, isClimate) {
                             ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
                             : layer.units
                         //const units = layer.units;  // if layer units contains |units| split, then index
-console.log(layer)
 
                         const yAxis_format = layer.yAxis_format || null;
                         const point_format = layer.point_format || null
-console.log(point_format)
                         finalize_chart([{
                             color: "#758055",
                             type: "line",
@@ -2223,12 +2166,15 @@ $(function () {
     }
 
     load_queried_layers();
+    $("#dialog").dialog('close');
+    $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
+        $("#dialog").dialog('close');
+    });
 
 });
 
 function load_queried_layers() {
     if (map.timeDimension._checkSyncedLayersReady() && !map.timeDimension.isLoading() && map.timeDimension._initHooksCalled) {
-        console.log("all true");
         for (let x = 0; x < queried_layers.length; x++) {
             try {
                 document.getElementById(queried_layers[x]).checked = true;
@@ -2240,7 +2186,6 @@ function load_queried_layers() {
         }
     } else {
         try {
-            console.log("waited");
             setTimeout(load_queried_layers, 500);
         } catch (e) {
         }
@@ -2251,7 +2196,6 @@ function confirm_animation() {
     if(!map.timeDimension.getUpperLimit()){
         for (let x = 0; x < queried_layers.length; x++) {
             try {
-                console.log("flipping");
                 toggleLayer(queried_layers[x] + "TimeLayer");
                 setTimeout(confirm_animation, 500);
             } catch (e) {

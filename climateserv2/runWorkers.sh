@@ -1,7 +1,7 @@
 #!/bin/sh
 
-HEADWORKERS=3
-WORKERSPERHEAD=8
+HEADWORKERS=6
+WORKERSPERHEAD=16
 
 python="/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/python"
 echo python
