@@ -987,6 +987,8 @@ function open_range_picker(){
 	// maybe a "full range" or "remove range" button as well
     if ($("#dialog").dialog()) {
         $("#dialog").dialog("close");
+    } else{
+        $("#dialog").dialog();
     }
 
     let hasLayers = false;
