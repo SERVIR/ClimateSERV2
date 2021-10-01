@@ -979,7 +979,7 @@ function initMap() {
     $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
 
 }
-let first_pass = true;
+
 function open_range_picker(){
 	// open a dialog with 2 date fields, from and to (populated with current range) and
 	// an update range button which calls setRange(from, to)
@@ -987,25 +987,6 @@ function open_range_picker(){
 	// maybe a "full range" or "remove range" button as well
     if ($("#dialog").dialog()) {
         $("#dialog").dialog("close");
-    }
-    if(first_pass){
-        console.log("first");
-        let dialog = $("#dialog");
-        dialog.html("");
-        dialog.dialog({
-            title: "setup",
-            resizable: {handles: "se"},
-            width: "auto",
-            height: "auto",
-            open: setup_dialog_close_button,
-            position: {
-                my: "center",
-                at: "center",
-                of: window
-            }
-        });
-        $("#dialog").dialog("close");
-        first_pass = false;
     }
 
     let hasLayers = false;
@@ -1049,9 +1030,9 @@ function open_range_picker(){
     } else {
         range_picker = '<p class="picker-text">You must add at least one layer to the map before you set an animation range</p>';
     }
-
-    $("#dialog").html(range_picker);
-    $("#dialog").dialog({
+    let dialog = $("#dialog");
+    dialog.html(range_picker);
+    dialog.dialog({
         title: "Range Picker",
         resizable: false,
         width: $(window).width() / 2,
@@ -1067,7 +1048,6 @@ function open_range_picker(){
 }
 
 function setup_dialog_close_button() {
-    alert("setting up");
     $(".ui-dialog-titlebar-close")[0].removeEventListener("click", close_dialog_event);
     $(".ui-dialog-titlebar-close span").off("click")
     $(".ui-dialog-titlebar-close")[0].addEventListener("click", close_dialog_event);
@@ -1075,7 +1055,6 @@ function setup_dialog_close_button() {
 }
 
 function close_dialog_event(){
-    alert("clicked");
     $('#dialog').dialog('close');
 }
 
