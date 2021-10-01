@@ -2200,6 +2200,10 @@ $(function () {
     }
 
     load_queried_layers();
+    $("#dialog").dialog('close');
+    $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
+        $("#dialog").dialog('close');
+    });
 
 });
 
