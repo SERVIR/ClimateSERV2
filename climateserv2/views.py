@@ -13,6 +13,8 @@ import os
 import xarray as xr
 from datetime import datetime,timedelta
 from django.apps import apps
+from .processDataRequest import start_processing
+import multiprocessing
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 
@@ -389,16 +391,46 @@ def submitDataRequest(request):
         else:
             dictionary['geometry'] = polygonstring
 
-        context = zmq.Context()
-        sender = context.socket(zmq.PUSH)
+        # start multiprocessing here
+        def print_my_results(my_results):
+            print(my_results)
+            logger.info("RESULTS " + str(my_results))
 
-        # ZMQ connection
-        sender.connect("ipc:///cserv2/tmp/servir/Q1/input")
-        sender.send_string(json.dumps(dictionary))
+        # we could either start one process here from the dictionary
+        # which in turn could split the work into yearly increments
+        # then start a new process for each, or we could do the splitting here
+        # and start all the processes, i think the first idea is better this
+        # way we can give the user some progress feedback.  Inside of the
+        # processes each of them would be able to update progress and when they
+        # have updated it all the way to 100 we can merge their data and be ready for the
+        # getDataFromRequest call where we could return it.
+
+        test_list = [{'id': 1, 'something': "bob"},
+                     {'id': 2, 'something': "tim"},
+                     {'id': 3, 'something': "sam"},
+                     {'id': 4, 'something': "todd"},
+                     {'id': 5, 'something': "bill"}
+                     ]
+        pool = multiprocessing.Pool(processes=5)
+
+        for t_task in test_list:
+            pool.apply_async(start_processing, args=(t_task,), callback=print_my_results)
+
+        print("got here")
+
+        # context = zmq.Context()
+        # sender = context.socket(zmq.PUSH)
+        #
+        # # ZMQ connection
+        # sender.connect("ipc:///cserv2/tmp/servir/Q1/input")
+        # sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
         return processCallBack(request, json.dumps(error), "application/json")
+
+
+
 
 #To submit request for Monthly Analysis
 @csrf_exempt
