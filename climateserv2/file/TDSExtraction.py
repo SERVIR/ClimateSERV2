@@ -23,16 +23,26 @@ def get_filelist(dataset,datatype,start_date,end_date):
             name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dsname[
                 2] + ".daily."+str(year)+".nc4"
             filelist.append(name)
+    elif "ucsb-chirp"==dsname[0]:
+        for year in year_nums:
+            for month in range(12):
+                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirp" + ".global." + dsname[
+                    2] + ".daily."+str(year)+str('{:02d}'.format(month+1))+".nc4"
+                filelist.append(name)
+    elif "ucsb-chirps-gefs"==dsname[0]:
+        for year in year_nums:
+            for month in range(12):
+                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb-chirps-gefs" + ".global." + dsname[
+                    2] + ".10dy."+str(year)+str('{:02d}'.format(month+1))+".nc4"
+                filelist.append(name)
+    elif "usda-smap"==dsname[0]:
+        for year in year_nums:
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".3dy."+str(year)+".nc4"
+            filelist.append(name)
     else:
         days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
         for day in days_list:
-            if "ucsb-chirp"==dsname[0]:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
-            elif "ucsb-chirps-gefs"==dsname[0]:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global.nc4"
-            elif "usda-smap" in dataset:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".3dy.nc4"
-            elif "ndvi" in dataset:
+            if "ndvi" in dataset:
                 name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".250m.10dy.nc4"
             elif "sport-esi" in dataset and "12wk" in dataset:
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
