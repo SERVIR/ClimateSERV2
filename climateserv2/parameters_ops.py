@@ -31,13 +31,13 @@ def get_dataLocation(type):
     if type=="ucsb-chirps":
         path = 'process_tmp/fast_chirps/'
     elif type=="ucsb-chirp":
-        path = type+'/global/0.05deg/daily/'
+        path = 'process_tmp/fast_chirp/'
     elif type=="ucsb-chirps-gefs":
-        path = type+'/global/0.05deg/10dy/'
+        path = 'process_tmp/fast_chirps_gefs/'
     elif type=="nmme-ccsm4_bcsd" or type=="nmme-cfsv2_bcsd":
         path =  type + '/global/0.05deg/daily/latest/'
     elif type=="usda-smap":
-        path =  type + '/global/10km/3dy/'
+        path =  'process_tmp/fast_usda_smap/'
     elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southafrica":
         path= type + '/250m/10dy/'
     elif type=="sport-esi/12wk":
@@ -106,7 +106,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-eastafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
+     'inputDataLocation': get_dataLocation("emodis-ndvi/eastafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_eastafrica_250m_10dy',

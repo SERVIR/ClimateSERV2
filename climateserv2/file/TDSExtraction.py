@@ -23,17 +23,27 @@ def get_filelist(dataset,datatype,start_date,end_date):
             name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dsname[
                 2] + ".daily."+str(year)+".nc4"
             filelist.append(name)
+    elif "ucsb-chirp"==dsname[0]:
+        for year in year_nums:
+            for month in range(12):
+                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirp" + ".global." + dsname[
+                    2] + ".daily."+str(year)+str('{:02d}'.format(month+1))+".nc4"
+                filelist.append(name)
+    elif "ucsb-chirps-gefs"==dsname[0]:
+        for year in year_nums:
+            for month in range(12):
+                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb-chirps-gefs" + ".global." + dsname[
+                    2] + ".10dy."+str(year)+str('{:02d}'.format(month+1))+".nc4"
+                filelist.append(name)
+    elif "usda-smap"==dsname[0]:
+        for year in year_nums:
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".3dy."+str(year)+".nc4"
+            filelist.append(name)
     else:
         days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
         for day in days_list:
-            if "ucsb-chirp"==dsname[0]:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".daily.nc4"
-            elif "ucsb-chirps-gefs"==dsname[0]:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global.nc4"
-            elif "usda-smap" in dataset:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".3dy.nc4"
-            elif "ndvi" in dataset:
-                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".nc4"
+            if "ndvi" in dataset:
+                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".250m.10dy.nc4"
             elif "sport-esi" in dataset and "12wk" in dataset:
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
             elif "sport-esi" in dataset and "4wk" in dataset:
@@ -119,7 +129,11 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
         except Exception as e :
             print(str(e))
             return [],[]
-        data = nc_file[variable].sel(time=slice(start_date,end_date)).sel(latitude=slice(lat1, lat2), longitude=slice(lon1, lon2))
+        lat_bounds = nc_file.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+        lon_bounds = nc_file.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+        latSlice = slice(lat_bounds[0], lat_bounds[1])
+        lonSlice = slice(lon_bounds[0], lon_bounds[1])
+        data = nc_file[variable].sel(longitude=lonSlice,latitude=latSlice).sel(time=slice(start_date,end_date))
 
         dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
 
@@ -136,6 +150,10 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             ds_vals[np.isnan(ds_vals)] = -9999
             return dates, ds_vals
         else:
+            if jsonn['features'][0]['geometry']['type'] == "Point":
+                ds_vals = data.values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             return data
     else:
         # using xarray to open the temporary netcdf
@@ -168,6 +186,10 @@ def get_aggregated_values(start_date, end_date, dataset, variable, geom, operati
             ds_vals[np.isnan(ds_vals)] = -9999
             return dates, ds_vals
         elif operation == "download":
+            if jsonn['features'][0]['geometry']['type'] == "Point":
+                ds_vals = data.values
+                ds_vals[np.isnan(ds_vals)] = -9999
+                return dates, ds_vals
             return data
 
 # To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
