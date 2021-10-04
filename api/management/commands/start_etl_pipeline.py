@@ -14,7 +14,7 @@ class Command(BaseCommand):
         parser.add_argument('--END_MONTH_MM', nargs='?', type=int)
         parser.add_argument('--START_DAY_DD', nargs='?', type=int)
         parser.add_argument('--END_DAY_DD', nargs='?', type=int)
-        parser.add_argument('--REGION_CODE_XX', nargs='?', type=int)
+        parser.add_argument('--REGION_CODE_XX', nargs='?')
         parser.add_argument('--START_30MININCREMENT_NN', nargs='?', type=int)
         parser.add_argument('--END_30MININCREMENT_NN', nargs='?', type=int)
 
