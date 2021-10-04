@@ -68,11 +68,11 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
 
             for filename, date in zip(filenames, dates):
 
-                date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
+                nc4_date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
 
-                current_year__YYYY_str  = "{:0>4d}".format(date.year)
-                current_month__MM_str   = "{:02d}".format(date.month)
-                current_day__DD_str     = "{:02d}".format(date.day)
+                current_year__YYYY_str  = "{:0>4d}".format(nc4_date.year)
+                current_month__MM_str   = "{:02d}".format(nc4_date.month)
+                current_day__DD_str     = "{:02d}".format(nc4_date.day)
 
                 # sport-esi.20200415T000000Z.global.0.05deg.4wk.nc4
                 nc4_week = '4wk' if self.mode == '4week' else '12wk'
