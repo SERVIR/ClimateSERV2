@@ -173,7 +173,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
 
     # Get Expected File Downloads and Expected Granules
     def execute__Step__Pre_ETL_Custom(self):
-        ret__function_name = "execute__Step__Pre_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -725,9 +725,9 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                     is_error                    = False
                     is_update_succeed           = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
                     additional_json                 = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
+                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
@@ -767,7 +767,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = "execute__Step__Post_ETL_Custom"
+        ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""

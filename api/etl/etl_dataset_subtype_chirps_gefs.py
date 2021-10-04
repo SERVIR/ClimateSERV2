@@ -95,8 +95,6 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                 local_full_filepath_tif             = os.path.join(self.temp_working_dir, base_filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
-                # print("DONE - Create a granule with all the above info")
-
                 # Make the current Granule Object
                 current_obj = {}
 
@@ -526,10 +524,6 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
-                    #
-                    # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
-                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
@@ -555,14 +549,6 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-                    # # Exit Here With Error info loaded up
-                    # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
-                    # ret__is_error = True
-                    # ret__error_description = error_JSON['error']
-                    # ret__detail_state_info = error_JSON
-                    # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-                    # return retObj
 
         except:
             sysErrorData = str(sys.exc_info())
