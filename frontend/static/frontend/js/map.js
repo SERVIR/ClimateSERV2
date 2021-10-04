@@ -1593,6 +1593,7 @@ function getDownLoadLink(id) {
 
 let rainfall_data;
 let from_compiled;
+let too_fast = 0;
 
 function getDataFromRequest(id, isClimate) {
     if ($("#dialog").dialog()) {
@@ -1629,136 +1630,146 @@ function getDataFromRequest(id, isClimate) {
         if (data.errMsg) {
             console.info(data.errMsg);
         } else {
-            if (isClimate) {
-
-                const graph_obj = JSON.parse(data).MonthlyAnalysisOutput.avg_percentiles_dataLines;
-                // i will have to make an array of objects that look like
-                /*
-                seriesOptions[i] = {
-                    name: name,
-                    data: [[date, val], ...]
-                  };
-                 */
-                rainfall_data = [];
-                rainfall_data.push({
-                    name: "LongTermAverage",
-                    data: []
-                });
-                rainfall_data.push({
-                    name: "SeasonalFcstAvg",
-                    data: []
-                });
-                rainfall_data.push({
-                    name: "25thPercentile",
-                    data: []
-                });
-                rainfall_data.push({
-                    name: "75thPercentile",
-                    data: []
-                });
-                // create these from the object dates
-                const xaxis = {
-                    categories: []
+            console.log(data);
+            if(data == "need to send id")
+            {
+                if(too_fast < 5){
+                    getDataFromRequest(id, isClimate);
                 }
-                let start_month = 13;
-                graph_obj.forEach((o, i) => {
-                    let month_year;
-                    //new Date().getFullYear()
-                    if (i === 0) {
-                        start_month = parseInt(o.col01_Month);
-                        month_year = o.col01_Month + "-" + new Date().getFullYear();
-                    } else {
-                        if (start_month < parseInt(o.col01_Month)) {
+            } else {
+                too_fast = 0;
+
+                if (isClimate) {
+
+                    const graph_obj = JSON.parse(data).MonthlyAnalysisOutput.avg_percentiles_dataLines;
+                    // i will have to make an array of objects that look like
+                    /*
+                    seriesOptions[i] = {
+                        name: name,
+                        data: [[date, val], ...]
+                      };
+                     */
+                    rainfall_data = [];
+                    rainfall_data.push({
+                        name: "LongTermAverage",
+                        data: []
+                    });
+                    rainfall_data.push({
+                        name: "SeasonalFcstAvg",
+                        data: []
+                    });
+                    rainfall_data.push({
+                        name: "25thPercentile",
+                        data: []
+                    });
+                    rainfall_data.push({
+                        name: "75thPercentile",
+                        data: []
+                    });
+                    // create these from the object dates
+                    const xaxis = {
+                        categories: []
+                    }
+                    let start_month = 13;
+                    graph_obj.forEach((o, i) => {
+                        let month_year;
+                        //new Date().getFullYear()
+                        if (i === 0) {
+                            start_month = parseInt(o.col01_Month);
                             month_year = o.col01_Month + "-" + new Date().getFullYear();
                         } else {
-                            const date = new Date();
-                            date.setFullYear(date.getFullYear() + 1);
-                            month_year = o.col01_Month + "-" + date.getFullYear();
-                        }
-                    }
-                    if (!xaxis.categories.includes(month_year)) {
-                        xaxis.categories.push(month_year);
-                    }
-
-                    rainfall_data[0].data.push(value_or_null(o.col05_50thPercentile));
-                    rainfall_data[1].data.push(value_or_null(o.col02_MonthlyAverage));
-                    rainfall_data[2].data.push(value_or_null(o.col03_25thPercentile));
-                    rainfall_data[3].data.push(value_or_null(o.col04_75thPercentile));
-
-                });
-                inti_chart_dialog();
-
-                finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
-
-            } else {
-                const compiledData = [];
-                const otState = parseInt($("#operationmenu").val());
-                if (otState === 6) {
-                    // this is a download request form download link
-                } else {
-                    let min = 9999;
-                    let max = -9999;
-                    JSON.parse(data).data.forEach((d) => {
-                        let val = 0;
-
-                        val =
-                            otState === 0
-                                ? d.value.max
-                                : otState === 1
-                                    ? d.value.min
-                                    : otState === 5
-                                        ? d.value.avg
-                                        : -9191;
-
-                        if (val > -9000) {
-                            const darray = [];
-                            darray.push(parseInt(d.epochTime) * 1000);
-                            //fix this
-                            if (val < min) {
-                                min = val;
+                            if (start_month < parseInt(o.col01_Month)) {
+                                month_year = o.col01_Month + "-" + new Date().getFullYear();
+                            } else {
+                                const date = new Date();
+                                date.setFullYear(date.getFullYear() + 1);
+                                month_year = o.col01_Month + "-" + date.getFullYear();
                             }
-                            if (val > max) {
-                                max = val;
-                            }
-                            darray.push(val);
-                            compiledData.push(darray); // i can likely store min and max here
-                        } else{
-                            const null_array = [];
-                            null_array.push(parseInt(d.epochTime) * 1000);
-                            null_array.push(null);
-                            compiledData.push(null_array); // i can likely store min and max here
                         }
+                        if (!xaxis.categories.includes(month_year)) {
+                            xaxis.categories.push(month_year);
+                        }
+
+                        rainfall_data[0].data.push(value_or_null(o.col05_50thPercentile));
+                        rainfall_data[1].data.push(value_or_null(o.col02_MonthlyAverage));
+                        rainfall_data[2].data.push(value_or_null(o.col03_25thPercentile));
+                        rainfall_data[3].data.push(value_or_null(o.col04_75thPercentile));
+
                     });
-                    from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                     inti_chart_dialog();
-//Need to fix this for multi ensemble
-                    if (compiledData.length === 0) {
-                        //inti_chart_dialog
-                        $("#chart_holder").html("<h1>No data available</h1>");
-                    } else {
-                        let layer = client_layers.find(
-                            (item) => item.app_id === $("#sourcemenu").val()
-                        ) || client_layers.find(
-                            (item) => item.app_id === $("#ensemblemenu").val()
-                        );
-                        const units = layer.units.includes("|units|")
-                            ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                            : layer.units
-                        //const units = layer.units;  // if layer units contains |units| split, then index
 
-                        const yAxis_format = layer.yAxis_format || null;
-                        const point_format = layer.point_format || null
-                        finalize_chart([{
-                            color: "#758055",
-                            type: "line",
-                            name: $("#operationmenu option:selected").text(),
-                            data: compiledData.sort((a, b) => a[0] - b[0])
-                        }], units, {
-                            type: "datetime"
-                        }, $("#sourcemenu option:selected").text(),
-                            false,
-                            yAxis_format,
-                            point_format);
+                    finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
+
+                } else {
+                    const compiledData = [];
+                    const otState = parseInt($("#operationmenu").val());
+                    if (otState === 6) {
+                        // this is a download request form download link
+                    } else {
+                        let min = 9999;
+                        let max = -9999;
+                        JSON.parse(data).data.forEach((d) => {
+                            let val = 0;
+
+                            val =
+                                otState === 0
+                                    ? d.value.max
+                                    : otState === 1
+                                        ? d.value.min
+                                        : otState === 5
+                                            ? d.value.avg
+                                            : -9191;
+
+                            if (val > -9000) {
+                                const darray = [];
+                                darray.push(parseInt(d.epochTime) * 1000);
+                                //fix this
+                                if (val < min) {
+                                    min = val;
+                                }
+                                if (val > max) {
+                                    max = val;
+                                }
+                                darray.push(val);
+                                compiledData.push(darray); // i can likely store min and max here
+                            } else {
+                                const null_array = [];
+                                null_array.push(parseInt(d.epochTime) * 1000);
+                                null_array.push(null);
+                                compiledData.push(null_array); // i can likely store min and max here
+                            }
+                        });
+                        from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
+                        inti_chart_dialog();
+//Need to fix this for multi ensemble
+                        if (compiledData.length === 0) {
+                            //inti_chart_dialog
+                            $("#chart_holder").html("<h1>No data available</h1>");
+                        } else {
+                            let layer = client_layers.find(
+                                (item) => item.app_id === $("#sourcemenu").val()
+                            ) || client_layers.find(
+                                (item) => item.app_id === $("#ensemblemenu").val()
+                            );
+                            const units = layer.units.includes("|units|")
+                                ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
+                                : layer.units
+                            //const units = layer.units;  // if layer units contains |units| split, then index
+
+                            const yAxis_format = layer.yAxis_format || null;
+                            const point_format = layer.point_format || null
+                            finalize_chart([{
+                                    color: "#758055",
+                                    type: "line",
+                                    name: $("#operationmenu option:selected").text(),
+                                    data: compiledData.sort((a, b) => a[0] - b[0])
+                                }], units, {
+                                    type: "datetime"
+                                }, $("#sourcemenu option:selected").text(),
+                                false,
+                                yAxis_format,
+                                point_format);
+                        }
                     }
                 }
             }
