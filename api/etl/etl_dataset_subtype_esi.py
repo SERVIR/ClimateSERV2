@@ -411,7 +411,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate
-                    ds = ds.assign_coords(time=end_time).expand_dims(dim='time', axis=0)
+                    ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries
                     ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 3) Rename and add attributes to this dataset
