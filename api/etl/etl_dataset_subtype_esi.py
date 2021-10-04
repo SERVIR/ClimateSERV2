@@ -69,6 +69,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
             for filename, date in zip(filenames, dates):
 
+                date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
+
                 current_year__YYYY_str  = "{:0>4d}".format(date.year)
                 current_month__MM_str   = "{:02d}".format(date.month)
                 current_day__DD_str     = "{:02d}".format(date.day)
