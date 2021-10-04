@@ -1603,7 +1603,7 @@ function getDataFromRequest(id, isClimate) {
         '    align-items: center;\n' +
         '}">';
     complete += '<div style="width:100%">';
-    complete += '<h1 class="step-marker">Download complete, downloading results.</h1>';
+    complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
     complete += '</div>';
     $("#dialog").html(complete);
     $("#dialog").dialog({
