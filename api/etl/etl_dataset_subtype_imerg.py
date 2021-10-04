@@ -314,13 +314,24 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     # print("B")
 
+                    # LATE_1DY
                     accumulation_interval = '1 day'
-                    comment = 'IMERG 1-day accumulated rainfall, Early Run'
-                    description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'
+                    comment = 'IMERG 1-day accumulated rainfall, Late Run'
+                    description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Late Run.'
                     temporal_resolution = '1-day'
-                    if self.mode.startswith('LATE'):
-                        comment = 'IMERG 1-day accumulated rainfall, Late Run'
+                    if self.mode == 'EARLY_30MIN':
+                        accumulation_interval = '30 min'
+                        comment = 'IMERG 30-min accumulated rainfall, Early Run'
+                        description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'
+                        temporal_resolution = '30-min'
+                    elif self.mode == 'LATE_30MIN':
+                        accumulation_interval = '30 min'
+                        comment = 'IMERG 30-min accumulated rainfall, Late Run'
                         description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Late Run.'
+                        temporal_resolution = '30-min'
+                    elif self.mode == 'EARLY_1DY':
+                        comment = 'IMERG 1-day accumulated rainfall, Early Run'
+                        description = 'NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.'
 
                     # print("C")
 
