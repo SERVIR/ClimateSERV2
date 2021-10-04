@@ -5,7 +5,6 @@ import logging
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
-import zmq
 import climateserv2.requestLog as requestLog
 import sys
 import pandas as pd
@@ -405,23 +404,14 @@ def submitDataRequest(request):
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
 
-        # pool = multiprocessing.Pool(processes=5)
-        print("about to p")
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+        log = Request_Progress(request_id=uniqueid, progress=0)
+        log.save()
         p.start()
-        print("got here")
-
-        # context = zmq.Context()
-        # sender = context.socket(zmq.PUSH)
-        #
-        # # ZMQ connection
-        # sender.connect("ipc:///cserv2/tmp/servir/Q1/input")
-        # sender.send_string(json.dumps(dictionary))
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
         return processCallBack(request, json.dumps(error), "application/json")
-
 
 
 
@@ -497,14 +487,6 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 dictionary['featureids'] = featureids
             else:
                 dictionary['geometry'] = polygonstring
-
-            context = zmq.Context()
-            sender = context.socket(zmq.PUSH)
-
-            # ZMQ connection
-            sender.connect("ipc:///tmp/servir/Q1/input")
-            sender.send_string(json.dumps(dictionary))
-
             return processCallBack(request, json.dumps([uniqueid]), "application/json")
         else:
             return processCallBack(request, json.dumps(error), "application/json")
@@ -574,12 +556,6 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 dictionary['featureids'] = featureids
             else:
                 dictionary['geometry'] = polygonstring
-
-            context = zmq.Context()
-            sender = context.socket(zmq.PUSH)
-            sender.connect("ipc:///cserv2/tmp/servir/Q1/input")
-            sender.send_string(json.dumps(dictionary))
-
             return processCallBack(request, json.dumps([uniqueid]), "application/json")
         else:
             return processCallBack(request, json.dumps(error), "application/json")
