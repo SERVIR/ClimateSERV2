@@ -405,17 +405,10 @@ def submitDataRequest(request):
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
 
-        test_list = [{'id': 1, 'something': "bob"},
-                     {'id': 2, 'something': "tim"},
-                     {'id': 3, 'something': "sam"},
-                     {'id': 4, 'something': "todd"},
-                     {'id': 5, 'something': "bill"}
-                     ]
-        pool = multiprocessing.Pool(processes=5)
-
-        for t_task in test_list:
-            pool.apply_async(start_processing, args=(t_task,), callback=print_my_results)
-
+        # pool = multiprocessing.Pool(processes=5)
+        print("about to p")
+        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+        p.start()
         print("got here")
 
         # context = zmq.Context()
