@@ -34,9 +34,9 @@ class ETL_Pipeline():
     END_MONTH_MM                = ""
     START_DAY_DD                = ""
     END_DAY_DD                  = ""
+    REGION_CODE_XX              = ""
     START_30MININCREMENT_NN     = ""
     END_30MININCREMENT_NN       = ""
-    REGION_CODE                 = ""
 
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -96,7 +96,7 @@ class ETL_Pipeline():
         retObj["START_30MININCREMENT_NN"]   = str(self.START_30MININCREMENT_NN).strip()
         retObj["END_30MININCREMENT_NN"]     = str(self.END_30MININCREMENT_NN).strip()
         # Region Code
-        retObj["REGION_CODE"] = str(self.REGION_CODE).strip()
+        retObj["REGION_CODE_XX"] = str(self.REGION_CODE_XX).strip()
 
         # Pipeline - Dataset Config Options - Set by Reading From the Database
         retObj["dataset_name"]              = str(self.dataset_name).strip()
@@ -299,9 +299,9 @@ class ETL_Pipeline():
                 'MM__Month__End': self.END_MONTH_MM,
                 'DD__Day__Start': self.START_DAY_DD,
                 'DD__Day__End': self.END_DAY_DD,
+                'XX__Region_Code': self.REGION_CODE_XX,
                 'NN__30MinIncrement__Start': self.START_30MININCREMENT_NN,
-                'NN__30MinIncrement__End': self.END_30MININCREMENT_NN,
-                'XX__Region_Code': self.REGION_CODE
+                'NN__30MinIncrement__End': self.END_30MININCREMENT_NN
             })
 
         except etl_exceptions.UnableToReadDatasetException:
