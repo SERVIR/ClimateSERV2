@@ -21,8 +21,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             self.mode = 'chirp'
         elif dataset_subtype == 'chirps':
             self.mode = 'chirps'
-        elif dataset_subtype == 'chirps_gefs':
-            self.mode = 'chirps_gefs'
         else:
             self.mode = 'chirp'
 
@@ -55,23 +53,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         )
         return base_filename
 
-    @staticmethod
-    def get__base_filename__for_mode__chirps_gefs(datetime_obj):
-        dekad_day_str = '01'
-        if datetime_obj.day > 10:
-            dekad_day_str = '11'
-        elif datetime_obj.day > 20:
-            dekad_day_str = '21'
-        base_filename = 'data.{}.{}{}.created-from.{}.{}{}'.format(
-            '{:0>4d}'.format(datetime_obj.year),
-            '{:02d}'.format(datetime_obj.month),
-            '{:02d}'.format(datetime_obj.day),
-            '{:0>4d}'.format(datetime_obj.year),
-            '{:02d}'.format(datetime_obj.month),
-            dekad_day_str
-        )
-        return base_filename
-
     # Function to decide which basefile name function to call based on the current mode.  (The file structure differs between each mode).
     @staticmethod
     def get__base_filename(subtype_filter, datetime_obj):
@@ -81,8 +62,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirp(datetime_obj=datetime_obj)
         elif subtype_filter == 'chirps':
             base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirps(datetime_obj=datetime_obj)
-        elif subtype_filter == 'chirps_gefs':
-            base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirps_gefs(datetime_obj=datetime_obj)
         return base_filename
 
     def execute__Step__Pre_ETL_Custom(self):
@@ -123,9 +102,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     product = 'chirp'
                 elif self.mode == 'chirps':
                     product = 'chirps'
-                elif self.mode == 'chirps_gefs':
-                    product = 'chirps-gefs'
-                    temporal_resolution = '10dy'
                 final_nc4_filename = 'ucsb-{}.{}{}{}T000000Z.global.0.05deg.{}.nc4'.format(
                     product,
                     current_year__YYYY_str,
@@ -451,10 +427,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         mode_var__precipAttr_comment    = 'Climate Hazards group InfraRed Precipitation with Stations'
                         mode_var__fileAttr_Description  = 'Climate Hazards group InfraRed Precipitation with Stations at 0.05x0.05 degree resolution'
                         mode_var__fileAttr_Version      = '2.0'
-                    elif self.mode == 'chirps_gefs':
-                        mode_var__precipAttr_comment    = 'chirps_gefs'
-                        mode_var__fileAttr_Description  = 'chirps_gefs'
-                        mode_var__fileAttr_Version      = 'chirps_gefs'
 
                     # print("C")
 
@@ -495,8 +467,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         yearStr         = TimeStrSplit[2]
                         monthStr        = TimeStrSplit[3]
                         dayStr          = TimeStrSplit[4]
-                    elif self.mode == 'chirps_gefs':
-                        temporal_resolution = '10 days'
 
                     # Determine the timestamp for the data.
                     start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
@@ -532,8 +502,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
                     ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
-                    if self.mode == "chirps_gefs":
-                        ds.precipitation_anomaly.attrs = OrderedDict([('long_name', 'precipitation_anomaly'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', 'Ensemble mean GEFS forecast bias corrected and converted into anomaly versus CHIRPS 2.0 climatology')])
                     ds.attrs = OrderedDict([
                         ('Description', str(mode_var__fileAttr_Description)),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
@@ -557,13 +525,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                         'dtype': np.dtype('float32'),
                         'chunksizes': (1, 256, 256)
                     }
-                    if self.mode == "chirps_gefs":
-                        ds.precipitation_anomaly.encoding = {
-                            '_FillValue': np.float32(-9999.0),
-                            'missing_value': np.float32(-9999.0),
-                            'dtype': np.dtype('float32'),
-                            'chunksizes': (1, 256, 256)
-                        }
                     ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
                     ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
