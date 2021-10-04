@@ -341,7 +341,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
-                    time_string_split = tif_filename.split('.')  # time_string_split = geotiffFile.split('.')
+                    time_string_split = tif_filename.split('.')
                     time_string = time_string_split[4].split('-')
                     yyyymmdd = time_string[0]
 

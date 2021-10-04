@@ -133,7 +133,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
                 current_obj['date_DD']      = current_day__DD_str
 
                 # Filename and Granule Name info
-                local_extract_path      = self.temp_working_dir  # There is no extract step, so just using the working directory as the local extract path.
+                local_extract_path      = self.temp_working_dir
                 local_final_load_path   = final_load_dir_path
                 current_obj['local_extract_path']       = local_extract_path  # Download path
                 current_obj['local_final_load_path']    = local_final_load_path  # The path where the final output granule file goes.
@@ -223,24 +223,20 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Note: In chirps, each granule has 1 file associated with it.
-        # # That file is a tif file that we can download directly.  The file is not zipped so there is no extract step needed.
-
-        download_counter    = 0
-        loop_counter        = 0
-        error_counter       = 0
-        detail_errors       = []
+        download_counter = 0
+        loop_counter = 0
+        error_counter = 0
+        detail_errors = []
 
         # Setting up for the periodic reporting on the terminal
-        expected_granules = self._expected_granules
-        num_of_objects_to_process = len(expected_granules)
+        num_of_objects_to_process = len(self._expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
         if modulus_size < 1:
             modulus_size = 1
 
         # Loop through each expected granule
-        for expected_granule in expected_granules:
+        for expected_granule in self._expected_granules:
             try:
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
@@ -301,11 +297,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
 
         # Ended, now for reporting
         #
-        ret__detail_state_info['class_name']        = "chirps"
-        ret__detail_state_info['download_counter']  = download_counter
-        ret__detail_state_info['error_counter']     = error_counter
-        ret__detail_state_info['loop_counter']      = loop_counter
-        ret__detail_state_info['detail_errors']     = detail_errors
+        ret__detail_state_info['class_name'] = self.__class__.__name__
+        ret__detail_state_info['download_counter'] = download_counter
+        ret__detail_state_info['error_counter'] = error_counter
+        ret__detail_state_info['loop_counter'] = loop_counter
+        ret__detail_state_info['detail_errors'] = detail_errors
         # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
         # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
@@ -320,8 +316,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        detail_errors = []
         error_counter = 0
+        detail_errors = []
 
         try:
 
@@ -380,7 +376,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype_Interface):
             ret__is_error = True
             ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when attempting to Extract the Granules.  System Error Message: " + str(sysErrorData)
 
-        ret__detail_state_info['class_name'] = "esi"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 

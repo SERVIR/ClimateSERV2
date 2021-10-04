@@ -188,15 +188,15 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         error_counter = 0
         detail_errors = []
 
-        expected_granules = self._expected_granules
-        num_of_objects_to_process = len(expected_granules)
+        # Setting up for the periodic reporting on the terminal
+        num_of_objects_to_process = len(self._expected_granules)
         num_of_download_activity_events = 4
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
         if modulus_size < 1:
             modulus_size = 1
 
         # Process each expected granule
-        for expected_granule in expected_granules:
+        for expected_granule in self._expected_granules:
             try:
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(num_of_objects_to_process)
@@ -208,11 +208,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
                 # Current Granule to download
                 current_url_to_download                             = expected_granule['remote_full_filepath_gz_tif']
-                current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download'] # current_download_destination_local_full_file_path = expected_granule['local_full_filepath']
-
-                # Granule info
-                Granule_UUID = expected_granule['Granule_UUID']
-                granule_name = expected_granule['granule_name']
+                current_download_destination_local_full_file_path   = expected_granule['local_full_filepath_download']
 
                 print(current_url_to_download)
 
@@ -229,7 +225,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     warn_JSON = {}
                     warn_JSON['warning'] = "Warning: There was an uncaught error when attempting to download file at URL: " + str(current_url_to_download) + ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
                     warn_JSON['is_error'] = True
-                    warn_JSON['class_name'] = "esi"
+                    warn_JSON['class_name'] = self.__class__.__name__
                     warn_JSON['function_name'] = "execute__Step__Download"
                     warn_JSON['current_object_info'] = expected_granule
                     # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
@@ -249,7 +245,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
         # Ended, now for reporting
         #
-        ret__detail_state_info['class_name'] = "esi"
+        ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['download_counter'] = download_counter
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['loop_counter'] = loop_counter
@@ -258,7 +254,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
         # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
         #
-
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -293,14 +288,11 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
 
                 except Exception as e:
                     print(e)
-                    # This granule errored on the Extract step.
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
                     error_message = "esi.execute__Step__Extract: An Error occurred during the Extract step with ETL_Granule UUID: " + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
-
-                    # print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
 
                     # Individual Transform Granule Error
                     error_counter = error_counter + 1
@@ -537,7 +529,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -546,13 +538,9 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
-                    #
                     # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
-                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
                 except:
                     sysErrorData = str(sys.exc_info())
@@ -561,11 +549,10 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     error_JSON['is_error'] = True
                     error_JSON['class_name'] = self.__class__.__name__
                     error_JSON['function_name'] = "execute__Step__Load"
-                    #
+
                     # Additional infos
                     error_JSON['expected_full_path_to_local_working_nc4_file'] = str(expected_full_path_to_local_working_nc4_file).strip()
                     error_JSON['expected_full_path_to_local_final_nc4_file'] = str(expected_full_path_to_local_final_nc4_file).strip()
-                    #
 
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -574,14 +561,6 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
-
-                    # # Exit Here With Error info loaded up
-                    # # UPDATE - NO - Exiting here would fail the entire pipeline run when only a single granule fails..
-                    # ret__is_error = True
-                    # ret__error_description = error_JSON['error']
-                    # ret__detail_state_info = error_JSON
-                    # retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-                    # return retObj
 
         except:
             sysErrorData = str(sys.exc_info())
@@ -621,7 +600,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == '':
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
@@ -629,7 +608,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype_Interface):
             else:
                 shutil.rmtree(temp_working_dir)
                 # Log an ETL Activity that says that the value of the temp_working_dir was blank.
-                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
+                activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
