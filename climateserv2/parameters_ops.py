@@ -44,8 +44,10 @@ def get_dataLocation(type):
         path= 'sport-esi/global/0.05deg/12wk/'
     elif type=="sport-esi/4wk":
         path= 'sport-esi/global/0.05deg/4wk/'
-    elif type=="nasa-imerg-late" or type=="nasa-imerg-early":
-        path=type+'/global/0.1deg/1dy/'
+    elif type=="nasa-imerg-late":
+        path='process_tmp/fast_nasa_imerg_late_daily/'
+    elif type == "nasa-imerg-early":
+        path = 'process_tmp/fast_nasa_imerg_early_daily/'
     return base_data_path + path
 
 
