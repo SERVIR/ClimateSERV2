@@ -15,6 +15,7 @@ import numpy as np
 from django import db
 from django.apps import apps
 import pandas as pd
+import climateserv2.geo.shapefile.readShapesfromFiles as sf
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -25,9 +26,16 @@ def start_processing(request):
     global results
     results = []
 
+    if ('geometry' in request):
+        polygonstring=request["geometry"]
+    elif ('layerid' in request):
+        layerid = request['layerid']
+        featureids = request['featureids']
+        polygonstring = sf.getPolygons(layerid, featureids)
+
     if 'custom_job_type' in request.keys() and request['custom_job_type']=='MonthlyRainfallAnalysis':
 
-        dates,months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(request["geometry"])
+        dates,months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygonstring)
         id = uu.getUUID()
         jobs.append({"uniqueid": request["uniqueid"], "id": id,"bounds":bounds,"dates":dates, "months":months,"subtype":"chirps"})
         id = uu.getUUID()
@@ -66,7 +74,7 @@ def start_processing(request):
             id=uu.getUUID()
             file_list = GetTDSData.get_filelist(dataset,datatype,dates[0],dates[1])
             if len(file_list)>0:
-                jobs.append({"uniqueid":request["uniqueid"],"id":id,"start_date":dates[0],"end_date":dates[1],"variable":params.dataTypes[int(datatype)]['variable'],"geom":request["geometry"],"operation":params.parameters[request["operationtype"]][1],"file_list":file_list,"derivedtype":False,"subtype":None})
+                jobs.append({"uniqueid":request["uniqueid"],"id":id,"start_date":dates[0],"end_date":dates[1],"variable":params.dataTypes[int(datatype)]['variable'],"geom":polygonstring,"operation":params.parameters[request["operationtype"]][1],"file_list":file_list,"derivedtype":False,"subtype":None})
     pool = multiprocessing.Pool(os.cpu_count())
     for job in jobs:
         pool.apply_async(start_worker_process, args=[job], callback=log_result)
@@ -118,7 +126,7 @@ def start_processing(request):
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
         datatype = request['datatype']
-        polygon_Str_ToPass=request['geometry']
+        polygon_Str_ToPass=polygonstring
         intervaltype = request['intervaltype']
         operationtype = request['operationtype']
         opn = params.parameters[operationtype][1]

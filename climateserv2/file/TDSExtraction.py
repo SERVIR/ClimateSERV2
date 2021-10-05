@@ -65,11 +65,8 @@ def get_filelist(dataset,datatype,start_date,end_date):
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
             elif "sport-esi" in dataset and "4wk" in dataset:
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".4wk.nc4"
-
             if os.path.exists(name):
                 filelist.append(name)
-                print(name)
-
     return filelist
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
