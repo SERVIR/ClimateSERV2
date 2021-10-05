@@ -253,6 +253,8 @@ def writeToTiff(dataObj,uniqueid):
         dst.write(np.flip(dataObj.values,axis=1))  # Note, we  flip the data along the latitude dimension so that is is monotonically decreasing (i.e. N to S)
     except Exception as e:
         print(e)
+        logger.info(e)
+
     # Close the file.
     dst.close()
     return fileName
