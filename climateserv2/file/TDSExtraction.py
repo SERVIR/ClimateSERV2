@@ -48,11 +48,11 @@ def get_filelist(dataset,datatype,start_date,end_date):
             name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".3dy."+str(year)+".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "nmme-ccsm4_bcsd"==dsname[0]:
+    elif "nmme-ccsm4"==dsname[0]:
         name = params.nmme_ccsm4_path + dataset
         if os.path.exists(name):
             filelist.append(name)
-    elif "nmme-cfsv2_bcsd"==dsname[0]:
+    elif "nmme-cfsv2"==dsname[0]:
         name = params.nmme_cfsv2_path + dataset
         if os.path.exists(name):
             filelist.append(name)
@@ -70,6 +70,7 @@ def get_filelist(dataset,datatype,start_date,end_date):
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
             elif "sport-esi" in dataset and "4wk" in dataset:
                 name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".4wk.nc4"
+            print(dataset)
             if os.path.exists(name):
                 filelist.append(name)
     return filelist
@@ -120,7 +121,6 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
     elif operation == "download":
-        print("from download")
         if jsonn['features'][0]['geometry']['type'] == "Point":
             values = data.values
             values[np.isnan(values)] = -9999
@@ -166,7 +166,7 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
 def get_chirps_climatology(month_nums,total_bounds):
 
     basepath='/mnt/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
-    ds = xr.open_dataset(basepath)
+    ds = xr.open_dataset(basepath,chunks={'time':12,'longitude':128,'latitude':128})
     lon1, lat1, lon2, lat2 = total_bounds
     lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
     lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
@@ -192,7 +192,7 @@ def get_nmme_data(total_bounds):
     for iens in np.arange(numEns):
         lon1, lat1, lon2, lat2 = total_bounds
     basepath = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
-    ds = xr.open_dataset(basepath)
+    ds = xr.open_dataset(basepath,chunks={'time':7,'longitude':256,'latitude':256})
     lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
     lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
     latSlice = slice(lat_bounds[0], lat_bounds[1])
@@ -207,7 +207,7 @@ def get_nmme_data(total_bounds):
 def get_monthlyanalysis_dates_bounds(geom):
 
     # Get start date and end date for NMME from netCDf file
-    nc_file = xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4')
+    nc_file = xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',chunks={'time':16,'longitude':128,'latitude':128})
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')

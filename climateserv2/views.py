@@ -209,7 +209,7 @@ def getFileForJobID(request):
 # To get list of all climate change scenario info
 @csrf_exempt
 def getClimateScenarioInfo(request):
-    nc_file = xr.open_dataset('/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4') # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+    nc_file = xr.open_dataset('/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',chunks={'time':16,'longitude':128,'latitude':128}) # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
