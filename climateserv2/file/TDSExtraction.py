@@ -97,7 +97,7 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
     lon1, lat1, lon2, lat2 = geodf.total_bounds
     # using xarray to open the temporary netcdf
     try:
-        nc_file = xr.open_mfdataset(file_list)
+        nc_file = xr.open_mfdataset(file_list, chunks={'time':16,'longitude':256,'latitude':256})
     except Exception as e :
         print(str(e))
         return [],[]
@@ -232,6 +232,10 @@ def writeToTiff(dataObj,uniqueid):
     os.chmod(params.zipFile_ScratchWorkspace_Path+uniqueid,0o777)
     os.chdir(params.zipFile_ScratchWorkspace_Path+uniqueid)
     fileName=dataObj.time.dt.strftime('%Y%m%d').values[0] + '.tif'
+    try:
+        dataObj.load()
+    except Exception as e:
+        print(e)
     print(fileName)
     width=dataObj.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
     height=dataObj.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
