@@ -68,6 +68,18 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
         ret_roothttp = '{}/{}'.format(ret_roothttp, '/dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/')
         return ret_roothttp
 
+    def get_source(self, region_code):
+        ret_source = ''
+        if region_code == 'ea':
+            ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/East%20Africa/eMODIS%20NDVI%20C6'
+        elif region_code == 'wa':
+            ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/West%20Africa/eMODIS%20NDVI%20C6'
+        elif region_code == 'sa':
+            ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/Southern%20Africa/eMODIS%20NDVI%20C6'
+        elif region_code == 'cta':
+            ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/Central%20Asia/eMODIS%20NDVI%20C6'
+        return ret_source
+
     # Whatever Month we are in, multiple by 3  and then subtract 2, (Jan would be 1 (3 - 2), Dec would be 34 (36 - 2) )
     @staticmethod
     def get_Earliest_Dekadal_Number_From_Month_Number(month_Number=1):
@@ -610,6 +622,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
 
                     # print("E")
 
+                    source = self.get_source(self.XX__Region_Code)
+
                     # Set the Attributes
                     ds.latitude.attrs = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
@@ -624,7 +638,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                         ('Description', 'EMODIS NDVI C6 at 250m resolution'),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                         ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
-                        ('Source', 'EMODIS NDVI C6, https://earlywarning.usgs.gov/fews/datadownloads/East%20Africa/eMODIS%20NDVI%20C6'),
+                        ('Source', 'EMODIS NDVI C6, {}'.format(source)),
                         ('Version', 'C6'), ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')),
                         ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')),
                         ('SouthernmostLatitude', np.min(ds.latitude.values)),
