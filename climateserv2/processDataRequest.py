@@ -212,7 +212,6 @@ def start_worker_process(job_item):
         'zipfilepath': ""
     }
 
-
 def log_result(retval):
     results.append(retval)
     try:
@@ -224,7 +223,6 @@ def log_result(retval):
         log.save()
     except Exception as e:
         logger.info(str(e))
-
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
     avg_percentiles_data_lines = []

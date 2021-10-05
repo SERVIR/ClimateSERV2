@@ -120,6 +120,7 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
     elif operation == "download":
+        print("from download")
         if jsonn['features'][0]['geometry']['type'] == "Point":
             values = data.values
             values[np.isnan(values)] = -9999
@@ -130,28 +131,35 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
             with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
                 outfile = csv.DictWriter(file, fieldnames=keylist)
                 outfile.writeheader()
-
+            if len(dates) > 0:
                 for k, v in dct.items():
                     outfile.writerow({"Date": k, "Value": v})
-            zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
-            return zipFilePath
-        [writeToTiff(data.sel(time=[x]),uniqueid) for x in data.time.values]
-        try:
-            with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
-                # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(
-                        params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
-                    for filename in filenames:
-                        # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
-                        # Add file to zip
-                        zipObj.write(filePath, basename(filePath))
+            else:
+                outfile.writerow({"Date": "No data", "Value": "No data"})
 
-            # close the Zip File
-            zipObj.close()
-        except Exception as e:
-            print(e)
-        return params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+            zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
+        else:
+            files = [writeToTiff(data.sel(time=[x]),uniqueid) for x in data.time.values]
+            if len(files)>0:
+                try:
+                    with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
+                        # Iterate over all the files in directory
+                        for folderName, subfolders, filenames in os.walk(
+                                params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
+                            for filename in filenames:
+                                # create complete filepath of file in directory
+                                filePath = os.path.join(folderName, filename)
+                                # Add file to zip
+                                zipObj.write(filePath, basename(filePath))
+
+                    # close the Zip File
+                    zipObj.close()
+                except Exception as e:
+                    print(e)
+                zipFilePath= params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+            else:
+                zipFilePath=""
+        return zipFilePath
 
 # To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
 # Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
@@ -222,7 +230,6 @@ def get_monthlyanalysis_dates_bounds(geom):
 def writeToTiff(dataObj,uniqueid):
     os.makedirs(params.zipFile_ScratchWorkspace_Path+uniqueid,exist_ok=True)
     os.chmod(params.zipFile_ScratchWorkspace_Path+uniqueid,0o777)
-
     os.chdir(params.zipFile_ScratchWorkspace_Path+uniqueid)
     fileName=dataObj.time.dt.strftime('%Y%m%d').values[0] + '.tif'
     print(fileName)
