@@ -209,7 +209,7 @@ def getFileForJobID(request):
 # To get list of all climate change scenario info
 @csrf_exempt
 def getClimateScenarioInfo(request):
-    nc_file = xr.open_dataset('/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4') # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+    nc_file = xr.open_dataset('/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4') # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
@@ -556,6 +556,10 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 dictionary['featureids'] = featureids
             else:
                 dictionary['geometry'] = polygonstring
+            p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+            log = Request_Progress(request_id=uniqueid, progress=0)
+            log.save()
+            p.start()
             return processCallBack(request, json.dumps([uniqueid]), "application/json")
         else:
             return processCallBack(request, json.dumps(error), "application/json")

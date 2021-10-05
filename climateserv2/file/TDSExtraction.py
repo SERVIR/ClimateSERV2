@@ -72,7 +72,7 @@ def get_filelist(dataset,datatype,start_date,end_date):
     return filelist
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
-def get_aggregated_values(start_date, end_date, variable, geom, operation,file_list):
+def get_thredds_values(start_date, end_date, variable, geom, operation,file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
@@ -129,13 +129,9 @@ def get_chirps_climatology(month_nums,total_bounds):
 
     basepath='/mnt/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
     ds = xr.open_dataset(basepath)
-
     lon1, lat1, lon2, lat2 = total_bounds
     lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
     lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-    print(lat_bounds)
-    print(lon_bounds)
-
     latSlice = slice(lat_bounds[0], lat_bounds[1])
     lonSlice = slice(lon_bounds[0], lon_bounds[1])
     precip = ds.precipitation_amount.sel(longitude=lonSlice,latitude=latSlice).mean(dim=['latitude', 'longitude'])
@@ -154,36 +150,23 @@ def get_chirps_climatology(month_nums,total_bounds):
 def get_nmme_data(total_bounds):
     # set number of ensembles to use from each dataset.
     numEns = 5
-    ccsm4 = []
-    cfsv2 = []
     LTA=[]
     for iens in np.arange(numEns):
         lon1, lat1, lon2, lat2 = total_bounds
-
-        ds1=xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4')
-        lat_bounds = ds1.sel(latitude=[lat1, lat2], method='nearest').latitude.values
-        lon_bounds = ds1.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-        latSlice = slice(lat_bounds[0], lat_bounds[1])
-        lonSlice = slice(lon_bounds[0], lon_bounds[1])
-        ccsm4.append(ds1.sel(longitude=lonSlice,latitude=latSlice).expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                 axis=0))
-        ds2=xr.open_dataset(params.nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(iens + 1) + '.nc4')
-        lat_bounds = ds2.sel(latitude=[lat1, lat2], method='nearest').latitude.values
-        lon_bounds = ds2.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-        latSlice = slice(lat_bounds[0], lat_bounds[1])
-        lonSlice = slice(lon_bounds[0], lon_bounds[1])
-        cfsv2.append(ds2.sel(longitude=lonSlice,latitude=latSlice).expand_dims(dim={'ensemble': np.array([iens + 1])},
-                                                                                 axis=0))
-    cfsv2 = xr.merge(cfsv2)
-    ccsm4 = xr.merge(ccsm4)
-    # Combine the files from CCSM4 and CSFV2 sensors
-    combined=xr.concat([ccsm4,cfsv2.assign_coords(ensemble=cfsv2.ensemble+5) ],dim='ensemble')
-    nmme_values = combined.precipitation.resample(time='1M',label='left',loffset='1D').sum(skipna=True).mean(dim=['ensemble','latitude','longitude'], skipna=True).values
+    basepath = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
+    ds = xr.open_dataset(basepath)
+    lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+    lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+    latSlice = slice(lat_bounds[0], lat_bounds[1])
+    lonSlice = slice(lon_bounds[0], lon_bounds[1])
+    try:
+        nmme_values = ds.precipitation.sel(longitude=lonSlice,latitude=latSlice).mean(dim=['latitude', 'longitude']).values
+    except Exception as e:
+        print(e)
     nmme_values[np.isnan(nmme_values)] = -9999
-    return nmme_values,LTA
+    return (nmme_values).tolist(),LTA
 
-# To retrieve months list and data of CHIRPS/NMME for Monthly Analysis
-def get_season_values(type, geom):
+def get_monthlyanalysis_dates_bounds(geom):
 
     # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4')
@@ -196,21 +179,12 @@ def get_season_values(type, geom):
     month_list = [i.strftime("%Y-%m-%d") for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
     month_nums =[int(i.strftime("%m")) for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
 
-    try:
-        # add properties to geometry json if it did not exist
-        jsonn = json.loads(str(geom))
-        for x in range(len(jsonn["features"])):
-            if "properties" not in jsonn["features"][x]:
-                jsonn["features"][x]["properties"] = {}
-        json_aoi = json.dumps(jsonn)
-        # using geopandas to get the bounds
-        aoi = gpd.read_file(json_aoi)
-        point=False
-        # Get CHIRPS 40 year historical data and NMME 180 day forecast
-        if type== "chirps":
-            data,LTA = get_chirps_climatology(month_nums,aoi.total_bounds)
-        elif type == "nmme":
-            data,LTA = get_nmme_data(aoi.total_bounds)
-    except Exception as e:
-        logger.info(e)
-    return month_list,data, LTA
+    # add properties to geometry json if it did not exist
+    jsonn = json.loads(str(geom))
+    for x in range(len(jsonn["features"])):
+        if "properties" not in jsonn["features"][x]:
+            jsonn["features"][x]["properties"] = {}
+    json_aoi = json.dumps(jsonn)
+    # using geopandas to get the bounds
+    aoi = gpd.read_file(json_aoi)
+    return month_list,month_nums,aoi.total_bounds
