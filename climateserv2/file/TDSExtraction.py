@@ -1,8 +1,13 @@
 import json
+from os.path import basename
+
 import pandas as pd
 import geopandas as gpd
 import numpy as np
 import xarray as xr
+import rasterio as rio
+import csv
+from zipfile import ZipFile
 from datetime import datetime,timedelta
 import os
 try:
@@ -70,7 +75,7 @@ def get_filelist(dataset,datatype,start_date,end_date):
     return filelist
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
-def get_thredds_values(start_date, end_date, variable, geom, operation,file_list):
+def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
@@ -116,10 +121,37 @@ def get_thredds_values(start_date, end_date, variable, geom, operation,file_list
         return dates, ds_vals
     elif operation == "download":
         if jsonn['features'][0]['geometry']['type'] == "Point":
-            ds_vals = data.values
-            ds_vals[np.isnan(ds_vals)] = -9999
-            return dates, ds_vals
-        return data
+            values = data.values
+            values[np.isnan(values)] = -9999
+            keylist = ["Date", "Value"]
+            dct = {}
+            for ind in range(len(dates)):
+                dct[dates[ind]] = values[ind]
+            with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
+                outfile = csv.DictWriter(file, fieldnames=keylist)
+                outfile.writeheader()
+
+                for k, v in dct.items():
+                    outfile.writerow({"Date": k, "Value": v})
+            zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
+            return zipFilePath
+        [writeToTiff(data.sel(time=[x]),uniqueid) for x in data.time.values]
+        try:
+            with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
+                # Iterate over all the files in directory
+                for folderName, subfolders, filenames in os.walk(
+                        params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
+                    for filename in filenames:
+                        # create complete filepath of file in directory
+                        filePath = os.path.join(folderName, filename)
+                        # Add file to zip
+                        zipObj.write(filePath, basename(filePath))
+
+            # close the Zip File
+            zipObj.close()
+        except Exception as e:
+            print(e)
+        return params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
 
 # To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
 # Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
@@ -186,3 +218,34 @@ def get_monthlyanalysis_dates_bounds(geom):
     # using geopandas to get the bounds
     aoi = gpd.read_file(json_aoi)
     return month_list,month_nums,aoi.total_bounds
+
+def writeToTiff(dataObj,uniqueid):
+    os.makedirs(params.zipFile_ScratchWorkspace_Path+uniqueid,exist_ok=True)
+    os.chmod(params.zipFile_ScratchWorkspace_Path+uniqueid,0o777)
+
+    os.chdir(params.zipFile_ScratchWorkspace_Path+uniqueid)
+    fileName=dataObj.time.dt.strftime('%Y%m%d').values[0] + '.tif'
+    print(fileName)
+    width=dataObj.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+    height=dataObj.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+    dataType=str(dataObj.dtype)
+    missingValue=np.nan           # This could change if we are not using float arrays.
+    crs='EPSG:4326'
+    xres=np.abs(dataObj.longitude.values[1]-dataObj.longitude.values[0])  # again, could change if using 2D coord arrays.
+    yres=np.abs(dataObj.latitude.values[1]-dataObj.latitude.values[0])    # again, could change if using 2D coord arrays.
+    xmin=dataObj.longitude.values.min()-xres/2.0  # shift to corner by 1/2 grid cell res
+    ymax=dataObj.latitude.values.max()+yres/2.0   # shift to corner by 1/2 grid cell res
+    affTransform=rio.transform.from_origin(xmin,ymax,xres,yres)
+    # Open the file.
+    dst=rio.open(fileName,'w',driver='GTiff',dtype=dataType,nodata=missingValue, \
+             width=width,height=height,count=1, \
+             crs=crs,transform=affTransform, \
+             compress='lzw')
+    # Write the data.
+    try:
+        dst.write(np.flip(dataObj.values,axis=1))  # Note, we  flip the data along the latitude dimension so that is is monotonically decreasing (i.e. N to S)
+    except Exception as e:
+        print(e)
+    # Close the file.
+    dst.close()
+    return fileName
