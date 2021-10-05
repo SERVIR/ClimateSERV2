@@ -556,8 +556,12 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 dictionary['featureids'] = featureids
             else:
                 dictionary['geometry'] = polygonstring
+            logger.info("Addind progress (getMonthlyRainfallAnalysis) " + uniqueid)
+
             p = multiprocessing.Process(target=start_processing, args=(dictionary,))
             log = Request_Progress(request_id=uniqueid, progress=0)
+            logger.info("Added progress (getMonthlyRainfallAnalysis) " + uniqueid)
+
             log.save()
             p.start()
             return processCallBack(request, json.dumps([uniqueid]), "application/json")
