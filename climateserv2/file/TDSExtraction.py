@@ -68,6 +68,7 @@ def get_filelist(dataset,datatype,start_date,end_date):
 
             if os.path.exists(name):
                 filelist.append(name)
+                print(name)
 
     return filelist
 

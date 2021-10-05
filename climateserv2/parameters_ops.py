@@ -38,7 +38,7 @@ def get_dataLocation(type):
         path =  type + '/global/0.05deg/daily/latest/'
     elif type=="usda-smap":
         path =  'process_tmp/fast_usda_smap/'
-    elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southafrica":
+    elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southernafrica":
         path= type + '/250m/10dy/'
     elif type=="sport-esi/12wk":
         path= 'sport-esi/global/0.05deg/12wk/'
@@ -141,7 +141,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-southafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
+     'inputDataLocation': get_dataLocation("emodis-ndvi/southernafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_southafrica_250m_10dy',

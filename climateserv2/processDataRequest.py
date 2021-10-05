@@ -24,6 +24,7 @@ def start_processing(request):
     jobs=[]
     global results
     results = []
+
     if 'custom_job_type' in request.keys() and request['custom_job_type']=='MonthlyRainfallAnalysis':
 
         dates,months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(request["geometry"])
