@@ -80,6 +80,18 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
             ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/Central%20Asia/eMODIS%20NDVI%20C6'
         return ret_source
 
+    def get_region_range(self, region_code):
+        ret_range = ((0.0, 0.0), (0.0, 0.0))
+        if region_code == 'ea':
+            ret_range = ((-12.45, 22.95), (21.05, 51.95))
+        elif region_code == 'wa':
+            ret_range = ((2.05, 20.95), (-18.95, 27.45))
+        elif region_code == 'sa':
+            ret_range = ((-35.50, 5.45), (4.15, 51.95))
+        elif region_code == 'cta':
+            ret_range = ((23.05 , 55.95), (46.05, 87.95))
+        return ret_range
+
     # Whatever Month we are in, multiple by 3  and then subtract 2, (Jan would be 1 (3 - 2), Dec would be 34 (36 - 2) )
     @staticmethod
     def get_Earliest_Dekadal_Number_From_Month_Number(month_Number=1):
@@ -595,6 +607,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                     startTime = dekadTimes[dekadNum][0]
                     endTime = dekadTimes[dekadNum][1]
 
+                    region_range = self.get_region_range(self.XX__Region_Code)
+
                     # print("C")
                     # print("D")
 
@@ -616,9 +630,12 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
                     ds['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
                     # 4) Rename and add attributes to this dataset.
                     ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                    ds = ds.assign_coords(latitude=np.around(ds.latitude.values, decimals=6), longitude=np.around(ds.longitude.values, decimals=6))
                     # 4) Reorder latitude dimension into ascending order
                     if ds.latitude.values[1] - ds.latitude.values[0] < 0:
                         ds = ds.reindex(latitude=ds.latitude[::-1])
+                    #
+                    ds = ds.sel(latitude=slice(region_range[0][0], region_range[0][1]), longitude=slice(region_range[1][0], region_range[1][1]))
 
                     # print("E")
 
