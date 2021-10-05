@@ -127,7 +127,7 @@ def get_thredds_values(start_date, end_date, variable, geom, operation,file_list
 # Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
 def get_chirps_climatology(month_nums,total_bounds):
 
-    basepath='/mnt/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
+    basepath='http://thredds.servirglobal.net/thredds/dodsC/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
     ds = xr.open_dataset(basepath)
     lon1, lat1, lon2, lat2 = total_bounds
     lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
