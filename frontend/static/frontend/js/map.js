@@ -1197,7 +1197,10 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
-    current_calculation = parseInt($("#operationmenu").val());
+    current_calculation = {
+        'value': parseInt($("#operationmenu").val()),
+        'text': $("#operationmenu option:selected").text()
+    };
     //set the calculation info here
     clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
@@ -1224,7 +1227,7 @@ function sendRequest() {
         formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
         formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
         formData.append("intervaltype", 0);
-        formData.append("operationtype", $("#operationmenu").val());
+        formData.append("operationtype", current_calculation.value);
         formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
         formData.append("isZip_CurrentDataType", false);
         if (highlightedIDs.length > 0) {
@@ -1706,7 +1709,7 @@ function getDataFromRequest(id, isClimate) {
                 } else {
                     const compiledData = [];
                     // change this, set it on send request
-                    const otState = current_calculation;
+                    const otState = current_calculation.value;
                     if (otState === 6) {
                         // this is a download request form download link
                     } else {
@@ -1765,7 +1768,7 @@ function getDataFromRequest(id, isClimate) {
                             finalize_chart([{
                                     color: "#758055",
                                     type: "line",
-                                    name: $("#operationmenu option:selected").text(),
+                                    name: current_calculation.text,
                                     data: compiledData.sort((a, b) => a[0] - b[0])
                                 }], units, {
                                     type: "datetime"
