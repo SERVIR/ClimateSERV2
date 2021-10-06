@@ -63,12 +63,12 @@ def get_filelist(dataset,datatype,start_date,end_date):
                 filelist.append(name)
     elif "sport-esi" in dataset and "12wk" in dataset:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + dsname[2] + ".12wk."+str(year)+".nc4"
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".12wk."+str(year)+".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     elif "sport-esi" in dataset and "4wk" in dataset:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + dsname[2] + ".4wk."+str(year)+".nc4"
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".4wk."+str(year)+".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     else:
