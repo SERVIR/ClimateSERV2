@@ -91,7 +91,10 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
     except:
         # If there is an exception with date format while converting, we can just ignore the conversion and use the passed dates
         pass
-    jsonn =json.loads(str(geom))
+    try:
+        jsonn =json.loads(str(geom))
+    except Exception as e:
+        jsonn =json.loads(json.dumps(geom))
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}

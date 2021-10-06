@@ -356,7 +356,7 @@ def submitDataRequest(request):
         else:
             try:
                 polygonstring = request.GET["geometry"]
-                geometry = decodeGeoJSON(polygonstring);
+                geometry = decodeGeoJSON(polygonstring)
             # create geometry
             except KeyError:
                 logger.warning("Problem with geometry")
@@ -389,7 +389,12 @@ def submitDataRequest(request):
 
         else:
             dictionary['geometry'] = polygonstring
-
+            try:
+                geom_str=dictionary['geometry']
+                jsonn = json.loads(dictionary['geometry'])
+                featuresexist= jsonn['features']
+            except:
+                dictionary['geometry']={"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":jsonn}]}
         # start multiprocessing here
         def print_my_results(my_results):
             print(my_results)
@@ -541,29 +546,35 @@ def submitMonthlyRainfallAnalysisRequest(request):
             else:
                 logger.warning(geometry)
 
-        uniqueid = uutools.getUUID()
-        logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
+    uniqueid = uutools.getUUID()
+    logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
 
-        # Submit requests to the ipcluster service to get data
-        if (len(error) == 0):
-            dictionary = {'uniqueid': uniqueid,
-                          'custom_job_type': custom_job_type,
-                          'seasonal_start_date': seasonal_start_date,
-                          'seasonal_end_date': seasonal_end_date
-                          }
-            if (featureList == True):
-                dictionary['layerid'] = layerid
-                dictionary['featureids'] = featureids
-            else:
-                dictionary['geometry'] = polygonstring
-            logger.info("Adding progress (getMonthlyRainfallAnalysis) " + uniqueid)
-
-            p = multiprocessing.Process(target=start_processing, args=(dictionary,))
-            log = Request_Progress(request_id=uniqueid, progress=0)
-            logger.info("Added progress (getMonthlyRainfallAnalysis) " + uniqueid)
-
-            log.save()
-            p.start()
-            return processCallBack(request, json.dumps([uniqueid]), "application/json")
+    # Submit requests to the ipcluster service to get data
+    if (len(error) == 0):
+        dictionary = {'uniqueid': uniqueid,
+                      'custom_job_type': custom_job_type,
+                      'seasonal_start_date': seasonal_start_date,
+                      'seasonal_end_date': seasonal_end_date
+                      }
+        if (featureList == True):
+            dictionary['layerid'] = layerid
+            dictionary['featureids'] = featureids
         else:
-            return processCallBack(request, json.dumps(error), "application/json")
+            dictionary['geometry'] = polygonstring
+            try:
+                geom_str=dictionary['geometry']
+                jsonn = json.loads(dictionary['geometry'])
+                featuresexist= jsonn['features']
+            except:
+                dictionary['geometry']={"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":jsonn}]}
+        logger.info("Adding progress (getMonthlyRainfallAnalysis) " + uniqueid)
+
+        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+        log = Request_Progress(request_id=uniqueid, progress=0)
+        logger.info("Added progress (getMonthlyRainfallAnalysis) " + uniqueid)
+
+        log.save()
+        p.start()
+        return processCallBack(request, json.dumps([uniqueid]), "application/json")
+    else:
+        return processCallBack(request, json.dumps(error), "application/json")
