@@ -22,6 +22,7 @@ let previous_chart;
 let layer_limits = {min: null, max: null}
 let queried_layers = [];
 let control_layer;
+let current_calculation;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -1196,6 +1197,8 @@ function handle_initial_request_data(data, isClimate) {
 }
 
 function sendRequest() {
+    current_calculation = parseInt($("#operationmenu").val());
+    //set the calculation info here
     clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
@@ -1702,7 +1705,8 @@ function getDataFromRequest(id, isClimate) {
 
                 } else {
                     const compiledData = [];
-                    const otState = parseInt($("#operationmenu").val());
+                    // change this, set it on send request
+                    const otState = current_calculation;
                     if (otState === 6) {
                         // this is a download request form download link
                     } else {
