@@ -41,9 +41,9 @@ def get_dataLocation(type):
     elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southernafrica":
         path= type + '/250m/10dy/'
     elif type=="sport-esi/12wk":
-        path= 'sport-esi/global/0.05deg/12wk/'
+        path= 'process_tmp/fast_sport_esi_12wk/'
     elif type=="sport-esi/4wk":
-        path= 'sport-esi/global/0.05deg/4wk/'
+        path= 'process_tmp/fast_sport_esi_4wk/'
     elif type=="nasa-imerg-late":
         path='process_tmp/fast_nasa_imerg_late_daily/'
     elif type == "nasa-imerg-early":

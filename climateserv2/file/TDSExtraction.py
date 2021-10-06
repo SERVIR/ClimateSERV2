@@ -61,18 +61,23 @@ def get_filelist(dataset,datatype,start_date,end_date):
             name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".1dy."+str(year)+".nc4"
             if os.path.exists(name):
                 filelist.append(name)
+    elif "sport-esi" in dataset and "12wk" in dataset:
+        for year in year_nums:
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + dsname[2] + ".12wk."+str(year)+".nc4"
+            if os.path.exists(name):
+                filelist.append(name)
+    elif "sport-esi" in dataset and "4wk" in dataset:
+        for year in year_nums:
+            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + dsname[2] + ".4wk."+str(year)+".nc4"
+            if os.path.exists(name):
+                filelist.append(name)
     else:
         days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
         for day in days_list:
             if "ndvi" in dataset:
                 name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".250m.10dy.nc4"
-            elif "sport-esi" in dataset and "12wk" in dataset:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." +  dsname[2] + ".12wk.nc4"
-            elif "sport-esi" in dataset and "4wk" in dataset:
-                name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + day + "T000000Z.global." + dsname[2] + ".4wk.nc4"
-            print(dataset)
-            if os.path.exists(name):
-                filelist.append(name)
+                if os.path.exists(name):
+                    filelist.append(name)
     return filelist
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
