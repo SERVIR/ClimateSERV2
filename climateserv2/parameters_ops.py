@@ -38,8 +38,8 @@ def get_dataLocation(type):
         path =  type + '/global/0.05deg/daily/latest/'
     elif type=="usda-smap":
         path =  'process_tmp/fast_usda_smap/'
-    elif type=="emodis-ndvi/centralasia" or type=="emodis-ndvi/westafrica" or type=="emodis-ndvi/eastafrica" or type=="emodis-ndvi/southernafrica":
-        path= type + '/250m/10dy/'
+    elif type=="centralasia" or type=="westafrica" or type=="eastafrica" or type=="southernafrica":
+        path= 'process_tmp/fast_emodis_'+type+'/'
     elif type=="sport-esi/12wk":
         path= 'process_tmp/fast_sport_esi_12wk/'
     elif type=="sport-esi/4wk":
@@ -95,7 +95,7 @@ dataTypes = [
      'directory': '/data/data/image/processed/eMODIS/ndvi-westafrica/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/westafrica"),
+     'inputDataLocation': get_dataLocation("westafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_westafrica_250m_10dy',
@@ -108,7 +108,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-eastafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/eastafrica"),
+     'inputDataLocation': get_dataLocation("eastafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_eastafrica_250m_10dy',
@@ -141,7 +141,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-southafrica/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/southernafrica"),
+     'inputDataLocation': get_dataLocation("southernafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_southafrica_250m_10dy',
@@ -480,7 +480,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-afghanistan/np/',
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
-     'inputDataLocation':get_dataLocation("emodis-ndvi/centralasia"),
+     'inputDataLocation':get_dataLocation("centralasia"),
      'data_category': 'NDVI',
      },
     {'number': 28, 'name': 'NDVI MODIS-Asia',
@@ -489,7 +489,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-asia/np/',
      'fillValue': -9999.,
      'indexer': dit.DecadalIndex(),
-     'inputDataLocation': get_dataLocation("emodis-ndvi/centralasia"),
+     'inputDataLocation': get_dataLocation("centralasia"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
      'dataset_name': 'emodis-ndvi_centralasia_250m_10dy',

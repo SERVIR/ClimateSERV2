@@ -72,12 +72,12 @@ def get_filelist(dataset,datatype,start_date,end_date):
             if os.path.exists(name):
                 filelist.append(name)
     else:
-        days_list = [i.strftime("%Y%m%d") for i in pd.date_range(start=start_date, end=end_date, freq='D')]
-        for day in days_list:
-            if "ndvi" in dataset:
-                name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"."+day+"T000000Z." + dsname[1] +".250m.10dy.nc4"
-                if os.path.exists(name):
-                    filelist.append(name)
+        if "ndvi" in dataset:
+            for year in year_nums:
+                for month in range(12):
+                    name=params.dataTypes[datatype]['inputDataLocation'] + dsname[0]+"." + dsname[1] +".250m.10dy."+str(year)+str('{:02d}'.format(month+1))+".nc4"
+                    if os.path.exists(name):
+                        filelist.append(name)
     return filelist
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
