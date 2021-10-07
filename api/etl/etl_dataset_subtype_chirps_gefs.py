@@ -218,6 +218,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
+                local_full_filepath_tif1    = local_full_filepath_tif.replace('data-mean', 'anomaly-mean')
 
                 # Download the file - Actually do the download now
                 try:
@@ -233,7 +234,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
                     print(current_url_to_download)
                     r = requests.get(current_url_to_download)
                     if r.ok:
-                        with open(local_full_filepath_tif, 'wb') as outfile:
+                        with open(local_full_filepath_tif1, 'wb') as outfile:
                             outfile.write(r.content)
                     else:
                         print('anomaly-mean file not found!')

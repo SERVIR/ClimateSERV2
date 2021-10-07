@@ -145,7 +145,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
         if region_code == 'wa':
             nc4_region_name_part = "westafrica"
         if region_code == 'sa':
-            nc4_region_name_part = "southafrica"
+            nc4_region_name_part = "southernafrica"
         if region_code == 'cta':
             nc4_region_name_part = "centralasia"
         # emodis-ndvi.20020701T000000Z.eastafrica.250m.10dy.nc4
