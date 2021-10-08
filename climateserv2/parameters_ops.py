@@ -519,7 +519,7 @@ dataTypes = [
      'indexer': dit.DecadalIndex(),
      'inputDataLocation': get_dataLocation("ucsb-chirps-gefs"),
      'data_category': 'CHIRPS',
-     'variable': 'precipitation_amount',
+     'variable': 'precipitation_anomaly',
      'dataset_name': 'ucsb-chirps-gefs_global_0.05deg_10dy',
      },
     {'number': 32,
