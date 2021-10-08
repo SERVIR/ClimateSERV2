@@ -309,8 +309,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-min").value +
                 "," +
                 document.getElementById("range-max").value,
-            abovemaxcolor: "transparent",
-            belowmincolor: "transparent",
+            abovemaxcolor: "extend",
+            belowmincolor: "extend",
             numcolorbands: 100,
             styles: $("#style_table").val(),
         }),
