@@ -562,7 +562,7 @@ function toggleLayer(which) {
         if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
-
+            map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
             $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
                 " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
