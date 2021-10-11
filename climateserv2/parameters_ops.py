@@ -144,7 +144,7 @@ dataTypes = [
      'inputDataLocation': get_dataLocation("southernafrica"),
      'data_category': 'NDVI',
      'variable': 'ndvi',
-     'dataset_name': 'emodis-ndvi_southafrica_250m_10dy',
+     'dataset_name': 'emodis-ndvi_southernafrica_250m_10dy',
      },
 
     # Adding new climate change datatypes here.
