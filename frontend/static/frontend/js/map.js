@@ -37,8 +37,10 @@ function createLayer(item) {
             format: "image/png",
             transparent: true,
             colorscalerange: item.colorrange,
-            abovemaxcolor: "transparent",
-            belowmincolor: "transparent",
+            abovemaxcolor: "extend",
+            belowmincolor: "extend",
+            // abovemaxcolor: "transparent",
+            // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
         }),
@@ -307,8 +309,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-min").value +
                 "," +
                 document.getElementById("range-max").value,
-            abovemaxcolor: "transparent",
-            belowmincolor: "transparent",
+            abovemaxcolor: "extend",
+            belowmincolor: "extend",
             numcolorbands: 100,
             styles: $("#style_table").val(),
         }),
@@ -562,7 +564,7 @@ function toggleLayer(which) {
         if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
-
+            map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
             $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
                 " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
@@ -2041,77 +2043,108 @@ const last_step_template = "<div class='popover tour'>" +
     "   </div>" +
     "</div>";
 
-const tour = new Tour({
-    smartPlacement: true,
-    onEnd: function (tour) {
-        localStorage.setItem("hideTour", "true");
-        document.querySelector(".tour_icon_blink").style.animationPlayState = 'running';
-        document.querySelector(".tour_box_blink").style.animationPlayState = 'running';
-    },
-    autoscroll: false,
-    backdrop: false,
-    steps: [
-        {
-            element: "#menu-about",
-            title: "Welcome to the ClimateSERV tour",
-            content: "You may return to this tour anytime by clicking the <i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
-            placement: "bottom"
+let tour;
 
+function init_tour() {
+    tour = new Tour({
+        smartPlacement: true,
+        onEnd: function (tour) {
+            localStorage.setItem("hideTour", "true");
+            document.querySelector(".tour_icon_blink").style.animationPlayState = 'running';
+            document.querySelector(".tour_box_blink").style.animationPlayState = 'running';
         },
-        {
-            element: "#btnAOIselect",
-            title: "Statistical Query",
-            content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
-            onShow: function (tour) {
-                sidebar.open('chart');
-                if ($("#sidebar-content").scrollTop !== 0) {
-                    $("#sidebar-content").scrollTop(0);
+        autoscroll: false,
+        backdrop: false,
+        steps: [
+            {
+                element: "#menu-about",
+                title: "Welcome to the ClimateSERV tour",
+                content: "You may return to this tour anytime by clicking the <i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
+                placement: "bottom"
+
+            },
+            {
+                element: "#btnAOIselect",
+                title: "Statistical Query",
+                content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+                onShow: function (tour) {
+                    sidebar.open('chart');
+                    const el = $('#aoiOptions');
+                    const curHeight = el.height();
+                    const autoHeight = el.css('height', 'auto').height();
+                    el.height(curHeight).animate({height: autoHeight}, 1000);
+                    el.css("marginBottom", '20px');
+                    if ($("#sidebar-content").scrollTop !== 0) {
+                        $("#sidebar-content").scrollTop(0);
+                    }
+                },
+                onHide: function(tour) {
+                    const el = $('#aoiOptions');
+                    const curHeight = el.height();
+                    el.height(curHeight).animate({height: 0}, 1000);
+                    el.css("marginBottom", '0px');
                 }
             },
-        },
-        {
-            element: "#operationmenu",
-            title: "Select Data",
-            content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
-            onShow: function (tour) {
-                if (!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
-                    $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+            {
+                element: "#operationmenu",
+                title: "Select Data",
+                content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
+                onShow: function (tour) {
+                    if (!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
+                        $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+                    }
                 }
-            }
-        },
-        {
-            element: "#tab-layers",
-            title: "Display Data",
-            content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
-            onShow: function (tour) {
-                sidebar.open('layers');
             },
-        },
-        {
-            element: "#basemap_link",
-            title: "Change Basemap",
-            content: "Click here to open basemaps, then click the one you would like to use.",
-            onShow: function (tour) {
-                sidebar.open('basemap');
+            {
+                element: "#tab-layers",
+                title: "Display Data",
+                content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
+                onShow: function (tour) {
+                    sidebar.open('layers');
+                },
+            },
+            {
+                element: ".leaflet-control-timecontrol.timecontrol-play.play:first",
+                title: "Layer Animation",
+                content: "You animate the layers with these controls. The system will begin to cache the tiles for a smooth animation.  <br />While caching feel free to click the next button and caching will still continue in the background. <br />",
+                // onShow: function (tour) {
+                //     sidebar.open('layers');
+                // },
+            },
+            {
+                element: "#slider-range-txt",
+                title: "Animation range",
+                content: "You may select a specific animation range by clicking this button.  It will bring up a date range control for you to use.<br />",
+                // onShow: function (tour) {
+                //     sidebar.open('layers');
+                // },
+            },
+            {
+                element: "#basemap_link",
+                title: "Change Basemap",
+                content: "Click here to open basemaps, then click the one you would like to use.",
+                onShow: function (tour) {
+                    sidebar.open('basemap');
+                }
+            },
+            {
+                element: "#menu-help",
+                title: "Help Center",
+                content: "Click here to answer any questions about the application or API",
+                placement: "left"
+            },
+            {
+                element: "#tour_link",
+                title: "Tour",
+                content: "Click here to open this tour anytime you need a refresher.",
+                template: last_step_template
             }
-        },
-        {
-            element: "#menu-help",
-            title: "Help Center",
-            content: "Click here to answer any questions about the application or API",
-            placement: "left"
-        },
-        {
-            element: "#tour_link",
-            title: "Tour",
-            content: "Click here to open this tour anytime you need a refresher.",
-            template: last_step_template
+        ],
+        onHide: function (tour) {
+            sidebar.open('chart');
         }
-    ],
-    onHide: function (tour) {
-        sidebar.open('chart');
-    }
-});
+    });
+}
 
 function open_tour() {
     localStorage.removeItem("hideTour")
@@ -2127,14 +2160,19 @@ function open_tour() {
 $(function () {
     initMap();
     try {
+        console.log("init object")
+        init_tour();
+console.log("init tour")
         tour.init();
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
+            console.log("no key")
             sidebar.close();
             tour.setCurrentStep(0);
             open_tour();
         }
     } catch (e) {
+        console.log(e);
     }
     $('#sourcemenu').val(0);
     try {

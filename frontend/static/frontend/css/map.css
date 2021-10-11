@@ -81,7 +81,9 @@ body {
     padding: 0;
     margin: 0;
 }
-
+.bold {
+    font-weight: 600;
+}
 #dialog {
     background: #ffffff;
     min-width: 99%;
