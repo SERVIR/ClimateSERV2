@@ -1,4 +1,4 @@
-import os, sys
+import glob, os, sys
 
 from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
@@ -28,6 +28,7 @@ class ETL_Pipeline():
 
     # Pipeline Config Params - Set Externally (only the etl_dataset_uuid param is actually required.  The rest are optional)
     etl_dataset_uuid            = ""
+    from_last_processed         = False
     START_YEAR_YYYY             = ""
     END_YEAR_YYYY               = ""
     START_MONTH_MM              = ""
@@ -290,6 +291,18 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
+
+            # Way to determinate which is the last processed file to use its date as starting date
+            if self.from_last_processed:
+                final_load_dir = self.dataset.final_load_dir
+                list_of_files = sorted(filter(os.path.isfile, glob.glob(final_load_dir + '/**/*', recursive=True)))
+                if len(list_of_files) != 0:
+                    last_processed_file = list_of_files[-1]
+                    date = last_processed_file.split('.')
+                    if len(date) > 0:
+                        self.START_YEAR_YYYY = date[0][:4]
+                        self.START_MONTH_MM = date[0][4:6]
+                        self.START_DAY_DD = date[0][6:8]
 
             # Set optional params
             self.Subtype_ETL_Instance.set_optional_parameters({
