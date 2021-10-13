@@ -105,6 +105,10 @@ ul {
     margin-left: 20px;
 }
 
+td, th {
+    padding: 10px;
+}
+
 thead {
     background-color: #758055;
     color: #ffffff;
