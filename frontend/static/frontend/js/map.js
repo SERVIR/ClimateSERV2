@@ -2047,7 +2047,6 @@ function stats_info(which) {
         },
          open: function() {
              $(this).dialog('option', 'maxHeight', $(window).height());
-             console.log($(this).width())
              if($(this).width() > $(window).width()){
                  $(this).dialog('option', 'width', $(window).width());
              }
@@ -2092,7 +2091,9 @@ function get_stat_body(which) {
                  "    <br>" +
                 "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
                 "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
-                "<br></div>";
+                "<br>" +
+                "<div class=\"servir_tooltip_header\">For more information please visit the <a href='" + help_link +"' style='color:#3b6e22;'>Help Center</a></div>" +
+                "</div>";
             break;
         case 'calculation':
             html += "<div id=\"popup_SelectData_Calculations_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -220.5px auto auto 323.922px;\">    " +

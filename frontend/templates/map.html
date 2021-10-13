@@ -38,6 +38,7 @@
 
 {% block content %}
     <script>
+    const help_link = "{% url 'ClimateSERV_UI:help' %}";
         const static_url = "{% static '' %}";
         let client_layers = [];
         {% for layer in data_layers %}
