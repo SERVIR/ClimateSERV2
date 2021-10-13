@@ -52,7 +52,7 @@ INSTALLED_APPS = [
     'rest_framework',
     #
     'api',
-    #'etl_monitor',
+    'etl_monitor',
     'frontend',
 ]
 
@@ -84,10 +84,9 @@ TEMPLATES = [
     },
 ]
 
-#STATICFILES_DIRS = [
-#    os.path.join(BASE_DIR, 'static/'),
-#    os.path.join(BASE_DIR, 'etl_monitor/app/dist/'),
-#]
+STATICFILES_DIRS = [
+   os.path.join(BASE_DIR, 'etl_monitor/app/dist/'),
+]
 
 WSGI_APPLICATION = 'climateserv2.wsgi.application'
 
