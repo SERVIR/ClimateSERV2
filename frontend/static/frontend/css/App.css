@@ -179,7 +179,7 @@ body {
 }
 
 .do-with-text {
-    margin-left: 300px;
+    /*margin-left: 300px;*/
     margin-bottom: 50px;
 }
 
@@ -191,6 +191,7 @@ body {
     overflow: hidden;
     border-radius: 50%;
     float: left;
+    margin-right: 15px;
 }
 
 .do-with-img {
