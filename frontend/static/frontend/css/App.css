@@ -1381,3 +1381,12 @@ button[disabled] {
         text-align: center;
     }
 }
+
+@media only screen and (max-width: 500px) {
+    .hero-subtitle {
+    padding: 7px 5px;
+    }
+    .carousel-caption p{
+        margin-top: 8px;
+    }
+}
