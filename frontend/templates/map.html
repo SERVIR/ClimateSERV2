@@ -69,8 +69,10 @@
                     dataset: "{{ layer.dataset_type }}",
                     app_id: "{{ layer.api_id }}",
                     units: "{{ layer.units }}",
-                    yAxis_format: {% if layer.yAxis_Special_Formatting %} {{ layer.yAxis_Special_Formatting | safe }}{% else %} null {% endif %},
-                    point_format: {% if layer.graph_point_Special_Formatting %} {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %}
+                    yAxis_format: {% if layer.yAxis_Special_Formatting %}
+                        {{ layer.yAxis_Special_Formatting | safe }}{% else %} null {% endif %},
+                    point_format: {% if layer.graph_point_Special_Formatting %}
+                        {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %}
                 })
             {% endif %}
         {% endfor %}
@@ -96,17 +98,18 @@
                             <a href="#basemap" role="tab" id="basemap_link" title="Basemaps"><i class="fas fa-map"></i></a>
                         </li>
                     </ul>
-                                        <ul role="tablist">
-                                            <li id="tour_box_blink" class="tour_box_blink">
-                                                <a role="tab" id="tour_link" onclick="open_tour()" title="Open interactive tour"><i id="tour_icon" class="fas fa-info-circle tour_icon_blink"></i></a>
-                                            </li>
-                                        </ul>
+                    <ul role="tablist">
+                        <li id="tour_box_blink" class="tour_box_blink">
+                            <a role="tab" id="tour_link" onclick="open_tour()" title="Open interactive tour"><i
+                                    id="tour_icon" class="fas fa-info-circle tour_icon_blink"></i></a>
+                        </li>
+                    </ul>
                 </div>
 
                 <!-- Tab panes -->
                 <div id="sidebar-content" class="sidebar-content">
 
-                  <div class="sidebar-pane" id="chart">
+                    <div class="sidebar-pane" id="chart">
                         <h1 class="sidebar-header">
                             Statistical Query
                             <span class="sidebar-close">
@@ -129,7 +132,8 @@
                                 <ul class="step-list">
                                     <li>
                                         <span class="bold">Draw:</span> Enables drawing on the map.
-                                        Select <span class="bold">polygon, rectangle, or point</span> from the toolbar, then
+                                        Select <span class="bold">polygon, rectangle, or point</span> from the toolbar,
+                                        then
                                         interact with the map to define your AOI.
                                     </li>
                                     <li>
@@ -269,6 +273,11 @@
                                 <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
                                     <label for="requestTypeSelect">Type</label>
+                                    <i
+                                            onclick="stats_info('type')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
                                             onchange="openDataTypePanel(this)">
                                         <option value="datasets">Dataset</option>
@@ -278,6 +287,11 @@
                                 <div id="panel_dataset">
                                     <div class="form-group panel-buffer">
                                         <label for="sourcemenu">Data Source</label>
+                                        <i
+                                                onclick="stats_info('source')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
                                         <select name="sourcemenu" class="form-control" id="sourcemenu"
                                                 onchange="handleSourceSelected(this.value)">
                                             {% for layer in data_layers %}
@@ -292,14 +306,15 @@
                                     <div id="ensemble_builder">
                                         <div class="form-group panel-buffer">
                                             <label for="model_run_menu">Select a model run</label>
-                                            <select name="model_run_menu" class="form-control" id="model_run_menu" disabled>
+                                            <select name="model_run_menu" class="form-control" id="model_run_menu"
+                                                    disabled>
                                             </select>
                                         </div>
                                         <div class="form-group panel-buffer">
                                             <label for="ensemblemenu">Select a model ensemble</label>
                                             <select name="ensemblemenu"
                                                     class="form-control" id="ensemblemenu"
-                                                    onchange="verify_ready()" >
+                                                    onchange="verify_ready()">
                                             </select>
                                         </div>
                                         <div class="form-group panel-buffer">
@@ -335,6 +350,11 @@
                                     </div>
                                     <div class="form-group panel-buffer">
                                         <label for="operationmenu">Calculation</label>
+                                        <i
+                                                onclick="stats_info('calculation')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
                                         <select
                                                 name="operationmenu"
                                                 id="operationmenu"
@@ -377,7 +397,8 @@
                             </form>
 
                             <div class="just-buttons">
-                                <button id="btnPreviousChart" disabled onclick="open_previous_chart()">Previous Chart</button>
+                                <button id="btnPreviousChart" disabled onclick="open_previous_chart()">Previous Chart
+                                </button>
                                 <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
                             </div>
                         </div>
@@ -389,14 +410,14 @@
                               <i class="fas fa-caret-left"></i>
                             </span>
                         </h1>
-                    <input
-                            type="search"
-                            placeholder="filter layers.."
-                            name="search"
-                            class="form-control searchbox-input"
-                            title="filter layers.."
-                            onkeyup="layer_filter()"
-                            id="layer_filter" />
+                        <input
+                                type="search"
+                                placeholder="filter layers.."
+                                name="search"
+                                class="form-control searchbox-input"
+                                title="filter layers.."
+                                onkeyup="layer_filter()"
+                                id="layer_filter"/>
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
                                 <li id="{{ layer.ui_id }}_node"
@@ -452,7 +473,8 @@
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
                                              onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
-                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}" class="cblabel">{{ layer.title }}</label>
+                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}"
+                                             class="cblabel">{{ layer.title }}</label>
                                       <br/>
                                   </span>
                                                                 <div>
@@ -481,7 +503,6 @@
                             {% endfor %}
                         </ol>
                     </div>
-
 
 
                     <div class="sidebar-pane" id="basemap">
@@ -516,7 +537,7 @@
                 &apos;x&apos; icon.
             </p>
         </div>
-    <span id="isMobile"></span>
+        <span id="isMobile"></span>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
             integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="

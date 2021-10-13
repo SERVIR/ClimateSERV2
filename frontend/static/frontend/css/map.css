@@ -416,6 +416,10 @@ ol {
     display: block;
 }
 
+.servir_tooltip_header{
+    font-weight: 600;
+}
+
 @media only screen and (max-width: 768px) {
     #isMobile {
         display: block;

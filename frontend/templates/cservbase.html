@@ -38,15 +38,17 @@
     {% block script %}{% endblock %}
 
     <script>
+
         $(document).ready(function () {
             setActive("{{ page }}");
+            console.log("{{ page }}")
         });
     </script>
 </head>
 <body>
 <header>
     <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
-        <a href="#home" class="navbar-brand">
+        <a href="{% if page == 'menu-home' %}#home {% else %} / {% endif %}" class="navbar-brand">
             <img src="{% static 'frontend/img/logo_climateserv_WithGlobe_white.png' %}" alt="ClimateSERV"/>
         </a>
         <button
