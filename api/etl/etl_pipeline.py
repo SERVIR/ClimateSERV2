@@ -298,11 +298,11 @@ class ETL_Pipeline():
                 list_of_files = sorted(filter(os.path.isfile, glob.glob(final_load_dir + '/**/*', recursive=True)))
                 if len(list_of_files) != 0:
                     last_processed_file = list_of_files[-1]
-                    date = last_processed_file.split('.')
+                    date = os.path.basename(last_processed_file).split('.')
                     if len(date) > 0:
-                        self.START_YEAR_YYYY = date[0][:4]
-                        self.START_MONTH_MM = date[0][4:6]
-                        self.START_DAY_DD = date[0][6:8]
+                        self.START_YEAR_YYYY = int(date[1][:4])
+                        self.START_MONTH_MM = int(date[1][4:6])
+                        self.START_DAY_DD = int(date[1][6:8])
 
             # Set optional params
             self.Subtype_ETL_Instance.set_optional_parameters({
