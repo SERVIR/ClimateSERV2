@@ -1262,6 +1262,9 @@ button[disabled] {
     .btn-data-info{
         font-size: 1.25em;
     }
+    .btn-data-info.hero-subtitle{
+        font-size: 1em;
+    }
 }
 
 @media (min-width: 1500px) {
