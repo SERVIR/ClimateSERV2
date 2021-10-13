@@ -559,7 +559,7 @@ function toggleLayer(which) {
 
     if(hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
-        map.timeDimension.prepareNextTimes(5, 1, false)
+        //map.timeDimension.prepareNextTimes(5, 1, false)
 
         if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
@@ -2067,6 +2067,7 @@ function init_tour() {
                 element: "#btnAOIselect",
                 title: "Statistical Query",
                 content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+                smartPlacement: true,
                 onShow: function (tour) {
                     sidebar.open('chart');
                     const el = $('#aoiOptions');
