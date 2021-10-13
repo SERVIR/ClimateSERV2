@@ -105,6 +105,19 @@ ul {
     margin-left: 20px;
 }
 
+thead {
+    background-color: #758055;
+    color: #ffffff;
+}
+
+table th{
+    color:#ffffff;
+}
+
+tr.row-even {
+    background-color: #7580552e;
+}
+
 .map-help-img{
     margin: 40px 20px;
     max-width: 85%;
