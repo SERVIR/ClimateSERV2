@@ -16,7 +16,7 @@ def remove_from(where):
             print(today)
 
             hours_old = filetime.total_seconds() / 3600
-            if hours_old >= 24:
+            if hours_old >= 12:
                 os.remove(os.path.join(root, name))
 
 
