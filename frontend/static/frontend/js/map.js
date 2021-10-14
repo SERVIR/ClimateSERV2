@@ -43,9 +43,11 @@ function createLayer(item) {
             // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
+            tileSize: 512,
         }),
         {
             updateTimeDimension: true,
+            cache: 3,
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
