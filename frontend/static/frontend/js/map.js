@@ -48,6 +48,9 @@ function createLayer(item) {
         {
             updateTimeDimension: true,
             cache: 3,
+            cacheForward:3,
+            cacheBackward:3,
+            setDefaultTime: true,
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
@@ -487,7 +490,7 @@ function mapSetup() {
             limitSliders: true,
             limitMinimumRange: 5,
             playerOptions: {
-                buffer: 20,
+                buffer: 5,
                 loop: true,
             }
         },
