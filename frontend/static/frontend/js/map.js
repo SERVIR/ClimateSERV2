@@ -43,7 +43,7 @@ function createLayer(item) {
             // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
-            tileSize: 512,
+            tileSize: 1024,
         }),
         {
             updateTimeDimension: true,
