@@ -16,7 +16,7 @@ dbfilepath = '''/cserv2/tmp/servirchirps.db'''
 newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db'''
 capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db'''
 requestLog_db_basepath = '''/cserv2/tmp/'''
-zipFile_ScratchWorkspace_Path = '''/cserv2/tmp/zipout/Zipfile_Scratch/'''
+zipFile_ScratchWorkspace_Path = '''/mnt/cs-temp/request_out/'''#'''/cserv2/tmp/zipout/Zipfile_Scratch/'''
 logfilepath = '''/cserv2/tmp/'''
 workpath = '''/cserv2/tmp/'''
 shapefilepath = '''/cserv2/tmp/mapfiles/'''
@@ -1360,5 +1360,5 @@ intervals = [
     {'name': 'year', 'pattern': '%Y'}
 ]
 
-resultsdir = '''/cserv2/tmp/'''
+resultsdir = '''/mnt/cs-temp/request_out/''' #'''/cserv2/tmp/'''
 

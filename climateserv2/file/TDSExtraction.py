@@ -10,6 +10,7 @@ import csv
 from zipfile import ZipFile
 from datetime import datetime,timedelta
 import os
+import shutil
 try:
     import climateserv2.locallog.locallogging as llog
     import climateserv2.parameters as params
@@ -165,6 +166,10 @@ def get_thredds_values(uniqueid,start_date, end_date, variable, geom, operation,
                 except Exception as e:
                     print(e)
                 zipFilePath= params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+                try:
+                    shutil.rmtree(params.zipFile_ScratchWorkspace_Path + uniqueid)
+                except OSError as e:
+                    print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
             else:
                 zipFilePath=""
         return zipFilePath
