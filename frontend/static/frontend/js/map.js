@@ -490,7 +490,7 @@ function mapSetup() {
             limitSliders: true,
             limitMinimumRange: 5,
             playerOptions: {
-                buffer: 5,
+                buffer: 10,
                 loop: true,
             }
         },
