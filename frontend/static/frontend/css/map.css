@@ -113,8 +113,13 @@ body {
     cursor: move;
 }
 
+.ui-widget {
+    font-family: inherit;
+     font-size: inherit;
+}
+
 .ui-dialog-content {
-    font-size: 12px;
+    font-size: inherit;
 }
 
 .ui-dialog-content input, .ui-dialog-content select {
