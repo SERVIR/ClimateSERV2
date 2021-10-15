@@ -1409,4 +1409,8 @@ button[disabled] {
         margin-left: unset !important;
         margin-bottom: 3px;
     }
+    #dataCarousel .col-md-12 {
+        margin-right: 20px !important;
+        margin-left: 20px !important;
+    }
 }
