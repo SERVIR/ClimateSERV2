@@ -8,8 +8,8 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi"
     />
     <title>{% block title %}ClimateSERV{% endblock %}</title>
-<link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
-<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
     <link
             rel="stylesheet"
@@ -41,7 +41,6 @@
 
         $(document).ready(function () {
             setActive("{{ page }}");
-            console.log("{{ page }}")
         });
     </script>
 </head>
@@ -86,10 +85,10 @@
     <footer id="footer">
         <div class="climate-copy">
             <a href="https://climateserv.servirglobal.net">ClimateSERV</a>
-{#            <span>© SERVIR Global</span>#}
+            {#            <span>© SERVIR Global</span>#}
         </div>
         <div class="ml-auto climate-power">
-{#            <span>Powered by </span>#}
+            {#            <span>Powered by </span>#}
             <a href="https://servirglobal.net">
                 <img
                         src="{% static 'frontend/img/logo_servir_global_better.png' %}"

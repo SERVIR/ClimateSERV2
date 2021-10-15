@@ -1067,8 +1067,8 @@ function isComplete() {
     // this will have to check those fields,
     // or assign dates to these when selected (think this is better)
     let isReady = false;
-    sDate_new_cooked = document.getElementById("sDate_new_cooked");
-    eDate_new_cooked = document.getElementById("eDate_new_cooked");
+    const sDate_new_cooked = document.getElementById("sDate_new_cooked");
+    const eDate_new_cooked = document.getElementById("eDate_new_cooked");
     if (sDate_new_cooked.value && eDate_new_cooked.value) {
         isReady = $(sDate_new_cooked).valid({
             rules: {
@@ -1205,14 +1205,6 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-
-        //here i will have to work out the nmme stuff a bit,
-        // dates should already be synced to b&etime
-        // likely i just have to calculate the datatype
-        // by adding $("#ensemblevarmenu")[0].selectedIndex
-        // to $("#ensemblemenu").val()
-        // but somehow i need to know if it's a multi ensemble
-        // could check if  $("#ensemble_builder").is(":visible");
         if ($("#ensemble_builder").is(":visible")) {
             formData.append(
                 "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
@@ -1281,11 +1273,6 @@ function sendRequest() {
         });
 
     } else {
-        // this is climatology
-        // this looks like it currently needs to be a get request not a post so we'll have to do it a bit different
-        //example request with querystring
-        //https://climateserv.servirglobal.net/api/submitMonthlyRainfallAnalysisRequest/?callback=successCallback&custom_job_type=monthly_rainfall_analysis&seasonal_start_date=2021_06_01&seasonal_end_date=2021_11_28&layerid=country&featureids=201&_=1627567378744
-
         let geometry_params;
 
         if (highlightedIDs.length > 0) {
@@ -1319,10 +1306,7 @@ function sendRequest() {
                 handle_initial_request_data(JSON.parse(data), true);
             }
         });
-
-
     }
-
 }
 
 function updateProgress(val) {
@@ -1433,9 +1417,6 @@ function handleSourceSelected(which) {
             $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
         });
 
-        //this will have to change when we get real data, but for now i will hardcode nmme fetch
-
-
         $.ajax({
             url: "api/getClimateScenarioInfo/" +
                 id,
@@ -1488,13 +1469,6 @@ function handleSourceSelected(which) {
                         .append(
                             '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
                 });
-
-                // need date dropdowns that will apply selections to the date
-                // range controls (which will be hidden, but still accessible)
-                // possibly need to fetch the ens available dates
-                // know the variables which are layers from the wms getcapabilities
-
-                // also need to get available run dates for selection
             }
         });
     }
@@ -1628,7 +1602,6 @@ function getDataFromRequest(id, isClimate) {
         if (data.errMsg) {
             console.info(data.errMsg);
         } else {
-            console.log(data);
             if (data == "need to send id") {
                 if (too_fast < 5) {
                     getDataFromRequest(id, isClimate);
@@ -1639,13 +1612,7 @@ function getDataFromRequest(id, isClimate) {
                 if (isClimate) {
 
                     const graph_obj = JSON.parse(data).MonthlyAnalysisOutput.avg_percentiles_dataLines;
-                    // i will have to make an array of objects that look like
-                    /*
-                    seriesOptions[i] = {
-                        name: name,
-                        data: [[date, val], ...]
-                      };
-                     */
+
                     rainfall_data = [];
                     rainfall_data.push({
                         name: "LongTermAverage",
@@ -1739,7 +1706,7 @@ function getDataFromRequest(id, isClimate) {
                         });
                         from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                         inti_chart_dialog();
-//Need to fix this for multi ensemble
+
                         if (compiledData.length === 0) {
                             //inti_chart_dialog
                             $("#chart_holder").html("<h1>No data available</h1>");
@@ -1771,7 +1738,6 @@ function getDataFromRequest(id, isClimate) {
                     }
                 }
             }
-            // $("#btnRequest").prop("disabled", false);
         }
     });
 };
@@ -1849,7 +1815,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
                     select: function (e) {
                         const full = new Date(e.target.x);
                         const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-
+                        // maybe set current time for layers to this date
                         console.log(date);
                     }
                 }
@@ -2255,13 +2221,10 @@ function open_tour() {
 $(function () {
     initMap();
     try {
-        console.log("init object")
         init_tour();
-        console.log("init tour")
         tour.init();
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
-            console.log("no key")
             sidebar.close();
             tour.setCurrentStep(0);
             open_tour();
