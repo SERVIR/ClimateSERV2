@@ -2034,7 +2034,7 @@ function stats_info(which) {
     let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
         '}">';
-    stat_info += '<div style="width:100%; text-align: center;">';
+    stat_info += '<div style="width:100%; text-align: left;">';
     stat_info += get_stat_body(which)
     stat_info += '</div>';
     $("#dialog").html(stat_info);
