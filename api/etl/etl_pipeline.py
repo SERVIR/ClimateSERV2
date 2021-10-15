@@ -29,6 +29,8 @@ class ETL_Pipeline():
     # Pipeline Config Params - Set Externally (only the etl_dataset_uuid param is actually required.  The rest are optional)
     etl_dataset_uuid            = ""
     from_last_processed         = False
+    merge_yearly                = False
+    merge_monthly               = False
     START_YEAR_YYYY             = ""
     END_YEAR_YYYY               = ""
     START_MONTH_MM              = ""
@@ -306,6 +308,8 @@ class ETL_Pipeline():
 
             # Set optional params
             self.Subtype_ETL_Instance.set_optional_parameters({
+                'merge_yearly': self.merge_yearly,
+                'merge_monthly': self.merge_monthly,
                 'YYYY__Year__Start': self.START_YEAR_YYYY,
                 'YYYY__Year__End': self.END_YEAR_YYYY,
                 'MM__Month__Start': self.START_MONTH_MM,
