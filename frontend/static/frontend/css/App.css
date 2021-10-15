@@ -1389,4 +1389,18 @@ button[disabled] {
     .carousel-caption p{
         margin-top: 8px;
     }
+    .todo-wrapper {
+        display: block;
+        position: relative;
+        width: 80vw;
+        height: 80vw;
+        overflow: hidden;
+        border-radius: 50%;
+        float: unset;
+        margin-right: 15px;
+    }
+    span.right.carousel-control.site-link {
+        width: 100%;
+        display: inline-block;
+    }
 }
