@@ -1403,4 +1403,10 @@ button[disabled] {
         width: 100%;
         display: inline-block;
     }
+    #dataCarousel button.btn.btn-lg.btn-data-info {
+        max-width: unset;
+        width: 100%;
+        margin-left: unset !important;
+        margin-bottom: 3px;
+    }
 }
