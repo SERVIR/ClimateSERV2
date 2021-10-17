@@ -248,12 +248,19 @@
 }
 
 .sidebar-left ~ .sidebar-map {
-    margin-left: 40px;
+    /*margin-left: 40px;*/
+    margin-left: 0;
 }
 
 @media (min-width: 768px) {
     .sidebar-left ~ .sidebar-map {
         margin-left: 0;
+    }
+}
+
+@media (max-width: 767px) {
+    .leaflet-top.leaflet-left, .leaflet-bottom.leaflet-left {
+        margin-left: 40px;
     }
 }
 
