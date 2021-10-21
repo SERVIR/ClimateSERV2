@@ -392,8 +392,16 @@ ol {
     width: 100%;
     margin: 10px 0px;
     position: absolute;
-    top: 25%;
+    top: 40%;
 }
+
+@media (min-width: 768px) and (max-width: 991px){
+    .map-thumb .caption-text h2,
+.map-thumb .caption-text p {
+        top: 25%;
+    }
+}
+
 .map-thumb img{
     float: left;
 }
