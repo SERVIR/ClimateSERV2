@@ -369,7 +369,7 @@ ol {
     max-width: calc(50% - 12px);
     border-radius: 0.317rem;
     margin: 5px;
-    box-shadow: 2px 2px 2px #002953;
+    box-shadow: 2px 2px 2px #909d6b94;
 }
 
 .highcharts-figure, .highcharts-data-table table {
