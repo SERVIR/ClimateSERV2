@@ -361,7 +361,7 @@ ol {
     max-width: calc(50% - 12px);
     border-radius: 0.317rem;
     margin: 5px;
-    box-shadow: 2px 2px 2px #002a53a1;
+    /*box-shadow: 2px 2px 2px #002a53a1;*/
     cursor: pointer;
 }
 
