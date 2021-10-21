@@ -27,31 +27,32 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
         self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.XX__Region_Code = params.get('XX__Region_Code') or 'ea'
 
-    # Get the local filesystem place to store data
-    def get_root_local_temp_working_dir(self, region_code):
-        ret_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+    @staticmethod
+    def get_region_folder_from_region_code(region_code='ea'):
         if region_code == 'ea':
-            ret_dir = os.path.join(ret_dir, 'eastafrica')
+            ret_region_folder = 'eastafrica'
         elif region_code == 'wa':
-            ret_dir = os.path.join(ret_dir, 'westafrica')
+            ret_region_folder = 'westafrica'
         elif region_code == 'sa':
-            ret_dir = os.path.join(ret_dir, 'southernafrica')
+            ret_region_folder = 'southernafrica'
         elif region_code == 'cta':
-            ret_dir = os.path.join(ret_dir, 'centralasia')
+            ret_region_folder = 'centralasia'
+        return ret_region_folder
+
+    # Get the local filesystem place to store data
+    @staticmethod
+    def get_root_local_temp_working_dir(temp_working_dir, region_code='ea'):
+        ret_dir = temp_working_dir
+        region_folder = ETL_Dataset_Subtype_EMODIS.get_region_folder_from_region_code(region_code)
+        ret_dir = os.path.join(ret_dir, region_folder)
         return ret_dir
 
     # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    def get_final_load_dir(self, region_code):
-        ret_dir = self.etl_parent_pipeline_instance.dataset.final_load_dir
-        if region_code == 'ea':
-            ret_dir = os.path.join(ret_dir, 'eastafrica')
-        elif region_code == 'wa':
-            ret_dir = os.path.join(ret_dir, 'westafrica')
-        elif region_code == 'sa':
-            ret_dir = os.path.join(ret_dir, 'southernafrica')
-        elif region_code == 'cta':
-            ret_dir = os.path.join(ret_dir, 'centralasia')
-        ret_dir = os.path.join(ret_dir, '250m', '10dy')
+    @staticmethod
+    def get_final_load_dir(final_load_dir, region_code='ea'):
+        ret_dir = final_load_dir
+        region_folder = ETL_Dataset_Subtype_EMODIS.get_region_folder_from_region_code(region_code)
+        ret_dir = os.path.join(ret_dir, region_folder, '250m', '10dy')
         return ret_dir
 
     # Get the Remote Locations for each of the regions
@@ -205,9 +206,9 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
 
         # Get the root http path based on the region.
 
-        root_file_download_path = self.get_root_local_temp_working_dir(self.XX__Region_Code)
+        root_file_download_path = ETL_Dataset_Subtype_EMODIS.get_root_local_temp_working_dir(self.etl_parent_pipeline_instance.dataset.temp_working_dir, self.XX__Region_Code)
         self.temp_working_dir = root_file_download_path
-        final_load_dir_path = self.get_final_load_dir(self.XX__Region_Code)
+        final_load_dir_path = ETL_Dataset_Subtype_EMODIS.get_final_load_dir(self.etl_parent_pipeline_instance.dataset.final_load_dir, self.XX__Region_Code)
         current_root_http_path = self.get_roothttp_for_regioncode(self.XX__Region_Code)
 
         # (1) Generate Expected remote file paths
@@ -346,7 +347,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # Make sure the directories exist
-        rootWorking_Dir = self.get_root_local_temp_working_dir(region_code=self.XX__Region_Code)
+        rootWorking_Dir = ETL_Dataset_Subtype_EMODIS.get_root_local_temp_working_dir(self.etl_parent_pipeline_instance.dataset.temp_working_dir, self.XX__Region_Code)
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(rootWorking_Dir)
         if is_error_creating_directory == True:
             error_JSON = {}
@@ -362,7 +363,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # final_load_dir_path
-        final_load_dir_path  = self.get_final_load_dir(region_code=self.XX__Region_Code)
+        final_load_dir_path  = ETL_Dataset_Subtype_EMODIS.get_final_load_dir(self.etl_parent_pipeline_instance.dataset.final_load_dir, self.XX__Region_Code)
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
         if is_error_creating_directory == True:
             error_JSON = {}

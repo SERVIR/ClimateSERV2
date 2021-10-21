@@ -9,6 +9,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
         parser.add_argument('--from_last_processed', action='store_true', default=False)
+        parser.add_argument('--merge_yearly', action='store_true', default=False)
+        parser.add_argument('--merge_monthly', action='store_true', default=False)
         parser.add_argument('--START_YEAR_YYYY', nargs='?', type=int)
         parser.add_argument('--END_YEAR_YYYY', nargs='?', type=int)
         parser.add_argument('--START_MONTH_MM', nargs='?', type=int)
@@ -43,6 +45,8 @@ class Command(BaseCommand):
             # Get the other optional params
             # Set input params as configuration options on the ETL Pipeline
             etl_pipeline.from_last_processed  = options.get('from_last_processed')
+            etl_pipeline.merge_yearly     = options.get('merge_yearly')
+            etl_pipeline.merge_monthly    = options.get('merge_monthly')
             etl_pipeline.START_YEAR_YYYY  = options.get('START_YEAR_YYYY')
             etl_pipeline.END_YEAR_YYYY    = options.get('END_YEAR_YYYY')
             etl_pipeline.START_MONTH_MM   = options.get('START_MONTH_MM')

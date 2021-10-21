@@ -7,10 +7,11 @@ from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 
-class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -31,6 +32,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
+        super().set_optional_parameters(params)
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
@@ -47,7 +49,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
-        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        self.final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
         self.current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
@@ -99,17 +101,17 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
 
                     # Getting full paths
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
-                    local_full_filepath_final_nc4_file =  os.path.join(final_load_dir_path, final_nc4_filename)
+                    local_full_filepath_final_nc4_file =  os.path.join(self.final_load_dir_path, final_nc4_filename)
                     if '30MIN' in self.mode:
                         local_full_filepath_tif = os.path.join(self.temp_working_dir, current_year, tif_filename)
-                        local_full_filepath_final_nc4_file =  os.path.join(final_load_dir_path, current_year, final_nc4_filename)
+                        local_full_filepath_final_nc4_file =  os.path.join(self.final_load_dir_path, current_year, final_nc4_filename)
 
                     current_obj = {
                         'date_YYYY': current_year,
                         'date_MM': current_month,
                         'date_DD': current_day,
                         'local_extract_path': self.temp_working_dir,
-                        'local_final_load_path': final_load_dir_path,
+                        'local_final_load_path': self.final_load_dir_path,
                         'tif_filename': tif_filename,
                         'final_nc4_filename': final_nc4_filename,
                         'granule_name': final_nc4_filename,
@@ -163,10 +165,10 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # final_load_dir_path
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
+        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.final_load_dir_path)
         if is_error_creating_directory == True:
             error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
@@ -556,6 +558,11 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
+
+        try:
+            super().execute__Step__Post_ETL_Custom()
+        except Exception as e:
+            print(e)
 
         retObj = common.get_function_response_object(class_name=self.__class__.__name__, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj

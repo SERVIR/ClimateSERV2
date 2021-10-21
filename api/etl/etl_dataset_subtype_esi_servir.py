@@ -1,4 +1,4 @@
-import datetime, gzip, os, requests, shutil, sys, urllib
+import datetime, dos, requests, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -6,12 +6,13 @@ from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -40,7 +41,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         ret__detail_state_info = {}
 
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
-        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        self.final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
 
         # (1) Generate Expected remote file paths
@@ -87,14 +88,14 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(date.year) + '/', filename)
-                local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
+                local_full_filepath_final_nc4_file  = os.path.join(self.final_load_dir_path, final_nc4_filename)
 
                 # Make the current Granule Object
                 current_obj = {}
 
                 # Filename and Granule Name info
                 local_extract_path = self.temp_working_dir
-                local_final_load_path = final_load_dir_path
+                local_final_load_path = self.final_load_dir_path
                 local_full_filepath_download = os.path.join(local_extract_path, tif_gz_filename)
 
                 current_obj['local_extract_path'] = local_extract_path
@@ -153,10 +154,10 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
             return retObj
 
         # final_load_dir_path
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
+        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.final_load_dir_path)
         if is_error_creating_directory == True:
             error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
@@ -547,6 +548,11 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
+
+        try:
+            super().execute__Step__Post_ETL_Custom()
+        except Exception as e:
+            print(e)
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
