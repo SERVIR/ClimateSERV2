@@ -508,6 +508,17 @@ function mapSetup() {
 
     //create the basemap thumbnails in the panel
     for (let key of Object.keys(baseLayers)) {
+        const map_thumb = $("<div>");
+        map_thumb.addClass("map-thumb");
+
+
+        const thumb_cap = $("<div>");
+        thumb_cap.addClass("caption-text");
+
+        const thumb_text = $("<h2>");
+        thumb_text.text(baseLayers[key].options.displayName);
+
+        thumb_text.appendTo(thumb_cap);
         const img = $("<img>");
         img.attr("src", static_url + 'frontend/' + baseLayers[key].options.thumb);
         img.addClass("basemapbtn");
@@ -517,7 +528,11 @@ function mapSetup() {
         img.on("click", function (e) {
             handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
         });
-        img.appendTo("#basemap");
+        //img.appendTo("#basemap");
+
+        img.appendTo(map_thumb);
+        thumb_cap.appendTo(map_thumb);
+        map_thumb.appendTo("#basemap");
     }
     map.on('layeradd', (e) => {
         adjustLayerIndex();
