@@ -359,7 +359,7 @@ ol {
 
 .basemapbtn {
     max-width: calc(50% - 12px);
-    border-radius: 0.317rem;
+    border-radius: 0.15rem;
     margin: 5px;
     /*box-shadow: 2px 2px 2px #002a53a1;*/
     cursor: pointer;
