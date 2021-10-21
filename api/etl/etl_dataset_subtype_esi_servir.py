@@ -1,4 +1,4 @@
-import datetime, gzip, os, requests, shutil, sys, urllib
+import datetime, dos, requests, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -6,12 +6,13 @@ from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -547,6 +548,11 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
+
+        try:
+            super().execute__Step__Post_ETL_Custom()
+        except Exception as e:
+            print(e)
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
