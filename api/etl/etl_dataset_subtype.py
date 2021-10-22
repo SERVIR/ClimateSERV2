@@ -31,4 +31,4 @@ class ETL_Dataset_Subtype():
                 pr_tuples = tuple([(period.month, period.year) for period in pr])
                 for pr_tuple in pr_tuples:
                     print('Merging {}-{}'.format(pr_tuple[1], pr_tuple[0]))
-                    call_command('merge_etl_dataset', etl_dataset_uuid=self.etl_parent_pipeline_instance.etl_dataset_uuid, YEAR_YYYY=pr_tuple[1], MONTH_MM=pr_tuple[0], REGION_CODE_XX=self.XX__Region_Code)
+                    call_command('merge_etl_dataset', etl_dataset_uuid=self.etl_parent_pipeline_instance.etl_dataset_uuid, YEAR_YYYY=pr_tuple[1], MONTH_MM=pr_tuple[0])
