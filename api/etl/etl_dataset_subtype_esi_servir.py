@@ -1,4 +1,4 @@
-import datetime, dos, requests, shutil, sys, urllib
+import datetime, os, requests, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
