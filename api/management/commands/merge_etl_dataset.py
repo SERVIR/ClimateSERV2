@@ -1,5 +1,4 @@
-import os, subprocess
-from distutils.dir_util import copy_tree
+import os, shutil, subprocess
 from django.core.management.base import BaseCommand
 
 from api.etl import etl_exceptions
@@ -20,7 +19,6 @@ class Command(BaseCommand):
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
         YEAR_YYYY  = options.get('YEAR_YYYY')
-        MONTH_MM   = options.get('MONTH_MM')
         MONTH_MM   = options.get('MONTH_MM')
         REGION_CODE_XX   = options.get('REGION_CODE_XX')
 
@@ -100,6 +98,6 @@ class Command(BaseCommand):
         stdout, stderr = process.communicate()
         print(stderr)
 
-        copy_tree(temp_aggregate_path, temp_fast_path)
+        shutil.copyfile(temp_aggregate_filepath, temp_fast_path)
 
         return
