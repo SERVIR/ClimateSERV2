@@ -27,6 +27,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
+        super().set_optional_parameters(params)
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
