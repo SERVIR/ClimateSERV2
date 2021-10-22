@@ -34,7 +34,7 @@ class Command(BaseCommand):
         temp_aggregate_path = etl_dataset.temp_working_dir
         temp_aggregate_filepath = etl_dataset.temp_working_dir
         pattern_filepath = etl_dataset.final_load_dir
-        temp_fast_path = '/mnt/climateserv/process_tmp//mnt/climateserv/process_tmp/'
+        temp_fast_path = '/mnt/climateserv/process_tmp/'
         pattern_filename = ''
         aggregate_filename = ''
         ncrcat_options = ''
