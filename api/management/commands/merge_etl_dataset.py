@@ -33,6 +33,7 @@ class Command(BaseCommand):
         print(YEAR_YYYY)
         print(MONTH_MM)
 
+        temp_aggregate_path = etl_dataset.temp_working_dir
         temp_aggregate_filepath = etl_dataset.temp_working_dir
         pattern_filepath = etl_dataset.final_load_dir
         temp_fast_path = '/mnt/climateserv/process_tmp//mnt/climateserv/process_tmp/'
@@ -48,7 +49,8 @@ class Command(BaseCommand):
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY, MONTH_MM))
-            temp_aggregate_filepath = os.path.join(temp_aggregate_filepath, 'by_month/', aggregate_filename.format(YEAR_YYYY, MONTH_MM))
+            temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_month/')
+            temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY, MONTH_MM))
         else:
             if etl_dataset.dataset_subtype == 'chirps':
                 temp_fast_path = os.path.join('temp_fast_path', 'fast_chirps')
@@ -83,7 +85,8 @@ class Command(BaseCommand):
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY))
-            temp_aggregate_filepath = os.path.join(temp_aggregate_filepath, 'by_year/', aggregate_filename.format(YEAR_YYYY))
+            temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_year/')
+            temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY))
 
         if ncrcat_options == '':
             raise Exception()
@@ -97,6 +100,6 @@ class Command(BaseCommand):
         stdout, stderr = process.communicate()
         print(stderr)
 
-        copy_tree(temp_aggregate_filepath, temp_fast_path)
+        copy_tree(temp_aggregate_path, temp_fast_path)
 
         return
