@@ -42,7 +42,7 @@ class Command(BaseCommand):
         ncrcat_options = ''
         if MONTH_MM:
             if etl_dataset.dataset_subtype == 'chirp':
-                temp_fast_path = os.path.join('temp_fast_path', 'fast_chirp')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_chirp')
                 pattern_filename = 'ucsb-chirp.{}{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirp.global.0.05deg.daily.{}{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
@@ -53,32 +53,32 @@ class Command(BaseCommand):
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY, MONTH_MM))
         else:
             if etl_dataset.dataset_subtype == 'chirps':
-                temp_fast_path = os.path.join('temp_fast_path', 'fast_chirps')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps')
                 pattern_filename = 'ucsb-chirps.{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirps.global.0.05deg.daily.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
             elif etl_dataset.dataset_subtype == 'esi_12week':
-                temp_fast_path = os.path.join('temp_fast_path', 'fast_sport_esi_12wk')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_esi_12wk')
                 pattern_filename = 'sport-esi.{}*.nc4'
                 aggregate_filename = 'sport-esi.global.0.05deg.12wk.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'esi_4week':
-                temp_fast_path = os.path.join('temp_fast_path', 'fast_sport_esi_4wk')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_esi_4wk')
                 pattern_filename = 'sport-esi.{}*.nc4'
                 aggregate_filename = 'sport-esi.global.0.05deg.4wk.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'imerg_early_1dy':
-                temp_fast_path = os.path.join('temp_fast_path', 'nasa_imerg_early_daily')
+                temp_fast_path = os.path.join(temp_fast_path, 'nasa_imerg_early_daily')
                 pattern_filename = 'nasa-imerg-early.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-early.global.0.1deg.1dy.{}.nc4'
                 ncrcat_options = '-4 -h -L 7 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'imerg_late_1dy':
-                temp_fast_path = os.path.join('temp_fast_path', 'nasa_imerg_lat_daily')
+                temp_fast_path = os.path.join(temp_fast_path, 'nasa_imerg_lat_daily')
                 pattern_filename = 'nasa-imerg-late.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-late.global.0.1deg.1dy.{}.nc4'
                 ncrcat_options = '-4 -h -L 7 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'usda_smap':
-                temp_fast_path = os.path.join('temp_fast_path', 'fast_usda_smap')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_usda_smap')
                 pattern_filename = 'usda-smap.{}*.nc4'
                 aggregate_filename = 'usda-smap.global.10km.3dy.{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
