@@ -17,7 +17,7 @@ class ETL_Dataset_Subtype():
                 years = list(range(self.YYYY__Year__Start, self.YYYY__Year__End + 1))
                 for year in years:
                     print('Merging {}'.format(year))
-                    call_command('merge_etl_dataset', etl_dataset_uuid=self.etl_parent_pipeline_instance.etl_dataset_uuid, YEAR_YYYY=year, MONTH_MM=None, REGION_CODE_XX=self.XX__Region_Code)
+                    call_command('merge_etl_dataset', etl_dataset_uuid=self.etl_parent_pipeline_instance.etl_dataset_uuid, YEAR_YYYY=year, MONTH_MM=None)
         if self.merge_monthly:
             temp_monthly_path = os.path.join(self.temp_working_dir, 'by_month/')
             shutil.rmtree(temp_monthly_path, ignore_errors=True)
