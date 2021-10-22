@@ -33,8 +33,8 @@ class Command(BaseCommand):
         print(YEAR_YYYY)
         print(MONTH_MM)
 
-        temp_working_dir = etl_dataset.temp_working_dir
-        final_load_dir = etl_dataset.final_load_dir
+        temp_aggregate_filepath = etl_dataset.temp_working_dir
+        pattern_filepath = etl_dataset.final_load_dir
         temp_fast_path = '/mnt/climateserv/process_tmp//mnt/climateserv/process_tmp/'
         pattern_filename = ''
         aggregate_filename = ''
@@ -80,8 +80,11 @@ class Command(BaseCommand):
                 ncrcat_options = '-4 -h --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
             else:
                 pass
-            pattern_filepath = os.path.join(final_load_dir, pattern_filename.format(YEAR_YYYY))
-            temp_aggregate_filepath = os.path.join(temp_working_dir, 'by_year/', aggregate_filename.format(YEAR_YYYY))
+            pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY))
+            temp_aggregate_filepath = os.path.join(temp_aggregate_filepath, 'by_year/', aggregate_filename.format(YEAR_YYYY))
+
+        if ncrcat_options == '':
+            raise Exception()
 
         command_str = 'ncrcat {} -O {} {}'.format(ncrcat_options, pattern_filepath, temp_aggregate_filepath)
         if os.name == 'nt':
