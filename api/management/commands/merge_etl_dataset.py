@@ -10,8 +10,8 @@ class Command(BaseCommand):
     # Parsing params
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
-        parser.add_argument('--YEAR_YYYY', nargs='?', type=int)
-        parser.add_argument('--MONTH_MM', nargs='?', type=int)
+        parser.add_argument('--YEAR_YYYY', nargs='?', type=str)
+        parser.add_argument('--MONTH_MM', nargs='?', type=str)
 
     # Function Handler
     def handle(self, *args, **options):
@@ -48,6 +48,8 @@ class Command(BaseCommand):
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY, MONTH_MM))
             temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_month/')
+            if not os.path.exists(temp_aggregate_path):
+                os.makedirs(temp_aggregate_path)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY, MONTH_MM))
         else:
             if etl_dataset.dataset_subtype == 'chirps':
@@ -84,6 +86,8 @@ class Command(BaseCommand):
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY))
             temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_year/')
+            if not os.path.exists(temp_aggregate_path):
+                os.makedirs(temp_aggregate_path)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY))
 
         if ncrcat_options == '':
@@ -98,6 +102,7 @@ class Command(BaseCommand):
         stdout, stderr = process.communicate()
         print(stderr)
 
-        shutil.copyfile(temp_aggregate_filepath, temp_fast_path)
+        _, tail = os.path.split(temp_aggregate_filepath)
+        shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
 
         return
