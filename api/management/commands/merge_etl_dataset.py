@@ -10,16 +10,16 @@ class Command(BaseCommand):
     # Parsing params
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
-        parser.add_argument('--YEAR_YYYY', nargs='?', type=str)
-        parser.add_argument('--MONTH_MM', nargs='?', type=str)
+        parser.add_argument('--YEAR_YYYY', nargs='?', type=int)
+        parser.add_argument('--MONTH_MM', nargs='?', type=int)
 
     # Function Handler
     def handle(self, *args, **options):
 
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
-        YEAR_YYYY  = options.get('YEAR_YYYY')
-        MONTH_MM   = options.get('MONTH_MM')
+        YEAR_YYYY  = str(options.get('YEAR_YYYY'))
+        MONTH_MM   = str(options.get('MONTH_MM')).zfill(2)
         REGION_CODE_XX   = options.get('REGION_CODE_XX')
 
         try:
@@ -27,9 +27,7 @@ class Command(BaseCommand):
         except:
             raise etl_exceptions.UnableToReadDatasetException()
 
-        print(etl_dataset.dataset_subtype)
-        print(YEAR_YYYY)
-        print(MONTH_MM)
+        print(f'Merging {etl_dataset.dataset_subtype} - {YEAR_YYYY} - {MONTH_MM}')
 
         temp_aggregate_path = etl_dataset.temp_working_dir
         temp_aggregate_filepath = etl_dataset.temp_working_dir
@@ -98,16 +96,21 @@ class Command(BaseCommand):
         if ncrcat_options == '':
             raise Exception()
 
-        command_str = 'ncrcat {} -O {} {}'.format(ncrcat_options, pattern_filepath, temp_aggregate_filepath)
+        command_str = f'ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
         if os.name == 'nt':
-            command_str = 'ncra -Y {}'.format(command_str)
+            command_str = f'ncra -Y {command_str}'
         print(command_str)
 
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         print(stderr)
 
-        _, tail = os.path.split(temp_aggregate_filepath)
-        shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
+        if temp_aggregate_filepath:
+            _, tail = os.path.split(temp_aggregate_filepath)
+            shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
+            shutil.rmtree(temp_aggregate_path)
+
+        else:
+            print(f'File not found: {temp_aggregate_filepath}')
 
         return
