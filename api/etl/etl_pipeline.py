@@ -2,7 +2,7 @@ import glob, os, sys
 
 from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
-from ..models import Config_Setting, ETL_Dataset, ETL_Granule
+from ..models import Config_Setting, ETL_Dataset
 
 from ..serializers import ETL_DatasetSerializer
 
@@ -37,9 +37,6 @@ class ETL_Pipeline():
     END_MONTH_MM                = ""
     START_DAY_DD                = ""
     END_DAY_DD                  = ""
-    REGION_CODE_XX              = ""
-    START_30MININCREMENT_NN     = ""
-    END_30MININCREMENT_NN       = ""
 
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -95,11 +92,6 @@ class ETL_Pipeline():
         # Day Range
         retObj["START_DAY_DD"]      = str(self.START_DAY_DD).strip()
         retObj["END_DAY_DD"]        = str(self.END_DAY_DD).strip()
-        # 30 Min Increment Range
-        retObj["START_30MININCREMENT_NN"]   = str(self.START_30MININCREMENT_NN).strip()
-        retObj["END_30MININCREMENT_NN"]     = str(self.END_30MININCREMENT_NN).strip()
-        # Region Code
-        retObj["REGION_CODE_XX"] = str(self.REGION_CODE_XX).strip()
 
         # Pipeline - Dataset Config Options - Set by Reading From the Database
         retObj["dataset_name"]              = str(self.dataset_name).strip()
@@ -315,10 +307,7 @@ class ETL_Pipeline():
                 'MM__Month__Start': self.START_MONTH_MM,
                 'MM__Month__End': self.END_MONTH_MM,
                 'DD__Day__Start': self.START_DAY_DD,
-                'DD__Day__End': self.END_DAY_DD,
-                'XX__Region_Code': self.REGION_CODE_XX,
-                'NN__30MinIncrement__Start': self.START_30MININCREMENT_NN,
-                'NN__30MinIncrement__End': self.END_30MININCREMENT_NN
+                'DD__Day__End': self.END_DAY_DD
             })
 
         except etl_exceptions.UnableToReadDatasetException:
