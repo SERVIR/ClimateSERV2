@@ -7,14 +7,13 @@ from collections import OrderedDict
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
-from .etl_pipeline import ETL_Pipeline
 
 from api.services import Config_SettingService
 
 class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance: ETL_Pipeline):
+    def __init__(self, etl_parent_pipeline_instance):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
@@ -114,8 +113,17 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         retObj = {}
         retObj['is_error'] = False
         try:
+            filename_part = ''
+            if region_code == 'eastafrica':
+                filename_part = 'ea'
+            if region_code == 'westafrica':
+                filename_part = 'wa'
+            if region_code == 'southernafrica':
+                filename_part = 'sa'
+            if region_code == 'centralasia':
+                filename_part = 'cta'
             filenum = "{:0>2d}{:0>2d}".format(year_YYYY - 2000, dekadal_N)
-            filename = '{}{}.zip'.format(region_code, filenum)
+            filename = '{}{}.zip'.format(filename_part, filenum)
             remote_full_filepath    = os.path.join(root_path, filename)
             local_full_filepath     = os.path.join(root_file_download_path, filename)
             local_extract_path      = root_file_download_path
@@ -156,7 +164,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
         self.final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
-        self.region_code = self.etl_parent_pipeline_instance.dataset.region
+        self.region_code = self.etl_parent_pipeline_instance.dataset.tds_region
 
         # (1) Generate Expected remote file paths
         try:
@@ -193,7 +201,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 # Iterate on Dekadal Ranges
                 for NN__Dekadal in range(start_dekadal, end_dekadal):
                     # Get the expected remote file to download
-                    result__ExpectedRemoteFilePath_Object = self.get_expected_filepath_infos(root_path=current_root_http_path, region_code=self.XX__Region_Code, year_YYYY=YYYY__Year, dekadal_N=NN__Dekadal, root_file_download_path=root_file_download_path, final_load_dir_path=self.final_load_dir_path)
+                    result__ExpectedRemoteFilePath_Object = self.get_expected_filepath_infos(root_path=current_root_http_path, region_code=self.region_code, year_YYYY=YYYY__Year, dekadal_N=NN__Dekadal, root_file_download_path=self.temp_working_dir, final_load_dir_path=self.final_load_dir_path)
                     is_error = result__ExpectedRemoteFilePath_Object['is_error']
                     if is_error == True:
                         activity_description    = "Error: There was an error when generating a specific expected remote file path.  See the additional data for details on which expected file caused the error."
