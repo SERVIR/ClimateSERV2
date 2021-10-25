@@ -44,6 +44,11 @@ class Command(BaseCommand):
                 pattern_filename = 'ucsb-chirp.{}{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirp.global.0.05deg.daily.{}{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
+            elif etl_dataset.dataset_subtype == 'chirps_gefs':
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps_gefs')
+                pattern_filename = 'ucsb-chirps-gefs.{}{}*10dy.nc4'
+                aggregate_filename = 'ucsb-chirps-gefs.global.0.05deg.10dy.{}{}.nc4'
+                ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256 '
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY, MONTH_MM))
@@ -68,12 +73,12 @@ class Command(BaseCommand):
                 aggregate_filename = 'sport-esi.global.0.05deg.4wk.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'imerg_early_1dy':
-                temp_fast_path = os.path.join(temp_fast_path, 'nasa_imerg_early_daily')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_nasa_imerg_early_daily')
                 pattern_filename = 'nasa-imerg-early.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-early.global.0.1deg.1dy.{}.nc4'
                 ncrcat_options = '-4 -h -L 7 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype == 'imerg_late_1dy':
-                temp_fast_path = os.path.join(temp_fast_path, 'nasa_imerg_lat_daily')
+                temp_fast_path = os.path.join(temp_fast_path, 'fast_nasa_imerg_late_daily')
                 pattern_filename = 'nasa-imerg-late.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-late.global.0.1deg.1dy.{}.nc4'
                 ncrcat_options = '-4 -h -L 7 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
