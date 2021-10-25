@@ -20,7 +20,6 @@ class Command(BaseCommand):
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
         YEAR_YYYY  = str(options.get('YEAR_YYYY'))
         MONTH_MM   = str(options.get('MONTH_MM')).zfill(2)
-        REGION_CODE_XX   = options.get('REGION_CODE_XX')
 
         try:
             etl_dataset = ETL_Dataset.objects.get(pk=etl_dataset_uuid)

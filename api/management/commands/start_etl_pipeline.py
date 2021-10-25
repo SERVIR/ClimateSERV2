@@ -17,7 +17,6 @@ class Command(BaseCommand):
         parser.add_argument('--END_MONTH_MM', nargs='?', type=int)
         parser.add_argument('--START_DAY_DD', nargs='?', type=int)
         parser.add_argument('--END_DAY_DD', nargs='?', type=int)
-        parser.add_argument('--REGION_CODE_XX', nargs='?')
         parser.add_argument('--START_30MININCREMENT_NN', nargs='?', type=int)
         parser.add_argument('--END_30MININCREMENT_NN', nargs='?', type=int)
 
@@ -53,7 +52,6 @@ class Command(BaseCommand):
             etl_pipeline.END_MONTH_MM     = options.get('END_MONTH_MM')
             etl_pipeline.START_DAY_DD     = options.get('START_DAY_DD')
             etl_pipeline.END_DAY_DD       = options.get('END_DAY_DD')
-            etl_pipeline.REGION_CODE_XX   = options.get('REGION_CODE_XX')
             etl_pipeline.START_30MININCREMENT_NN  = options.get('START_30MININCREMENT_NN')
             etl_pipeline.END_30MININCREMENT_NN    = options.get('START_30MININCREMENT_NN')
 

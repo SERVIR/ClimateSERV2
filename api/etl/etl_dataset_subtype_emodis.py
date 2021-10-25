@@ -7,13 +7,14 @@ from collections import OrderedDict
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
+from .etl_pipeline import ETL_Pipeline
 
 from api.services import Config_SettingService
 
 class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
-    def __init__(self, etl_parent_pipeline_instance):
+    def __init__(self, etl_parent_pipeline_instance: ETL_Pipeline):
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
@@ -27,71 +28,28 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
         self.MM__Month__Start = params.get('MM__Month__Start') or 1
         self.MM__Month__End = params.get('MM__Month__End') or today.month
-        self.XX__Region_Code = params.get('XX__Region_Code') or 'ea'
 
-    @staticmethod
-    def get_region_folder_from_region_code(region_code='ea'):
-        if region_code == 'ea':
-            ret_region_folder = 'eastafrica'
-        elif region_code == 'wa':
-            ret_region_folder = 'westafrica'
-        elif region_code == 'sa':
-            ret_region_folder = 'southernafrica'
-        elif region_code == 'cta':
-            ret_region_folder = 'centralasia'
-        return ret_region_folder
-
-    # Get the local filesystem place to store data
-    @staticmethod
-    def get_root_local_temp_working_dir(temp_working_dir, region_code='ea'):
-        ret_dir = temp_working_dir
-        region_folder = ETL_Dataset_Subtype_EMODIS.get_region_folder_from_region_code(region_code)
-        ret_dir = os.path.join(ret_dir, region_folder)
-        return ret_dir
-
-    # Get the local filesystem place to store the final NC4 files (The THREDDS monitored Directory location)
-    @staticmethod
-    def get_final_load_dir(final_load_dir, region_code='ea'):
-        ret_dir = final_load_dir
-        region_folder = ETL_Dataset_Subtype_EMODIS.get_region_folder_from_region_code(region_code)
-        ret_dir = os.path.join(ret_dir, region_folder, '250m', '10dy')
-        return ret_dir
-
-    # Get the Remote Locations for each of the regions
-    def get_roothttp_for_regioncode(self, region_code):
-        ret_roothttp = self.etl_parent_pipeline_instance.dataset.source_url
-        if region_code == 'ea':
-            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/east')
-        elif region_code == 'wa':
-            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/west')
-        elif region_code == 'sa':
-            ret_roothttp = '{}/{}'.format(ret_roothttp, '/africa/southern')
-        elif region_code == 'cta':
-            ret_roothttp = '{}/{}'.format(ret_roothttp, '/asia/centralasia')
-        ret_roothttp = '{}/{}'.format(ret_roothttp, '/dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/')
-        return ret_roothttp
-
-    def get_source(self, region_code):
+    def get_source(self):
         ret_source = ''
-        if region_code == 'ea':
+        if self.region_code == 'eastafrica':
             ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/East%20Africa/eMODIS%20NDVI%20C6'
-        elif region_code == 'wa':
+        elif self.region_code == 'westafrica':
             ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/West%20Africa/eMODIS%20NDVI%20C6'
-        elif region_code == 'sa':
+        elif self.region_code == 'southernafrica':
             ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/Southern%20Africa/eMODIS%20NDVI%20C6'
-        elif region_code == 'cta':
+        elif self.region_code == 'centralasia':
             ret_source = 'https://earlywarning.usgs.gov/fews/datadownloads/Central%20Asia/eMODIS%20NDVI%20C6'
         return ret_source
 
-    def get_region_range(self, region_code):
+    def get_region_range(self):
         ret_range = ((0.0, 0.0), (0.0, 0.0))
-        if region_code == 'ea':
+        if self.region_code == 'eastafrica':
             ret_range = ((-12.45, 22.95), (21.05, 51.95))
-        elif region_code == 'wa':
+        elif self.region_code == 'westafrica':
             ret_range = ((2.05, 20.95), (-18.95, 27.45))
-        elif region_code == 'sa':
+        elif self.region_code == 'southernafrica':
             ret_range = ((-35.50, 5.45), (4.15, 51.95))
-        elif region_code == 'cta':
+        elif self.region_code == 'centralasia':
             ret_range = ((23.05 , 55.95), (46.05, 87.95))
         return ret_range
 
@@ -141,22 +99,12 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
     def get_Final_NC4_FileName_From_Inputs(region_code, year_YYYY, dekadal_N):
         monthNumber = ETL_Dataset_Subtype_EMODIS.get_Month_Number_From_Dekadal(dekadal_string=str(dekadal_N))
         begin_DayNumber = ETL_Dataset_Subtype_EMODIS.get_Begin_Day_Number_From_Dekadal(dekadal_string=str(dekadal_N))
-        nc4_region_name_part = 'regionnamepart'
-        region_code = str(region_code).strip()
-        if region_code == 'ea':
-            nc4_region_name_part = "eastafrica"
-        if region_code == 'wa':
-            nc4_region_name_part = "westafrica"
-        if region_code == 'sa':
-            nc4_region_name_part = "southernafrica"
-        if region_code == 'cta':
-            nc4_region_name_part = "centralasia"
         # emodis-ndvi.20020701T000000Z.eastafrica.250m.10dy.nc4
         final_nc4_filename = 'emodis-ndvi.{}{}{}T000000Z.{}.250m.10dy.nc4'.format(
             '{:0>4d}'.format(year_YYYY),
             '{:02d}'.format(monthNumber),
             '{:02d}'.format(begin_DayNumber),
-            nc4_region_name_part
+            region_code
         )
         return final_nc4_filename
 
@@ -198,7 +146,6 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
         return retObj
 
-    # Get Expected File Downloads and Expected Granules
     def execute__Step__Pre_ETL_Custom(self):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
@@ -206,12 +153,10 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        # Get the root http path based on the region.
-
-        root_file_download_path = ETL_Dataset_Subtype_EMODIS.get_root_local_temp_working_dir(self.etl_parent_pipeline_instance.dataset.temp_working_dir, self.XX__Region_Code)
-        self.temp_working_dir = root_file_download_path
-        final_load_dir_path = ETL_Dataset_Subtype_EMODIS.get_final_load_dir(self.etl_parent_pipeline_instance.dataset.final_load_dir, self.XX__Region_Code)
-        current_root_http_path = self.get_roothttp_for_regioncode(self.XX__Region_Code)
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
+        self.final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
+        self.region_code = self.etl_parent_pipeline_instance.dataset.region
 
         # (1) Generate Expected remote file paths
         try:
@@ -248,7 +193,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 # Iterate on Dekadal Ranges
                 for NN__Dekadal in range(start_dekadal, end_dekadal):
                     # Get the expected remote file to download
-                    result__ExpectedRemoteFilePath_Object = self.get_expected_filepath_infos(root_path=current_root_http_path, region_code=self.XX__Region_Code, year_YYYY=YYYY__Year, dekadal_N=NN__Dekadal, root_file_download_path=root_file_download_path, final_load_dir_path=final_load_dir_path)
+                    result__ExpectedRemoteFilePath_Object = self.get_expected_filepath_infos(root_path=current_root_http_path, region_code=self.XX__Region_Code, year_YYYY=YYYY__Year, dekadal_N=NN__Dekadal, root_file_download_path=root_file_download_path, final_load_dir_path=self.final_load_dir_path)
                     is_error = result__ExpectedRemoteFilePath_Object['is_error']
                     if is_error == True:
                         activity_description    = "Error: There was an error when generating a specific expected remote file path.  See the additional data for details on which expected file caused the error."
@@ -300,7 +245,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     current_year        = expected_file_path_object['current_year']
                     current_dekadal     = expected_file_path_object['current_dekadal']
 
-                    final_nc4_filename = ETL_Dataset_Subtype_EMODIS.get_Final_NC4_FileName_From_Inputs(region_code=region_code, year_YYYY=current_year, dekadal_N=current_dekadal)
+                    final_nc4_filename = ETL_Dataset_Subtype_EMODIS.get_Final_NC4_FileName_From_Inputs(region_code=self.region_code, year_YYYY=current_year, dekadal_N=current_dekadal)
 
                     expected_file_path_object['tif_filename']       = base_file_name + ".tif"
                     expected_file_path_object['tfw_filename']       = base_file_name + ".tfw"  # NOT .twf - these kinds of bugs are TONS of fun!!
@@ -349,8 +294,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             return retObj
 
         # Make sure the directories exist
-        rootWorking_Dir = ETL_Dataset_Subtype_EMODIS.get_root_local_temp_working_dir(self.etl_parent_pipeline_instance.dataset.temp_working_dir, self.XX__Region_Code)
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(rootWorking_Dir)
+        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
         if is_error_creating_directory == True:
             error_JSON = {}
             error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(rootWorking_Dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
@@ -365,11 +309,10 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             return retObj
 
         # final_load_dir_path
-        final_load_dir_path  = ETL_Dataset_Subtype_EMODIS.get_final_load_dir(self.etl_parent_pipeline_instance.dataset.final_load_dir, self.XX__Region_Code)
-        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(final_load_dir_path)
+        is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.final_load_dir_path)
         if is_error_creating_directory == True:
             error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.final_load_dir_path) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
@@ -610,7 +553,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     startTime = dekadTimes[dekadNum][0]
                     endTime = dekadTimes[dekadNum][1]
 
-                    region_range = self.get_region_range(self.XX__Region_Code)
+                    region_range = self.get_region_range()
 
                     # print("C")
                     # print("D")
@@ -642,7 +585,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     # print("E")
 
-                    source = self.get_source(self.XX__Region_Code)
+                    source = self.get_source()
 
                     # Set the Attributes
                     ds.latitude.attrs = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
