@@ -174,11 +174,6 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
                 except Exception as e:
                     print(e)
                 zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
-                try:
-                    # shutil.rmtree(params.zipFile_ScratchWorkspace_Path + uniqueid)
-                    print("hi")
-                except OSError as e:
-                    print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
             else:
                 zipFilePath = ""
         return zipFilePath

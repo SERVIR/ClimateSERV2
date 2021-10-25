@@ -151,6 +151,7 @@ def start_processing(request):
             workdict["year"] = int(dates[dateIndex][0:4])
             workdict["month"] = int(dates[dateIndex][5:7])
             workdict["day"] = int(dates[dateIndex][8:10])
+            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(dates[dateIndex][0:4])
             workdict["epochTime"] = gmt_midnight
             workdict["value"] = {opn: np.float64(values[dateIndex])}
             if intervaltype == 0:
