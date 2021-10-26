@@ -45,7 +45,29 @@ class Command(BaseCommand):
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps_gefs')
                 pattern_filename = 'ucsb-chirps-gefs.{}{}*10dy.nc4'
                 aggregate_filename = 'ucsb-chirps-gefs.global.0.05deg.10dy.{}{}.nc4'
-                ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256 '
+                ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
+            elif etl_dataset.dataset_subtype == 'emodis':
+                if etl_dataset.tds_region == 'eastafrica':
+                    temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_eastafrica')
+                    pattern_filename = 'emodis-ndvi.{}{}*.eastafrica.250m.10dy.nc4'
+                    aggregate_filename = 'emodis-ndvi.eastafrica.250m.10dy.{}{}.nc4'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc longitude=.5 --ppc latitude=.5'
+                elif etl_dataset.tds_region == 'westafrica':
+                    temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_westafrica')
+                    pattern_filename = 'emodis-ndvi.{}{}*.westafrica.250m.10dy.nc'
+                    aggregate_filename = 'emodis-ndvi.westafrica.250m.10dy.{}{}.nc4'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
+                elif etl_dataset.tds_region == 'southernafrica':
+                    temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_southernafrica')
+                    pattern_filename = 'emodis-ndvi.{}{}*.southernafrica.250m.10dy.nc4'
+                    aggregate_filename = 'emodis-ndvi.southernafrica.250m.10dy.{}{}.nc4'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc longitude=.5 --ppc latitude=.5'
+                elif etl_dataset.tds_region == 'centralasia':
+                    temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_centralasia')
+                    pattern_filename = 'emodis-ndvi.{}{}*.centralasia.250m.10dy.nc4'
+                    aggregate_filename = 'emodis-ndvi.centralasia.250m.10dy.{}{}.nc4'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
+
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY, MONTH_MM))
