@@ -510,7 +510,10 @@ function mapSetup() {
     for (let key of Object.keys(baseLayers)) {
         const map_thumb = $("<div>");
         map_thumb.addClass("map-thumb");
-
+        map_thumb.attr("datavalue", key);
+        map_thumb.on("click", function (e) {
+            handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
+        });
 
         const thumb_cap = $("<div>");
         thumb_cap.addClass("caption-text");
