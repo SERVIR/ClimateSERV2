@@ -18,8 +18,6 @@ class Command(BaseCommand):
         parser.add_argument('--END_MONTH_MM', nargs='?', type=int)
         parser.add_argument('--START_DAY_DD', nargs='?', type=int)
         parser.add_argument('--END_DAY_DD', nargs='?', type=int)
-        parser.add_argument('--START_30MININCREMENT_NN', nargs='?', type=int)
-        parser.add_argument('--END_30MININCREMENT_NN', nargs='?', type=int)
 
     # Function Handler
     def handle(self, *args, **options):
@@ -54,8 +52,6 @@ class Command(BaseCommand):
             etl_pipeline.END_MONTH_MM     = options.get('END_MONTH_MM')
             etl_pipeline.START_DAY_DD     = options.get('START_DAY_DD')
             etl_pipeline.END_DAY_DD       = options.get('END_DAY_DD')
-            etl_pipeline.START_30MININCREMENT_NN  = options.get('START_30MININCREMENT_NN')
-            etl_pipeline.END_30MININCREMENT_NN    = options.get('START_30MININCREMENT_NN')
 
             # Call the actual function to start the pipeline
             etl_pipeline.execute_pipeline_control_function()
