@@ -385,6 +385,10 @@ a.leaflet-bar-part.leaflet-bar-part-single{
     background-size: 18px 18px;
 }
 
+.leaflet-touch .leaflet-control-geosearch a.reset{
+    height:26px;
+}
+
 .map-thumb {
     float: left;
     position: relative;
