@@ -89,30 +89,20 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 tif_gz_filename                     = filename
                 extracted_tif_filename              = filename
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path + '/' + str(date.year) + '/', filename)
-                local_full_filepath_final_nc4_file  = os.path.join(self.final_load_dir_path, final_nc4_filename)
 
                 # Make the current Granule Object
-                current_obj = {}
-
-                # Filename and Granule Name info
-                local_extract_path = self.temp_working_dir
-                local_final_load_path = self.final_load_dir_path
-                local_full_filepath_download = os.path.join(local_extract_path, tif_gz_filename)
-
-                current_obj['local_extract_path'] = local_extract_path
-                current_obj['local_final_load_path'] = local_final_load_path
-                current_obj['remote_directory_path'] = current_root_http_path
-
-                # Filename and Granule Name info
-                current_obj['tif_gz_filename'] = tif_gz_filename
-                current_obj['extracted_tif_filename']   = extracted_tif_filename
-                current_obj['final_nc4_filename']       = final_nc4_filename
-                current_obj['granule_name']             = final_nc4_filename
-
-                # Full Paths
-                current_obj['remote_full_filepath_gz_tif'] = remote_full_filepath_gz_tif
-                current_obj['local_full_filepath_download'] = local_full_filepath_download
-                current_obj['local_full_filepath_final_nc4_file'] = local_full_filepath_final_nc4_file
+                current_obj = {
+                    'local_extract_path': self.temp_working_dir,
+                    'local_final_load_path': self.final_load_dir_path,
+                    'remote_directory_path': current_root_http_path,
+                    'tif_gz_filename': tif_gz_filename,
+                    'extracted_tif_filename': extracted_tif_filename,
+                    'final_nc4_filename': final_nc4_filename,
+                    'granule_name': final_nc4_filename,
+                    'remote_full_filepath_gz_tif': remote_full_filepath_gz_tif,
+                    'local_full_filepath_download': os.path.join(self.temp_working_dir, tif_gz_filename),
+                    'local_full_filepath_final_nc4_file': os.path.join(self.final_load_dir_path, final_nc4_filename)
+                }
 
                 # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                 granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
@@ -489,7 +479,9 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
+
+                    print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)

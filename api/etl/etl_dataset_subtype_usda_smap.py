@@ -469,8 +469,9 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Int
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
+                    print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
