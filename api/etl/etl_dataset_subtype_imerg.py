@@ -502,7 +502,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     if not os.path.exists(os.path.dirname(expected_full_path_to_local_final_nc4_file)):
                         os.makedirs(os.path.dirname(expected_full_path_to_local_final_nc4_file))
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
+                    super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 

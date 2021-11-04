@@ -8,6 +8,7 @@ class Command(BaseCommand):
     # Parsing params
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
+        parser.add_argument('--no_duplicates', action='store_true', default=False)
         parser.add_argument('--from_last_processed', action='store_true', default=False)
         parser.add_argument('--merge_yearly', action='store_true', default=False)
         parser.add_argument('--merge_monthly', action='store_true', default=False)
@@ -43,6 +44,7 @@ class Command(BaseCommand):
 
             # Get the other optional params
             # Set input params as configuration options on the ETL Pipeline
+            etl_pipeline.no_duplicates        = options.get('no_duplicates')
             etl_pipeline.from_last_processed  = options.get('from_last_processed')
             etl_pipeline.merge_yearly     = options.get('merge_yearly')
             etl_pipeline.merge_monthly    = options.get('merge_monthly')

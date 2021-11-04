@@ -474,7 +474,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Int
                     print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
