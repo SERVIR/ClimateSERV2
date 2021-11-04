@@ -372,6 +372,18 @@ ol {
     box-shadow: 2px 2px 2px #909d6b94;
 }
 
+.leaflet-control-geosearch a.leaflet-bar-part:before{
+    border-top: 0;
+}
+
+.leaflet-control-geosearch a.leaflet-bar-part:after{
+    border: 0;
+}
+
+a.leaflet-bar-part.leaflet-bar-part-single{
+    background-image: url(images/search.png) !important;
+    background-size: 18px 18px;
+}
 
 .map-thumb {
     float: left;

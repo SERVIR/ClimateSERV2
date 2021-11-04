@@ -48,8 +48,8 @@ function createLayer(item) {
         {
             updateTimeDimension: true,
             cache: 3,
-            cacheForward:3,
-            cacheBackward:3,
+            cacheForward: 3,
+            cacheBackward: 3,
             setDefaultTime: true,
         }
     );
@@ -540,6 +540,14 @@ function mapSetup() {
     map.on('layeradd', (e) => {
         adjustLayerIndex();
     });
+
+    const search = new GeoSearch.GeoSearchControl({
+        provider: new GeoSearch.OpenStreetMapProvider(),
+        showMarker: false, // optional: true|false  - default true
+        showPopup: false,
+        autoClose: true,
+    });
+    map.addControl(search);
 }
 
 /**
@@ -2034,13 +2042,13 @@ function stats_info(which) {
             at: "center",
             of: window
         },
-         open: function() {
-             $(this).dialog('option', 'maxHeight', $(window).height());
-             if($(this).width() > $(window).width()){
-                 $(this).dialog('option', 'width', $(window).width());
-             }
+        open: function () {
+            $(this).dialog('option', 'maxHeight', $(window).height());
+            if ($(this).width() > $(window).width()) {
+                $(this).dialog('option', 'width', $(window).width());
+            }
 
-         }
+        }
     });
 }
 
@@ -2077,11 +2085,11 @@ function get_stat_body(which) {
                 "    <br>" +
                 "    <div class=\"servir_tooltip_header\">Evaporative Stress Index  (ESI)</div>" +
                 "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water. <a href=\"http://catalogue.servirglobal.net/Product?product_id=198\" alt=\"More about ESI\" title=\"More about ESI\" target=\"_blank\">More about ESI</a></div>" +
-                 "    <br>" +
+                "    <br>" +
                 "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
                 "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
                 "<br>" +
-                "<div class=\"servir_tooltip_header\">For more information please visit the <a href='" + help_link +"' style='color:#3b6e22;'>Help Center</a></div>" +
+                "<div class=\"servir_tooltip_header\">For more information please visit the <a href='" + help_link + "' style='color:#3b6e22;'>Help Center</a></div>" +
                 "</div>";
             break;
         case 'calculation':
