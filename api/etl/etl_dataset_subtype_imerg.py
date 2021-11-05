@@ -101,11 +101,12 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
 
                     # Getting full paths
                     local_full_filepath_tif = os.path.join(self.temp_working_dir, tif_filename)
-                    local_full_filepath_final_nc4_file =  os.path.join(self.final_load_dir_path, final_nc4_filename)
+                    local_full_filepath_final_nc4_file = os.path.join(self.final_load_dir_path, final_nc4_filename)
                     if '30MIN' in self.mode:
                         local_full_filepath_tif = os.path.join(self.temp_working_dir, current_year, tif_filename)
-                        local_full_filepath_final_nc4_file =  os.path.join(self.final_load_dir_path, current_year, final_nc4_filename)
+                        local_full_filepath_final_nc4_file = os.path.join(self.final_load_dir_path, current_year, final_nc4_filename)
 
+                    # Make the current Granule Object
                     current_obj = {
                         'date_YYYY': current_year,
                         'date_MM': current_month,
@@ -120,6 +121,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                         'local_full_filepath_final_nc4_file': local_full_filepath_final_nc4_file
                     }
 
+                    # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
                     new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
                         granule_name=final_nc4_filename,
@@ -514,25 +516,24 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
 
-                except Exception as e:
-                    print(e)
+                except:
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
                     error_JSON['is_error'] = True
                     error_JSON['class_name'] = self.__class__.__name__
-                    error_JSON['function_name'] = "execute__Step__Load"
-                    #
+                    error_JSON['function_name'] = ret__function_name
+
                     # Additional infos
                     error_JSON['expected_full_path_to_local_working_nc4_file'] = str(expected_full_path_to_local_working_nc4_file).strip()
                     error_JSON['expected_full_path_to_local_final_nc4_file'] = str(expected_full_path_to_local_final_nc4_file).strip()
-                    #
+
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
                     new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    new_json_key_to_append = "execute__Step__Load"
+                    new_json_key_to_append = ret__function_name
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
         except Exception as e:

@@ -67,7 +67,6 @@ class Command(BaseCommand):
                     pattern_filename = 'emodis-ndvi.{}{}*.centralasia.250m.10dy.nc4'
                     aggregate_filename = 'emodis-ndvi.centralasia.250m.10dy.{}{}.nc4'
                     ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
-
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(YEAR_YYYY, MONTH_MM))

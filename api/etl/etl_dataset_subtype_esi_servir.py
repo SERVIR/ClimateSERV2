@@ -503,19 +503,18 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     error_JSON['error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(sysErrorData)
                     error_JSON['is_error'] = True
                     error_JSON['class_name'] = self.__class__.__name__
-                    error_JSON['function_name'] = "execute__Step__Load"
-                    #
+                    error_JSON['function_name'] = ret__function_name
+
                     # Additional infos
                     error_JSON['expected_full_path_to_local_working_nc4_file'] = str(expected_full_path_to_local_working_nc4_file).strip()
                     error_JSON['expected_full_path_to_local_final_nc4_file'] = str(expected_full_path_to_local_final_nc4_file).strip()
-                    #
 
                     # Update this Granule for Failure (store the error info in the granule also)
                     Granule_UUID = expected_granules_object['Granule_UUID']
                     new__granule_pipeline_state = Config_SettingService.get_value(setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
-                    new_json_key_to_append = "execute__Step__Load"
+                    new_json_key_to_append = ret__function_name
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append, sub_jsonable_object=error_JSON)
 
         except:
