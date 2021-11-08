@@ -299,12 +299,14 @@ function buildStyles() {
     });
 }
 
+//In here i can add the options for transparent above and below
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     if (map.hasLayer(overlayMaps[which])) {
         was_removed = true;
         map.removeLayer(overlayMaps[which]);
     }
+    // console.log(document.getElementById("above_below").value);
     overlayMaps[which] = L.timeDimension.layer.wms(
         L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
             layers: active_layer.layers,
@@ -316,6 +318,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-max").value,
             abovemaxcolor: "extend",
             belowmincolor: "extend",
+            // abovemaxcolor: document.getElementById("above_below").value,
+            // belowmincolor: document.getElementById("above_below").value,
             numcolorbands: 100,
             styles: $("#style_table").val(),
         }),
