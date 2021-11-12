@@ -74,7 +74,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
             elif self.mode == 'LATE_1DY':
                 current_text_http_path = self.current_root_http_path.replace('/imerg/gis/', '/text/imerg/gis/{}/{}/3B*-S233000-*1day.tif')
 
-            for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date, until=end_date):
+            for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date.replace(day=1), until=end_date):
                 current_year = dt.strftime('%Y')
                 current_month = dt.strftime('%m')
                 response = session.get(current_text_http_path.format(current_year, current_month))
