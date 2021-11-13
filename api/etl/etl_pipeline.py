@@ -15,8 +15,8 @@ from .etl_dataset_subtype_nmme import ETL_Dataset_Subtype_NMME
 from .etl_dataset_subtype_nmme_cfsv2 import ETL_Dataset_Subtype_NMME_CFSV2
 from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_usda_smap import ETL_Dataset_Subtype_USDA_SMAP
-# from .etl_dataset_subtype_nsidc_smap_36km import ETL_Dataset_Subtype_NSIDC_SMAP_36KM
-# from .etl_dataset_subtype_nsidc_smap_9km import ETL_Dataset_Subtype_NSIDC_SMAP_9KM
+from .etl_dataset_subtype_nsidc_smap_36km import ETL_Dataset_Subtype_NSIDC_SMAP_36KM
+from .etl_dataset_subtype_nsidc_smap_9km import ETL_Dataset_Subtype_NSIDC_SMAP_9KM
 from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
 
 from . import etl_exceptions
@@ -284,6 +284,10 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_USDA_SMAP(self, dataset_subtype)
             elif dataset_subtype in ('esi_4week_servir', 'esi_12week_servir'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
+            elif dataset_subtype == 'nsidc_smap_9km':
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP_9KM(self, dataset_subtype)
+            elif dataset_subtype == 'nsidc_smap_36km':
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP_36KM(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
 
