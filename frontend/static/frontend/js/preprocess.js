@@ -271,9 +271,6 @@ DBFParser.prototype.parse = function(arrayBuffer,src,response,encoding) {
             for (var i = 0, z = 0; i < 10; i++) {
                 var letter = 0;
                 try {
-                    console.log("**************")
-                    console.log(dv)
-                    console.log(idx)
                     letter = dv.getUint8(idx);
                 } catch (e) {
                 }
