@@ -1265,6 +1265,7 @@ function sendRequest() {
             processData: false,
             contentType: false,
             async: true,
+            async: true,
             crossDomain: true,
             data: formData
         }).fail(function (jqXHR, textStatus, errorThrown) {
@@ -2261,6 +2262,17 @@ $(function () {
         }
     } catch (e) {
         console.log(e);
+    }
+    try{
+        loadshp(
+                {
+                    url: '/static/frontend/data/shape.zip',
+                    encoding: "UTF-8",
+                    EPSG: 4326,
+                },
+                function (data) {console.log("")});
+    } catch (e2){
+        console.log(e2);
     }
     $('#sourcemenu').val(0);
     try {
