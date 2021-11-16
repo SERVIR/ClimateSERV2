@@ -1,5 +1,4 @@
-import datetime, os, requests, shutil, sys, urllib
-from datetime import timedelta
+import datetime, os, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -11,12 +10,9 @@ from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 from ..models import Config_Setting
+from .nsidc_smap import SMAPDownload
 
-from bs4 import BeautifulSoup
-import os
-from .SMAP import SMAPDownload  
-
-class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -25,7 +21,12 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        self.mode = 'smap_9km'
+        if dataset_subtype == 'nsidc_smap_9km':
+            self.mode = '9km'
+        elif dataset_subtype == 'nsidc_smap_36km':
+            self.mode = '36km'
+        else:
+            self.mode = '9km'
 
     def set_optional_parameters(self, params):
         super().set_optional_parameters(params)
@@ -53,18 +54,21 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
-            s_date, e_date =  datetime.datetime.strftime(start_date, '%Y-%m-%d'), datetime.datetime.strftime(end_date, '%Y-%m-%d')
-
-            filenames = []
-            dates = []
+            s_date, e_date = datetime.datetime.strftime(start_date, '%Y-%m-%d'), datetime.datetime.strftime(end_date, '%Y-%m-%d')
 
             print("Start Date:", start_date, "End Date:", end_date)
-            smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', time_start=s_date, time_end=e_date)
-            url_list = smap_obj.query()
 
-            #TO -DO: remove manual url_list, use the file from the url_list
-            for link in url_list:
-                link_date = link.split('/')[-1].split('_')[5]
+            filenames, dates, urls = [], [], []
+            if self.mode == '36km':
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', time_start=s_date, time_end=e_date)
+                urls = smap_obj.query()
+            else:
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', time_start=s_date, time_end=e_date)
+                urls = smap_obj.query()
+
+            for link in urls:
+                splitted_link = link.split('/')[-1].split('_')
+                link_date = splitted_link[4] if self.mode == '36km' else splitted_link[5]
                 link_date_obj = datetime.datetime.strptime(link_date, "%Y%m%d")
                 if link_date_obj >= start_date and link_date_obj <= end_date:
                     filenames.append(link)
@@ -81,11 +85,11 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                     current_year__YYYY_str,
                     current_month__MM_str,
                     current_day__DD_str,
-                    '9km',
+                    self.mode,
                     'daily'
                 )
 
-                extracted_tif_filename              = filename
+                extracted_tif_filename              = os.path.basename(filename)
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
@@ -218,11 +222,16 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                 granule_name = expected_granule['granule_name']
 
                 print("Current URL to Download", current_url_to_download)
+                print("Local Path: ", current_download_destination_local_full_file_path)
 
                 # Download the file - Actually do the download now
                 try:
-                    smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download])
-                    smap_obj.download()
+                    if self.mode == '36km':
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download])
+                        smap_obj.download()
+                    else:
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download])
+                        smap_obj.download()
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -242,7 +251,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
-                error_message = "nsidc_smap_9km.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
+                error_message = "nsidc_smap.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -294,7 +303,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
 
                     # Getting info ready for the current granule.
                     local_extract_path                                  = expected_granules_object['local_extract_path']
-                    tif_filename                                        = expected_granules_object['extracted_tif_filename'].split('/')[-1]
+                    tif_filename                                        = expected_granules_object['extracted_tif_filename']
                     final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
                     expected_full_path_to_local_extracted_tif_file      = expected_full_path_to_local_extracted_tif_file
@@ -309,7 +318,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                     # Based on the smapHDF5File name, determine the time string elements. 
                     # Split Mean File elements by period
                     TimeStrSplit=smapHDF5File.split('/')[-1].split('_') #UPDATE_HERE
-                    yyyymmdd=TimeStrSplit[5]
+                    yyyymmdd = TimeStrSplit[4] if self.mode == '36km' else TimeStrSplit[5]
                     # set start and end time
                     startTime= pd.Timestamp(yyyymmdd + 'T00:00:00')  # begin of day
                     endTime  = pd.Timestamp(yyyymmdd + 'T23:59:59')  # end of day
@@ -338,7 +347,8 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
 
                     # 2) Merge both into a dataset and add daily average
                     smap=smap_am['soil_moisture'].rename({'phony_dim_0':'latitude','phony_dim_1':'longitude'}).to_dataset()
-                    smap['soil_moisture_pm']=smap_pm['soil_moisture_pm'].rename({'phony_dim_2':'latitude','phony_dim_3':'longitude'})   
+                    rename_criteria = {'phony_dim_3':'latitude','phony_dim_4':'longitude'} if self.mode == '36km' else {'phony_dim_2':'latitude','phony_dim_3':'longitude'}
+                    smap['soil_moisture_pm'] = smap_pm['soil_moisture_pm'].rename(rename_criteria)
                     smap=smap.rename({'soil_moisture':'soil_moisture_am'}) # rename "soil_moisture" to "soil_moisture_am"
 
                     # Add in daily average soil moisture
@@ -348,7 +358,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                     daily_sm = xr.DataArray(daily_sm,coords=[lat,lon],dims=['latitude','longitude'])
                     smap['soil_moisture']=daily_sm
 
-                    # 3) Clean up dimensions including adding a time dimension. 
+                    # 3) Clean up dimensions including adding a time dimension.
                     # Add the time dimension as a new coordinate.
                     smap=smap.assign_coords(time=startTime).expand_dims(dim='time',axis=0)
                     # Add latitude and longitude coordinates
@@ -362,21 +372,38 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                     lonAttr  =  OrderedDict([('long_name','longitude'), ('units','degrees_east'), ('axis','X')])
                     timeAttr =  OrderedDict([('long_name','time'),('axis','T'),('bounds','time_bnds')])
                     timeBoundsAttr =  OrderedDict([('long_name','time_bounds')])
-                    smAttr         =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 9km product')])
-                    fileAttr =  OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 Enhanced 9km (SPL3SMP_E) soil moisture product.'), \
-                                ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
-                                ('Source','National Snow & Ice Data Center (NSIDC); https://nsidc.org/data/SPL3SMP_E/versions/1'), \
-                                ('Version','1.0'), \
-                                ('RangeStartTime',startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                ('RangeEndTime',endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                ('SouthernmostLatitude',np.min(smap.latitude.values)), \
-                                ('NorthernmostLatitude',np.max(smap.latitude.values)), \
-                                ('WesternmostLongitude',np.min(smap.longitude.values)), \
-                                ('EasternmostLongitude',np.max(smap.longitude.values)), \
-                                ('TemporalResolution','daily'), \
-                                ('SpatialResolution','9km')])
-                
+                    smAttr, fileAttr = OrderedDict(), OrderedDict()
+                    if self.mode == '36km':
+                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 36km product')])
+                        fileAttr = OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 36km (SPL3SMP) soil moisture product.'), \
+                                    ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
+                                    ('Source','National Snow & Ice Data Center (NSIDC); https://nsidc.org/data/SPL3SMP/versions/6'), \
+                                    ('Version','6.0'), \
+                                    ('RangeStartTime',startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('RangeEndTime',endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('SouthernmostLatitude',np.min(smap.latitude.values)), \
+                                    ('NorthernmostLatitude',np.max(smap.latitude.values)), \
+                                    ('WesternmostLongitude',np.min(smap.longitude.values)), \
+                                    ('EasternmostLongitude',np.max(smap.longitude.values)), \
+                                    ('TemporalResolution','daily'), \
+                                    ('SpatialResolution','36km')])
+                    else:
+                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 9km product')])
+                        fileAttr =  OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 Enhanced 9km (SPL3SMP_E) soil moisture product.'), \
+                                    ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
+                                    ('Source','National Snow & Ice Data Center (NSIDC); https://nsidc.org/data/SPL3SMP_E/versions/1'), \
+                                    ('Version','1.0'), \
+                                    ('RangeStartTime',startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('RangeEndTime',endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('SouthernmostLatitude',np.min(smap.latitude.values)), \
+                                    ('NorthernmostLatitude',np.max(smap.latitude.values)), \
+                                    ('WesternmostLongitude',np.min(smap.longitude.values)), \
+                                    ('EasternmostLongitude',np.max(smap.longitude.values)), \
+                                    ('TemporalResolution','daily'), \
+                                    ('SpatialResolution','9km')])
+
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
                     smEncoding = { '_FillValue':np.float32(-9999.0),'missing_value':np.float32(-9999.0), 'dtype':np.dtype('float32'),'zlib':True, 'complevel':7}
                     timeEncoding={'units':'seconds since 1970-01-01T00:00:00Z'}
@@ -394,9 +421,9 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                     smap.time_bnds.encoding=timeBoundsEncoding
 
                     # 5) Output File
-                    outputFile='NSIDC-SMAP_ENH.' + startTime.strftime('%Y%m%dT%H%M%SZ') + '.' + regionID + '.nc4'
-                    smap=smap[['soil_moisture','time_bnds']]   # throwing out am/pm passes here, we can always add later but then we probably will want to add the time of the samples as well.
-                    
+                    # outputFileTemplate = 'NSIDC-SMAP.{}.{}.nc4' if self.mode == '36km' else 'NSIDC-SMAP_ENH.{}.{}.nc4'
+                    # outputFile = outputFileTemplate.format(startTime.strftime('%Y%m%dT%H%M%SZ'), regionID)
+                    smap = smap[['soil_moisture','time_bnds']]   # throwing out am/pm passes here, we can always add later but then we probably will want to add the time of the samples as well.
 
                     # 5) Output File
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
@@ -545,7 +572,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
             print(e)
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        return retObj   
+        return retObj
 
     def execute__Step__Clean_Up(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -561,7 +588,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "nsidc_smap_9km"
+                additional_json['subclass'] = "nsidc_smap"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
                 shutil.rmtree(temp_working_dir)
@@ -570,7 +597,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP_9KM(ETL_Dataset_Subtype, ETL_Dataset_Subtyp
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "nsidc_smap_9km"
+                additional_json['subclass'] = "nsidc_smap"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
