@@ -66,9 +66,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
 
             current_text_http_path = ''
             if self.mode == 'EARLY_30MIN':
-                current_text_http_path = self.current_root_http_path.replace('/imerg/gis/early/', '/text/imerg/gis/early/3B*-S*-*30min.tif')
+                current_text_http_path = self.current_root_http_path.replace('/imerg/gis/early/', '/text/imerg/gis/early/{}/{}/3B*-S*-*30min.tif')
             elif self.mode == 'LATE_30MIN':
-                current_text_http_path = self.current_root_http_path.replace('/imerg/gis/', '/text/imerg/gis/3B*-S*-*30min.tif')
+                current_text_http_path = self.current_root_http_path.replace('/imerg/gis/', '/text/imerg/gis/{}/{}/3B*-S*-*30min.tif')
             elif self.mode == 'EARLY_1DY':
                 current_text_http_path = self.current_root_http_path.replace('/imerg/gis/early/', '/text/imerg/gis/early/{}/{}/3B*-S233000-*1day.tif')
             elif self.mode == 'LATE_1DY':
