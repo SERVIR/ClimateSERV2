@@ -27,6 +27,8 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             self.mode = '36km'
         else:
             self.mode = '9km'
+        self.authentication_username = Config_SettingService.get_value(setting_name="NSIDC_SMAP_USERNAME", default_or_error_return_value="NO Username")
+        self.authentication_password = Config_SettingService.get_value(setting_name="NSIDC_SMAP_PASSWORD", default_or_error_return_value="No Password")
 
     def set_optional_parameters(self, params):
         super().set_optional_parameters(params)
@@ -48,7 +50,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir #< h5py file
         final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir # <- netcdf4 file
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
-
+        print()
         # (1) Generate Expected remote file paths
         try:
 
@@ -227,10 +229,12 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 # Download the file - Actually do the download now
                 try:
                     if self.mode == '36km':
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download])
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     else:
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download])
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     download_counter = download_counter + 1
                 except:

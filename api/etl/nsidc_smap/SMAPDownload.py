@@ -38,12 +38,11 @@ CMR_FILE_URL = ('{0}/search/granules.json?provider=NSIDC_ECS'
                 '&sort_key[]=start_date&sort_key[]=producer_granule_id'
                 '&scroll=true&page_size={1}'.format(CMR_URL, CMR_PAGE_SIZE))
 
-def get_login_credentials():
+def get_login_credentials(username, password):
     """Get user credentials from .netrc or prompt for input."""
     credentials = None
     token = None
-    
-    username, password = 'paulslin_usra', 'USra2021'
+
     credentials = '{0}:{1}'.format(username, password)
     credentials = base64.b64encode(credentials.encode('ascii')).decode('ascii')
     return credentials, token
@@ -182,15 +181,12 @@ def cmr_download(urls, obj, force=False, quiet=False):
         if not credentials and not token:
             p = urlparse(url)
             if p.scheme == 'https':
-                credentials, token = get_login_credentials()
+                credentials, token = get_login_credentials(obj.username, obj.password)
 
         filename = url.split('/')[-1]
 
         # filenames
-        if obj.short_name == 'SPL3SMP_E' and obj.version == '005':
-            filename = os.path.join('/mnt/cs-temp/nsidc_smap_9km', filename)
-        elif obj.short_name == 'SPL3SMP' and obj.version == '008':
-            filename = os.path.join('/mnt/cs-temp/nsidc_smap_36km', filename)
+        filename = os.path.join(obj.temp_working_dir, filename)
 
         
         if not quiet:
@@ -325,7 +321,7 @@ class SMAPDownload():
 
     def __init__(self, short_name='SPL3SMP_E', version='005',
                 time_start='2015-03-31', time_end='2021-11-05', bounding_box='',
-                polygon='', filename_filter='', url_list=[]):
+                polygon='', filename_filter='', url_list=[], username=None, password=None, temp_working_dir=None):
         self.short_name = short_name
         self.version = version
         self.time_start = '{}T00:00:00Z'.format(time_start) 
@@ -334,6 +330,9 @@ class SMAPDownload():
         self.polygon = polygon
         self.filename_filter = filename_filter
         self.url_list = url_list
+        self.username = username
+        self.password = password
+        self.temp_working_dir = temp_working_dir
     
     def query(self):
         url_list = self.url_list
