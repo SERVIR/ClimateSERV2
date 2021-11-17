@@ -336,7 +336,7 @@ class SMAPDownload():
     
     def query(self):
         url_list = self.url_list
-        quiet, force = False, False #Manually Added
+        quiet, force = True, False #Manually Added
         if len(url_list) == 0:
             url_list = cmr_search(self.short_name, self.version, self.time_start, self.time_end,
                                   bounding_box=self.bounding_box, polygon=self.polygon,
@@ -348,11 +348,10 @@ class SMAPDownload():
 
     def download(self):
         url_list = self.url_list
-        quiet, force = False, False #Manually Added
+        quiet, force = True, False #Manually Added
         if len(url_list) == 0:
             url_list = cmr_search(self.short_name, self.version, self.time_start, self.time_end,
                                   bounding_box=self.bounding_box, polygon=self.polygon,
                                   filename_filter=self.filename_filter, quiet=quiet)
         
         cmr_download(url_list, self, force=force, quiet=quiet)
-        print("SMAP Download Finished!")
