@@ -339,8 +339,14 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Int
                     usda = usda.assign_coords(time=centerTime).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
                     usda['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
-                    # 3) Rename coordinates
-                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    # 3) Rename and add attributes to this dataset.
+                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if usda.latitude.values[1] - usda.latitude.values[0] < 0:
+                        usda = usda.reindex(latitude=usda.latitude[::-1])
+
+                    # print("E")
+
                     # Lat/Lon/Time dictionaries.
                     # Use Ordered dict
                     latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
