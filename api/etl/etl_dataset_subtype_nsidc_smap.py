@@ -27,6 +27,8 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             self.mode = '36km'
         else:
             self.mode = '9km'
+        self.authentication_username = Config_SettingService.get_value(setting_name="NSIDC_SMAP_USERNAME", default_or_error_return_value="NO Username")
+        self.authentication_password = Config_SettingService.get_value(setting_name="NSIDC_SMAP_PASSWORD", default_or_error_return_value="No Password")
 
     def set_optional_parameters(self, params):
         super().set_optional_parameters(params)
@@ -48,7 +50,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir #< h5py file
         final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir # <- netcdf4 file
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
-
+        print("MODE: SMAP", self.mode)
         # (1) Generate Expected remote file paths
         try:
 
@@ -180,7 +182,6 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         ret__event_description = "Success.  Completed Step execute__Step__Pre_ETL_Custom by generating " + str(len(self._expected_remote_full_file_paths)).strip() + " expected full file paths to download and " + str(len(self._expected_granules)).strip() + " expected granules to process."
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        print("FINISHED: PRE ETL")
         return retObj
 
     def execute__Step__Download(self):
@@ -221,16 +222,15 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 Granule_UUID = expected_granule['Granule_UUID']
                 granule_name = expected_granule['granule_name']
 
-                print("Current URL to Download", current_url_to_download)
-                print("Local Path: ", current_download_destination_local_full_file_path)
-
                 # Download the file - Actually do the download now
                 try:
                     if self.mode == '36km':
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download])
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     else:
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download])
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     download_counter = download_counter + 1
                 except:
@@ -266,7 +266,6 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(download_counter).strip() + " files."
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        print("FINISHED: Download")
         return retObj
 
     
@@ -430,6 +429,8 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     outputFile_FullPath = outputFile_FullPath
                     smap.to_netcdf(outputFile_FullPath,unlimited_dims='time')
 
+                    print("SUCCESS:", yyyymmdd)
+
                 except Exception as e:
                     print(e)
 
@@ -477,7 +478,6 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         ret__detail_state_info['detail_errors'] = detail_errors
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        print("FINISHED: TRANSFORM")
         return retObj
 
     def execute__Step__Load(self):
@@ -500,9 +500,6 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
-                    print("Local", expected_full_path_to_local_working_nc4_file)
-                    print("Full", expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
@@ -556,7 +553,6 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             return retObj
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        print("FINISHED: LOAD")
         return retObj
 
     def execute__Step__Post_ETL_Custom(self):
@@ -620,5 +616,4 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             return retObj
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
-        print("FINISHED CLEANUP")
         return retObj
