@@ -165,6 +165,15 @@ body {
 .ui-icon-closethick {
     background-position: unset;
 }
+.tooltip{
+    z-index: 99999;
+}
+
+.tooltip-inner {
+    color: #fff;
+    background-color: #758055;
+    box-shadow: 2px 2px 2px #909d6b94;
+}
 
 .legend-btn, .settings-btn {
     cursor: pointer;

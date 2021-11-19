@@ -2263,17 +2263,22 @@ $(function () {
     } catch (e) {
         console.log(e);
     }
-    try{
+    try {
         loadshp(
-                {
-                    url: '/static/frontend/data/shape.zip',
-                    encoding: "UTF-8",
-                    EPSG: 4326,
-                },
-                function (data) {console.log("")});
-    } catch (e2){
+            {
+                url: '/static/frontend/data/shape.zip',
+                encoding: "UTF-8",
+                EPSG: 4326,
+            },
+            function (data) {
+                console.log("")
+            });
+    } catch (e2) {
         console.log(e2);
     }
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip({container: 'body', trigger: 'hover'})
+    });
     $('#sourcemenu').val(0);
     try {
         getClimateScenarioInfo();

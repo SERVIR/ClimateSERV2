@@ -443,6 +443,7 @@
                                                                       <label for="{{ layer.ui_id }}"
                                                                              title="{{ layer.title }}"
                                                                              class="cblabel"
+                                                                             data-toggle="tooltip"
                                                                       >{{ layer.title }}</label>
                                                                       <br/>
                                                                 </span>
@@ -473,12 +474,16 @@
 
 
                                                             {% else %}
-                                                                <span class="rst__rowTitle">
+                                                                <span
+                                                                        class="rst__rowTitle"
+                                                                        title="{{ layer.title }}"
+                                                                        data-toggle="tooltip"
+                                                                >
                                       <input type="checkbox"
                                              id="{{ layer.ui_id }}"
                                              name="{{ layer.ui_id }}"
                                              onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
-                                      <label for="{{ layer.ui_id }}" title="{{ layer.title }}"
+                                      <label for="{{ layer.ui_id }}"
                                              class="cblabel">{{ layer.title }}</label>
                                       <br/>
                                   </span>
@@ -588,7 +593,7 @@
             src="{% static 'frontend/js/leaflet.timedimension.min.js' %}"
     ></script>
     <script src="{% static 'frontend/js/leaflet-sidebar.js' %}"></script>
-
+    <script src="{% static 'frontend/js/leaflet-providers.js' %}"></script>
     <script src="{% static 'frontend/js/jszip.js' %}"></script>
     <script src="{% static 'frontend/js/jszip-utils.js' %}"></script>
     <!--[if IE]>
