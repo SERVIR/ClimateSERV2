@@ -406,6 +406,26 @@
                                 </button>
                                 <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
                             </div>
+                        <div class="just-buttons">
+                                <button id="btnViewAPI"
+                                        data-toggle="collapse"
+                                        href="#api_panel"
+                                        role="button"
+                                        class="w-100"
+                                >
+                                    View API Call
+                                </button>
+                            </div>
+
+                            <div class="form-group panel-buffer collapse" id="api_panel">
+                                <label for="api_query">API Query</label>
+                                <span name="api_query"
+                                      class="form-control"
+                                      style="word-wrap: break-word; height: fit-content;"
+                                      id="api_query"
+                                >
+                                            </span>
+                            </div>
                         </div>
                     </div>
                     <div class="sidebar-pane" id="layers">
@@ -626,13 +646,13 @@
             </label>
             <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
             </select><br>
-{#            <label>#}
-{#                Out of range values#}
-{#            </label>#}
-{#            <select class="style_table form-control" name="above_below" id="above_below" style="width: 100%">#}
-{#                <option value="extend">Extend</option>#}
-{#                <option value="transparent">Transparent</option>#}
-{#            </select><br>#}
+            {#            <label>#}
+            {#                Out of range values#}
+            {#            </label>#}
+            {#            <select class="style_table form-control" name="above_below" id="above_below" style="width: 100%">#}
+            {#                <option value="extend">Extend</option>#}
+            {#                <option value="transparent">Transparent</option>#}
+            {#            </select><br>#}
             <button id="applyStylebtn" style="
               float: right;
           ">

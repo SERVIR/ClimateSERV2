@@ -1259,6 +1259,11 @@ function sendRequest() {
         } else if (uploadLayer) {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
+        let api_host = window.location.hostname;
+        if(window.location.port){
+            api_host += ":" + window.location.port
+        }
+        $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
         $.ajax({
             url: "/api/submitDataRequest/",
             type: "POST",
