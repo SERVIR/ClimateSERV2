@@ -62,7 +62,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
 
             filenames, dates, urls = [], [], []
             if self.mode == '36km':
-                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', time_start=s_date, time_end=e_date)
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='007', time_start=s_date, time_end=e_date)
                 urls = smap_obj.query()
             else:
                 smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', time_start=s_date, time_end=e_date)
@@ -225,7 +225,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 # Download the file - Actually do the download now
                 try:
                     if self.mode == '36km':
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='008', url_list=[current_url_to_download],
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='007', url_list=[current_url_to_download],
                                                             username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     else:
