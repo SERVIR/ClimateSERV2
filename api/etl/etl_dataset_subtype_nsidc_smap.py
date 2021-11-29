@@ -65,7 +65,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='007', time_start=s_date, time_end=e_date)
                 urls = smap_obj.query()
             else:
-                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', time_start=s_date, time_end=e_date)
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='004', time_start=s_date, time_end=e_date)
                 urls = smap_obj.query()
 
             for link in urls:
@@ -229,7 +229,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                                             username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     else:
-                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='005', url_list=[current_url_to_download],
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='004', url_list=[current_url_to_download],
                                                             username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
                         smap_obj.download()
                     download_counter = download_counter + 1
