@@ -7,7 +7,7 @@ from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
 from .models import ETL_PipelineRun
-from .models import Request_Progress, Request_Log
+from .models import Request_Progress, Request_Log, Track_Usage
 
 
 admin.site.register(Config_Setting)
@@ -16,5 +16,5 @@ admin.site.register(ETL_Granule)
 admin.site.register(ETL_Log)
 admin.site.register(ETL_PipelineRun)
 admin.site.register(Request_Progress)
-
 admin.site.register(Request_Log)
+admin.site.register(Track_Usage)

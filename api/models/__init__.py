@@ -4,3 +4,4 @@ from .etl_granule_model import ETL_Granule
 from .etl_log_model import ETL_Log
 from .etl_pipeline_run_model import ETL_PipelineRun
 from .requests_model import Request_Log,Request_Progress
+from .usage_model import Track_Usage
