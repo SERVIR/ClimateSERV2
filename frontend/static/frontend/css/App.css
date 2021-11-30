@@ -74,7 +74,7 @@ body {
 
 .hero-subtitle {
     padding: 10px 20px;
-    background-color: #92b03d94;
+    background-color: #007db0bd;
     border-radius: 5px;
 }
 
@@ -179,7 +179,7 @@ body {
 }
 
 .do-with-text {
-    margin-left: 300px;
+    /*margin-left: 300px;*/
     margin-bottom: 50px;
 }
 
@@ -191,6 +191,7 @@ body {
     overflow: hidden;
     border-radius: 50%;
     float: left;
+    margin-right: 15px;
 }
 
 .do-with-img {
@@ -292,6 +293,11 @@ body {
     width: 100%;
 }
 
+.layer-opacity:focus, .form-control:focus{
+    border-color: #758055;
+    box-shadow: 0 0 0 0.2rem rgba(117, 128, 85, 0.25)
+}
+
 .layer-opacity {
     -webkit-appearance: none; /* Hides the slider so that custom slider can be made */
     width: 100%; /* Specific width is required for Firefox. */
@@ -323,31 +329,31 @@ body {
     height: 22px;
     width: 22px;
     border-radius: 22px;
-    background: #7eaddb;
+    background: #92B03D;
     cursor: pointer;
     margin-top: -11px; /* You need to specify a margin in Chrome, but in Firefox and IE it is automatic */
-    box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3; /* Add cool effects to your sliders! */
+    box-shadow: 1px 1px 1px #597017, 0 0 1px #b1d93f; /* Add cool effects to your sliders! */
 }
 
 /* All the same stuff for Firefox */
 .layer-opacity::-moz-range-thumb {
-    box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3;
+    box-shadow: 1px 1px 1px #597017, 0 0 1px #b1d93f;
     border: none;
     height: 22px;
     width: 22 ps;
     border-radius: 22px;
-    background: #7eaddb;
+    background: #92B03D;
     cursor: pointer;
 }
 
 /* All the same stuff for IE */
 .layer-opacity::-ms-thumb {
-    box-shadow: 1px 1px 1px #50769c, 0 0 1px #5896d3;
+    box-shadow: 1px 1px 1px #597017, 0 0 1px #b1d93f;
     border: none;
     height: 22px;
     width: 12px;
     border-radius: 22px;
-    background: #7eaddb;
+    background: #92B03D;
     cursor: pointer;
 }
 
@@ -386,25 +392,25 @@ body {
 }
 
 .layer-opacity::-ms-fill-lower {
-    background: #2a6495;
+    background: #92B03D;
     border: 0.2px solid #010101;
     border-radius: 2.6px;
     box-shadow: 1px 1px 1px #000000, 0 0 1px #0d0d0d;
 }
 
 .layer-opacity:focus::-ms-fill-lower {
-    background: #3071a9;
+    background: #92B03D;
 }
 
 .layer-opacity::-ms-fill-upper {
-    background: #3071a9;
+    background: #92B03D;
     border: 0.2px solid #010101;
     border-radius: 2.6px;
     box-shadow: 1px 1px 1px #000000, 0 0 1px #0d0d0d;
 }
 
 .layer-opacity:focus::-ms-fill-upper {
-    background: #367ebd;
+    background: #92B03D;
 }
 
 .rst__rowContents {
@@ -981,7 +987,7 @@ button {
     margin: 0;
     padding: 0.75rem 0.75rem;
     border: 0;
-    border-radius: 0.317rem;
+    border-radius: 0.15rem;
     color: #fff;
     text-decoration: none;
     font-weight: 700;
@@ -991,7 +997,7 @@ button {
     cursor: pointer;
     -webkit-appearance: none;
     -webkit-font-smoothing: antialiased;
-    background-color: #758055;
+    background-color: #92B03D; /*#758055;*/
 }
 
 button:hover,
@@ -1262,6 +1268,9 @@ button[disabled] {
     .btn-data-info{
         font-size: 1.25em;
     }
+    .btn-data-info.hero-subtitle{
+        font-size: 1em;
+    }
 }
 
 @media (min-width: 1500px) {
@@ -1375,5 +1384,38 @@ button[disabled] {
         left: unset;
         width: 100%;
         text-align: center;
+    }
+}
+
+@media only screen and (max-width: 500px) {
+    .hero-subtitle {
+    padding: 7px 5px;
+    }
+    .carousel-caption p{
+        margin-top: 8px;
+    }
+    .todo-wrapper {
+        display: block;
+        position: relative;
+        width: 80vw;
+        height: 80vw;
+        overflow: hidden;
+        border-radius: 50%;
+        float: unset;
+        margin-right: 15px;
+    }
+    span.right.carousel-control.site-link {
+        width: 100%;
+        display: inline-block;
+    }
+    #dataCarousel button.btn.btn-lg.btn-data-info {
+        max-width: unset;
+        width: 100%;
+        margin-left: unset !important;
+        margin-bottom: 3px;
+    }
+    #dataCarousel .col-md-12 {
+        margin-right: 20px !important;
+        margin-left: 20px !important;
     }
 }

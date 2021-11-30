@@ -2,6 +2,7 @@
     display: flex;
     -ms-flex-wrap: wrap;
     flex-wrap: wrap;
+    font-family: "Work Sans", 'Roboto';
 }
 
 .card-header {
@@ -103,6 +104,23 @@ border-right: 1px solid #eee;
 ul {
     list-style: unset;
     margin-left: 20px;
+}
+
+td, th {
+    padding: 10px;
+}
+
+thead {
+    background-color: #758055;
+    color: #ffffff;
+}
+
+table th{
+    color:#ffffff;
+}
+
+tr.row-even {
+    background-color: #7580552e;
 }
 
 .map-help-img{

@@ -1,4 +1,4 @@
-import datetime, os, requests, shutil, sys, urllib
+import datetime, os, shutil, sys, urllib
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -6,13 +6,13 @@ from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 from ..models import Config_Setting
+from .nsidc_smap import SMAPDownload
 
-from bs4 import BeautifulSoup
-
-class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -21,13 +21,17 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        if dataset_subtype == 'nsidc_smap_36km':
-            self.mode = 'nsidc_smap_36km'
+        if dataset_subtype == 'nsidc_smap_9km':
+            self.mode = '9km'
+        elif dataset_subtype == 'nsidc_smap_36km':
+            self.mode = '36km'
         else:
-            self.mode = 'nsidc_smap_36km'
+            self.mode = '9km'
+        self.authentication_username = Config_SettingService.get_value(setting_name="NSIDC_SMAP_USERNAME", default_or_error_return_value="NO Username")
+        self.authentication_password = Config_SettingService.get_value(setting_name="NSIDC_SMAP_PASSWORD", default_or_error_return_value="No Password")
 
-    # Set default parameters or using default
     def set_optional_parameters(self, params):
+        super().set_optional_parameters(params)
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
@@ -35,7 +39,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         self.MM__Month__End = params.get('MM__Month__End') or today.month
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
         self.DD__Day__End = params.get('DD__Day__End') or today.day
-
+    
     def execute__Step__Pre_ETL_Custom(self):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
@@ -43,28 +47,35 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
-        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir
-        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir
+        self.temp_working_dir = self.etl_parent_pipeline_instance.dataset.temp_working_dir #< h5py file
+        final_load_dir_path = self.etl_parent_pipeline_instance.dataset.final_load_dir # <- netcdf4 file
         current_root_http_path = self.etl_parent_pipeline_instance.dataset.source_url
-
+        print("MODE: SMAP", self.mode)
         # (1) Generate Expected remote file paths
         try:
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
+            s_date, e_date = datetime.datetime.strftime(start_date, '%Y-%m-%d'), datetime.datetime.strftime(end_date, '%Y-%m-%d')
 
-            filenames = []
-            dates = []
-            response = requests.get(current_root_http_path)
-            soup = BeautifulSoup(response.text, 'html.parser')
-            for _, link in enumerate(soup.findAll('a')):
-                if link.get('href').startswith('NASA_USDA_SMAP_'):
-                    _, _, _, start, end = link.get('href').split('_')
-                    s_date = datetime.datetime.strptime(start[2:], '%Y%m%d')
-                    e_date = datetime.datetime.strptime(end[:-4], '%Y%m%d')
-                    if s_date >= start_date and e_date <= end_date:
-                        filenames.append(link.get('href'))
-                        dates.append(s_date)
+            print("Start Date:", start_date, "End Date:", end_date)
+
+            filenames, dates, urls = [], [], []
+            if self.mode == '36km':
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='007', time_start=s_date, time_end=e_date)
+                urls = smap_obj.query()
+            else:
+                smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='004', time_start=s_date, time_end=e_date)
+                urls = smap_obj.query()
+
+            for link in urls:
+                splitted_link = link.split('/')[-1].split('_')
+                link_date = splitted_link[4] if self.mode == '36km' else splitted_link[5]
+                link_date_obj = datetime.datetime.strptime(link_date, "%Y%m%d")
+                if link_date_obj >= start_date and link_date_obj <= end_date:
+                    filenames.append(link)
+                    dates.append(link_date_obj)
+            print("Filenames", filenames, "Dates:", dates)
 
             for filename, date in zip(filenames, dates):
 
@@ -72,21 +83,19 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                 current_month__MM_str   = "{:02d}".format(date.month)
                 current_day__DD_str     = "{:02d}".format(date.day)
 
-                # usda-smap.20200415T000000Z.global.10km.3dy.nc4
-                final_nc4_filename = 'usda-smap.{}{}{}T000000Z.global.{}.{}.nc4'.format(
+                final_nc4_filename = 'nsdic_smap.{}{}{}T000000Z.global.{}.{}.nc4'.format(
                     current_year__YYYY_str,
                     current_month__MM_str,
                     current_day__DD_str,
-                    '10km',
-                    '3dy'
+                    self.mode,
+                    'daily'
                 )
 
-                extracted_tif_filename              = filename
+                extracted_tif_filename              = os.path.basename(filename)
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
 
-
-                current_obj = {}
+                current_obj = {} # saved in DB
 
                 # Filename and Granule Name info
                 local_extract_path = self.temp_working_dir  # We are using the same directory for the download and extract path
@@ -213,13 +222,16 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                 Granule_UUID = expected_granule['Granule_UUID']
                 granule_name = expected_granule['granule_name']
 
-                print(current_url_to_download)
-
                 # Download the file - Actually do the download now
                 try:
-                    r = requests.get(current_url_to_download)
-                    with open(current_download_destination_local_full_file_path, 'wb') as outfile:
-                        outfile.write(r.content)
+                    if self.mode == '36km':
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP', version='007', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
+                        smap_obj.download()
+                    else:
+                        smap_obj = SMAPDownload.SMAPDownload(short_name='SPL3SMP_E', version='004', url_list=[current_url_to_download],
+                                                            username= self.authentication_username, password=self.authentication_password, temp_working_dir=self.temp_working_dir)
+                        smap_obj.download()
                     download_counter = download_counter + 1
                 except:
                     error_counter = error_counter + 1
@@ -239,7 +251,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
-                error_message = "usda_smap.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
+                error_message = "nsidc_smap.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -256,6 +268,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
+    
     def execute__Step__Extract(self):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
@@ -292,112 +305,131 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     tif_filename                                        = expected_granules_object['extracted_tif_filename']
                     final_nc4_filename                                  = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_extracted_tif_file      = os.path.join(local_extract_path, tif_filename)
+                    expected_full_path_to_local_extracted_tif_file      = expected_full_path_to_local_extracted_tif_file
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
 
-                    # print("B")
+                    smapHDF5File= expected_full_path_to_local_extracted_tif_file     
 
-                    # Note there are only 3 lines of differences between the 4wk and 12 wk scripts
-                    # TODO: Place those difference variables here.
-                    mode_var__pd_timedelta = ""
-                    mode_var__attr_composite_interval = ""
-                    mode_var__attr_comment = ""
-                    mode_var__TemporalResolution = ""
+                    # Set region ID
+                    regionID='Global' 
 
-                    # print("C")
-
-                    # Matching to the other script
-
-                    ############################################################
-                    # Start extracting data and creating output netcdf file.
-                    ############################################################
-
-                    _, _, _, start, end = tif_filename.split('_')
-                    startTime = datetime.datetime.strptime(start[2:], '%Y%m%d')
-                    endTime = datetime.datetime.strptime(end[:-4], '%Y%m%d')
-
-                    # print("D")
+                    # Based on the smapHDF5File name, determine the time string elements. 
+                    # Split Mean File elements by period
+                    TimeStrSplit=smapHDF5File.split('/')[-1].split('_') #UPDATE_HERE
+                    yyyymmdd = TimeStrSplit[4] if self.mode == '36km' else TimeStrSplit[5]
+                    # set start and end time
+                    startTime= pd.Timestamp(yyyymmdd + 'T00:00:00')  # begin of day
+                    endTime  = pd.Timestamp(yyyymmdd + 'T23:59:59')  # end of day
 
                     ############################################################
                     # Beging extracting data and creating output netcdf file.
                     ############################################################
-                    # 1) Read the geotiff data into an xarray data array
-                    tiffData = xr.open_rasterio(geotiffFile_FullPath)  #tiffData = xr.open_rasterio(geotiffFile)
-                    # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    usda = tiffData.rename('smap').to_dataset()
-                    # Handle selecting/adding the dimesions
-                    ssm = usda.isel(band=0).reset_coords('band', drop=True).rename({'smap':'ssm'})  # select the singleton band dimension and drop out the associated coordinate.
-                    susm = usda.isel(band=1).reset_coords('band', drop=True).rename({'smap':'susm'})
-                    smp = usda.isel(band=2).reset_coords('band', drop=True).rename({'smap':'smp'})
-                    ssma = usda.isel(band=3).reset_coords('band', drop=True).rename({'smap':'ssma'})
-                    susma = usda.isel(band=4).reset_coords('band', drop=True).rename({'smap':'susma'})
 
-                    usda = xr.merge([ssm,susm,smp,ssma,susma])
-                    centerTime=startTime +pd.Timedelta('36h')
+                    # 1) Read the AM and PM group data form the HDF file into xarray data arrays
+                    smap_am=xr.open_dataset(smapHDF5File,group='Soil_Moisture_Retrieval_Data_AM')
+                    smap_pm=xr.open_dataset(smapHDF5File,group='Soil_Moisture_Retrieval_Data_PM')
+                    # Set lat and lon from data arrays.
+                    lat=smap_am.latitude.values
+                    # latitudes
+                    lat[lat<-90]=np.nan  # set missing values to NaN
+                    lat=np.nanmean(lat,axis=1)
+                    # longitudes
+                    lon=smap_am.longitude.values
+                    lon[lon<-180]=np.nan; # set missing values to NaN
+                    lon=np.nanmean(lon,axis=0)
+                    # Ensure these are complete (i.e. no missing data)
+                    if np.any(np.isnan(lat)):
+                        raise Exception('Missing latitude values present')
+                    if np.any(np.isnan(lon)):
+                        raise Exception('Missing longitude values present')
+
+                    # 2) Merge both into a dataset and add daily average
+                    smap=smap_am['soil_moisture'].rename({'phony_dim_0':'latitude','phony_dim_1':'longitude'}).to_dataset()
+                    rename_criteria = {'phony_dim_3':'latitude','phony_dim_4':'longitude'} if self.mode == '36km' else {'phony_dim_2':'latitude','phony_dim_3':'longitude'}
+                    smap['soil_moisture_pm'] = smap_pm['soil_moisture_pm'].rename(rename_criteria)
+                    smap=smap.rename({'soil_moisture':'soil_moisture_am'}) # rename "soil_moisture" to "soil_moisture_am"
+
+                    # Add in daily average soil moisture
+                    daily_sm=np.stack([smap.soil_moisture_am.values,smap.soil_moisture_pm.values],axis=0)
+                    daily_sm=np.nanmean(daily_sm,axis=0)
+                    # Make a data array and add to dataset.
+                    daily_sm = xr.DataArray(daily_sm,coords=[lat,lon],dims=['latitude','longitude'])
+                    smap['soil_moisture']=daily_sm
+
+                    # 3) Clean up dimensions including adding a time dimension.
                     # Add the time dimension as a new coordinate.
-                    usda = usda.assign_coords(time=centerTime).expand_dims(dim='time', axis=0)
+                    smap=smap.assign_coords(time=startTime).expand_dims(dim='time',axis=0)
+                    # Add latitude and longitude coordinates
+                    smap=smap.assign_coords(latitude=lat)
+                    smap=smap.assign_coords(longitude=lon)
                     # Add an additional variable "time_bnds" for the time boundaries.
-                    usda['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
-                    # 3) Rename coordinates
-                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    smap['time_bnds']=xr.DataArray(np.array([startTime,endTime]).reshape((1,2)),dims=['time','nbnds'])
                     # Lat/Lon/Time dictionaries.
                     # Use Ordered dict
-                    latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
-                    lonAttr = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
-                    timeAttr = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
-                    timeBoundsAttr = OrderedDict([('long_name', 'time_bounds')])
-                    ssmAttr = OrderedDict([('long_name', 'surface_soil_moisture'), ('units', 'mm'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
-                    susmAttr = OrderedDict([('long_name', 'sub_surface_soil_moisture'), ('units', 'mm'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
-                    smpAttr = OrderedDict([('long_name', 'soil_moisture_profile'), ('units', '%'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
-                    ssmaAttr = OrderedDict([('long_name', 'surface_soil_moisture_anomaly'), ('units', 'unitless'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
-                    susmaAttr = OrderedDict([('long_name', 'sub_surface_soil_moisture_anomaly'), ('units', 'unitless'), ('composite_interval', '3 day'), ('comment', '3 day mean composite estimate')])
-
-                    fileAttr = OrderedDict([('Description', 'The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.'), \
-                                            ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'), \
-                                            ('Source', 'NASA Goddard Space Flight Center; John D. Bolten. john.bolten@nasa.gov; https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/'), \
-                                            ('Version', '1.0'), \
-                                            ('Reference', 'Mladenova, I.E., Bolten, J.D., Crow, W., Sazib, N. and Reynolds, C., 2020. Agricultural drought monitoring via the assimilation of SMAP soil moisture retrievals into a global soil water balance model.'), \
-                                            ('RangeStartTime', startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('RangeEndTime', endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
-                                            ('SouthernmostLatitude', np.min(usda.latitude.values)), \
-                                            ('NorthernmostLatitude', np.max(usda.latitude.values)), \
-                                            ('WesternmostLongitude', np.min(usda.longitude.values)), \
-                                            ('EasternmostLongitude', np.max(usda.longitude.values)), \
-                                            ('TemporalResolution', str(mode_var__TemporalResolution)), \
-                                            ('SpatialResolution', '10kmx10km')])
+                    latAttr  =  OrderedDict([('long_name','latitude') , ('units','degrees_north') ,('axis','Y')])
+                    lonAttr  =  OrderedDict([('long_name','longitude'), ('units','degrees_east'), ('axis','X')])
+                    timeAttr =  OrderedDict([('long_name','time'),('axis','T'),('bounds','time_bnds')])
+                    timeBoundsAttr =  OrderedDict([('long_name','time_bounds')])
+                    smAttr, fileAttr = OrderedDict(), OrderedDict()
+                    if self.mode == '36km':
+                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 36km product')])
+                        fileAttr = OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 36km (SPL3SMP) soil moisture product.'), \
+                                    ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
+                                    ('Source','National Snow & Ice Data Center (NSIDC); https://nsidc.org/data/SPL3SMP/versions/6'), \
+                                    ('Version','6.0'), \
+                                    ('RangeStartTime',startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('RangeEndTime',endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('SouthernmostLatitude',np.min(smap.latitude.values)), \
+                                    ('NorthernmostLatitude',np.max(smap.latitude.values)), \
+                                    ('WesternmostLongitude',np.min(smap.longitude.values)), \
+                                    ('EasternmostLongitude',np.max(smap.longitude.values)), \
+                                    ('TemporalResolution','daily'), \
+                                    ('SpatialResolution','36km')])
+                    else:
+                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 9km product')])
+                        fileAttr =  OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 Enhanced 9km (SPL3SMP_E) soil moisture product.'), \
+                                    ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
+                                    ('Source','National Snow & Ice Data Center (NSIDC); https://nsidc.org/data/SPL3SMP_E/versions/1'), \
+                                    ('Version','1.0'), \
+                                    ('RangeStartTime',startTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('RangeEndTime',endTime.strftime('%Y-%m-%dT%H:%M:%SZ')), \
+                                    ('SouthernmostLatitude',np.min(smap.latitude.values)), \
+                                    ('NorthernmostLatitude',np.max(smap.latitude.values)), \
+                                    ('WesternmostLongitude',np.min(smap.longitude.values)), \
+                                    ('EasternmostLongitude',np.max(smap.longitude.values)), \
+                                    ('TemporalResolution','daily'), \
+                                    ('SpatialResolution','9km')])
 
                     # missing_data/_FillValue , relative time units etc. are handled as part of the encoding dictionary used in to_netcdf() call.
-                    ssmEncoding = {'_FillValue': np.float32(-999.0), 'missing_value': np.float32(-999.0), 'dtype': np.dtype('float32')}
-                    timeEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    timeBoundsEncoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    # Set the Attributes
-                    usda.latitude.attrs = latAttr
-                    usda.longitude.attrs = lonAttr
-                    usda.time.attrs = timeAttr
-                    usda.time_bnds.attrs = timeBoundsAttr
-                    usda.ssm.attrs = ssmAttr
-                    usda.susm.attrs = susmAttr
-                    usda.smp.attrs = smpAttr
-                    usda.ssma.attrs = ssmaAttr
-                    usda.susma.attrs = susmaAttr
-                    usda.attrs = fileAttr
-                    # Set the Encodings
-                    usda.ssm.encoding = ssmEncoding
-                    usda.susm.encoding = ssmEncoding
-                    usda.smp.encoding = ssmEncoding
-                    usda.ssma.encoding = ssmEncoding
-                    usda.susma.encoding = ssmEncoding
+                    smEncoding = { '_FillValue':np.float32(-9999.0),'missing_value':np.float32(-9999.0), 'dtype':np.dtype('float32'),'zlib':True, 'complevel':7}
+                    timeEncoding={'units':'seconds since 1970-01-01T00:00:00Z'}
+                    timeBoundsEncoding={'units':'seconds since 1970-01-01T00:00:00Z'}
+                    # Set the Attributes 
+                    smap.latitude.attrs=latAttr
+                    smap.longitude.attrs=lonAttr
+                    smap.time.attrs=timeAttr
+                    smap.time_bnds.attrs=timeBoundsAttr
+                    smap.soil_moisture.attrs=smAttr
+                    smap.attrs=fileAttr
+                    # Set the Endcodings
+                    smap.soil_moisture.encoding=smEncoding
+                    smap.time.encoding=timeEncoding
+                    smap.time_bnds.encoding=timeBoundsEncoding
 
-                    usda.time.encoding = timeEncoding
-                    usda.time_bnds.encoding = timeBoundsEncoding
-                    usda.reindex(latitude=usda.latitude[::-1])
+                    # 5) Output File
+                    # outputFileTemplate = 'NSIDC-SMAP.{}.{}.nc4' if self.mode == '36km' else 'NSIDC-SMAP_ENH.{}.{}.nc4'
+                    # outputFile = outputFileTemplate.format(startTime.strftime('%Y%m%dT%H%M%SZ'), regionID)
+                    smap = smap[['soil_moisture','time_bnds']]   # throwing out am/pm passes here, we can always add later but then we probably will want to add the time of the samples as well.
 
                     # 5) Output File
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    usda.to_netcdf(outputFile_FullPath, unlimited_dims='time')
+                    outputFile_FullPath = outputFile_FullPath
+                    smap.to_netcdf(outputFile_FullPath,unlimited_dims='time')
 
-                    print(outputFile_FullPath)
+                    print("SUCCESS:", yyyymmdd)
 
                 except Exception as e:
                     print(e)
@@ -467,11 +499,10 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
+                    expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -480,12 +511,6 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
-                    #
-                    # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
-                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
-                    granule_name = final_nc4_filename
-                    granule_contextual_information = ""
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
@@ -537,6 +562,11 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         ret__error_description = ""
         ret__detail_state_info = {}
 
+        try:
+            super().execute__Step__Post_ETL_Custom()
+        except Exception as e:
+            print(e)
+
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -554,7 +584,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK", default_or_error_return_value="Temp Working Dir Blank")  #
                 activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "usda_smap"
+                additional_json['subclass'] = "nsidc_smap"
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             else:
                 shutil.rmtree(temp_working_dir)
@@ -563,7 +593,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                 activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_REMOVED", default_or_error_return_value="Temp Working Dir Removed")  #
                 activity_description = "Temp Working Directory, " + str(self.temp_working_dir).strip() + ", was removed."
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
-                additional_json['subclass'] = "usda_smap"
+                additional_json['subclass'] = "nsidc_smap"
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 

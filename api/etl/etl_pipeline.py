@@ -1,8 +1,8 @@
-import os, sys
+import glob, os, sys
 
 from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
-from ..models import Config_Setting, ETL_Dataset, ETL_Granule
+from ..models import Config_Setting, ETL_Dataset
 
 from ..serializers import ETL_DatasetSerializer
 
@@ -15,8 +15,7 @@ from .etl_dataset_subtype_nmme import ETL_Dataset_Subtype_NMME
 from .etl_dataset_subtype_nmme_cfsv2 import ETL_Dataset_Subtype_NMME_CFSV2
 from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_usda_smap import ETL_Dataset_Subtype_USDA_SMAP
-# from .etl_dataset_subtype_nsidc_smap_36km import ETL_Dataset_Subtype_NSIDC_SMAP_36KM
-# from .etl_dataset_subtype_nsidc_smap_9km import ETL_Dataset_Subtype_NSIDC_SMAP_9KM
+from .etl_dataset_subtype_nsidc_smap import ETL_Dataset_Subtype_NSIDC_SMAP
 from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
 
 from . import etl_exceptions
@@ -28,15 +27,16 @@ class ETL_Pipeline():
 
     # Pipeline Config Params - Set Externally (only the etl_dataset_uuid param is actually required.  The rest are optional)
     etl_dataset_uuid            = ""
+    no_duplicates               = True
+    from_last_processed         = False
+    merge_yearly                = False
+    merge_monthly               = False
     START_YEAR_YYYY             = ""
     END_YEAR_YYYY               = ""
     START_MONTH_MM              = ""
     END_MONTH_MM                = ""
     START_DAY_DD                = ""
     END_DAY_DD                  = ""
-    REGION_CODE_XX              = ""
-    START_30MININCREMENT_NN     = ""
-    END_30MININCREMENT_NN       = ""
 
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -92,11 +92,6 @@ class ETL_Pipeline():
         # Day Range
         retObj["START_DAY_DD"]      = str(self.START_DAY_DD).strip()
         retObj["END_DAY_DD"]        = str(self.END_DAY_DD).strip()
-        # 30 Min Increment Range
-        retObj["START_30MININCREMENT_NN"]   = str(self.START_30MININCREMENT_NN).strip()
-        retObj["END_30MININCREMENT_NN"]     = str(self.END_30MININCREMENT_NN).strip()
-        # Region Code
-        retObj["REGION_CODE_XX"] = str(self.REGION_CODE_XX).strip()
 
         # Pipeline - Dataset Config Options - Set by Reading From the Database
         retObj["dataset_name"]              = str(self.dataset_name).strip()
@@ -288,20 +283,34 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_USDA_SMAP(self, dataset_subtype)
             elif dataset_subtype in ('esi_4week_servir', 'esi_12week_servir'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
+            elif dataset_subtype  in ('nsidc_smap_9km', 'nsidc_smap_36km'):
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
 
+            # Way to determinate which is the last processed file to use its date as starting date
+            if self.from_last_processed:
+                final_load_dir = self.dataset.final_load_dir
+                list_of_files = sorted(filter(os.path.isfile, glob.glob(final_load_dir + '/**/*', recursive=True)))
+                if len(list_of_files) != 0:
+                    last_processed_file = list_of_files[-1]
+                    date = os.path.basename(last_processed_file).split('.')
+                    if len(date) > 0:
+                        self.START_YEAR_YYYY = int(date[1][:4])
+                        self.START_MONTH_MM = int(date[1][4:6])
+                        self.START_DAY_DD = int(date[1][6:8])
+
             # Set optional params
             self.Subtype_ETL_Instance.set_optional_parameters({
+                'no_duplicates': self.no_duplicates,
+                'merge_yearly': self.merge_yearly,
+                'merge_monthly': self.merge_monthly,
                 'YYYY__Year__Start': self.START_YEAR_YYYY,
                 'YYYY__Year__End': self.END_YEAR_YYYY,
                 'MM__Month__Start': self.START_MONTH_MM,
                 'MM__Month__End': self.END_MONTH_MM,
                 'DD__Day__Start': self.START_DAY_DD,
-                'DD__Day__End': self.END_DAY_DD,
-                'XX__Region_Code': self.REGION_CODE_XX,
-                'NN__30MinIncrement__Start': self.START_30MININCREMENT_NN,
-                'NN__30MinIncrement__End': self.END_30MININCREMENT_NN
+                'DD__Day__End': self.END_DAY_DD
             })
 
         except etl_exceptions.UnableToReadDatasetException:

@@ -264,42 +264,52 @@ DBFParser.prototype.parse = function(arrayBuffer,src,response,encoding) {
     }
 
     while (true) {
-        var field = {},
-            nameArray = [];
+        try {
+            var field = {},
+                nameArray = [];
 
-        for (var i = 0, z=0; i < 10; i++) {
-            var letter = dv.getUint8(idx);
-            if (letter != 0) nameArray.push(String.fromCharCode(letter));
+            for (var i = 0, z = 0; i < 10; i++) {
+                var letter = 0;
+                try {
+                    letter = dv.getUint8(idx);
+                } catch (e) {
+                }
+                if (letter != 0) nameArray.push(String.fromCharCode(letter));
+                idx += 1;
+            }
+
+            field.name = charString[index++];
             idx += 1;
+
+            field.type = String.fromCharCode(dv.getUint8(idx));
+            idx += 1;
+            // Skip field data address
+            idx += 4;
+            field.fieldLength = dv.getUint8(idx);
+            idx += 1;
+            //field.decimalCount = dv.getUint8(idx);
+            idx += 1;
+            // Skip reserved bytes multi-user dBASE.
+            idx += 2;
+            field.workAreaId = dv.getUint8(idx);
+            idx += 1;
+            // Skip reserved bytes multi-user dBASE.
+            idx += 2;
+            field.setFieldFlag = dv.getUint8(idx);
+            idx += 1;
+            // Skip reserved bytes.
+            idx += 7;
+            field.indexFieldFlag = dv.getUint8(idx);
+            idx += 1;
+            o.fields.push(field);
+            var test = dv.getUint8(idx);
+            // Checks for end of field descriptor array. Valid .dbf files will have this
+            // flag.
+            if (dv.getUint8(idx) == 0x0D) break;
+        } catch(e){
+            break;
         }
 
-        field.name = charString[index++];
-        idx += 1;
-        field.type = String.fromCharCode(dv.getUint8(idx));
-        idx += 1;
-        // Skip field data address
-        idx += 4;
-        field.fieldLength = dv.getUint8(idx);
-        idx += 1;
-        //field.decimalCount = dv.getUint8(idx);
-        idx += 1;
-        // Skip reserved bytes multi-user dBASE.
-        idx += 2;
-        field.workAreaId = dv.getUint8(idx);
-        idx += 1;
-        // Skip reserved bytes multi-user dBASE.
-        idx += 2;
-        field.setFieldFlag = dv.getUint8(idx);
-        idx += 1;
-        // Skip reserved bytes.
-        idx += 7;
-        field.indexFieldFlag = dv.getUint8(idx);
-        idx += 1;
-        o.fields.push(field);
-        var test = dv.getUint8(idx);
-        // Checks for end of field descriptor array. Valid .dbf files will have this
-        // flag.
-        if (dv.getUint8(idx) == 0x0D) break;
     }
 
     idx += 1;

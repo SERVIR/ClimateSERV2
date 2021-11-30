@@ -91,11 +91,13 @@ function getCommonBaseLayers(map) {
     gSatLayer.addTo(map);
 
     var terrainLayer = L.tileLayer(
-        "https://production-api.globalforestwatch.org/v2/landsat-tiles/2017/{z}/{x}/{y}",
+        "https://{s}.tile.jawg.io/jawg-terrain/{z}/{x}/{y}{r}.png?access-token={accessToken}",
         {
-            format: "image/png",
-            transparent: true,
-            attribution: "Tiles © USGS The National Map",
+            attribution: '<a href="https://jawg.io" title="Tiles Courtesy of Jawg Maps" target="_blank">&copy; <b>Jawg</b>Maps</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            minZoom: 0,
+            maxZoom: 22,
+            subdomains: 'abcd',
+            accessToken: 'rU9sOZqw2vhWdd1iYYIFqXxstyXPNKIp9UKC1s8NQkl9epmf0YpFF8a2HX1sNMBM',
             opacity: 1,
             thumb: "img/terrain.png",
             displayName: "Terrain",

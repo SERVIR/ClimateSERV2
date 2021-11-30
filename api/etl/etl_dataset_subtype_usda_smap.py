@@ -6,13 +6,14 @@ from collections import OrderedDict
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 from ..models import Config_Setting
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -28,6 +29,7 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
+        super().set_optional_parameters(params)
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
@@ -84,7 +86,6 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                 extracted_tif_filename              = filename
                 remote_full_filepath_gz_tif         = urllib.parse.urljoin(current_root_http_path, filename)
                 local_full_filepath_final_nc4_file  = os.path.join(final_load_dir_path, final_nc4_filename)
-
 
                 current_obj = {}
 
@@ -338,8 +339,14 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     usda = usda.assign_coords(time=centerTime).expand_dims(dim='time', axis=0)
                     # Add an additional variable "time_bnds" for the time boundaries.
                     usda['time_bnds'] = xr.DataArray(np.array([startTime, endTime]).reshape((1, 2)), dims=['time', 'nbnds'])
-                    # 3) Rename coordinates
-                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})  # rename lat/lon
+                    # 3) Rename and add attributes to this dataset.
+                    usda = usda.rename({'y': 'latitude', 'x': 'longitude'})
+                    # 4) Reorder latitude dimension into ascending order
+                    if usda.latitude.values[1] - usda.latitude.values[0] < 0:
+                        usda = usda.reindex(latitude=usda.latitude[::-1])
+
+                    # print("E")
+
                     # Lat/Lon/Time dictionaries.
                     # Use Ordered dict
                     latAttr = OrderedDict([('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
@@ -467,11 +474,12 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path, final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
-                    expected_full_path_to_local_final_nc4_file = os.path.join(local_final_load_path, final_nc4_filename)  # Where the final NC4 file should be placed for THREDDS Server monitoring
+                    expected_full_path_to_local_final_nc4_file = expected_granules_object['local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
 
+                    print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
-                    shutil.copyfile(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)  # (src, dst)
+                    super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file, expected_full_path_to_local_final_nc4_file)
 
                     # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -480,12 +488,6 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state, is_error=is_error)
 
-                    # Now that the granule is in it's destination location, we can do a create_or_update 'Available Granule' so that the database knows this granule exists in the system (so the client side will know it is available)
-                    #
-                    # # TODO - Possible Parameter updates needed here.  (As we learn more about what the specific client side needs are)
-                    # # def create_or_update_Available_Granule(self, granule_name, granule_contextual_information, etl_pipeline_run_uuid, etl_dataset_uuid, created_by, additional_json):
-                    granule_name = final_nc4_filename
-                    granule_contextual_information = ""
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
                     # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=granule_name, granule_contextual_information=granule_contextual_information, additional_json=additional_json)
@@ -536,6 +538,11 @@ class ETL_Dataset_Subtype_USDA_SMAP(ETL_Dataset_Subtype_Interface):
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
+
+        try:
+            super().execute__Step__Post_ETL_Custom()
+        except Exception as e:
+            print(e)
 
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj

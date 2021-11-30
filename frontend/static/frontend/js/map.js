@@ -12,8 +12,8 @@ let drawnItems;
 let drawToolbar;
 let styleOptions = [];
 const admin_layer_url = location.hostname === "localhost" ||
-                        location.hostname === "127.0.0.1" ||
-                        location.hostname === "192.168.1.132"
+location.hostname === "127.0.0.1" ||
+location.hostname === "192.168.1.132"
     ? "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100"
     : "servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
@@ -43,9 +43,14 @@ function createLayer(item) {
             // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
+            tileSize: 1024,
         }),
         {
             updateTimeDimension: true,
+            cache: 3,
+            cacheForward: 3,
+            cacheBackward: 3,
+            setDefaultTime: true,
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
@@ -53,7 +58,7 @@ function createLayer(item) {
     if (item.id.includes(passedLayer)) {
         queried_layers.push(item.id)
     } else {
-        if(!control_layer) {
+        if (!control_layer) {
             control_layer = item.id;
         }
     }
@@ -294,12 +299,14 @@ function buildStyles() {
     });
 }
 
+//In here i can add the options for transparent above and below
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     if (map.hasLayer(overlayMaps[which])) {
         was_removed = true;
         map.removeLayer(overlayMaps[which]);
     }
+    // console.log(document.getElementById("above_below").value);
     overlayMaps[which] = L.timeDimension.layer.wms(
         L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
             layers: active_layer.layers,
@@ -311,6 +318,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-max").value,
             abovemaxcolor: "extend",
             belowmincolor: "extend",
+            // abovemaxcolor: document.getElementById("above_below").value,
+            // belowmincolor: document.getElementById("above_below").value,
             numcolorbands: 100,
             styles: $("#style_table").val(),
         }),
@@ -370,9 +379,8 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
-if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
+close_dialog();
+
 function openSettings(which) {
     let active_layer = getLayer(which);
     let multi = false;
@@ -439,9 +447,7 @@ function baseSettingsHtml() {
  * @param {string} which - Name of layer to open legend for
  */
 function openLegend(which) {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
+    close_dialog();
     let id = which.replace("TimeLayer", "") + "ens";
     const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
@@ -488,9 +494,10 @@ function mapSetup() {
             limitSliders: true,
             limitMinimumRange: 5,
             playerOptions: {
-                buffer: 20,
+                buffer: 10,
                 loop: true,
-            }},
+            }
+        },
         center: [38.0, 15.0],
     });
 
@@ -505,6 +512,20 @@ function mapSetup() {
 
     //create the basemap thumbnails in the panel
     for (let key of Object.keys(baseLayers)) {
+        const map_thumb = $("<div>");
+        map_thumb.addClass("map-thumb");
+        map_thumb.attr("datavalue", key);
+        map_thumb.on("click", function (e) {
+            handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
+        });
+
+        const thumb_cap = $("<div>");
+        thumb_cap.addClass("caption-text");
+
+        const thumb_text = $("<h2>");
+        thumb_text.text(baseLayers[key].options.displayName);
+
+        thumb_text.appendTo(thumb_cap);
         const img = $("<img>");
         img.attr("src", static_url + 'frontend/' + baseLayers[key].options.thumb);
         img.addClass("basemapbtn");
@@ -514,11 +535,23 @@ function mapSetup() {
         img.on("click", function (e) {
             handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
         });
-        img.appendTo("#basemap");
+        //img.appendTo("#basemap");
+
+        img.appendTo(map_thumb);
+        thumb_cap.appendTo(map_thumb);
+        map_thumb.appendTo("#basemap");
     }
     map.on('layeradd', (e) => {
         adjustLayerIndex();
     });
+
+    const search = new GeoSearch.GeoSearchControl({
+        provider: new GeoSearch.OpenStreetMapProvider(),
+        showMarker: false, // optional: true|false  - default true
+        showPopup: false,
+        autoClose: true,
+    });
+    map.addControl(search);
 }
 
 /**
@@ -536,9 +569,7 @@ function handleBaseMapSwitch(which) {
  * @param {string} which - The id of the layer to toggle
  */
 function toggleLayer(which) {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
+    close_dialog();
     if (map.hasLayer(overlayMaps[which])) {
         map.removeLayer(overlayMaps[which]);
     } else {
@@ -557,17 +588,17 @@ function toggleLayer(which) {
     layer_limits.min = available_times[0];
     layer_limits.max = available_times[available_times.length - 1];
 
-    if(hasLayer) {
+    if (hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
-        map.timeDimension.prepareNextTimes(5, 1, false)
+        //map.timeDimension.prepareNextTimes(5, 1, false)
 
         if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
-            $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
-                " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
+        $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
+            " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
     } else {
         map.timeDimension.setAvailableTimes([null], "replace");
         $(".timecontrol-date").html("Time not available")
@@ -640,7 +671,7 @@ function triggerUpload(e) {
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
-     const targetEl = document.getElementById("drop-container");
+    const targetEl = document.getElementById("drop-container");
     if (uploadLayer) {
         uploadLayer.clearLayers();
         uploadLayer.remove();
@@ -650,17 +681,17 @@ function enableUpload() {
 
         targetEl.removeEventListener("drop", handleFiles);
     }
-        targetEl.addEventListener("dragenter", prevent);
-        targetEl.addEventListener("dragover", prevent);
+    targetEl.addEventListener("dragenter", prevent);
+    targetEl.addEventListener("dragover", prevent);
 
-        targetEl.addEventListener("drop", handleFiles);
+    targetEl.addEventListener("drop", handleFiles);
 
     uploadLayer = L.geoJson().addTo(map);
 
 
 }
 
-function prevent(e){
+function prevent(e) {
     e.preventDefault();
 }
 
@@ -968,29 +999,27 @@ function initMap() {
 
 }
 
-function open_range_picker(){
-	// open a dialog with 2 date fields, from and to (populated with current range) and
-	// an update range button which calls setRange(from, to)
-	// possibly a close button, but the [X] is likely enough
-	// maybe a "full range" or "remove range" button as well
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
+function open_range_picker() {
+    // open a dialog with 2 date fields, from and to (populated with current range) and
+    // an update range button which calls setRange(from, to)
+    // possibly a close button, but the [X] is likely enough
+    // maybe a "full range" or "remove range" button as well
+    close_dialog();
 
     let hasLayers = false;
     for (let key in overlayMaps) {
-            if (overlayMaps.hasOwnProperty(key)) {
-                if (map.hasLayer(overlayMaps[key])) {
-                    hasLayers = true;
-                    break;
-                }
+        if (overlayMaps.hasOwnProperty(key)) {
+            if (map.hasLayer(overlayMaps[key])) {
+                hasLayers = true;
+                break;
             }
         }
+    }
     let range_picker;
-    if(hasLayers) {
+    if (hasLayers) {
         let current_min = "";
         let current_max = "";
-        if(map.timeDimension.getLowerLimit()){
+        if (map.timeDimension.getLowerLimit()) {
             current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
             current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
         }
@@ -1034,22 +1063,22 @@ function open_range_picker(){
     $('#range_picker_form').validate();
 }
 
-function close_dialog_event(){
+function close_dialog_event() {
     $('#dialog').dialog('close');
 }
 
 function setRange() {
-	const startTime = new Date($('#begin_range_date').val());
-	const endTime = new Date($('#end_range_date').val());
-	map.timeDimension.setLowerLimit(startTime);
+    const startTime = new Date($('#begin_range_date').val());
+    const endTime = new Date($('#end_range_date').val());
+    map.timeDimension.setLowerLimit(startTime);
     map.timeDimension.setUpperLimit(endTime);
     map.timeDimension.setCurrentTime(startTime);
     $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
-                " to " + moment(endTime).utc().format('MM/DD/YYYY'));
+        " to " + moment(endTime).utc().format('MM/DD/YYYY'));
 
 }
 
-function clearRange(){
+function clearRange() {
     map.timeDimension.setLowerLimit(false);
     map.timeDimension.setUpperLimit(false);
 }
@@ -1068,8 +1097,8 @@ function isComplete() {
     // this will have to check those fields,
     // or assign dates to these when selected (think this is better)
     let isReady = false;
-    sDate_new_cooked = document.getElementById("sDate_new_cooked");
-    eDate_new_cooked = document.getElementById("eDate_new_cooked");
+    const sDate_new_cooked = document.getElementById("sDate_new_cooked");
+    const eDate_new_cooked = document.getElementById("eDate_new_cooked");
     if (sDate_new_cooked.value && eDate_new_cooked.value) {
         isReady = $(sDate_new_cooked).valid({
             rules: {
@@ -1111,7 +1140,7 @@ function verify_ready() {
     }
 }
 
-function verify_range(){
+function verify_range() {
     let isReady = false;
     let begin_range_date = document.getElementById("begin_range_date");
     let end_range_date = document.getElementById("end_range_date");
@@ -1152,7 +1181,7 @@ function collect_review_data() {
     } else {
         $("#geometry").text('{"type":"FeatureCollection","features":[]}');
     }
-    if($("#geometry").text().indexOf("Point") > -1){
+    if ($("#geometry").text().indexOf("Point") > -1) {
         $("#operation_max").hide();
         $("#operation_min").hide();
         $("#operation_average").text("Timeseries");
@@ -1169,15 +1198,13 @@ function getEnsDataType() {
 }
 
 function handle_initial_request_data(data, isClimate) {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
-    let progress = '<div style="width:100%; height:100%; display: flex;\n' +
-        '    align-items: center;\n' +
+    close_dialog();
+    let progress = '<div style="width:100%; height:100%; display: flex;' +
+        '    align-items: center;' +
         '}">';
     progress += '<div class="progress">';
-    progress += '<div class="progress-bar progress-bar-striped progress-bar-animated"\n' +
-        ' role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"\n' +
+    progress += '<div class="progress-bar progress-bar-striped progress-bar-animated"' +
+        ' role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"' +
         ' style="width: 0%"><span><span class="percentage" id="txtpercent">0%</span></span></div>';
     progress += '</div></div>';
     $("#dialog").html(progress);
@@ -1186,7 +1213,7 @@ function handle_initial_request_data(data, isClimate) {
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        close: function(event, ui){
+        close: function (event, ui) {
             clearTimeout(polling_timeout);
         },
         position: {
@@ -1208,14 +1235,6 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-
-        //here i will have to work out the nmme stuff a bit,
-        // dates should already be synced to b&etime
-        // likely i just have to calculate the datatype
-        // by adding $("#ensemblevarmenu")[0].selectedIndex
-        // to $("#ensemblemenu").val()
-        // but somehow i need to know if it's a multi ensemble
-        // could check if  $("#ensemble_builder").is(":visible");
         if ($("#ensemble_builder").is(":visible")) {
             formData.append(
                 "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
@@ -1240,43 +1259,47 @@ function sendRequest() {
         } else if (uploadLayer) {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
+        let api_host = window.location.hostname;
+        if(window.location.port){
+            api_host += ":" + window.location.port
+        }
+        $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
         $.ajax({
             url: "/api/submitDataRequest/",
             type: "POST",
             processData: false,
             contentType: false,
             async: true,
+            async: true,
             crossDomain: true,
             data: formData
         }).fail(function (jqXHR, textStatus, errorThrown) {
             console.warn(jqXHR + textStatus + errorThrown);
-            if ($("#dialog").dialog()) {
-                        $("#dialog").dialog("close");
-                    }
-                    let error_message = '<div style="width:100%; height:100%; display: flex;\n' +
-                        '    align-items: center;\n' +
-                        '}">';
-                    error_message += '<div style="width:100%; text-align: center;">';
-                    error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-                    error_message += '<p style="line-height: 2em;">There was am error processing this request' ;
-                   error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+            close_dialog();
+            let error_message = '<div style="width:100%; height:100%; display: flex;' +
+                '    align-items: center;' +
+                '}">';
+            error_message += '<div style="width:100%; text-align: center;">';
+            error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
+            error_message += '<p style="line-height: 2em;">There was am error processing this request';
+            error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
-                    error_message += '</div>';
-                    $("#dialog").html(error_message);
-                    $("#dialog").dialog({
-                        title: "Processing Error",
-                        resizable: false,
-                        width: $(window).width() / 2,
-                        height: 200,
-                        position: {
-                            my: "center",
-                            at: "center",
-                            of: window
-                        },
-                        close: function( event, ui ) {
-                            $("#btnRequest").prop("disabled", false);
-                        }
-                    });
+            error_message += '</div>';
+            $("#dialog").html(error_message);
+            $("#dialog").dialog({
+                title: "Processing Error",
+                resizable: false,
+                width: $(window).width() / 2,
+                height: 200,
+                position: {
+                    my: "center",
+                    at: "center",
+                    of: window
+                },
+                close: function (event, ui) {
+                    $("#btnRequest").prop("disabled", false);
+                }
+            });
         }).done(function (data, _textStatus, _jqXHR) {
             if (data.errMsg) {
                 console.info(data.errMsg);
@@ -1286,11 +1309,6 @@ function sendRequest() {
         });
 
     } else {
-        // this is climatology
-        // this looks like it currently needs to be a get request not a post so we'll have to do it a bit different
-        //example request with querystring
-        //https://climateserv.servirglobal.net/api/submitMonthlyRainfallAnalysisRequest/?callback=successCallback&custom_job_type=monthly_rainfall_analysis&seasonal_start_date=2021_06_01&seasonal_end_date=2021_11_28&layerid=country&featureids=201&_=1627567378744
-
         let geometry_params;
 
         if (highlightedIDs.length > 0) {
@@ -1324,10 +1342,7 @@ function sendRequest() {
                 handle_initial_request_data(JSON.parse(data), true);
             }
         });
-
-
     }
-
 }
 
 function updateProgress(val) {
@@ -1376,16 +1391,14 @@ function pollForProgress(id, isClimate) {
                     retries = 0;
                     console.log("Server Error");
                     $("#btnRequest").prop("disabled", false);
-                    if ($("#dialog").dialog()) {
-                        $("#dialog").dialog("close");
-                    }
-                    let error_message = '<div style="width:100%; height:100%; display: flex;\n' +
-                        '    align-items: center;\n' +
+                    close_dialog();
+                    let error_message = '<div style="width:100%; height:100%; display: flex;' +
+                        '    align-items: center;' +
                         '}">';
                     error_message += '<div style="width:100%; text-align: center;">';
                     error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-                    error_message += '<p style="line-height: 2em;">There was am error processing Job ID: ' + id ;
-                   error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+                    error_message += '<p style="line-height: 2em;">There was am error processing Job ID: ' + id;
+                    error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
                     error_message += '</div>';
                     $("#dialog").html(error_message);
@@ -1399,7 +1412,7 @@ function pollForProgress(id, isClimate) {
                             at: "center",
                             of: window
                         },
-                        close: function( event, ui ) {
+                        close: function (event, ui) {
                             $("#btnRequest").prop("disabled", false);
                         }
 
@@ -1409,6 +1422,7 @@ function pollForProgress(id, isClimate) {
         }
     });
 }
+
 let debugjson;
 
 function handleSourceSelected(which) {
@@ -1439,9 +1453,6 @@ function handleSourceSelected(which) {
             $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
         });
 
-        //this will have to change when we get real data, but for now i will hardcode nmme fetch
-
-
         $.ajax({
             url: "api/getClimateScenarioInfo/" +
                 id,
@@ -1471,7 +1482,7 @@ function handleSourceSelected(which) {
                 $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
 
                 do {
-                   $("#forecastfrommenu")
+                    $("#forecastfrommenu")
                         .append
                         (
                             '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
@@ -1494,13 +1505,6 @@ function handleSourceSelected(which) {
                         .append(
                             '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
                 });
-
-                // need date dropdowns that will apply selections to the date
-                // range controls (which will be hidden, but still accessible)
-                // possibly need to fetch the ens available dates
-                // know the variables which are layers from the wms getcapabilities
-
-                // also need to get available run dates for selection
             }
         });
     }
@@ -1513,9 +1517,7 @@ function syncDates() {
 }
 
 function inti_chart_dialog() {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
+    close_dialog();
     $("#btnPreviousChart").prop("disabled", true);
     $("#dialog").html(
         '<div id="chart_holder"></p>'
@@ -1523,15 +1525,15 @@ function inti_chart_dialog() {
     $("#dialog").dialog({
         title: "Statistical Query",
         resizable: $("#isMobile").css("display") === "block" ? false : {handles: "se"},
-        width: $("#isMobile").css("display") === "block" ? $(window).width(): $(window).width() - ($("#sidebar").width() + 100),
+        width: $("#isMobile").css("display") === "block" ? $(window).width() : $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
             Highcharts.charts[0].reflow();
             window.dispatchEvent(new Event('resize'));
         },
-        open: function(event, ui){
-                            window.dispatchEvent(new Event('resize'));
-                        },
+        open: function (event, ui) {
+            window.dispatchEvent(new Event('resize'));
+        },
         position: $("#isMobile").css("display") === "block" ? {
             my: "center",
             at: "center",
@@ -1543,18 +1545,20 @@ function inti_chart_dialog() {
         }
     });
 
-    $('#dialog').on('dialogclose', function(event) {
+    $('#dialog').on('dialogclose', function (event) {
         $("#btnPreviousChart").prop("disabled", false);
     });
 
 }
 
-function open_previous_chart(){
-    if(previous_chart){
-         inti_chart_dialog();
-         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
+function open_previous_chart() {
+    if (previous_chart) {
+        inti_chart_dialog();
+        finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
 
-    } else {alert("you have no previous chart, please send a request.")}
+    } else {
+        alert("you have no previous chart, please send a request.")
+    }
 }
 
 function getIndex(which) {
@@ -1572,18 +1576,16 @@ function getIndex(which) {
 
 
 function getDownLoadLink(id) {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
-    let download = '<div style="width:100%; height:100%; display: flex;\n' +
-        '    align-items: center;\n' +
+    close_dialog();
+    let download = '<div style="width:100%; height:100%; display: flex;' +
+        '    align-items: center;' +
         '}">';
     download += '<div style="width:100%; text-align: center;">';
     download += '<h1 class="step-marker" style="line-height: 2em;">File Download Ready</h1>';
     download += '<p style="line-height: 2em;">Job ID: ' + id + '</p>';
     const url = '/api/getFileForJobID/?id=' + id
     download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
-    download += '</div>';
+    download += '</div></div>';
     $("#dialog").html(download);
     $("#dialog").dialog({
         title: "Download Data",
@@ -1604,11 +1606,9 @@ let from_compiled;
 let too_fast = 0;
 
 function getDataFromRequest(id, isClimate) {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
-    }
-    let complete = '<div style="width:100%; height:100%; display: flex;\n' +
-        '    align-items: center;\n' +
+    close_dialog();
+    let complete = '<div style="width:100%; height:100%; display: flex;' +
+        '    align-items: center;' +
         '}">';
     complete += '<div style="width:100%">';
     complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
@@ -1638,10 +1638,8 @@ function getDataFromRequest(id, isClimate) {
         if (data.errMsg) {
             console.info(data.errMsg);
         } else {
-            console.log(data);
-            if(data == "need to send id")
-            {
-                if(too_fast < 5){
+            if (data == "need to send id") {
+                if (too_fast < 5) {
                     getDataFromRequest(id, isClimate);
                 }
             } else {
@@ -1650,13 +1648,7 @@ function getDataFromRequest(id, isClimate) {
                 if (isClimate) {
 
                     const graph_obj = JSON.parse(data).MonthlyAnalysisOutput.avg_percentiles_dataLines;
-                    // i will have to make an array of objects that look like
-                    /*
-                    seriesOptions[i] = {
-                        name: name,
-                        data: [[date, val], ...]
-                      };
-                     */
+
                     rainfall_data = [];
                     rainfall_data.push({
                         name: "LongTermAverage",
@@ -1750,7 +1742,7 @@ function getDataFromRequest(id, isClimate) {
                         });
                         from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                         inti_chart_dialog();
-//Need to fix this for multi ensemble
+
                         if (compiledData.length === 0) {
                             //inti_chart_dialog
                             $("#chart_holder").html("<h1>No data available</h1>");
@@ -1782,15 +1774,14 @@ function getDataFromRequest(id, isClimate) {
                     }
                 }
             }
-            // $("#btnRequest").prop("disabled", false);
         }
     });
 };
 
-function value_or_null(value){
-    if(value > -9000){
+function value_or_null(value) {
+    if (value > -9000) {
         return Number.parseFloat(value);
-    } else{
+    } else {
         return null;
     }
 }
@@ -1819,7 +1810,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         }
     };
 
-    if(yAxis_format){
+    if (yAxis_format) {
         chart_obj.yAxis.labels = yAxis_format
     }
 
@@ -1860,7 +1851,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
                     select: function (e) {
                         const full = new Date(e.target.x);
                         const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-
+                        // maybe set current time for layers to this date
                         console.log(date);
                     }
                 }
@@ -1896,12 +1887,13 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
                         this.chartWidth - originalWidth,
                         this.chartHeight - originalHeight
                     );
-                } catch(e){}
+                } catch (e) {
+                }
             }
         }
     };
     chart_obj.series = compiled_series;
-    if(point_format){
+    if (point_format) {
         chart_obj.tooltip = point_format;
         chart_obj.tooltip.borderColor = "#758055";
     } else {
@@ -2029,6 +2021,110 @@ function toggleAOIHeight() {
     }
 }
 
+function close_dialog() {
+    if ($("#dialog").dialog()) {
+        $("#dialog").dialog("close");
+    }
+}
+
+function stats_info(which) {
+    close_dialog();
+    const title = which === "type"
+        ? "Type of request"
+        : which === "source"
+            ? "Data Source info" : "Calculation info"
+    let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
+        '    align-items: center;' +
+        '}">';
+    stat_info += '<div style="width:100%; text-align: left;">';
+    stat_info += get_stat_body(which)
+    stat_info += '</div>';
+    $("#dialog").html(stat_info);
+    $("#dialog").html(stat_info);
+    const the_width = $(window).width() < 500 ? $(window).width() + "px" : "500px";
+    $("#dialog").dialog({
+        title: title,
+        resizable: false,
+        width: '500px',
+        height: 'auto',
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        },
+        open: function () {
+            $(this).dialog('option', 'maxHeight', $(window).height());
+            if ($(this).width() > $(window).width()) {
+                $(this).dialog('option', 'width', $(window).width());
+            }
+
+        }
+    });
+}
+
+function get_stat_body(which) {
+    let html = '';
+    switch (which) {
+        case 'type':
+            html += "<div style=''text-align:left'><p>ClimateSERV offers direct <b>Dataset</b> queries for your AOI and specific time period " +
+                "which result offer results in graphs with " +
+                "download options or downloadable raw data.</p><br>";
+            html += "<p>In addition we offer a <b>Monthly Rainfall Analysis</b> which is derived from a combination" +
+                " of CHIRPS historical data and current NMME seasonal forecast data. </p><br></div>";
+            break;
+        case 'source':
+            html += "<div id=\"popup_SelectData_DataSource_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -325px auto auto 323.922px;\">    " +
+                "  <div class=\"servir_tooltip_header\">CHIRPS Rainfall</div>" +
+                "  <div class=\"servir_tooltip_body\">Climate Hazards group IR Precipitation with Stations (CHIRPS).</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">eMODIS NDVI</div>" +
+                "  <div class=\"servir_tooltip_body\">MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI).  NDVI datasets for the following regions are available: West Africa, East Africa, Southern Africa, and Central Asia</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">Seasonal Forecast</div>" +
+                "  <div class=\"servir_tooltip_body\">North American Multi-Model Ensemble (NMME).  Up to 180 day forecast models available.  This dataset supports download capabilities.</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">IMERG 1 Day</div>" +
+                "  <div class=\"servir_tooltip_body\">1 Day rainfall accumulations product from the Integrated Multi-satellitE Retrievals (IMERG) for Global Precipitation Mission (GPM).</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">GEFS</div>" +
+                "  <div class=\"servir_tooltip_body\">Global Ensemble Forecast System (GEFS) a weather forecast model made up of 21 separate forecasts, or ensemble members. Availability: January 1, 1985 to present.</div>" +
+                "    <br>" +
+                "    <div class=\"servir_tooltip_header\">Evaporative Stress Index  (ESI)</div>" +
+                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water. <a href=\"http://catalogue.servirglobal.net/Product?product_id=198\" alt=\"More about ESI\" title=\"More about ESI\" target=\"_blank\">More about ESI</a></div>" +
+                "    <br>" +
+                "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
+                "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
+                "<br>" +
+                "<div class=\"servir_tooltip_header\">For more information please visit the <a href='" + help_link + "' style='color:#3b6e22;'>Help Center</a></div>" +
+                "</div>";
+            break;
+        case 'calculation':
+            html += "<div id=\"popup_SelectData_Calculations_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -220.5px auto auto 323.922px;\">    " +
+                "  <div class=\"servir_tooltip_header\">Min</div>" +
+                "  <div class=\"servir_tooltip_body\">The minimum value found for all data in a given geographical selected area for each time interval in the date range.  Sometimes for large area selections, a value of 0 will be returned for every date.  If this happens, try selecting a smaller area.</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">Max</div>" +
+                "  <div class=\"servir_tooltip_body\">The maximum value found for all data in a given geographical selected area for each time interval in the selected date range.</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">Average</div>" +
+                "  <div class=\"servir_tooltip_body\">The average value for the entire geographical selected area for each time interval in the selected date range.</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <br>" +
+                "  <div class=\"servir_tooltip_header\">Download</div>" +
+                "  <div class=\"servir_tooltip_body\">Some datasets support the option to download a zip file of clipped raw data.  The format of data download is a single zip file which contains a set of geotif files for each time interval in the date selected range.</div>" +
+                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "<br></div>";
+            break;
+    }
+    return html;
+}
+
 let img, originalWidth, originalHeight;
 const last_step_template = "<div class='popover tour'>" +
     "   <div class='arrow'></div>" +
@@ -2067,6 +2163,7 @@ function init_tour() {
                 element: "#btnAOIselect",
                 title: "Statistical Query",
                 content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+                smartPlacement: true,
                 onShow: function (tour) {
                     sidebar.open('chart');
                     const el = $('#aoiOptions');
@@ -2078,7 +2175,7 @@ function init_tour() {
                         $("#sidebar-content").scrollTop(0);
                     }
                 },
-                onHide: function(tour) {
+                onHide: function (tour) {
                     const el = $('#aoiOptions');
                     const curHeight = el.height();
                     el.height(curHeight).animate({height: 0}, 1000);
@@ -2160,13 +2257,10 @@ function open_tour() {
 $(function () {
     initMap();
     try {
-        console.log("init object")
         init_tour();
-console.log("init tour")
         tour.init();
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
-            console.log("no key")
             sidebar.close();
             tour.setCurrentStep(0);
             open_tour();
@@ -2174,6 +2268,22 @@ console.log("init tour")
     } catch (e) {
         console.log(e);
     }
+    try {
+        loadshp(
+            {
+                url: '/static/frontend/data/shape.zip',
+                encoding: "UTF-8",
+                EPSG: 4326,
+            },
+            function (data) {
+                console.log("")
+            });
+    } catch (e2) {
+        console.log(e2);
+    }
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip({container: 'body', trigger: 'hover'})
+    });
     $('#sourcemenu').val(0);
     try {
         getClimateScenarioInfo();
@@ -2249,7 +2359,7 @@ function load_queried_layers() {
 }
 
 function confirm_animation() {
-    if(!map.timeDimension.getUpperLimit()){
+    if (!map.timeDimension.getUpperLimit()) {
         for (let x = 0; x < queried_layers.length; x++) {
             try {
                 toggleLayer(queried_layers[x] + "TimeLayer");
@@ -2258,7 +2368,7 @@ function confirm_animation() {
             }
 
         }
-    } else{
+    } else {
         map.timeDimension.nextTime();
     }
 }

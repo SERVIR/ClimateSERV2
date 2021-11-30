@@ -14,7 +14,6 @@ improve understanding of, and make improved decisions for, issues related to agr
 
 - [Python 3.9.5 or greater](https://www.python.org/downloads/) (We suggest 3.9.5)
 - [Postgresql (version 13)](https://www.postgresql.org/download)
-- [PostGIS (version 3)](https://postgis.net/install/)
 
 ### Environment
 Due to python package requirements we found it best to use a conda environment for ClimateSERV.

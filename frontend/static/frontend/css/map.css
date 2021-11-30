@@ -113,8 +113,13 @@ body {
     cursor: move;
 }
 
+.ui-widget {
+    font-family: inherit;
+     font-size: inherit;
+}
+
 .ui-dialog-content {
-    font-size: 12px;
+    font-size: inherit;
 }
 
 .ui-dialog-content input, .ui-dialog-content select {
@@ -159,6 +164,15 @@ body {
 
 .ui-icon-closethick {
     background-position: unset;
+}
+.tooltip{
+    z-index: 99999;
+}
+
+.tooltip-inner {
+    color: #fff;
+    background-color: #758055;
+    box-shadow: 2px 2px 2px #909d6b94;
 }
 
 .legend-btn, .settings-btn {
@@ -353,18 +367,79 @@ ol {
 }
 
 .basemapbtn {
-    max-width: calc(50% - 12px);
-    border-radius: 0.317rem;
-    margin: 5px;
-    box-shadow: 2px 2px 2px #002a53a1;
+   width:100%;
+    border-radius: 0.15rem;
+    /*margin: 5px;*/
+    /*box-shadow: 2px 2px 2px #002a53a1;*/
     cursor: pointer;
 }
 
 .basemapbtn:hover {
     max-width: calc(50% - 12px);
     border-radius: 0.317rem;
+    /*margin: 5px;*/
+    box-shadow: 2px 2px 2px #909d6b94;
+}
+
+.leaflet-control-geosearch a.leaflet-bar-part:before{
+    border-top: 0;
+}
+
+.leaflet-control-geosearch a.leaflet-bar-part:after{
+    border: 0;
+}
+
+a.leaflet-bar-part.leaflet-bar-part-single{
+    background-image: url(images/search.png) !important;
+    background-size: 18px 18px;
+}
+
+.leaflet-touch .leaflet-control-geosearch a.reset{
+    height:26px;
+}
+
+.map-thumb {
+    float: left;
+    position: relative;
+    overflow: hidden;
+     max-width: calc(50% - 12px);
+    max-height: 300px;
+    cursor: pointer;
     margin: 5px;
-    box-shadow: 2px 2px 2px #002953;
+}
+.map-thumb:hover .caption-text {
+    opacity: 1;
+    transform: scale(1.2);
+}
+.map-thumb .caption-text h2,
+.map-thumb .caption-text p {
+    width: 100%;
+    margin: 10px 0px;
+    position: absolute;
+    top: 40%;
+}
+
+@media (min-width: 768px) and (max-width: 991px){
+    .map-thumb .caption-text h2,
+.map-thumb .caption-text p {
+        top: 25%;
+    }
+}
+
+.map-thumb img{
+    float: left;
+}
+
+.caption-text {
+    position: absolute;
+    opacity: 0;
+    transition: all 0.45s ease-in-out;
+    background-color: rgb(0 0 0 / 50%);
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    color: #ffffff;
+    padding-top: 120px;
 }
 
 .highcharts-figure, .highcharts-data-table table {
@@ -414,6 +489,10 @@ ol {
 .ens-holder.checked {
     padding-left: 20px;
     display: block;
+}
+
+.servir_tooltip_header{
+    font-weight: 600;
 }
 
 @media only screen and (max-width: 768px) {

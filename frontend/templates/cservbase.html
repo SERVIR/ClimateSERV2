@@ -8,9 +8,17 @@
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, target-densityDpi=device-dpi"
     />
     <title>{% block title %}ClimateSERV{% endblock %}</title>
-<link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
-<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'frontend/img/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'frontend/img/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'frontend/img/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'frontend/img/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'frontend/img/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/static/frontend/img/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
     <link
             rel="stylesheet"
             href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
@@ -38,15 +46,30 @@
     {% block script %}{% endblock %}
 
     <script>
+
         $(document).ready(function () {
             setActive("{{ page }}");
         });
     </script>
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-27020636-4"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+
+        gtag('js', new Date());
+
+        gtag('config', 'UA-27020636-4');
+    </script>
+
 </head>
 <body>
 <header>
     <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
-        <a href="#home" class="navbar-brand">
+        <a href="{% if page == 'menu-home' %}#home {% else %} / {% endif %}" class="navbar-brand">
             <img src="{% static 'frontend/img/logo_climateserv_WithGlobe_white.png' %}" alt="ClimateSERV"/>
         </a>
         <button
@@ -64,17 +87,17 @@
             <ul class="navbar-nav mr-auto">
                 <li>
                     <a aria-current="page" id="menu-home" class="nav-link"
-                       href="{% url 'ClimateSERV_UI:home' %}">Home</a>
+                       href="{% url 'ClimateSERV_UI:home' %}">HOME</a>
                 </li>
                 <li>
-                    <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">Map</a>
+                    <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">MAP</a>
                 </li>
                 <li>
-                    <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">About</a>
+                    <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">ABOUT</a>
                 </li>
             </ul>
             <div class="navbar-nav">
-                <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">Help Center</a>
+                <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">HELP CENTER</a>
             </div>
         </div>
     </nav>
@@ -84,15 +107,15 @@
     <footer id="footer">
         <div class="climate-copy">
             <a href="https://climateserv.servirglobal.net">ClimateSERV</a>
-{#            <span>© SERVIR Global</span>#}
+            {#            <span>© SERVIR Global</span>#}
         </div>
         <div class="ml-auto climate-power">
-{#            <span>Powered by </span>#}
+            {#            <span>Powered by </span>#}
             <a href="https://servirglobal.net">
                 <img
-                        src="{% static 'frontend/img/logo_servir_global_better.png' %}"
+                        src="{% static 'frontend/img/servir_global_full_logo_white.png' %}"
                         alt="SERVIR Global"
-                        style="margin-left: 8px"
+                        style="margin-left: 8px; max-height: 21px;"
                 />
             </a>
         </div>

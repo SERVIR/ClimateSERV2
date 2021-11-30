@@ -25,6 +25,8 @@ urlpatterns = [
     # Uncomment the next line to enable the admin:
     url('', include('frontend.urls')),
     url(r'^admin/', admin.site.urls),
+    url(r'^api/', include('api.urls')),
+    url(r'^etl_monitor/', include('etl_monitor.urls')),
     url(r'chirps/getParameterTypes/', getParameterTypes),
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     url(r'chirps/submitDataRequest/', submitDataRequest),
@@ -53,7 +55,22 @@ urlpatterns = [
     url('api/getFileForJobID/', getFileForJobID),
     # url(r'^/api/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
     # url(r'^/api/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
-    url(r'api/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
+    url(r'api/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest),
+
+    # support old script access path
+    url(r'chirps/scriptAccess/getParameterTypes/', getParameterTypes),
+    # url(r'^/chirps/getRequiredElements/', getRequiredElements),
+    url(r'chirps/scriptAccess/submitDataRequest/', submitDataRequest),
+    url(r'chirps/scriptAccess/getDataRequestProgress/', getDataRequestProgress),
+    url(r'chirps/scriptAccess/getDataFromRequest/', getDataFromRequest),
+    url(r'chirps/scriptAccess/getFeatureLayers/', getFeatureLayers),
+    # url(r'^/chirps/getCapabilitiesForDataset/', getCapabilitiesForDataset),
+    url('chirps/scriptAccess/getClimateScenarioInfo/', getClimateScenarioInfo),
+    url('chirps/scriptAccess/getFileForJobID/', getFileForJobID),
+    # url(r'^/chirps/submitMonthlyGEFSRainfallAnalysisRequest/', submitMonthlyGEFSRainfallAnalysisRequest),
+    # url(r'^/chirps/scriptAccess/', scriptAccess),  # New path for Serverside Script access.
+    url(r'chirps/scriptAccess/submitMonthlyRainfallAnalysisRequest/', submitMonthlyRainfallAnalysisRequest)
+
 ]
 
 if settings.DEBUG:
