@@ -661,23 +661,25 @@ function clearAOISelections() {
     verify_ready();
 }
 
-function setPointAOI(){
+function setPointAOI() {
     // need to validate lat/lon
     let valid_values = true;
     const point_lon = $("#point_lon").val();
     const point_lat = $("#point_lat").val();
-    if(isNaN(point_lon) || point_lon < -180 || point_lon > 180){
+    if (isNaN(point_lon) || point_lon < -180 || point_lon > 180) {
         valid_values = false;
     }
-    if(isNaN(point_lat) || point_lat < -90 || point_lat > 90){
+    if (isNaN(point_lat) || point_lat < -90 || point_lat > 90) {
         valid_values = false;
     }
-    if(valid_values){
+    if (valid_values) {
+        drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
         $("#point_lon").val("")
         $("#point_lat").val("")
-    } else{
+        $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+    } else {
         $("#lat-lon-error").show();
     }
 
@@ -831,7 +833,23 @@ function enableDrawing() {
     });
 
     map.on("draw:drawstart", function (e) {
-        drawnItems.clearLayers();
+        if (e.layerType === "marker") {
+            drawnItems.clearLayers();
+        } else {
+            let BreakException = {};
+            // check to make sure drawnItems does not contain a marker
+            try {
+                drawnItems.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker) {
+                        drawnItems.clearLayers();
+                        throw BreakException;
+                    }
+                });
+            } catch(e){
+                if (e !== BreakException) throw e;
+            }
+            // check to make sure drawnItems.length <= 20
+        }
     });
 }
 
@@ -1282,7 +1300,7 @@ function sendRequest() {
             formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
         }
         let api_host = window.location.hostname;
-        if(window.location.port){
+        if (window.location.port) {
             api_host += ":" + window.location.port
         }
         $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
