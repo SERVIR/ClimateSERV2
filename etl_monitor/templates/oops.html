@@ -1,0 +1,7 @@
+<p>Is Authenticated {{ request.user.is_authenticated }}</p>
+<p>Is Admin {{ request.user.is_superuser }}</p>
+{% if request.user.is_authenticated and request.user.is_superuser %}
+<p>GOOD USER</p>
+{% else %}
+<p>BAD USER</p>
+{% endif %}
