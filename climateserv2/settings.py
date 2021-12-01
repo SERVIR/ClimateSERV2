@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'api',
     'etl_monitor',
     'frontend',
+    'system_admin',
 ]
 
 MIDDLEWARE = [

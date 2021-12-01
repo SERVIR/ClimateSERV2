@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/', include('api.urls')),
     url(r'^etl_monitor/', include('etl_monitor.urls')),
+    url(r'^system_admin/', include('system_admin.urls')),
     url(r'chirps/getParameterTypes/', getParameterTypes),
     # url(r'^/chirps/getRequiredElements/', getRequiredElements),
     url(r'chirps/submitDataRequest/', submitDataRequest),
