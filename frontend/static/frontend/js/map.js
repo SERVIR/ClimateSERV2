@@ -303,7 +303,7 @@ function buildStyles() {
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     if (map.hasLayer(overlayMaps[which])) {
-        was_removed = true;
+        was_removed = true;:q
         map.removeLayer(overlayMaps[which]);
     }
     // console.log(document.getElementById("above_below").value);
@@ -662,7 +662,6 @@ function clearAOISelections() {
 }
 
 function setPointAOI() {
-    // need to validate lat/lon
     let valid_values = true;
     const point_lon = $("#point_lon").val();
     const point_lat = $("#point_lat").val();
