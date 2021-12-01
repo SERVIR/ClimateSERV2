@@ -7,4 +7,4 @@ from .models import *
 @staff_member_required
 def testing(request):
     print("REQUEST", request)
-    return render(request, 'oops.html')
+    return render(request, 'testing.html')
