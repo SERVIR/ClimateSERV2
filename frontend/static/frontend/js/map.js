@@ -661,6 +661,28 @@ function clearAOISelections() {
     verify_ready();
 }
 
+function setPointAOI(){
+    // need to validate lat/lon
+    let valid_values = true;
+    const point_lon = $("#point_lon").val();
+    const point_lat = $("#point_lat").val();
+    if(isNaN(point_lon) || point_lon < -180 || point_lon > 180){
+        valid_values = false;
+    }
+    if(isNaN(point_lat) || point_lat < -90 || point_lat > 90){
+        valid_values = false;
+    }
+    if(valid_values){
+        drawnItems.addLayer(L.marker([point_lat, point_lon]));
+        $("#lat-lon-error").hide();
+        $("#point_lon").val("")
+        $("#point_lat").val("")
+    } else{
+        $("#lat-lon-error").show();
+    }
+
+}
+
 function triggerUpload(e) {
     document.getElementById("upload_files").value = "";
     e.preventDefault();
