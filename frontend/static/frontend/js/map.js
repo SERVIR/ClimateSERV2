@@ -302,11 +302,11 @@ function buildStyles() {
 //In here i can add the options for transparent above and below
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
+    const style_table = $("#style_table");
     if (map.hasLayer(overlayMaps[which])) {
         was_removed = true;
         map.removeLayer(overlayMaps[which]);
     }
-    // console.log(document.getElementById("above_below").value);
     overlayMaps[which] = L.timeDimension.layer.wms(
         L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
             layers: active_layer.layers,
@@ -321,7 +321,7 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             // abovemaxcolor: document.getElementById("above_below").value,
             // belowmincolor: document.getElementById("above_below").value,
             numcolorbands: 100,
-            styles: $("#style_table").val(),
+            styles: style_table.val(),
         }),
         {
             updateTimeDimension: true,
@@ -333,7 +333,7 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
     if (!bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
-    active_layer.styles = $("#style_table").val();
+    active_layer.styles = style_table.val();
     active_layer.colorrange = document.getElementById("range-min").value +
         "," +
         document.getElementById("range-max").value
@@ -448,6 +448,7 @@ function baseSettingsHtml() {
  */
 function openLegend(which) {
     close_dialog();
+    const dialog = $("#dialog");
     let id = which.replace("TimeLayer", "") + "ens";
     const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
@@ -458,10 +459,10 @@ function openLegend(which) {
         active_layer.colorrange +
         "&PALETTE=" +
         active_layer.styles.substr(active_layer.styles.indexOf("/") + 1);
-    $("#dialog").html(
+    dialog.html(
         '<p style="text-align:center;"><img src="' + src + '" alt="legend"></p>'
     );
-    $("#dialog").dialog({
+    dialog.dialog({
         title: active_layer.title,
         resizable: {handles: "se"},
         width: 169,
@@ -541,7 +542,7 @@ function mapSetup() {
         thumb_cap.appendTo(map_thumb);
         map_thumb.appendTo("#basemap");
     }
-    map.on('layeradd', (e) => {
+    map.on('layeradd', () => {
         adjustLayerIndex();
     });
 
@@ -675,8 +676,8 @@ function setPointAOI() {
         drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        $("#point_lon").val("")
-        $("#point_lat").val("")
+        point_lon.val("")
+        point_lat.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
     } else {
         $("#lat-lon-error").show();
@@ -733,8 +734,7 @@ function handleFiles(e) {
             verify_ready();
         } catch (e) {
             // When the section is built the url will need to add #pageanchorlocation
-            $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
-            $("#upload_error").show();
+            upload_file_error();
         }
     };
     const files = e.target.files || e.dataTransfer.files || this.files;
@@ -778,7 +778,10 @@ function handleFiles(e) {
                     verify_ready();
                 }
             );
-        }
+            $("#upload_error").hide();
+        } else{
++            upload_file_error();
+         }
     }
 }
 
@@ -813,10 +816,19 @@ function enableDrawing() {
         const type = e.layerType,
             layer = e.layer;
         if (type === "marker") {
-            // Do marker specific actions
+            drawnItems.addLayer(layer);
+            drawnItems.addLayer(layer);
+        } else{
+            if(drawnItems.getLayers().length < 20) {
+                drawnItems.addLayer(layer);
+                if (drawnItems.getLayers().length === 20) {
+                    alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
+                }
+            } else {
+                alert("You may not add this polygon because you have reached the limit of 20.");
+            }
         }
-        // Do whatever else you need to. (save to db; add to map etc)
-        drawnItems.addLayer(layer);
+
         collect_review_data();
         verify_ready();
     });
@@ -826,7 +838,7 @@ function enableDrawing() {
         verify_ready();
     });
 
-    map.on(L.Draw.Event.DELETED, function (e) {
+    map.on(L.Draw.Event.DELETED, function () {
         collect_review_data();
         verify_ready();
     });
@@ -993,6 +1005,12 @@ function sortableLayerSetup() {
             let cloneEl = evt.clone;
         },
     });
+}
+
+function upload_file_error() {
+   const upload_error = $("#upload_error");
+    upload_error.html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+   upload_error.show();
 }
 
 function adjustLayerIndex() {
