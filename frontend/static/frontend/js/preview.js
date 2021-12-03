@@ -17,11 +17,11 @@
 
 var inputData = {},
 geoData = {},
-EPSGUser, url, encoding, EPSG,
+EPSGUser, shape_url, encoding, EPSG,
 EPSG4326 = proj4('EPSG:4326');
 
 function loadshp(config, returnData) {
-    url = config.url;
+    shape_url = config.url;
     encoding = typeof config.encoding != 'utf-8' ? config.encoding : 'utf-8';
     EPSG = typeof config.EPSG != 'undefined' ? config.EPSG : 4326;
 
@@ -33,7 +33,7 @@ function loadshp(config, returnData) {
 
         EPSGUser = proj4('EPSG:'+EPSG);
 
-        if(typeof url != 'string') {
+        if(typeof shape_url != 'string') {
             var reader = new FileReader();
             reader.onload = function(e) {
                 var URL = window.URL || window.webkitURL || window.mozURL || window.msURL,
@@ -54,9 +54,9 @@ function loadshp(config, returnData) {
                 DBFParser.load(URL.createObjectURL(new Blob([zip.file(dbfString).asArrayBuffer()])), encoding, dbfLoader, returnData);
             }
 
-            reader.readAsArrayBuffer(url);
+            reader.readAsArrayBuffer(shape_url);
         } else {
-            JSZipUtils.getBinaryContent(url, function(err, data) {
+            JSZipUtils.getBinaryContent(shape_url, function(err, data) {
                 if(err) throw err;
 
                 var URL = window.URL || window.webkitURL,
