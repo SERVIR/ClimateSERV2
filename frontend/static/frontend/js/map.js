@@ -516,7 +516,7 @@ function mapSetup() {
         const map_thumb = $("<div>");
         map_thumb.addClass("map-thumb");
         map_thumb.attr("datavalue", key);
-        map_thumb.on("click", function (e) {
+        map_thumb.on("click", function () {
             handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
         });
 
@@ -533,7 +533,7 @@ function mapSetup() {
         img.attr("alt", baseLayers[key].options.displayName);
         img.attr("title", baseLayers[key].options.displayName);
         img.attr("datavalue", key);
-        img.on("click", function (e) {
+        img.on("click", function () {
             handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
         });
         //img.appendTo("#basemap");
@@ -755,11 +755,11 @@ function handleFiles(e) {
                     EPSG: 4326,
                 },
                 function (data) {
-                    let URL =
-                            window.URL || window.webkitURL || window.mozURL || window.msURL,
-                        url = URL.createObjectURL(
-                            new Blob([JSON.stringify(data)], {type: "application/json"})
-                        );
+                    // let URL =
+                    //         window.URL || window.webkitURL || window.mozURL || window.msURL,
+                    //     url = URL.createObjectURL(
+                    //         new Blob([JSON.stringify(data)], {type: "application/json"})
+                    //     );
                     if (data.features.length > 10) {
                         data.features = data.features.splice(0, 10);
                     }
@@ -779,9 +779,9 @@ function handleFiles(e) {
                 }
             );
             $("#upload_error").hide();
-        } else{
-+            upload_file_error();
-         }
+        } else {
+            +upload_file_error();
+        }
     }
 }
 
@@ -818,8 +818,8 @@ function enableDrawing() {
         if (type === "marker") {
             drawnItems.addLayer(layer);
             drawnItems.addLayer(layer);
-        } else{
-            if(drawnItems.getLayers().length < 20) {
+        } else {
+            if (drawnItems.getLayers().length < 20) {
                 drawnItems.addLayer(layer);
                 if (drawnItems.getLayers().length === 20) {
                     alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
@@ -833,7 +833,7 @@ function enableDrawing() {
         verify_ready();
     });
 
-    map.on('draw:edited', function (e) {
+    map.on('draw:edited', function () {
         collect_review_data();
         verify_ready();
     });
@@ -856,7 +856,7 @@ function enableDrawing() {
                         throw BreakException;
                     }
                 });
-            } catch(e){
+            } catch (e) {
                 if (e !== BreakException) throw e;
             }
             // check to make sure drawnItems.length <= 20
@@ -995,37 +995,37 @@ function sortableLayerSetup() {
         onEnd: function ($item, container, _super) {
             adjustLayerIndex();
         },
-        onChange: function (/**Event*/evt) {
+        onChange: function () {
             adjustLayerIndex();
         },
         filter: ".ignore-elements",
         // Called when creating a clone of element
-        onClone: function (/**Event*/evt) {
-            let origEl = evt.item;
-            let cloneEl = evt.clone;
-        },
+        // onClone: function (/**Event*/evt) {
+        //     let origEl = evt.item;
+        //     let cloneEl = evt.clone;
+        // },
     });
 }
 
 function upload_file_error() {
-   const upload_error = $("#upload_error");
+    const upload_error = $("#upload_error");
     upload_error.html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
-   upload_error.show();
+    upload_error.show();
 }
 
 function adjustLayerIndex() {
     let count = 10;
-
-    for (let i = $("ol.layers li").length; i > 0; i--) {
+    const ol_layers_li = $("ol.layers li");
+    for (let i = ol_layers_li.length; i > 0; i--) {
         if (overlayMaps[
-            $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+            ol_layers_li[i - 1].id.replace("_node", "TimeLayer")
             ]) {
             overlayMaps[
-                $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+                ol_layers_li[i - 1].id.replace("_node", "TimeLayer")
                 ].setZIndex(count);
             count++;
         } else {
-            let id = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
+            let id = ol_layers_li[i - 1].id.replace("_node", "") + "ens";
             for (let j = 0; j < $("[id^=" + id + "]").length; j++) {
                 overlayMaps[
                 $("[id^=" + id + "]")[j].id + "TimeLayer"
@@ -1187,13 +1187,54 @@ function verify_ready() {
     if ($("#requestTypeSelect").val() === "datasets") {
         ready = isComplete();
     }
-    $("#btnRequest").prop("disabled",
-        !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
-    if ($("#geometry").text().trim().indexOf('{"type"') > -1
-        || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
-        $("#download_aoi_holder").show();
+    const geometry = $("#geometry");
+    const download_aoi_holder = $("#download_aoi_holder");
+    const disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
+    $("#btnRequest").prop("disabled", disabled);
+    $("#btnViewAPI").prop("disabled", disabled);
+    if (geometry.text().trim().indexOf('{"type"') > -1
+        || geometry.text().trim().indexOf('{\"type\"') > -1) {
+        download_aoi_holder.show();
     } else {
-        $("#download_aoi_holder").hide();
+        download_aoi_holder.hide();
+    }
+    let api_host = window.location.hostname;
+        if (window.location.port) {
+            api_host += ":" + window.location.port
+        }
+    try {
+
+        if ($("#requestTypeSelect").val() === "datasets") {
+            console.log("datasets");
+            const formData = new FormData();
+
+            buildForm(formData);
+
+            $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
+        } else {
+            console.log("seasonal forecast");
+            let geometry_params;
+
+            if (highlightedIDs.length > 0) {
+                geometry_params = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                geometry_params += "&featureids=" + highlightedIDs.join(",");
+            } else if (drawnItems.getLayers().length > 0) {
+                geometry_params = "&geometry=" + JSON.stringify(drawnItems.toGeoJSON());
+            } else if (uploadLayer) {
+                geometry_params = "&geometry=" + JSON.stringify(uploadLayer.toGeoJSON());
+            }
+
+
+            const csi = climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities;
+            let url = "api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
+            url += "seasonal_start_date=" + csi.startDateTime;
+            url += "&seasonal_end_date=" + csi.endDateTime;
+            url += geometry_params;
+
+            $("#api_query").text(api_host + url);
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 
@@ -1282,6 +1323,39 @@ function handle_initial_request_data(data, isClimate) {
     pollForProgress(data[0], isClimate);
 }
 
+function buildForm(formData) {
+
+    current_calculation = {
+        'value': parseInt($("#operationmenu").val()),
+        'text': $("#operationmenu option:selected").text()
+    };
+
+    if ($("#ensemble_builder").is(":visible")) {
+        formData.append(
+            "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
+        );
+    } else {
+        formData.append(
+            "datatype", $("#sourcemenu").val()
+        );
+    }
+
+    formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
+    formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
+    formData.append("intervaltype", 0);
+    formData.append("operationtype", current_calculation.value);
+    formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
+    formData.append("isZip_CurrentDataType", false);
+    if (highlightedIDs.length > 0) {
+        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+        formData.append("featureids", highlightedIDs.join(","));
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    } else if (uploadLayer) {
+        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    }
+}
+
 function sendRequest() {
     current_calculation = {
         'value': parseInt($("#operationmenu").val()),
@@ -1292,30 +1366,7 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-        if ($("#ensemble_builder").is(":visible")) {
-            formData.append(
-                "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
-            );
-        } else {
-            formData.append(
-                "datatype", $("#sourcemenu").val()
-            );
-        }
-
-        formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
-        formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
-        formData.append("intervaltype", 0);
-        formData.append("operationtype", current_calculation.value);
-        formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
-        formData.append("isZip_CurrentDataType", false);
-        if (highlightedIDs.length > 0) {
-            formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-            formData.append("featureids", highlightedIDs.join(","));
-        } else if (drawnItems.getLayers().length > 0) {
-            formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-        } else if (uploadLayer) {
-            formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-        }
+        buildForm(formData);
         let api_host = window.location.hostname;
         if (window.location.port) {
             api_host += ":" + window.location.port
@@ -1355,6 +1406,7 @@ function sendRequest() {
                 },
                 close: function (event, ui) {
                     $("#btnRequest").prop("disabled", false);
+                    $("#btnViewAPI").prop("disabled", false);
                 }
             });
         }).done(function (data, _textStatus, _jqXHR) {
@@ -1448,6 +1500,7 @@ function pollForProgress(id, isClimate) {
                     retries = 0;
                     console.log("Server Error");
                     $("#btnRequest").prop("disabled", false);
+                    $("#btnViewAPI").prop("disabled", false);
                     close_dialog();
                     let error_message = '<div style="width:100%; height:100%; display: flex;' +
                         '    align-items: center;' +
