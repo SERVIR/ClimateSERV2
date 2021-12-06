@@ -13,5 +13,6 @@ class Track_Usage(models.Model):
     status = models.CharField(max_length=50)
     file_size = models.IntegerField()
 
+
     def __str__(self):
         return f"{self.unique_id}"
