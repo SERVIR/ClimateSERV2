@@ -38,6 +38,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r".*",
 ]
 
+USE_TZ = True
 # Application definition
 
 INSTALLED_APPS = [

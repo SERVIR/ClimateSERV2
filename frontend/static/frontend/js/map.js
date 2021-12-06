@@ -532,10 +532,11 @@ function mapSetup() {
         thumb_text.text(baseLayers[key].options.displayName);
 
         thumb_text.appendTo(thumb_cap);
-        let img;
-        img = $("<img>", {
-            src: static_url + 'frontend/' + baseLayers[key].options.thumb,
-            alt: baseLayers[key].options.displayName,
+        const img = $("<img src='"
+            + static_url + "frontend/"
+            + baseLayers[key].options.thumb
+            + "' alt='"
+            + baseLayers[key].options.displayName + "'>", {
             title: baseLayers[key].options.displayName,
             datavalue: key,
             click: function () {
@@ -2274,7 +2275,7 @@ function get_stat_body(which) {
                 "  <div class=\"servir_tooltip_body\">Global Ensemble Forecast System (GEFS) a weather forecast model made up of 21 separate forecasts, or ensemble members. Availability: January 1, 1985, to present.</div>" +
                 "    <br>" +
                 "    <div class=\"servir_tooltip_header\">Evaporative Stress Index  (ESI)</div>" +
-                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water. <a href=\"http://catalogue.servirglobal.net/Product?product_id=198\" title=\"More about ESI\" target=\"_blank\">More about ESI</a></div>" +
+                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water.</div>" +
                 "    <br>" +
                 "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
                 "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
