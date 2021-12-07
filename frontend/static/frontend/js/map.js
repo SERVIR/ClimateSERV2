@@ -726,37 +726,51 @@ function enableUpload() {
 function prevent(e) {
     e.preventDefault();
 }
-let debug;
-function handleFiles(e) {
-    e.preventDefault();
-    const reader = new FileReader();
-    reader.onloadend = function () {
-        try {
-            const data = JSON.parse(this.result.toString());
-            debug = data;
 
-            // this handles all polygon situations
-            const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
-            let verifiedRequirements = false;
-            if(!allPoints && data.features.length <= 20) {
-                verifiedRequirements = true;
-            } else if(allPoints && data.features.length === 1){
-                verifiedRequirements = true;
-            }
+function verifyFeatures(data) {
+    const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
+    let verifiedRequirements = false;
+    if (!allPoints && data.features.length <= 20) {
+        verifiedRequirements = true;
+    } else if (allPoints && data.features.length === 1) {
+        verifiedRequirements = true;
+    }
+    return verifiedRequirements;
+}
+
+function addDataToMap(data){
+    try {
+            // this handles all upload situations
+            let verifiedRequirements = verifyFeatures(data);
             if(verifiedRequirements){
                 uploadLayer.clearLayers();
                 uploadLayer.addData(data);
-
-                map.fitBounds(uploadLayer.getBounds());
+                try {
+                    map.fitBounds(uploadLayer.getBounds());
+                } catch(e){
+                    map.fitBounds([
+                            [data.bbox[1], data.bbox[0]],
+                            [data.bbox[3], data.bbox[2]],
+                        ]);
+                }
                 $("#upload_error").hide();
                 collect_review_data();
                 verify_ready();
             } else{
                 upload_file_error();
             }
-
         } catch (e) {
-            // When the section is built the url will need to add #pageanchorlocation
+            upload_file_error();
+        }
+}
+
+function handleFiles(e) {
+    e.preventDefault();
+    const reader = new FileReader();
+    reader.onloadend = function () {
+        try {
+            addDataToMap(JSON.parse(this.result.toString()));
+           } catch (e) {
             upload_file_error();
         }
     };
@@ -783,14 +797,27 @@ function handleFiles(e) {
                     //     url = URL.createObjectURL(
                     //         new Blob([JSON.stringify(data)], {type: "application/json"})
                     //     );
-                    if (data.features.length > 10) {
-                        data.features = data.features.splice(0, 10);
-                    }
-                    uploadLayer.addData(data);
-                    map.fitBounds([
-                        [data.bbox[1], data.bbox[0]],
-                        [data.bbox[3], data.bbox[2]],
-                    ]);
+                    // if (data.features.length > 10) {
+                    //     data.features = data.features.splice(0, 10);
+                    // }
+                    // uploadLayer.addData(data);
+                    addDataToMap(data);
+                    // let verifiedRequirements = verifyFeatures(data);
+                    // if(verifiedRequirements){
+                    //     uploadLayer.clearLayers();
+                    //     uploadLayer.addData(data);
+                    //
+                    //     map.fitBounds([
+                    //         [data.bbox[1], data.bbox[0]],
+                    //         [data.bbox[3], data.bbox[2]],
+                    //     ]);
+                    //     $("#upload_error").hide();
+                    //     collect_review_data();
+                    //     verify_ready();
+                    // } else{
+                    //     upload_file_error();
+                    // }
+
                     $(".dimmer").removeClass("active");
                     $("#preview").addClass("disabled");
                     $("#epsg").val("");
