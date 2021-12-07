@@ -726,20 +726,35 @@ function enableUpload() {
 function prevent(e) {
     e.preventDefault();
 }
-
+let debug;
 function handleFiles(e) {
     e.preventDefault();
     const reader = new FileReader();
     reader.onloadend = function () {
         try {
             const data = JSON.parse(this.result.toString());
-            uploadLayer.clearLayers();
-            uploadLayer.addData(data);
+            debug = data;
 
-            map.fitBounds(uploadLayer.getBounds());
-            $("#upload_error").hide();
-            collect_review_data();
-            verify_ready();
+            // this handles all polygon situations
+            const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
+            let verifiedRequirements = false;
+            if(!allPoints && data.features.length <= 20) {
+                verifiedRequirements = true;
+            } else if(allPoints && data.features.length === 1){
+                verifiedRequirements = true;
+            }
+            if(verifiedRequirements){
+                uploadLayer.clearLayers();
+                uploadLayer.addData(data);
+
+                map.fitBounds(uploadLayer.getBounds());
+                $("#upload_error").hide();
+                collect_review_data();
+                verify_ready();
+            } else{
+                upload_file_error();
+            }
+
         } catch (e) {
             // When the section is built the url will need to add #pageanchorlocation
             upload_file_error();
@@ -1037,9 +1052,10 @@ function adjustLayerIndex() {
             count++;
         } else {
             let id = ol_layers_li[i - 1].id.replace("_node", "") + "ens";
-            for (let j = 0; j < $("[id^=" + id + "]").length; j++) {
+            let element = $("[id^=" + id + "]");
+            for (let j = 0; j < element.length; j++) {
                 overlayMaps[
-                $("[id^=" + id + "]")[j].id + "TimeLayer"
+                element[j].id + "TimeLayer"
                     ].setZIndex(count);
                 count++;
             }
@@ -1278,28 +1294,30 @@ function verify_range() {
     let isReady = false;
     let begin_range_date = document.getElementById("begin_range_date");
     let end_range_date = document.getElementById("end_range_date");
-    if (begin_range_date.value && end_range_date.value) {
-        isReady = $(begin_range_date).valid({
-            rules: {
-                field: {
-                    required: true,
-                    dateISO: true
+    if(begin_range_date && end_range_date) {
+        if (begin_range_date.value && end_range_date.value) {
+            isReady = $(begin_range_date).valid({
+                rules: {
+                    field: {
+                        required: true,
+                        dateISO: true
+                    }
+                }
+            }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+            if (isReady) {
+                // Also should confirm s < e;
+                if (moment(begin_range_date.value) > moment(end_range_date.value)) {
+                    isReady = false;
+                    $("#range-error").show();
+                } else {
+                    $("#range-error").hide();
                 }
             }
-        }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
-        if (isReady) {
-            // Also should confirm s < e;
-            if (moment(begin_range_date.value) > moment(end_range_date.value)) {
-                isReady = false;
-                $("#range-error").show();
-            } else {
-                $("#range-error").hide();
-            }
-        }
 
-    } else {
-        $(begin_range_date).valid({rules: {field: {required: true, dateISO: true}}});
-        $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        } else {
+            $(begin_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+            $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        }
     }
     return isReady;
 }
@@ -2528,6 +2546,7 @@ $(function () {
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
+    verify_range();
 });
 
 /**
