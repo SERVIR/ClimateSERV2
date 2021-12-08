@@ -964,26 +964,33 @@ function enableAdminFeature(which) {
                     } else {
                         highlightedIDs.push(selectedID);
                     }
-
-                    adminHighlightLayer = L.tileLayer.wms(
-                        admin_layer_url,
-                        {
-                            layers: which + "_highlight",
-                            format: "image/png",
-                            transparent: true,
-                            styles: "",
-                            TILED: true,
-                            VERSION: "1.3.0",
-                            feat_ids: highlightedIDs.join(),
+                    if(highlightedIDs.length <= 20) {
+                        if (highlightedIDs.length === 20) {
+                            alert("Max selections has been reached");
                         }
-                    );
+                    } else{
+                        alert("You may only select 20 features.");
+                        highlightedIDs = highlightedIDs.filter((e) => e !== selectedID);
+                    }
+                    adminHighlightLayer = L.tileLayer.wms(
+                            admin_layer_url,
+                            {
+                                layers: which + "_highlight",
+                                format: "image/png",
+                                transparent: true,
+                                styles: "",
+                                TILED: true,
+                                VERSION: "1.3.0",
+                                feat_ids: highlightedIDs.join(),
+                            }
+                        );
 
-                    map.addLayer(adminHighlightLayer);
-                    adminHighlightLayer.setZIndex(
-                        Object.keys(baseLayers).length + client_layers.length + 6
-                    );
-                    collect_review_data();
-                    verify_ready();
+                        map.addLayer(adminHighlightLayer);
+                        adminHighlightLayer.setZIndex(
+                            Object.keys(baseLayers).length + client_layers.length + 6
+                        );
+                        collect_review_data();
+                        verify_ready();
                 }
             },
         });
