@@ -2,6 +2,8 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
+import socket
+from api.models import Track_Usage
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processtools import uutools as uutools
@@ -412,10 +414,23 @@ def submitDataRequest(request):
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=uniqueid, progress=0)
         log.save()
+        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
+        print(logg.progress)
+        if logg.progress == 100:
+            status="Success"
+        else:
+            status="In Progress"
+        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset=params.dataTypes[int(datatype)]['name'],start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),request_type=request.method,status=status)
+
+        track_usage.save()
         p.start()
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
+        status="Fail"
+        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=request.POST["geometry"],dataset=params.dataTypes[int(datatype)]['name'],start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),request_type=request.method,status=status)
+
+        track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")
 
 
@@ -574,7 +589,17 @@ def submitMonthlyRainfallAnalysisRequest(request):
         logger.info("Added progress (getMonthlyRainfallAnalysis) " + uniqueid)
 
         log.save()
+        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
+        if logg.progress == 100:
+            status="Success"
+        else:
+            status="In Progress"
+        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset="MonthlyRainfallAnalysis",start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,status=status)
+        track_usage.save()
         p.start()
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
+        status="Fail"
+        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=polygonstring,dataset="MonthlyRainfallAnalysis",start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,status=status)
+        track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")

@@ -1,6 +1,8 @@
 import multiprocessing
 import shutil
 import time
+from socket import socket
+
 import climateserv2.file.TDSExtraction as GetTDSData
 import climateserv2.parameters as params
 import sys
@@ -17,6 +19,8 @@ from django.apps import apps
 import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
+
+from api.models import Track_Usage
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -175,8 +179,23 @@ def start_processing(request):
     log = reqLog.Request_Progress.objects.get(request_id=request["uniqueid"])
     log.progress = 100
     log.save()
+    if log.progress == 100:
+        status = "Success"
+    else:
+        status = "In Progress"
+    track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+    track_usage.status = status
+    track_usage.save()
     if str(operationtype) == "6":
         zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+        if not os.path.exists(zipFilePath):
+            track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+            track_usage.status = "Fail"
+            track_usage.save()
+        else:
+            track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+            track_usage.file_size = os.stat(zipFilePath).st_size
+            track_usage.save()
         try:
             shutil.rmtree(params.zipFile_ScratchWorkspace_Path + uniqueid)
         except OSError as e:
