@@ -12,15 +12,17 @@ import sys
 import pandas as pd
 import os
 import xarray as xr
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 from django.apps import apps
 from .processDataRequest import start_processing
 import multiprocessing
+
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
+
 
 # To read a results file from the filesystem based on uuid
 def readResults(uid):
@@ -30,14 +32,16 @@ def readResults(uid):
     f.close()
     return x
 
+
 # To read progress from the database
 def readProgress(uid):
     try:
         res = Request_Progress.objects.get(request_id=str(uid))
-        value=res.progress
+        value = res.progress
     except Exception as e:
         print(e)
     return value
+
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def processCallBack(request, output, contenttype):
@@ -65,6 +69,7 @@ def processCallBack(request, output, contenttype):
         track_usage.save()
     return  httpresp
 
+
 # To get the request logs from a given date range
 def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
     dateTimeFormat = "%Y_%m_%d"
@@ -91,6 +96,7 @@ def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
         logger.error(errorMsg)
     return retLogs
 
+
 # To get a list of all request logs within a specified date range
 @csrf_exempt
 def getRequestLogs(request):
@@ -112,6 +118,7 @@ def getRequestLogs(request):
         theLogs.append(retObj)
     return processCallBack(request, json.dumps(theLogs), "application/json")
 
+
 # To get a list of all of the parameter types
 @csrf_exempt
 def getParameterTypes(request):
@@ -124,6 +131,7 @@ def getParameterTypes(request):
     #
     # track_usage.save()
     return processCallBack(request, json.dumps(params.parameters), "application/javascript")
+
 
 # To get a list of shaoefile feature types supported by the system
 @csrf_exempt
@@ -139,6 +147,7 @@ def getFeatureLayers(request):
         output.append({'id': value['id'], 'displayName': value['displayName'], 'visible': value['visible']})
     return processCallBack(request, json.dumps(output), "application/javascript")
 
+
 # To get the actual data from the processing request
 @csrf_exempt
 def getDataFromRequest(request):
@@ -147,19 +156,25 @@ def getDataFromRequest(request):
         requestid = request.GET["id"]
         logger.debug("Getting Data from Request " + requestid)
         jsonresults = readResults(requestid)
+        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage.data_retrieved = True
+        track_usage.save()
         return processCallBack(request, json.dumps(jsonresults), "application/json")
     except Exception as e:
         logger.warning("problem getting request data for id: " + str(request))
+        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage.data_retrieved = False
+        track_usage.save()
         return processCallBack(request, "need to send id", "application/json")
-    track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-    track_usage.data_retrieved = True
-    track_usage.save()
+
+
 # To parse an int from a string
 def intTryParse(value):
     try:
         return int(value), True
     except ValueError:
         return value, False
+
 
 # To get feedback on the request as to the progress of the request. Will return the float percentage of progress
 @csrf_exempt
@@ -179,7 +194,7 @@ def getDataRequestProgress(request):
             return processCallBack(request, json.dumps([-1]), "application/json")
         else:
             return processCallBack(request, json.dumps([float(progress)]), "application/json")
-    except (Exception, OSError) as e :
+    except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return processCallBack(request, json.dumps([-1]), "application/json")
 
@@ -199,9 +214,9 @@ def getFileForJobID(request):
             track_usage.save()
             expectedFileLocation = ""
             expectedFileName = ""
-            ext=""
+            ext = ""
             try:
-                ext="zip"
+                ext = "zip"
                 expectedFileName = requestid + ".zip"
                 expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
                 doesFileExist = os.path.exists(expectedFileLocation)
@@ -211,14 +226,14 @@ def getFileForJobID(request):
                     expectedFileLocation = os.path.join(params.zipFile_ScratchWorkspace_Path, expectedFileName)
                     doesFileExist = os.path.exists(expectedFileLocation)
             except:
-                    doesFileExist=False
+                doesFileExist = False
 
             if (doesFileExist == True):
                 track_usage = Track_Usage.objects.get(unique_id=requestid)
                 track_usage.file_size = os.stat(expectedFileLocation).st_size
                 track_usage.save()
                 theFileToSend = open(expectedFileLocation, 'rb')
-                if ext=="csv":
+                if ext == "csv":
                     response = HttpResponse(theFileToSend, content_type='text/csv')
                 else:
                     response = HttpResponse(theFileToSend, content_type='application/zip')
@@ -243,25 +258,33 @@ def getFileForJobID(request):
             }
             return processCallBack(request, json.dumps(retObj), "application/json")
     except Exception as e:
-        return processCallBack(request, json.dumps(str(e) ), "application/json")
+        return processCallBack(request, json.dumps(str(e)), "application/json")
+
 
 # To get list of all climate change scenario info
 @csrf_exempt
 def getClimateScenarioInfo(request):
+<<<<<<< HEAD
     track_usage = Track_Usage.objects.get(unique_id= request.GET["id"])
     track_usage.progress = readProgress(request.GET["id"])
     track_usage.save()
     nc_file = xr.open_dataset('/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',chunks={'time':16,'longitude':128,'latitude':128}) # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+=======
+    nc_file = xr.open_dataset(
+        '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
+        chunks={'time': 16, 'longitude': 128,
+                'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+>>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
     ed = datetime.strptime(start_date, '%Y-%m-%d') + timedelta(days=180)
     end_date = ed.strftime('%Y-%m-%d')
     isError = False
-    climateModel_DataType_Capabilities_List=[
+    climateModel_DataType_Capabilities_List = [
         {
-            "current_Capabilities":{
-                "startDateTime":start_date,
+            "current_Capabilities": {
+                "startDateTime": start_date,
                 "endDateTime": end_date
             }
         }
@@ -276,6 +299,7 @@ def getClimateScenarioInfo(request):
     }
 
     return processCallBack(request, json.dumps(api_ReturnObject), "application/javascript")
+
 
 # Submit a data request for processing
 @csrf_exempt
@@ -417,6 +441,7 @@ def submitDataRequest(request):
     uniqueid = uutools.getUUID()
     logger.info("Submitting " + uniqueid)
     # Submit requests to the ipcluster service to get data
+
     if (len(error) == 0):
         dictionary = {'uniqueid': uniqueid,
                       'datatype': datatype,
@@ -428,15 +453,16 @@ def submitDataRequest(request):
         if (featureList == True):
             dictionary['layerid'] = layerid
             dictionary['featureids'] = featureids
-
         else:
             dictionary['geometry'] = polygonstring
             try:
-                geom_str=dictionary['geometry']
+                geom_str = dictionary['geometry']
                 jsonn = json.loads(dictionary['geometry'])
-                featuresexist= jsonn['features']
+                featuresexist = jsonn['features']
             except:
-                dictionary['geometry']={"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":jsonn}]}
+                dictionary['geometry'] = {"type": "FeatureCollection",
+                                          "features": [{"type": "Feature", "properties": {}, "geometry": jsonn}]}
+
         # start multiprocessing here
         def print_my_results(my_results):
             print(my_results)
@@ -456,29 +482,55 @@ def submitDataRequest(request):
         log.save()
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         if logg.progress == 100:
-            status="Success"
+            status = "Success"
         else:
+            status = "In Progress"
+        if "geometry" in dictionary:
+            aoi = dictionary['geometry']
+        else:
+<<<<<<< HEAD
             status="In Progress"
         track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset=params.dataTypes[int(datatype)]['name'],start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
                                   end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),request_type=request.method,status=status,progress=logg.progress,API_call="submitDataRequest",data_retrieved=False)
+=======
+            aoi = {"Admin Boundary": layerid, "FeatureIds": featureids}
+        track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+                                  time_requested=datetime.now(), AOI=aoi,
+                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
+                                  end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method,
+                                  status=status)
+>>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
 
         track_usage.save()
         p.start()
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
+<<<<<<< HEAD
         status="Fail"
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=request.POST["geometry"],dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
                                   request_type=request.method,status=status,progress=logg.progress,API_call="submitDataRequest",data_retrieved=False)
+=======
+        status = "Fail"
+        if "geometry" in request.POST:
+            aoi = request.POST['geometry']
+        else:
+            aoi = {"Admin Boundary": layerid, "FeatureIds": featureids}
+        track_usage = Track_Usage(
+            unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+            time_requested=datetime.now(), AOI=aoi, dataset=params.dataTypes[int(datatype)]['name'],
+            start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
+            end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method, status=status)
+>>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
 
         track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")
 
 
-
-#To submit request for Monthly Analysis
+# To submit request for Monthly Analysis
 @csrf_exempt
 def submitMonthlyRainfallAnalysisRequest(request):
     custom_job_type = "MonthlyRainfallAnalysis"
@@ -620,11 +672,12 @@ def submitMonthlyRainfallAnalysisRequest(request):
         else:
             dictionary['geometry'] = polygonstring
             try:
-                geom_str=dictionary['geometry']
+                geom_str = dictionary['geometry']
                 jsonn = json.loads(dictionary['geometry'])
-                featuresexist= jsonn['features']
+                featuresexist = jsonn['features']
             except:
-                dictionary['geometry']={"type":"FeatureCollection","features":[{"type":"Feature","properties":{},"geometry":jsonn}]}
+                dictionary['geometry'] = {"type": "FeatureCollection",
+                                          "features": [{"type": "Feature", "properties": {}, "geometry": jsonn}]}
         logger.info("Adding progress (getMonthlyRainfallAnalysis) " + uniqueid)
 
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
@@ -634,22 +687,41 @@ def submitMonthlyRainfallAnalysisRequest(request):
         log.save()
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         if logg.progress == 100:
-            status="Success"
+            status = "Success"
         else:
+<<<<<<< HEAD
             status="In Progress"
         track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset="MonthlyRainfallAnalysis",
                                   start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,
                                   status=status,progress=logg.progress,API_call="submitMonthlyRainfallAnalysisRequest",data_retrieved=False)
+=======
+            status = "In Progress"
+        track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+                                  time_requested=datetime.now(), AOI=dictionary['geometry'],
+                                  dataset="MonthlyRainfallAnalysis",
+                                  start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
+                                  end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
+                                  request_type=request.method, status=status)
+>>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
         track_usage.save()
         p.start()
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
+<<<<<<< HEAD
         status="Fail"
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),
                                   AOI=polygonstring,dataset="MonthlyRainfallAnalysis",start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,status=status,
                                   progress=logg.progress,API_call="submitMonthlyRainfallAnalysisRequest",data_retrieved=False)
+=======
+        status = "Fail"
+        track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+                                  time_requested=datetime.now(), AOI=polygonstring, dataset="MonthlyRainfallAnalysis",
+                                  start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
+                                  end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
+                                  request_type=request.method, status=status)
+>>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
         track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")

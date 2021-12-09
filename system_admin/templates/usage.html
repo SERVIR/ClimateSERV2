@@ -1,0 +1,113 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - API Usage{% endblock %}
+{% block script %}
+    <link rel="stylesheet"
+          href="{% static 'system_admin/css/system_admin.css' %}"
+    />
+{% endblock %}
+{% block content %}
+    <script>
+        const static_url = "{% static '' %}";
+    </script>
+    <div>
+        <div class="container-fluid" style="padding-right: 0; padding-left: 0">
+            <table id="api_usage">
+                <thead>
+                <tr>
+                    {% for header in headers %}
+                        <th>{{ header.name }}</th>
+                    {% endfor %}
+                </tr>
+                </thead>
+
+
+                {% for record in items %}
+                    <tr>
+                        <td>
+                            {{ record.id }}
+                        </td>
+                        <td>
+                            {{ record.unique_id }}
+                        </td>
+                        <td>
+                            {{ record.originating_IP }}
+                        </td>
+                        <td>
+                            {{ record.time_requested }}
+                        </td>
+                        <td>
+                            {{ record.AOI }}
+                        </td>
+                        <td>
+                            {{ record.dataset }}
+                        </td>
+                        <td>
+                            {{ record.start_date }}
+                        </td>
+                        <td>
+                            {{ record.end_date }}
+                        </td>
+                        <td>
+                            {{ record.request_type }}
+                        </td>
+                        <td>
+                            {{ record.status }}
+                        </td>
+                        <td>
+                            {{ record.file_size }}
+                        </td>
+                    </tr>
+                {% endfor %}
+
+            </table>
+            {% if items.has_other_pages %}
+                <div class="col-6 off-set-3 text-center pagination-set">
+                    <nav aria-label="ClimateSERV API Usage">
+                        <ul class="pagination">
+                            {% if items.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ items.previous_page_number }}"><<</a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link">
+                                        <span><<</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            {% for i in page_range %}
+                                {% if items.number == i %}
+                                    <li class="page-item active">
+                                        <a class="page-link" href="#">
+                                            {{ i }}<span aclass="sr-only">(current)</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ i }}">
+                                            {{ i }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            {% if items.has_next %}
+                                <li class="page-item" aria-label="Next">
+                                    <a class="page-link" href="?page={{ items.next_page_number }}">>></a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link">
+                                        <span>>></span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+
+{% endblock %}
