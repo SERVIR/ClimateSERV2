@@ -45,29 +45,29 @@ def readProgress(uid):
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def processCallBack(request, output, contenttype):
-    httpresp=None
+    httpresp = None
     if request.method == 'POST':
         try:
             callback = request.POST["callback"]
-            httpresp= HttpResponse(callback + "(" + output + ")", content_type=contenttype)
+            httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
         except KeyError:
-            httpresp= HttpResponse(output)
+            httpresp = HttpResponse(output)
     if request.method == 'GET':
         try:
             callback = request.GET["callback"]
-            httpresp= HttpResponse(callback + "(" + output + ")", content_type=contenttype)
+            httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
         except KeyError:
-            httpresp= HttpResponse(output)
+            httpresp = HttpResponse(output)
 
     if httpresp.status_code == 200:
-        track_usage = Track_Usage.objects.get(unique_id= request.GET["id"])
-        track_usage.status="Complete"
+        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage.status = "Complete"
         track_usage.save()
     else:
-        track_usage = Track_Usage.objects.get(unique_id= request.GET["id"])
+        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
         track_usage.status = "Fail"
         track_usage.save()
-    return  httpresp
+    return httpresp
 
 
 # To get the request logs from a given date range
@@ -113,7 +113,8 @@ def getRequestLogs(request):
             theLogs = get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay)
     except:
         retObj = {
-            "error": "Error Processing getRequestLogs (This error message has been simplified for security reasons.  Please contact the website owner for more information)"
+            "error": "Error Processing getRequestLogs (This error message has been simplified for security reasons.  "
+                     "Please contact the website owner for more information) "
         }
         theLogs.append(retObj)
     return processCallBack(request, json.dumps(theLogs), "application/json")
@@ -124,12 +125,6 @@ def getRequestLogs(request):
 def getParameterTypes(request):
     print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
-    # track_usage = Track_Usage(unique_id= uutools.getUUID(), dataset="",originating_IP=socket.gethostbyname(socket.gethostname()),
-    #                           time_requested=datetime.now(),request_type=request.method,
-    #                           status="Submitted",progress=100,API_call="getParameterTypes",data_retrieved=False
-    #                           )
-    #
-    # track_usage.save()
     return processCallBack(request, json.dumps(params.parameters), "application/javascript")
 
 
@@ -137,8 +132,9 @@ def getParameterTypes(request):
 @csrf_exempt
 def getFeatureLayers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id= request.GET["id"], originating_IP=socket.gethostbyname(socket.gethostname()),
-                              time_requested=datetime.now(),request_type=request.method,status="Submitted",progress=100,API_call="getFeatureLayers",data_retrieved=False
+    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=socket.gethostbyname(socket.gethostname()),
+                              time_requested=datetime.now(), request_type=request.method, status="Submitted",
+                              progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
 
     track_usage.save()
@@ -181,7 +177,7 @@ def intTryParse(value):
 def getDataRequestProgress(request):
     logger.debug("Getting Data Request Progress")
     track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-    track_usage.progress  = readProgress(request.GET["id"])
+    track_usage.progress = readProgress(request.GET["id"])
     track_usage.data_retrieved = True
     track_usage.save()
     try:
@@ -189,7 +185,7 @@ def getDataRequestProgress(request):
         progress = readProgress(requestid)
 
         logger.debug("Progress =" + str(progress))
-        if (progress == -1.0):
+        if progress == -1.0:
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             return processCallBack(request, json.dumps([-1]), "application/json")
         else:
@@ -208,7 +204,7 @@ def getFileForJobID(request):
         requestid = request.GET["id"]
         progress = readProgress(requestid)
         # Validate that progress is at 100%
-        if (float(progress) == 100.0):
+        if float(progress) == 100.0:
             track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
             track_usage.data_retrieved = True
             track_usage.save()
@@ -247,7 +243,8 @@ def getFileForJobID(request):
                                        "application/json")
         elif (progress == -1.0):
             retObj = {
-                "msg": "File Not found.  There was an error validating the job progress.  It is possible that this is an invalid job id.",
+                "msg": "File Not found.  There was an error validating the job progress.  It is possible that this is "
+                       "an invalid job id.",
                 "fileProgress": progress
             }
             return processCallBack(request, json.dumps(retObj), "application/json")
@@ -264,17 +261,14 @@ def getFileForJobID(request):
 # To get list of all climate change scenario info
 @csrf_exempt
 def getClimateScenarioInfo(request):
-<<<<<<< HEAD
-    track_usage = Track_Usage.objects.get(unique_id= request.GET["id"])
+    track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
     track_usage.progress = readProgress(request.GET["id"])
     track_usage.save()
-    nc_file = xr.open_dataset('/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',chunks={'time':16,'longitude':128,'latitude':128}) # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
-=======
     nc_file = xr.open_dataset(
         '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
         chunks={'time': 16, 'longitude': 128,
                 'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
->>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
+
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
@@ -488,43 +482,29 @@ def submitDataRequest(request):
         if "geometry" in dictionary:
             aoi = dictionary['geometry']
         else:
-<<<<<<< HEAD
-            status="In Progress"
-        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset=params.dataTypes[int(datatype)]['name'],start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
-                                  end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),request_type=request.method,status=status,progress=logg.progress,API_call="submitDataRequest",data_retrieved=False)
-=======
-            aoi = {"Admin Boundary": layerid, "FeatureIds": featureids}
+            status = "In Progress"
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=aoi,
+                                  time_requested=datetime.now(), AOI=dictionary['geometry'],
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
                                   end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method,
-                                  status=status)
->>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
+                                  status=status, progress=logg.progress, API_call="submitDataRequest",
+                                  data_retrieved=False)
 
         track_usage.save()
         p.start()
 
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
-<<<<<<< HEAD
-        status="Fail"
-        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
-        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=request.POST["geometry"],dataset=params.dataTypes[int(datatype)]['name'],
-                                  start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
-                                  request_type=request.method,status=status,progress=logg.progress,API_call="submitDataRequest",data_retrieved=False)
-=======
         status = "Fail"
-        if "geometry" in request.POST:
-            aoi = request.POST['geometry']
-        else:
-            aoi = {"Admin Boundary": layerid, "FeatureIds": featureids}
-        track_usage = Track_Usage(
-            unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-            time_requested=datetime.now(), AOI=aoi, dataset=params.dataTypes[int(datatype)]['name'],
-            start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
-            end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method, status=status)
->>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
+        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
+        track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+                                  time_requested=datetime.now(), AOI=request.POST["geometry"],
+                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
+                                  end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
+                                  request_type=request.method, status=status, progress=logg.progress,
+                                  API_call="submitDataRequest", data_retrieved=False)
 
         track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")
@@ -546,9 +526,11 @@ def submitMonthlyRainfallAnalysisRequest(request):
             seasonal_end_date = seasonal_end_date[0:10]
         except KeyError:
             logger.warning(
-                "issue with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
+                "issue with getting start and end dates for seasonal forecast.  Expecting something like this: "
+                "&seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
             error.append(
-                "Error with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
+                "Error with getting start and end dates for seasonal forecast.  Expecting something like this: "
+                "&seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
 
         # Get geometry from parameter Or extract from shapefile
         geometry = None
@@ -571,16 +553,20 @@ def submitMonthlyRainfallAnalysisRequest(request):
         else:
             try:
                 polygonstring = request.POST["geometry"]
-                geometry = decodeGeoJSON(polygonstring);
+                geometry = decodeGeoJSON(polygonstring)
             # create geometry
             except KeyError:
                 logger.warning("Problem with geometry")
                 try:
                     error.append("problem decoding geometry " + polygonstring)
                 except:
-                    example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,19.642587534013032],[32.25585937500001,19.311143355064658],[32.25585937500001,14.944784875088374],[23.994140624999996,15.284185114076436],[24.521484374999996,19.642587534013032]]]}'
+                    example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,' \
+                                             '19.642587534013032],[32.25585937500001,19.311143355064658],' \
+                                             '[32.25585937500001,14.944784875088374],[23.994140624999996,' \
+                                             '15.284185114076436],[24.521484374999996,19.642587534013032]]]} '
                     error.append(
-                        "problem decoding geometry.  Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
+                        "problem decoding geometry.  "
+                        "Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
 
             if geometry is None:
                 logger.warning("Problem in that the geometry is a problem")
@@ -615,9 +601,11 @@ def submitMonthlyRainfallAnalysisRequest(request):
             seasonal_end_date = seasonal_end_date[0:10]
         except KeyError:
             logger.warning(
-                "issue with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
+                "issue with getting start and end dates for seasonal forecast.  Expecting something like this: "
+                "&seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
             error.append(
-                "Error with getting start and end dates for seasonal forecast.  Expecting something like this: &seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
+                "Error with getting start and end dates for seasonal forecast.  Expecting something like this: "
+                "&seasonal_start_date=2017_05_01&seasonal_end_date=2017_10_28")
 
         # Get geometry from parameter Or extract from shapefile
         geometry = None
@@ -647,7 +635,10 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 try:
                     error.append("problem decoding geometry " + polygonstring)
                 except:
-                    example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,19.642587534013032],[32.25585937500001,19.311143355064658],[32.25585937500001,14.944784875088374],[23.994140624999996,15.284185114076436],[24.521484374999996,19.642587534013032]]]}'
+                    example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,' \
+                                             '19.642587534013032],[32.25585937500001,19.311143355064658],' \
+                                             '[32.25585937500001,14.944784875088374],[23.994140624999996,' \
+                                             '15.284185114076436],[24.521484374999996,19.642587534013032]]]} '
                     error.append(
                         "problem decoding geometry.  Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
 
@@ -660,13 +651,13 @@ def submitMonthlyRainfallAnalysisRequest(request):
     logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
 
     # Submit requests to the ipcluster service to get data
-    if (len(error) == 0):
+    if len(error) == 0:
         dictionary = {'uniqueid': uniqueid,
                       'custom_job_type': custom_job_type,
                       'seasonal_start_date': seasonal_start_date,
                       'seasonal_end_date': seasonal_end_date
                       }
-        if (featureList == True):
+        if featureList:
             dictionary['layerid'] = layerid
             dictionary['featureids'] = featureids
         else:
@@ -689,39 +680,30 @@ def submitMonthlyRainfallAnalysisRequest(request):
         if logg.progress == 100:
             status = "Success"
         else:
-<<<<<<< HEAD
-            status="In Progress"
-        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),AOI=dictionary['geometry'],dataset="MonthlyRainfallAnalysis",
-                                  start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
-                                  end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,
-                                  status=status,progress=logg.progress,API_call="submitMonthlyRainfallAnalysisRequest",data_retrieved=False)
-=======
             status = "In Progress"
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
                                   time_requested=datetime.now(), AOI=dictionary['geometry'],
                                   dataset="MonthlyRainfallAnalysis",
                                   start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
-                                  request_type=request.method, status=status)
->>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
+                                  request_type=request.method,
+                                  status=status, progress=logg.progress,
+                                  API_call="submitMonthlyRainfallAnalysisRequest", data_retrieved=False)
+
         track_usage.save()
         p.start()
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
-<<<<<<< HEAD
-        status="Fail"
-        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
-        track_usage = Track_Usage(unique_id=uniqueid,originating_IP=socket.gethostbyname(socket.gethostname())  ,time_requested=datetime.now(),
-                                  AOI=polygonstring,dataset="MonthlyRainfallAnalysis",start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
-                                  end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),request_type=request.method,status=status,
-                                  progress=logg.progress,API_call="submitMonthlyRainfallAnalysisRequest",data_retrieved=False)
-=======
         status = "Fail"
+        logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=polygonstring, dataset="MonthlyRainfallAnalysis",
+                                  time_requested=datetime.now(),
+                                  AOI=polygonstring, dataset="MonthlyRainfallAnalysis",
                                   start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
-                                  request_type=request.method, status=status)
->>>>>>> 18bf5aad393106b964df90cb9aaf4f94123f6528
+                                  request_type=request.method, status=status,
+                                  progress=logg.progress, API_call="submitMonthlyRainfallAnalysisRequest",
+                                  data_retrieved=False)
+
         track_usage.save()
         return processCallBack(request, json.dumps(error), "application/json")
