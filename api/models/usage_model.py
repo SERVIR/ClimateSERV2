@@ -12,7 +12,10 @@ class Track_Usage(models.Model):
     end_date = models.DateTimeField(default=timezone.now)
     request_type = models.CharField(max_length=50, default=None)
     status = models.CharField(max_length=50, default=None)
-    file_size = models.IntegerField(default=0)  # for download data
+    file_size = models.IntegerField(default=0)  # for download data, get file
+    API_call = models.CharField(max_length=250, null=True,blank=True)
+    data_retrieved =  models.BooleanField(default=False)
+    progress =  models.IntegerField(default=0)
 
     def __str__(self):
         return f"{self.unique_id}"
