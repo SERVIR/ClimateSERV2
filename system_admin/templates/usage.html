@@ -1,15 +1,18 @@
 {% extends "cservbase.html" %}
 {% load static %}
 {% block title %}ClimateSERV - API Usage{% endblock %}
-<!DOCTYPE html>
-<html>
+{% block script %}
+    <link rel="stylesheet"
+          href="{% static 'system_admin/css/system_admin.css' %}"
+    />
+{% endblock %}
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
     </script>
     <div>
         <div class="container-fluid" style="padding-right: 0; padding-left: 0">
-            <table>
+            <table id="api_usage">
                 <thead>
                 <tr>
                     {% for header in headers %}
@@ -19,45 +22,45 @@
                 </thead>
 
 
-            {% for record in items %}
-                <tr>
-                <td>
-               {{ record.id }}
-                </td>
-                 <td>
-               {{ record.unique_id }}
-                </td>
-                 <td>
-               {{ record.originating_IP }}
-                </td>
-                 <td>
-               {{ record.time_requested }}
-                </td>
-                 <td>
-               {{ record.AOI }}
-                </td>
-                 <td>
-               {{ record.dataset }}
-                </td>
-                 <td>
-               {{ record.start_date }}
-                </td>
-                 <td>
-               {{ record.end_date }}
-                </td>
-                 <td>
-               {{ record.request_type }}
-                </td>
-                <td>
-               {{ record.status }}
-                </td>
-                 <td>
-               {{ record.file_size }}
-                </td>
-                </tr>
-            {% endfor %}
+                {% for record in items %}
+                    <tr>
+                        <td>
+                            {{ record.id }}
+                        </td>
+                        <td>
+                            {{ record.unique_id }}
+                        </td>
+                        <td>
+                            {{ record.originating_IP }}
+                        </td>
+                        <td>
+                            {{ record.time_requested }}
+                        </td>
+                        <td>
+                            {{ record.AOI }}
+                        </td>
+                        <td>
+                            {{ record.dataset }}
+                        </td>
+                        <td>
+                            {{ record.start_date }}
+                        </td>
+                        <td>
+                            {{ record.end_date }}
+                        </td>
+                        <td>
+                            {{ record.request_type }}
+                        </td>
+                        <td>
+                            {{ record.status }}
+                        </td>
+                        <td>
+                            {{ record.file_size }}
+                        </td>
+                    </tr>
+                {% endfor %}
 
-</table>
+            </table>
             {% if items.has_other_pages %}
                 <div class="col-6 off-set-3 text-center pagination-set">
                     <nav aria-label="ClimateSERV API Usage">
