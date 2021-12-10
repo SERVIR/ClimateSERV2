@@ -1,22 +1,30 @@
 #api_usage {
-  font-family: Arial, Helvetica, sans-serif;
-  border-collapse: collapse;
-  width: 100%;
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
 }
 
 #api_usage td, #api_usage th {
-  border: 1px solid #ddd;
-  padding: 8px;
+    border: 1px solid #ddd;
+    padding: 8px;
 }
 
-#api_usage tr:nth-child(even){background-color: #f2f2f2;}
+#api_usage tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
 
-#api_usage tr:hover {background-color: #ddd;}
+#api_usage tr:hover {
+    background-color: #ddd;
+}
 
 #api_usage th {
-  padding-top: 12px;
-  padding-bottom: 12px;
-  text-align: left;
-  background-color: #04AA6D;
-  color: white;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #04AA6D;
+    color: white;
+}
+
+.pagination {
+    justify-content: center !important;
 }

@@ -482,9 +482,9 @@ def submitDataRequest(request):
         if "geometry" in dictionary:
             aoi = dictionary['geometry']
         else:
-            status = "In Progress"
+            aoi = json.dumps({"Admin Boundary": layerid, "FeatureIds": featureids})
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=dictionary['geometry'],
+                                  time_requested=datetime.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
                                   end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method,
@@ -497,9 +497,13 @@ def submitDataRequest(request):
         return processCallBack(request, json.dumps([uniqueid]), "application/json")
     else:
         status = "Fail"
+        if "geometry" in request.POST:
+            aoi = request.POST['geometry']
+        else:
+            aoi = json.dumps({"Admin Boundary": layerid, "FeatureIds": featureids})
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=request.POST["geometry"],
+                                  time_requested=datetime.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
                                   end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
@@ -681,8 +685,13 @@ def submitMonthlyRainfallAnalysisRequest(request):
             status = "Success"
         else:
             status = "In Progress"
+
+        if "geometry" in request.POST:
+            aoi = request.POST['geometry']
+        else:
+            aoi = json.dumps({"Admin Boundary": layerid, "FeatureIds": featureids})
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=dictionary['geometry'],
+                                  time_requested=datetime.now(), AOI=aoi,
                                   dataset="MonthlyRainfallAnalysis",
                                   start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
@@ -696,9 +705,13 @@ def submitMonthlyRainfallAnalysisRequest(request):
     else:
         status = "Fail"
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
+        if "geometry" in request.POST:
+            aoi = request.POST['geometry']
+        else:
+            aoi = json.dumps({"Admin Boundary": layerid, "FeatureIds": featureids})
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
                                   time_requested=datetime.now(),
-                                  AOI=polygonstring, dataset="MonthlyRainfallAnalysis",
+                                  AOI=aoi, dataset="MonthlyRainfallAnalysis",
                                   start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
                                   end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
                                   request_type=request.method, status=status,

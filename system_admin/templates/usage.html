@@ -5,6 +5,7 @@
     <link rel="stylesheet"
           href="{% static 'system_admin/css/system_admin.css' %}"
     />
+    <script src="{% static 'system_admin/js/system_admin.js' %}"></script>
 {% endblock %}
 {% block content %}
     <script>
@@ -12,6 +13,7 @@
     </script>
     <div>
         <div class="container-fluid" style="padding-right: 0; padding-left: 0">
+        <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto" >
             <table id="api_usage">
                 <thead>
                 <tr>
@@ -36,7 +38,7 @@
                         <td>
                             {{ record.time_requested }}
                         </td>
-                        <td>
+                        <td onclick="showAOI(this)">
                             {{ record.AOI }}
                         </td>
                         <td>
@@ -57,12 +59,23 @@
                         <td>
                             {{ record.file_size }}
                         </td>
+                        <td>
+                            {{ record.API_call }}
+                        </td>
+                        <td>
+                            {{ record.data_retrieved }}
+                        </td>
+                        <td>
+                            {{ record.progress }}
+                        </td>
                     </tr>
                 {% endfor %}
 
             </table>
-            {% if items.has_other_pages %}
-                <div class="col-6 off-set-3 text-center pagination-set">
+
+        </div>
+        {% if items.has_other_pages %}
+                <div class="col-12 off-set-3 text-center pagination-set">
                     <nav aria-label="ClimateSERV API Usage">
                         <ul class="pagination">
                             {% if items.has_previous %}
@@ -80,7 +93,7 @@
                                 {% if items.number == i %}
                                     <li class="page-item active">
                                         <a class="page-link" href="#">
-                                            {{ i }}<span aclass="sr-only">(current)</span>
+                                            {{ i }}
                                         </a>
                                     </li>
                                 {% else %}
@@ -106,7 +119,6 @@
                     </nav>
                 </div>
             {% endif %}
-
         </div>
     </div>
 
