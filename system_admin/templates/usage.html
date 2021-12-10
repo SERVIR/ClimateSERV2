@@ -38,8 +38,10 @@
                         <td>
                             {{ record.time_requested }}
                         </td>
-                        <td onclick="showAOI(this)">
+                        <td >
+                            <div onclick="showAOI(this)" style="max-height: 350px; overflow-y: auto;">
                             {{ record.AOI }}
+                                </div>
                         </td>
                         <td>
                             {{ record.dataset }}

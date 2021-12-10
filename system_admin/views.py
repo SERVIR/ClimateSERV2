@@ -1,4 +1,5 @@
 # Create your views here.
+from django.db.models.functions import Lower
 from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
@@ -14,7 +15,12 @@ def testing(request):
 
 @staff_member_required
 def usage(request):
-    paginator = Paginator(Track_Usage.objects.all(), 2)
+    order_by = "id"  # request.GET.get('order_by')
+    direction = "asc"  # request.GET.get('direction')
+    ordering = order_by
+    if direction == 'desc':
+        ordering = '-{}'.format(ordering)
+    paginator = Paginator(Track_Usage.objects.all().order_by(ordering), 2)
     page = request.GET.get('page')
 
     try:
