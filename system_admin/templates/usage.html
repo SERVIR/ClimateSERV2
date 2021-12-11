@@ -23,53 +23,15 @@
                 </tr>
                 </thead>
 
-
                 {% for record in items %}
                     <tr>
-                        <td>
-                            {{ record.id }}
-                        </td>
-                        <td>
-                            {{ record.unique_id }}
-                        </td>
-                        <td>
-                            {{ record.originating_IP }}
-                        </td>
-                        <td>
-                            {{ record.time_requested }}
-                        </td>
-                        <td >
-                            <div onclick="showAOI(this)" style="max-height: 350px; overflow-y: auto;">
-                            {{ record.AOI }}
+                        {% for header in headers %}
+                            <td>
+                                 <div {% if header.name == "AOI" %} onclick="showAOI(this)"  {% endif %}style="max-height: 350px; overflow-y: auto;">
+                                    {{ record| key:header.name }}
                                 </div>
-                        </td>
-                        <td>
-                            {{ record.dataset }}
-                        </td>
-                        <td>
-                            {{ record.start_date }}
-                        </td>
-                        <td>
-                            {{ record.end_date }}
-                        </td>
-                        <td>
-                            {{ record.request_type }}
-                        </td>
-                        <td>
-                            {{ record.status }}
-                        </td>
-                        <td>
-                            {{ record.file_size }}
-                        </td>
-                        <td>
-                            {{ record.API_call }}
-                        </td>
-                        <td>
-                            {{ record.data_retrieved }}
-                        </td>
-                        <td>
-                            {{ record.progress }}
-                        </td>
+                            </td>
+                        {% endfor %}
                     </tr>
                 {% endfor %}
 

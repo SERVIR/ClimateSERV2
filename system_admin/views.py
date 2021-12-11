@@ -3,7 +3,8 @@ from django.db.models.functions import Lower
 from django.shortcuts import render
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-
+from django.template.defaultfilters import register
+from django.forms.models import model_to_dict
 from api.models import Track_Usage
 
 
@@ -43,3 +44,11 @@ def usage(request):
         'items': items
     }
     return render(request, 'usage.html', context)
+
+
+def key(d, key_name):
+    row = model_to_dict(d)
+    return row[key_name]
+
+
+key = register.filter('key', key)
