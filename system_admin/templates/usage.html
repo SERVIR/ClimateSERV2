@@ -13,77 +13,30 @@
     </script>
     <div>
         <div class="container-fluid" style="padding-right: 0; padding-left: 0">
-        <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto" >
-            <table id="api_usage">
-                <thead>
-                <tr>
-                    {% for header in headers %}
-                        <th>{{ header.name }}</th>
-                    {% endfor %}
-                </tr>
-                </thead>
-
-                {% for record in items %}
+            <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto">
+                <table id="api_usage">
+                    <thead>
                     <tr>
                         {% for header in headers %}
-                            <td>
-                                 <div {% if header.name == "AOI" %} onclick="showAOI(this)"  {% endif %}style="max-height: 350px; overflow-y: auto;">
-                                    {{ record| key:header.name }}
-                                </div>
-                            </td>
+                            <th>{{ header.name }}</th>
                         {% endfor %}
                     </tr>
-                {% endfor %}
-
-            </table>
-
-        </div>
-        {% if items.has_other_pages %}
-                <div class="col-12 off-set-3 text-center pagination-set">
-                    <nav aria-label="ClimateSERV API Usage">
-                        <ul class="pagination">
-                            {% if items.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ items.previous_page_number }}"><<</a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <a class="page-link">
-                                        <span><<</span>
-                                    </a>
-                                </li>
-                            {% endif %}
-                            {% for i in page_range %}
-                                {% if items.number == i %}
-                                    <li class="page-item active">
-                                        <a class="page-link" href="#">
-                                            {{ i }}
-                                        </a>
-                                    </li>
-                                {% else %}
-                                    <li class="page-item">
-                                        <a class="page-link" href="?page={{ i }}">
-                                            {{ i }}
-                                        </a>
-                                    </li>
-                                {% endif %}
+                    </thead>
+                    {% for record in items %}
+                        <tr>
+                            {% for header in headers %}
+                                <td>
+                                    <div {% if header.name == "AOI" %}
+                                        onclick="showAOI(this)"  {% endif %}style="max-height: 350px; overflow-y: auto;">
+                                        {{ record| key:header.name }}
+                                    </div>
+                                </td>
                             {% endfor %}
-                            {% if items.has_next %}
-                                <li class="page-item" aria-label="Next">
-                                    <a class="page-link" href="?page={{ items.next_page_number }}">>></a>
-                                </li>
-                            {% else %}
-                                <li class="page-item disabled">
-                                    <a class="page-link">
-                                        <span>>></span>
-                                    </a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                </div>
-            {% endif %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% include "pagination.html" %}
         </div>
     </div>
-
 {% endblock %}
