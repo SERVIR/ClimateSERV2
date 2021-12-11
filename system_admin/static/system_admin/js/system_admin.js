@@ -15,3 +15,7 @@ function showAOI(which){
     }
     console.log(aoi);
 }
+
+function deleteRow(which){
+    console.log("Delete: " + which);
+}

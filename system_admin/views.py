@@ -16,6 +16,10 @@ def testing(request):
 
 @staff_member_required
 def usage(request):
+    if request.method == "POST":
+        record = Track_Usage.objects.get(id=request.POST["record_id"])
+        record.delete()
+
     order_by = "id"  # request.GET.get('order_by')
     direction = "asc"  # request.GET.get('direction')
     ordering = order_by
