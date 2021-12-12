@@ -13,9 +13,9 @@ class Track_Usage(models.Model):
     request_type = models.CharField(max_length=50, default=None)
     status = models.CharField(max_length=50, default=None)
     file_size = models.IntegerField(default=0)  # for download data, get file
-    API_call = models.CharField(max_length=250, null=True,blank=True)
-    data_retrieved =  models.BooleanField(default=False)
-    progress =  models.IntegerField(default=0)
+    API_call = models.CharField(max_length=250, null=True, blank=True)
+    data_retrieved = models.BooleanField(default=False)
+    progress = models.CharField(default='0', max_length=50)
 
     def __str__(self):
         return f"{self.unique_id}"

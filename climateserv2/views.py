@@ -46,27 +46,39 @@ def readProgress(uid):
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def processCallBack(request, output, contenttype):
     httpresp = None
+    request_id = None
     if request.method == 'POST':
+        try:
+            if "id" in request.POST:
+                request_id = request.POST["id"]
+            else:
+                request_id = json.loads(output)[0]
+        except Exception:
+            httpresp = HttpResponse(output)
         try:
             callback = request.POST["callback"]
             httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
         except KeyError:
             httpresp = HttpResponse(output)
     if request.method == 'GET':
+        request_id = request.GET["id"]
         try:
             callback = request.GET["callback"]
             httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
         except KeyError:
             httpresp = HttpResponse(output)
 
-    if httpresp.status_code == 200:
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-        track_usage.status = "Complete"
-        track_usage.save()
-    else:
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-        track_usage.status = "Fail"
-        track_usage.save()
+    try:
+        if httpresp.status_code == 200:
+            track_usage = Track_Usage.objects.get(unique_id=request_id)
+            track_usage.status = "Complete"
+            track_usage.save()
+        else:
+            track_usage = Track_Usage.objects.get(unique_id=request_id)
+            track_usage.status = "Fail"
+            track_usage.save()
+    except Exception:
+        pass
     return httpresp
 
 
@@ -309,7 +321,7 @@ def submitDataRequest(request):
 
     if request.method == 'POST':
         try:
-            logger.debug("looking at getting datatype" + str(request))
+            logger.debug("looking at getting datatype" + str(request.POST["datatype"]))
             datatype = int(request.POST["datatype"])
         except KeyError:
             logger.warning("issue with datatype" + str(request))
@@ -482,6 +494,7 @@ def submitDataRequest(request):
         if "geometry" in dictionary:
             aoi = dictionary['geometry']
         else:
+            status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layerid, "FeatureIds": featureids})
         track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
                                   time_requested=datetime.now(), AOI=aoi,
@@ -675,11 +688,13 @@ def submitMonthlyRainfallAnalysisRequest(request):
                                           "features": [{"type": "Feature", "properties": {}, "geometry": jsonn}]}
         logger.info("Adding progress (getMonthlyRainfallAnalysis) " + uniqueid)
 
-        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=uniqueid, progress=0)
         logger.info("Added progress (getMonthlyRainfallAnalysis) " + uniqueid)
 
         log.save()
+
+        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
         if logg.progress == 100:
             status = "Success"
