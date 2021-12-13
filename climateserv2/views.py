@@ -1,21 +1,24 @@
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
 import json
 import logging
+import multiprocessing
+import os
 import socket
+import sys
+from datetime import datetime, timedelta
+
+import pandas as pd
+import xarray as xr
+from django.apps import apps
+from django.db import DatabaseError
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+
+import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
-from .processtools import uutools as uutools
-import climateserv2.requestLog as requestLog
-import sys
-import pandas as pd
-import os
-import xarray as xr
-from datetime import datetime, timedelta
-from django.apps import apps
 from .processDataRequest import start_processing
-import multiprocessing
+from .processtools import uutools as uutools
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -25,7 +28,7 @@ logger = logging.getLogger("request_processor")
 
 
 # To read a results file from the filesystem based on uuid
-def readResults(uid):
+def read_results(uid):
     filename = params.getResultsFilename(uid)
     f = open(filename, "r")
     x = json.load(f)
@@ -34,18 +37,18 @@ def readResults(uid):
 
 
 # To read progress from the database
-def readProgress(uid):
+def read_progress(uid):
     try:
         res = Request_Progress.objects.get(request_id=str(uid))
-        value = res.progress
+        return res.progress
     except Exception as e:
         print(e)
-    return value
+        return "-1"
 
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
-def processCallBack(request, output, contenttype):
-    httpresp = None
+def process_callback(request, output, content_type):
+    http_response = None
     request_id = None
     if request.method == 'POST':
         try:
@@ -54,22 +57,22 @@ def processCallBack(request, output, contenttype):
             else:
                 request_id = json.loads(output)[0]
         except Exception:
-            httpresp = HttpResponse(output)
+            http_response = HttpResponse(output)
         try:
             callback = request.POST["callback"]
-            httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
+            http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
         except KeyError:
-            httpresp = HttpResponse(output)
+            http_response = HttpResponse(output)
     if request.method == 'GET':
         request_id = request.GET["id"]
         try:
             callback = request.GET["callback"]
-            httpresp = HttpResponse(callback + "(" + output + ")", content_type=contenttype)
+            http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
         except KeyError:
-            httpresp = HttpResponse(output)
+            http_response = HttpResponse(output)
 
     try:
-        if httpresp.status_code == 200:
+        if http_response.status_code == 200:
             track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.status = "Complete"
             track_usage.save()
@@ -77,36 +80,41 @@ def processCallBack(request, output, contenttype):
             track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.status = "Fail"
             track_usage.save()
+    except DatabaseError:
+        pass
     except Exception:
         pass
-    return httpresp
+    return http_response
 
 
 # To get the request logs from a given date range
-def get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay):
-    dateTimeFormat = "%Y_%m_%d"
-    if (len(str(sMonth)) == 1):
-        sMonth = "0" + str(sMonth)
-    if (len(str(eMonth)) == 1):
-        eMonth = "0" + str(eMonth)
-    if (len(str(sDay)) == 1):
-        sDay = "0" + str(sDay)
-    if (len(str(eDay)) == 1):
-        eDay = "0" + str(eDay)
-    sDateTimeString = str(sYear) + "_" + str(sMonth) + "_" + str(sDay)
-    eDateTimeString = str(eYear) + "_" + str(eMonth) + "_" + str(eDay)
-    dateTime_Early = datetime.datetime.strptime(sDateTimeString, dateTimeFormat)
-    dateTime_Late = datetime.datetime.strptime(eDateTimeString, dateTimeFormat)
+def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_month, end_day):
+    date_time_format = "%Y_%m_%d"
+    # This should not be needed, after we confirm please remove
+    # if len(str(start_month)) == 1:
+    #     start_month = "0" + str(start_month)
+    # if len(str(end_month)) == 1:
+    #     end_month = "0" + str(end_month)
+    # if len(str(start_day)) == 1:
+    #     start_day = "0" + str(start_day)
+    # if len(str(end_day)) == 1:
+    #     end_day = "0" + str(end_day)
+    # sDateTimeString = str(start_year) + "_" + str(start_month) + "_" + str(start_day)
+    # eDateTimeString = str(end_year) + "_" + str(end_month) + "_" + str(end_day)
+    date_time_early = datetime.datetime.strptime(str(start_year) + "_" + str(start_month) + "_" + str(start_day),
+                                                 date_time_format)
+    date_time_late = datetime.datetime.strptime(str(end_year) + "_" + str(end_month) + "_" + str(end_day),
+                                                date_time_format)
 
-    retLogs = []
+    ret_logs = []
     try:
-        retLogs = requestLog.get_RequestData_ByRange(dateTime_Early, dateTime_Late)
+        ret_logs = requestLog.get_RequestData_ByRange(date_time_early, date_time_late)
     except:
         e = sys.exc_info()[0]
-        errorMsg = "ERROR get_LogRequests_ByRange: There was an error trying to get the logs.  System error message: " + str(
+        error_msg = "ERROR get_LogRequests_ByRange: There was an error trying to get the logs.  System error message: " + str(
             e)
-        logger.error(errorMsg)
-    return retLogs
+        logger.error(error_msg)
+    return ret_logs
 
 
 # To get a list of all request logs within a specified date range
@@ -115,21 +123,21 @@ def getRequestLogs(request):
     theLogs = []
     try:
         request_Token = request.GET["tn"]
-        if (request_Token == global_CONST_LogToken):
+        if request_Token == global_CONST_LogToken:
             sYear = request.GET["sYear"]
             sMonth = request.GET["sMonth"]
             sDay = request.GET["sDay"]
             eYear = request.GET["eYear"]
             eMonth = request.GET["eMonth"]
             eDay = request.GET["eDay"]
-            theLogs = get_LogRequests_ByRange(sYear, sMonth, sDay, eYear, eMonth, eDay)
+            theLogs = get_log_requests_by_range(sYear, sMonth, sDay, eYear, eMonth, eDay)
     except:
         retObj = {
             "error": "Error Processing getRequestLogs (This error message has been simplified for security reasons.  "
                      "Please contact the website owner for more information) "
         }
         theLogs.append(retObj)
-    return processCallBack(request, json.dumps(theLogs), "application/json")
+    return process_callback(request, json.dumps(theLogs), "application/json")
 
 
 # To get a list of all of the parameter types
@@ -137,7 +145,7 @@ def getRequestLogs(request):
 def getParameterTypes(request):
     print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
-    return processCallBack(request, json.dumps(params.parameters), "application/javascript")
+    return process_callback(request, json.dumps(params.parameters), "application/javascript")
 
 
 # To get a list of shaoefile feature types supported by the system
@@ -153,7 +161,7 @@ def getFeatureLayers(request):
     output = []
     for value in params.shapefileName:
         output.append({'id': value['id'], 'displayName': value['displayName'], 'visible': value['visible']})
-    return processCallBack(request, json.dumps(output), "application/javascript")
+    return process_callback(request, json.dumps(output), "application/javascript")
 
 
 # To get the actual data from the processing request
@@ -163,17 +171,17 @@ def getDataFromRequest(request):
     try:
         requestid = request.GET["id"]
         logger.debug("Getting Data from Request " + requestid)
-        jsonresults = readResults(requestid)
+        jsonresults = read_results(requestid)
         track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
         track_usage.data_retrieved = True
         track_usage.save()
-        return processCallBack(request, json.dumps(jsonresults), "application/json")
+        return process_callback(request, json.dumps(jsonresults), "application/json")
     except Exception as e:
         logger.warning("problem getting request data for id: " + str(request))
         track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
         track_usage.data_retrieved = False
         track_usage.save()
-        return processCallBack(request, "need to send id", "application/json")
+        return process_callback(request, "need to send id", "application/json")
 
 
 # To parse an int from a string
@@ -189,22 +197,22 @@ def intTryParse(value):
 def getDataRequestProgress(request):
     logger.debug("Getting Data Request Progress")
     track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-    track_usage.progress = readProgress(request.GET["id"])
+    track_usage.progress = read_progress(request.GET["id"])
     track_usage.data_retrieved = True
     track_usage.save()
     try:
         requestid = request.GET["id"]
-        progress = readProgress(requestid)
+        progress = read_progress(requestid)
 
         logger.debug("Progress =" + str(progress))
         if progress == -1.0:
             logger.warning("Problem with getDataRequestProgress: " + str(request))
-            return processCallBack(request, json.dumps([-1]), "application/json")
+            return process_callback(request, json.dumps([-1]), "application/json")
         else:
-            return processCallBack(request, json.dumps([float(progress)]), "application/json")
+            return process_callback(request, json.dumps([float(progress)]), "application/json")
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
-        return processCallBack(request, json.dumps([-1]), "application/json")
+        return process_callback(request, json.dumps([-1]), "application/json")
 
 
 # To get the file for the completed Job ID
@@ -214,7 +222,7 @@ def getFileForJobID(request):
 
     try:
         requestid = request.GET["id"]
-        progress = readProgress(requestid)
+        progress = read_progress(requestid)
         # Validate that progress is at 100%
         if float(progress) == 100.0:
             track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
@@ -236,7 +244,7 @@ def getFileForJobID(request):
             except:
                 doesFileExist = False
 
-            if (doesFileExist == True):
+            if doesFileExist == True:
                 track_usage = Track_Usage.objects.get(unique_id=requestid)
                 track_usage.file_size = os.stat(expectedFileLocation).st_size
                 track_usage.save()
@@ -250,31 +258,31 @@ def getFileForJobID(request):
                 return response
             else:
                 # File did not exist
-                return processCallBack(request, json.dumps(
+                return process_callback(request, json.dumps(
                     "File does not exist on server.  There was an error generating this file during the server job"),
-                                       "application/json")
-        elif (progress == -1.0):
+                                        "application/json")
+        elif progress == -1.0:
             retObj = {
                 "msg": "File Not found.  There was an error validating the job progress.  It is possible that this is "
                        "an invalid job id.",
                 "fileProgress": progress
             }
-            return processCallBack(request, json.dumps(retObj), "application/json")
+            return process_callback(request, json.dumps(retObj), "application/json")
         else:
             retObj = {
                 "msg": "File still being built.",
                 "fileProgress": progress
             }
-            return processCallBack(request, json.dumps(retObj), "application/json")
+            return process_callback(request, json.dumps(retObj), "application/json")
     except Exception as e:
-        return processCallBack(request, json.dumps(str(e)), "application/json")
+        return process_callback(request, json.dumps(str(e)), "application/json")
 
 
 # To get list of all climate change scenario info
 @csrf_exempt
 def getClimateScenarioInfo(request):
     track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-    track_usage.progress = readProgress(request.GET["id"])
+    track_usage.progress = read_progress(request.GET["id"])
     track_usage.save()
     nc_file = xr.open_dataset(
         '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
@@ -304,7 +312,7 @@ def getClimateScenarioInfo(request):
         "isError": isError
     }
 
-    return processCallBack(request, json.dumps(api_ReturnObject), "application/javascript")
+    return process_callback(request, json.dumps(api_ReturnObject), "application/javascript")
 
 
 # Submit a data request for processing
@@ -353,7 +361,7 @@ def submitDataRequest(request):
                 featureids = []
                 for fid in fids:
                     value, isInt = intTryParse(fid)
-                    if (isInt == True):
+                    if isInt == True:
                         featureids.append(value)
 
                 featureList = True
@@ -415,7 +423,7 @@ def submitDataRequest(request):
                 featureids = []
                 for fid in fids:
                     value, isInt = intTryParse(fid)
-                    if (isInt == True):
+                    if isInt == True:
                         featureids.append(value)
 
                 featureList = True
@@ -448,7 +456,7 @@ def submitDataRequest(request):
     logger.info("Submitting " + uniqueid)
     # Submit requests to the ipcluster service to get data
 
-    if (len(error) == 0):
+    if len(error) == 0:
         dictionary = {'uniqueid': uniqueid,
                       'datatype': datatype,
                       'begintime': begintime,
@@ -456,7 +464,7 @@ def submitDataRequest(request):
                       'intervaltype': intervaltype,
                       'operationtype': operationtype
                       }
-        if (featureList == True):
+        if featureList == True:
             dictionary['layerid'] = layerid
             dictionary['featureids'] = featureids
         else:
@@ -507,7 +515,7 @@ def submitDataRequest(request):
         track_usage.save()
         p.start()
 
-        return processCallBack(request, json.dumps([uniqueid]), "application/json")
+        return process_callback(request, json.dumps([uniqueid]), "application/json")
     else:
         status = "Fail"
         if "geometry" in request.POST:
@@ -524,7 +532,7 @@ def submitDataRequest(request):
                                   API_call="submitDataRequest", data_retrieved=False)
 
         track_usage.save()
-        return processCallBack(request, json.dumps(error), "application/json")
+        return process_callback(request, json.dumps(error), "application/json")
 
 
 # To submit request for Monthly Analysis
@@ -559,7 +567,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 featureids = []
                 for fid in fids:
                     value, isInt = intTryParse(fid)
-                    if (isInt == True):
+                    if isInt == True:
                         featureids.append(value)
                 featureList = True
                 logger.debug("getMonthlyRainfallAnalysis: Loaded feature ids, featureids: " + str(featureids))
@@ -594,20 +602,20 @@ def submitMonthlyRainfallAnalysisRequest(request):
         logger.info("Submitting (getMonthlyRainfallAnalysis) " + uniqueid)
 
         # Submit requests to the ipcluster service to get data
-        if (len(error) == 0):
+        if len(error) == 0:
             dictionary = {'uniqueid': uniqueid,
                           'custom_job_type': custom_job_type,
                           'seasonal_start_date': seasonal_start_date,
                           'seasonal_end_date': seasonal_end_date
                           }
-            if (featureList == True):
+            if featureList == True:
                 dictionary['layerid'] = layerid
                 dictionary['featureids'] = featureids
             else:
                 dictionary['geometry'] = polygonstring
-            return processCallBack(request, json.dumps([uniqueid]), "application/json")
+            return process_callback(request, json.dumps([uniqueid]), "application/json")
         else:
-            return processCallBack(request, json.dumps(error), "application/json")
+            return process_callback(request, json.dumps(error), "application/json")
 
     if request.method == 'GET':
         try:
@@ -634,7 +642,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
                 featureids = []
                 for fid in fids:
                     value, isInt = intTryParse(fid)
-                    if (isInt == True):
+                    if isInt == True:
                         featureids.append(value)
                 featureList = True
                 logger.debug("getMonthlyRainfallAnalysis: Loaded feature ids, featureids: " + str(featureids))
@@ -716,7 +724,7 @@ def submitMonthlyRainfallAnalysisRequest(request):
 
         track_usage.save()
         p.start()
-        return processCallBack(request, json.dumps([uniqueid]), "application/json")
+        return process_callback(request, json.dumps([uniqueid]), "application/json")
     else:
         status = "Fail"
         logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
@@ -734,4 +742,4 @@ def submitMonthlyRainfallAnalysisRequest(request):
                                   data_retrieved=False)
 
         track_usage.save()
-        return processCallBack(request, json.dumps(error), "application/json")
+        return process_callback(request, json.dumps(error), "application/json")
