@@ -4,7 +4,7 @@
             <ul class="pagination">
                 {% if items.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ items.previous_page_number }}"><<</a>
+                        <a class="page-link" href="?page={{ items.previous_page_number }}&sorted={{ sorted }}"><<</a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">
@@ -22,7 +22,7 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}">
+                            <a class="page-link" href="?page={{ i }}&sorted={{ sorted }}">
                                 {{ i }}
                             </a>
                         </li>
@@ -30,7 +30,7 @@
                 {% endfor %}
                 {% if items.has_next %}
                     <li class="page-item" aria-label="Next">
-                        <a class="page-link" href="?page={{ items.next_page_number }}">>></a>
+                        <a class="page-link" href="?page={{ items.next_page_number }}&sorted={{ sorted }}">>></a>
                     </li>
                 {% else %}
                     <li class="page-item disabled">

@@ -16,17 +16,25 @@ def testing(request):
 
 @staff_member_required
 def usage(request):
+    page = 1
+    order_by = 'id'
     if request.method == "POST":
-        record = Track_Usage.objects.get(id=request.POST["record_id"])
-        record.delete()
-
-    order_by = "id"  # request.GET.get('order_by')
+        if "delete_record_id" in request.POST:
+            record = Track_Usage.objects.get(id=request.POST["delete_record_id"])
+            record.delete()
+            page = request.POST["page"]
+        if "sort_column" in request.POST:
+            order_by = request.POST["sort_column"]
+    else:
+        page = request.GET.get('page')
+        if 'sorted' in request.GET:
+            order_by = request.GET.get('sorted')
+    # order_by = "id"  # request.GET.get('order_by')
     direction = "asc"  # request.GET.get('direction')
     ordering = order_by
     if direction == 'desc':
         ordering = '-{}'.format(ordering)
     paginator = Paginator(Track_Usage.objects.all().order_by(ordering), 2)
-    page = request.GET.get('page')
 
     try:
         items = paginator.page(page)
@@ -45,7 +53,9 @@ def usage(request):
         'headers': Track_Usage._meta.get_fields(),
         'usage': Track_Usage.objects.all(),
         'page_range': page_range,
-        'items': items
+        'items': items,
+        'page': page,
+        'sorted': order_by,
     }
     return render(request, 'usage.html', context)
 
