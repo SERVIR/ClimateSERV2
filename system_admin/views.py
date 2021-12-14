@@ -18,6 +18,7 @@ def testing(request):
 def usage(request):
     page = 1
     order_by = 'id'
+    direction = "asc"
     if request.method == "POST":
         if "delete_record_id" in request.POST:
             record = Track_Usage.objects.get(id=request.POST["delete_record_id"])
@@ -25,12 +26,16 @@ def usage(request):
             page = request.POST["page"]
         if "sort_column" in request.POST:
             order_by = request.POST["sort_column"]
+        if "direction" in request.POST:
+            direction = 'desc' if request.POST["direction"] == 'asc' else 'asc'
     else:
         page = request.GET.get('page')
         if 'sorted' in request.GET:
             order_by = request.GET.get('sorted')
+        if "direction" in request.GET:
+            direction = 'desc' if request.GET.get == 'asc' else 'asc'
     # order_by = "id"  # request.GET.get('order_by')
-    direction = "asc"  # request.GET.get('direction')
+    # direction = "asc"  # request.GET.get('direction')
     ordering = order_by
     if direction == 'desc':
         ordering = '-{}'.format(ordering)
@@ -56,6 +61,7 @@ def usage(request):
         'items': items,
         'page': page,
         'sorted': order_by,
+        'direction': direction,
     }
     return render(request, 'usage.html', context)
 

@@ -36,6 +36,13 @@
                                                 style="display:none"
                                                 value="{{ page }}"
                                         ></input>
+                                        {% if header.name == sorted %}
+                                        <input
+                                                name="direction"
+                                                style="display:none"
+                                                value="{{ direction }}"
+                                        ></input>
+                                        {% endif %}
                                     </div>
                                 </form>
 
