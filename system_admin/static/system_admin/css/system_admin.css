@@ -21,10 +21,60 @@
     padding-top: 12px;
     padding-bottom: 12px;
     text-align: left;
-    background-color: #04AA6D;
+    background-color: #758055;
     color: white;
 }
 
 .pagination {
     justify-content: center !important;
+}
+
+.sort-by {
+	padding-right: 18px;
+	position: relative;
+	display: block;
+    width: 100%;
+}
+.sort-by:before,
+.sort-by:after {
+	border: 5px solid transparent;
+	content: "";
+	display: block;
+	height: 0;
+	right: 5px;
+	top: 50%;
+	position: absolute;
+	width: 0;
+}
+.sort-by:before {
+	border-bottom-color: #bbbbbb;
+	margin-top: -9px;
+}
+.sort-by.asc:before {
+	border-bottom-color: #fff;
+	margin-top: -9px;
+}
+.sort-by:after {
+	border-top-color: #bdbdbdb5;
+    margin-top: 4px;
+}
+
+.sort-by.desc:after {
+	border-top-color: #fff;
+	margin-top: 4px;
+}
+
+.page-link{
+    color:#92B03D;
+}
+
+.page-link:hover{
+    color:#92B03D;
+}
+
+.page-item.active .page-link {
+    z-index: 1;
+    color: #fff;
+    background-color: #92B03D;
+    border-color: #92B03D;
 }

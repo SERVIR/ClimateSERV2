@@ -46,7 +46,16 @@
                                     </div>
                                 </form>
 
-                                <span onclick="document.forms['sort_form_{{ header.name }}'].submit();">{{ header.name }}</span></th>
+                                <span
+                                        onclick="document.forms['sort_form_{{ header.name }}'].submit();"
+                                        class="sort-by
+                                            {% if header.name == sorted and direction == 'asc'%}asc
+                                            {% elif  header.name == sorted and direction == 'desc'%}desc{% endif %}
+"
+                                >
+                                    {{ header.name }}
+                                </span>
+                            </th>
                         {% endfor %}
                     </tr>
                     </thead>
