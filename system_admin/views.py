@@ -33,7 +33,7 @@ def usage(request):
         if 'sorted' in request.GET:
             order_by = request.GET.get('sorted')
         if "direction" in request.GET:
-            direction = 'desc' if request.GET.get == 'asc' else 'asc'
+            direction = request.GET.get('direction')
     # order_by = "id"  # request.GET.get('order_by')
     # direction = "asc"  # request.GET.get('direction')
     ordering = order_by
@@ -61,7 +61,7 @@ def usage(request):
         'items': items,
         'page': page,
         'sorted': order_by,
-        'direction': direction,
+        'direction': direction
     }
     return render(request, 'usage.html', context)
 
