@@ -5,22 +5,51 @@
     <link rel="stylesheet"
           href="{% static 'system_admin/css/system_admin.css' %}"
     />
+     <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
+    />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
+    />
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet.nontiledlayer@1.0.7/dist/NonTiledLayer.js"
+    ></script>
     <script src="{% static 'system_admin/js/system_admin.js' %}"></script>
 {% endblock %}
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
     </script>
-    <div>
-        <div class="container-fluid" style="padding-right: 0; padding-left: 0">
+    <div class="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h3>Map and filters</h3>
+        </div>
+        <div id="map">
+
+        </div>
+        <p>Map at top</p>
+        <p>Different filters</p>
+    </nav>
+        <div class="usage_content" style="padding-right: 0; padding-left: 0">
             <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto">
                 <div>
                     <form action="{% url 'ClimateSERV_SystemAdmin:usage' %}"
                                         method="POST">
                         {% csrf_token %}
                         <span>Items per page: </span>
-                    {{ number_of_items }}
-                        <select onchange="this.form.submit()" name="number_of_items">
+                        <label for="number_of_items" style="display: none">Items</label>
+                        <select onchange="this.form.submit()" name="number_of_items" id="number_of_items">
                             <option value="2" {% if number_of_items == '2' %}selected{% endif %}>2</option>
                             <option value="5" {% if number_of_items == '5' %}selected{% endif %}>5</option>
                             <option value="10" {% if number_of_items == '10' %}selected{% endif %}>10</option>

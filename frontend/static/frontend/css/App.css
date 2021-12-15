@@ -267,7 +267,11 @@ body {
 }
 
 .sidebar-header {
-    background-color: #002a53;
+    background-color: #758055;
+    height: 40px;
+    line-height: 40px;
+    font-size: 14.4pt;
+    color: #fff;
 }
 
 #home.sidebar-pane.active {

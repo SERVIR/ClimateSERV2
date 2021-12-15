@@ -1,3 +1,33 @@
+.wrapper {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+}
+
+#sidebar {
+    min-width: 250px;
+    max-width: 250px;
+    min-height: 100vh;
+}
+
+#sidebar.active {
+    margin-left: -250px;
+}
+
+#map{
+    width:250px;
+    height:250px;
+}
+
+.sidebar-header h3{
+    text-align: center;
+    line-height: 40px;
+}
+
+.usage_content{
+    overflow-y: auto;
+}
+
 #api_usage {
     font-family: Arial, Helvetica, sans-serif;
     border-collapse: collapse;
@@ -27,6 +57,7 @@
 
 .pagination {
     justify-content: center !important;
+    list-style: none;
 }
 
 .sort-by {
