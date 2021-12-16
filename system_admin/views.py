@@ -20,6 +20,7 @@ def usage(request):
     order_by = 'id'
     direction = "asc"
     number_of_items = 2
+    filter = None
     if request.method == "POST":
         if "delete_record_id" in request.POST:
             record = Track_Usage.objects.get(id=request.POST["delete_record_id"])
@@ -33,7 +34,10 @@ def usage(request):
             Track_Usage.objects.all().count()
             post_count = request.POST["number_of_items"]
             number_of_items = Track_Usage.objects.all().count() if post_count == "all" else post_count
-
+            if 'filter_key' in request.POST:
+                filter_key = request.POST["filter_key"]
+                filter_value = request.POST["filter_text"]
+                filter = 1
     else:
         page = request.GET.get('page')
         if 'sorted' in request.GET:
@@ -47,7 +51,10 @@ def usage(request):
     ordering = order_by
     if direction == 'desc':
         ordering = '-{}'.format(ordering)
-    paginator = Paginator(Track_Usage.objects.all().order_by(ordering), number_of_items)
+    if filter is not None:
+        paginator = Paginator(Track_Usage.objects.filter(**{filter_key:filter_value}).order_by(ordering), number_of_items)
+    else:
+        paginator = Paginator(Track_Usage.objects.all().order_by(ordering), number_of_items)
 
     try:
         items = paginator.page(page)
