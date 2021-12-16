@@ -5,14 +5,14 @@
                 <li class="page-item" aria-label="First">
                     <a
                             class="page-link"
-                            href="?page=1&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}">
+                            href="?page=1&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
                         First
                     </a>
                 </li>
                 {% if items.has_previous %}
                     <li class="page-item">
                         <a class="page-link"
-                           href="?page={{ items.previous_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}">
+                           href="?page={{ items.previous_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
                             <<
                         </a>
                     </li>
@@ -32,7 +32,7 @@
                         </li>
                     {% else %}
                         <li class="page-item">
-                            <a class="page-link" href="?page={{ i }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}">
+                            <a class="page-link" href="?page={{ i }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
                                 {{ i }}
                             </a>
                         </li>
@@ -41,7 +41,7 @@
                 {% if items.has_next %}
                     <li class="page-item" aria-label="Next">
                         <a class="page-link"
-                           href="?page={{ items.next_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}">
+                           href="?page={{ items.next_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
                             >>
                         </a>
                     </li>
@@ -55,7 +55,7 @@
                 <li class="page-item" aria-label="Last">
                     <a
                             class="page-link"
-                            href="?page={{ items.paginator.num_pages }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}">
+                            href="?page={{ items.paginator.num_pages }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
                         Last
                     </a>
                 </li>

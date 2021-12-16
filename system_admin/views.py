@@ -35,11 +35,11 @@ def usage(request):
             Track_Usage.objects.all().count()
             post_count = request.POST["number_of_items"]
             number_of_items = Track_Usage.objects.all().count() if post_count == "all" else post_count
-            if 'filter_key' in request.POST:
-                filter_key = request.POST["filter_key"]
-                if filter_key:
-                    filter_key += "__icontains"
-                filter_value = request.POST["filter_text"]
+        if 'filter_key' in request.POST:
+            filter_key = request.POST["filter_key"]
+            if filter_key:
+                filter_key += "__icontains"
+            filter_value = request.POST["filter_text"]
     else:
         page = request.GET.get('page')
         if 'sorted' in request.GET:
@@ -50,6 +50,11 @@ def usage(request):
             Track_Usage.objects.all().count()
             get_count = request.GET.get("number_of_items")
             number_of_items = Track_Usage.objects.all().count() if get_count == "all" else get_count
+        if 'filter_key' in request.GET:
+            filter_key = request.GET.get("filter_key")
+            if filter_key:
+                filter_key += "__icontains"
+            filter_value = request.GET.get("filter_text")
     ordering = order_by
     if direction == 'desc':
         ordering = '-{}'.format(ordering)
@@ -73,6 +78,8 @@ def usage(request):
     start_index = index - 5 if index >= 5 else 0
     end_index = index + 5 if index <= max_index - 5 else max_index
     page_range = paginator.page_range[start_index:end_index]
+    if filter_key:
+        filter_key = filter_key.replace('__icontains', '')
     context = {
         'headers': Track_Usage._meta.get_fields(),
         'usage': Track_Usage.objects.all(),
@@ -82,6 +89,8 @@ def usage(request):
         'sorted': order_by,
         'direction': direction,
         'number_of_items': number_of_items,
+        'filter_key': filter_key,
+        'filter_text': filter_value,
     }
     return render(request, 'usage.html', context)
 
