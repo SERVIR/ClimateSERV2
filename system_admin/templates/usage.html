@@ -55,14 +55,14 @@
 
                     <label>Filter by:</label><br>
                 <select id="filter_key" name="filter_key">
-                    <option value="originating_IP">originating_IP</option>
-                    <option value="dataset">dataset</option>
-                    <option value="request_type">request_type</option>
-                    <option value="status">status</option>
-                    <option value="file_size">file_size</option>
+                    <option value="originating_IP" {% if filter_key == 'originating_IP' %}selected{% endif %}>originating_IP</option>
+                    <option value="dataset" {% if filter_key == 'dataset' %}selected{% endif %}>dataset</option>
+                    <option value="request_type" {% if filter_key == 'request_type' %}selected{% endif %}>request_type</option>
+                    <option value="status" {% if filter_key == 'status' %}selected{% endif %}>status</option>
+                    <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size</option>
                 </select>
 
-                    <input type="text" name="filter_text"/>
+                    <input type="text" name="filter_text" value="{{ filter_text }}"/>
                 </form>
 
             </div>
