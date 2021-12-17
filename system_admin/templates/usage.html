@@ -29,6 +29,10 @@
 {% block content %}
     <script>
         const static_url = "{% static '' %}";
+        $(function () {
+            enable_filter_view('{% if filter_key and filter_key is not 'None' %}{{ filter_key }}{% endif %}');
+        });
+
     </script>
     <div class="wrapper">
         <nav id="sidebar">
@@ -54,24 +58,48 @@
                     </select>
 
                     <label>Filter by:</label><br>
-                <select id="filter_key" name="filter_key">
-                    <option value="originating_IP" {% if filter_key == 'originating_IP' %}selected{% endif %}>originating_IP</option>
-                    <option value="dataset" {% if filter_key == 'dataset' %}selected{% endif %}>dataset</option>
-                    <option value="request_type" {% if filter_key == 'request_type' %}selected{% endif %}>request_type</option>
-                    <option value="status" {% if filter_key == 'status' %}selected{% endif %}>status</option>
-                    <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size</option>
-                </select>
-
-                    <input
-                            type="text"
-                            name="filter_text"
-                            style="width:100%"
-                            value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
-
+                    <select id="filter_key" name="filter_key" onchange="enable_filter_view(this.value)">
+                        <option value="originating_IP" {% if filter_key == 'originating_IP' %}selected{% endif %}>
+                            originating_IP
+                        </option>
+                        <option value="dataset" {% if filter_key == 'dataset' %}selected{% endif %}>dataset</option>
+                        <option value="request_type" {% if filter_key == 'request_type' %}selected{% endif %}>
+                            request_type
+                        </option>
+                        <option value="status" {% if filter_key == 'status' %}selected{% endif %}>status</option>
+                        <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size
+                        </option>
+                        <option value="time_requested" {% if filter_key == 'time_requested' %}selected{% endif %}>
+                            time_requested
+                        </option>
+                    </select>
+                    <div id="normal_filter">
+                        <input
+                                type="text"
+                                name="filter_text"
+                                style="width:100%"
+                                value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
+                    </div>
+                    <div id="time_range_filter">
+                        <label for="start_range">Start range:</label>
+                        <input
+                                type="date"
+                                id="start_range"
+                                value="{% if start_range and start_range is not 'None' %}{{ start_range }}{% endif %}"
+                                name="start_range">
+                        to
+                        <label for="end_range">End range:</label>
+                        <input
+                                type="date"
+                                id="end_range"
+                                value="{% if end_range and end_range is not 'None' %}{{ end_range }}{% endif %}"
+                                name="end_range">
+                    </div>
                     <button
                             type="submit"
                             style="float: right"
-                            value="Apply Filter">Apply Filter</button>
+                            value="Apply Filter">Apply Filter
+                    </button>
                 </form>
 
             </div>
@@ -116,25 +144,44 @@
                                                     value="{{ direction }}"
                                             />
                                         {% endif %}
-                                    {% if filter_key and filter_text %}
-                                        <label for="filter_key_{{ header.name }}_{{ number_of_items }}"
-                                               style="display: none">items</label>
-                                        <input
-                                                id="filter_key_{{ header.name }}_{{ number_of_items }}"
-                                                name="filter_key"
-                                                style="display:none"
-                                                value="{{ filter_key }}"
-                                        />
-                                        <label for="filter_text_{{ header.name }}_{{ number_of_items }}"
-                                               style="display: none">items</label>
-                                        <input
-                                                id="filter_text_{{ header.name }}_{{ number_of_items }}"
-                                                name="filter_text"
-                                                style="display:none"
-                                                value="{{ filter_text }}"
-                                        />
+                                        {% if filter_key and filter_text %}
+                                            <label for="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                                    name="filter_key"
+                                                    style="display:none"
+                                                    value="{{ filter_key }}"
+                                            />
+                                            <label for="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                                    name="filter_text"
+                                                    style="display:none"
+                                                    value="{{ filter_text }}"
+                                            />
 
-                                    {% endif %}
+                                        {% endif %}
+                                        {% if start_range and end_range %}
+                                            <label for="start_range_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="start_range_{{ header.name }}_{{ number_of_items }}"
+                                                    name="start_range"
+                                                    style="display:none"
+                                                    value="{{ start_range }}"
+                                            />
+                                            <label for="end_range_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="end_range_{{ header.name }}_{{ number_of_items }}"
+                                                    name="end_range"
+                                                    style="display:none"
+                                                    value="{{ end_range }}"
+                                            />
+
+                                        {% endif %}
                                         <label for="items_{{ header.name }}_{{ number_of_items }}"
                                                style="display: none">items</label>
                                         <input
@@ -199,6 +246,67 @@
                                             value="{{ number_of_items }}"
                                     />
                                     <button type="submit" form="removeItem_{{ record.id }}">Delete</button>
+                                    {% if sorted %}
+                                        <label for="sort_column_{{ record.id }}_{{ number_of_items }}"
+                                               style="display:none">sort_column</label>
+                                        <input
+                                                id="sort_column_{{ record.id }}_{{ number_of_items }}"
+                                                name="sort_column"
+                                                style="display:none"
+                                                value="{{ sorted }}"
+                                        />
+                                    {% endif %}
+
+                                    {% if direction %}
+                                        <label for="direction_{{ record.id }}_{{ number_of_items }}"
+                                               style="display:none">direction</label>
+                                        <input
+                                                id="direction_{{ record.id }}_{{ number_of_items }}"
+                                                name="direction"
+                                                style="display:none"
+                                                value="{{ direction }}"
+                                        />
+                                    {% endif %}
+                                    {% if filter_key and filter_text %}
+                                        <label for="filter_key_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_key_{{ record.id }}_{{ number_of_items }}"
+                                                name="filter_key"
+                                                style="display:none"
+                                                value="{{ filter_key }}"
+                                        />
+                                        <label for="filter_text_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_text_{{ record.id }}_{{ number_of_items }}"
+                                                name="filter_text"
+                                                style="display:none"
+                                                value="{{ filter_text }}"
+                                        />
+
+                                    {% endif %}
+                                    {% if start_range and end_range %}
+                                        <label for="start_range_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="start_range_{{ record.id }}_{{ number_of_items }}"
+                                                name="start_range"
+                                                style="display:none"
+                                                value="{{ start_range }}"
+                                        />
+                                        <label for="end_range_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="end_range_{{ record.id }}_{{ number_of_items }}"
+                                                name="end_range"
+                                                style="display:none"
+                                                value="{{ end_range }}"
+                                        />
+
+                                    {% endif %}
+
+
                                 </form>
                             </td>
                             {% for header in headers %}
