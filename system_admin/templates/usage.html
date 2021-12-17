@@ -62,7 +62,7 @@
                     <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size</option>
                 </select>
 
-                    <input type="text" name="filter_text" value="{{ filter_text }}"/>
+                    <input type="text" name="filter_text" value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
                 </form>
 
             </div>
@@ -107,6 +107,25 @@
                                                     value="{{ direction }}"
                                             />
                                         {% endif %}
+                                    {% if filter_key and filter_text %}
+                                        <label for="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                                name="filter_key"
+                                                style="display:none"
+                                                value="{{ filter_key }}"
+                                        />
+                                        <label for="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                                name="filter_text"
+                                                style="display:none"
+                                                value="{{ filter_text }}"
+                                        />
+
+                                    {% endif %}
                                         <label for="items_{{ header.name }}_{{ number_of_items }}"
                                                style="display: none">items</label>
                                         <input
