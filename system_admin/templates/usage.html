@@ -62,7 +62,16 @@
                     <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size</option>
                 </select>
 
-                    <input type="text" name="filter_text" value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
+                    <input
+                            type="text"
+                            name="filter_text"
+                            style="width:100%"
+                            value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
+
+                    <button
+                            type="submit"
+                            style="float: right"
+                            value="Apply Filter">Apply Filter</button>
                 </form>
 
             </div>

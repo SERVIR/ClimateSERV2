@@ -8,6 +8,10 @@
     min-width: 250px;
     max-width: 250px;
     min-height: 100vh;
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    height: 100vh;
 }
 
 #sidebar.active {
