@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='track_usage',
             name='AOI',
-            field=models.JSONField(default=None),
+            field=models.JSONField(default=None, null=True),
         ),
         migrations.AlterField(
             model_name='track_usage',
