@@ -19,6 +19,7 @@ from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .processtools import uutools as uutools
+from django.middleware.csrf import CsrfViewMiddleware
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -319,6 +320,11 @@ def getClimateScenarioInfo(request):
 @csrf_exempt
 def submitDataRequest(request):
     logger.debug("Submitting Data Request")
+    from_ui = False
+    reason = CsrfViewMiddleware().process_view(request, None, (), {})
+    if not reason:
+        from_ui = True
+
     error = []
     polygonstring = None
     datatype = None
@@ -326,6 +332,7 @@ def submitDataRequest(request):
     endtime = None
     intervaltype = None
     layerid = None
+    calculation = None
 
     if request.method == 'POST':
         try:
@@ -387,6 +394,7 @@ def submitDataRequest(request):
         except KeyError:
             logger.warning("issue with operationtype" + str(request))
             error.append("Error with operationtype")
+        calculation = params.parameters[int(request.POST["operationtype"])][2]
 
     if request.method == 'GET':
         # Get datatype
@@ -413,6 +421,10 @@ def submitDataRequest(request):
         except KeyError:
             logger.warning("issue with intervaltype" + str(request))
             error.append("Error with intervaltype")
+        try:
+            calculation =  operationtype = params.parameters[int(request.GET["operationtype"])][2]
+        except KeyError:
+            logger.warning("issue with operationtype" + str(request))
         # Get geometry from parameter Or extract from shapefile
         geometry = None
         featureList = False;
@@ -508,9 +520,10 @@ def submitDataRequest(request):
                                   time_requested=datetime.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
-                                  end_date=pd.to_datetime(endtime, format='%m/%d/%Y'), request_type=request.method,
+                                  end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
+                                  calculation=calculation, request_type=request.method,
                                   status=status, progress=logg.progress, API_call="submitDataRequest",
-                                  data_retrieved=False)
+                                  data_retrieved=False, ui_request=from_ui)
 
         track_usage.save()
         p.start()
@@ -529,7 +542,7 @@ def submitDataRequest(request):
                                   start_date=pd.to_datetime(begintime, format='%m/%d/%Y'),
                                   end_date=pd.to_datetime(endtime, format='%m/%d/%Y'),
                                   request_type=request.method, status=status, progress=logg.progress,
-                                  API_call="submitDataRequest", data_retrieved=False)
+                                  API_call="submitDataRequest", data_retrieved=False, ui_request=from_ui)
 
         track_usage.save()
         return process_callback(request, json.dumps(error), "application/json")
