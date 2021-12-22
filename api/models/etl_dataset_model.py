@@ -2,7 +2,7 @@ from django.db import models
 import uuid
 
 class ETL_Dataset(models.Model):
-    uuid = models.CharField(default=uuid.uuid4, editable=False, max_length=40, primary_key=True)
+    uuid = models.CharField(default=uuid.uuid4, editable=True, max_length=40, primary_key=True, auto_created=True)
     #
     dataset_name = models.CharField('Human Readable Dataset Short Name', max_length=90, blank=False, default="Unknown Dataset Name", help_text="A Human Readable Custom Name to identify this dataset.  Typically expected usage would be for Admin to set this name so they can quickly understand which data set they are looking at.  They could also use the other TDS fields to understand exactly which dataset this refers to.")
     dataset_subtype = models.CharField('Dataset Subtype', max_length=90, blank=False, default="Unknown_Dataset_Subtype", help_text="IMPORTANT: This setting is used by the pipeline to select which specific sub type script logic gets used to execute the ETL job.  There are a set list of Subtypes, use python manage.py list_etl_dataset_subtypes to see a list of all subtypes.")

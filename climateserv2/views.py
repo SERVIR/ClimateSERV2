@@ -422,7 +422,7 @@ def submitDataRequest(request):
             logger.warning("issue with intervaltype" + str(request))
             error.append("Error with intervaltype")
         try:
-            calculation =  operationtype = params.parameters[int(request.GET["operationtype"])][2]
+            calculation = operationtype = params.parameters[int(request.GET["operationtype"])][2]
         except KeyError:
             logger.warning("issue with operationtype" + str(request))
         # Get geometry from parameter Or extract from shapefile
@@ -484,10 +484,13 @@ def submitDataRequest(request):
             try:
                 geom_str = dictionary['geometry']
                 jsonn = json.loads(dictionary['geometry'])
-                featuresexist = jsonn['features']
+                if 'features' not in jsonn:
+                    # featuresexist = jsonn['features']
+                    dictionary['geometry'] = '{"type": "FeatureCollection", "features": [{"type": "Feature", ' \
+                                             '"properties": {}, "geometry": ' + json.dumps(jsonn) + '}]}'
             except:
                 dictionary['geometry'] = {"type": "FeatureCollection",
-                                          "features": [{"type": "Feature", "properties": {}, "geometry": jsonn}]}
+                                          "features": [{"type": "Feature", "properties": {}, "geometry": json.dumps(jsonn)}]}
 
         # start multiprocessing here
         def print_my_results(my_results):
