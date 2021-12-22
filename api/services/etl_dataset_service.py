@@ -1,67 +1,60 @@
 from ..models import ETL_Dataset
 from ..serializers import ETL_DatasetSerializer
 
+
 class ETL_DatasetService():
 
     @staticmethod
     def is_datasetname_avalaible(input__datasetname):
-        retBool = True
         try:
             existing_etl_dataset = ETL_Dataset.objects.filter(dataset_name=str(input__datasetname).strip())[0]
-            retBool = False
+            return False
         except:
-            retBool = True
-        return retBool
+            return True
+
 
     @staticmethod
     def does_etl_dataset_exist__by_uuid(input__uuid):
-        ret_DoesExist = False
         try:
             existing_etl_dataset = ETL_Dataset.objects.filter(uuid=str(input__uuid).strip())[0]
-            ret_DoesExist = True
+            return True
         except:
-            ret_DoesExist = False
-        return ret_DoesExist
+            return False
 
     @staticmethod
     def create_etl_dataset_from_datasetname_only(input__datasetname, created_by="create_dataset_from_datasetname_only"):
-        ret_did_create_dataset = False
-        ret_Dataset_UUID = ""
         try:
-            new_ETL_Dataset = ETL_Dataset()
-            new_ETL_Dataset.dataset_name = str(input__datasetname).strip()
-            new_ETL_Dataset.created_by = str(created_by).strip()
-            new_ETL_Dataset.save()
-            ret_Dataset_UUID = new_ETL_Dataset.uuid
-            ret_did_create_dataset = True
+            new_etl_dataset = ETL_Dataset()
+            new_etl_dataset.dataset_name = str(input__datasetname).strip()
+            new_etl_dataset.created_by = str(created_by).strip()
+            new_etl_dataset.save()
+
+            return True, new_etl_dataset.uuid
         except:
-            ret_Dataset_UUID = ""
-            ret_did_create_dataset = False
-        return ret_did_create_dataset, ret_Dataset_UUID
+            return False, ""
 
     @staticmethod
     def get_all_etl_datasets_preview_list():
-        ret_List = []
+        ret_list = []
         try:
             all_datasets = ETL_Dataset.objects.all()
             for current_dataset in all_datasets:
-                ret_List.append(ETL_DatasetSerializer(current_dataset).data)
+                ret_list.append(ETL_DatasetSerializer(current_dataset).data)
         except:
-            ret_List = []
-        return ret_List
+            ret_list = []
+        return ret_list
 
     @staticmethod
     def is_a_valid_subtype_string(input__string):
-        retBool = False
         try:
             input__string = str(input__string).strip()
             valid_subtypes_string_list = ETL_DatasetService.get_all_subtypes_as_string_array()
-            if (input__string in valid_subtypes_string_list):
-                retBool = True
+            if input__string in valid_subtypes_string_list:
+                return True
         except:
-            retBool = False
-        return retBool
+            return False
 
     @staticmethod
     def get_all_subtypes_as_string_array():
-        return list(ETL_Dataset.objects.order_by('dataset_subtype').values_list('dataset_subtype', flat=True).distinct())
+        return list(
+            ETL_Dataset.objects.order_by('dataset_subtype').values_list('dataset_subtype', flat=True).distinct())

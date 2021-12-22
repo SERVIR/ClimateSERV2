@@ -12,7 +12,6 @@ from .models import Request_Progress, Request_Log, Track_Usage
 
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
-# admin.site.register(ETL_Granule)
 
 
 @admin.register(ETL_Granule)
@@ -40,7 +39,6 @@ class ETLPipelineRunAdmin(admin.ModelAdmin):
     date_hierarchy = "created_at"
 
 
-# admin.site.register(ETL_PipelineRun)
 admin.site.register(Request_Progress)
 admin.site.register(Request_Log)
 admin.site.register(Track_Usage)
