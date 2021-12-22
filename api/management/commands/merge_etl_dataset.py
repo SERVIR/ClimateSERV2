@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from api.etl import etl_exceptions
 from api.models import ETL_Dataset
 
+
 class Command(BaseCommand):
     help = ''
 
@@ -18,8 +19,8 @@ class Command(BaseCommand):
 
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
-        YEAR_YYYY  = str(options.get('YEAR_YYYY'))
-        MONTH_MM   = str(options.get('MONTH_MM')).zfill(2)
+        YEAR_YYYY = str(options.get('YEAR_YYYY'))
+        MONTH_MM = str(options.get('MONTH_MM')).zfill(2)
 
         try:
             etl_dataset = ETL_Dataset.objects.get(pk=etl_dataset_uuid)
@@ -51,7 +52,8 @@ class Command(BaseCommand):
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_eastafrica')
                     pattern_filename = 'emodis-ndvi.{}{}*.eastafrica.250m.10dy.nc4'
                     aggregate_filename = 'emodis-ndvi.eastafrica.250m.10dy.{}{}.nc4'
-                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc longitude=.5 --ppc latitude=.5'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc ' \
+                                     'longitude=.5 --ppc latitude=.5 '
                 elif etl_dataset.tds_region == 'westafrica':
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_westafrica')
                     pattern_filename = 'emodis-ndvi.{}{}*.westafrica.250m.10dy.nc'
@@ -61,7 +63,8 @@ class Command(BaseCommand):
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_southernafrica')
                     pattern_filename = 'emodis-ndvi.{}{}*.southernafrica.250m.10dy.nc4'
                     aggregate_filename = 'emodis-ndvi.southernafrica.250m.10dy.{}{}.nc4'
-                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc longitude=.5 --ppc latitude=.5'
+                    ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256 --ppc ' \
+                                     'longitude=.5 --ppc latitude=.5 '
                 elif etl_dataset.tds_region == 'centralasia':
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_centralasia')
                     pattern_filename = 'emodis-ndvi.{}{}*.centralasia.250m.10dy.nc4'
