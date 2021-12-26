@@ -361,6 +361,7 @@ def submit_data_request(request):
             calculation = operation_type = params.parameters[int(request.GET["operationtype"])][2]
         except KeyError:
             logger.warning("issue with operation_type" + str(request))
+
         # Get geometry from parameter Or extract from shapefile
         geometry = None
         if "layerid" in request.GET:
@@ -416,7 +417,8 @@ def submit_data_request(request):
                 json_obj = json.loads(dictionary['geometry'])
             except ValueError:
                 dictionary['geometry'] = {"type": "FeatureCollection",
-                                          "features": [{"type": "Feature", "properties": {}, "geometry": json_obj}]}
+                                          "features": [{"type": "Feature", "properties": {}, "geometry": json.dumps(json_obj)}]}
+
 
         # start multiprocessing here
 
