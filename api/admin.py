@@ -24,10 +24,8 @@ class ETLGranuleAdmin(admin.ModelAdmin):
 
 @admin.register(ETL_Log)
 class ETLLogAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'activity_event_type', 'activity_description', 'etl_pipeline_run',
-                    'etl_dataset', 'etl_granule', 'is_alert', 'is_alert_dismissed', 'additional_json',
-                    'created_at', 'created_by', 'is_test_object')
-    list_filter = ('etl_granule', 'etl_dataset', 'etl_pipeline_run')
+    list_display = ('uuid', 'etl_pipeline_run',
+                    'etl_dataset', 'etl_granule')
     autocomplete_fields = ['etl_granule']
     search_fields = ('etl_granule', )
     date_hierarchy = "created_at"
