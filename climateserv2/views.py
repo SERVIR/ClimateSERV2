@@ -331,6 +331,8 @@ def submit_data_request(request):
     interval_type = None
     layer_id = None
     calculation = None
+    feature_ids_list = []
+    feature_list = False
 
     if request.method == 'POST':
         datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
@@ -367,8 +369,6 @@ def submit_data_request(request):
         calculation = params.parameters[int(request.POST["operationtype"])][2]
 
     if request.method == 'GET':
-        feature_ids_list = []
-        feature_list = False
         datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
         try:
             calculation = operation_type = params.parameters[int(request.GET["operationtype"])][2]
