@@ -11,6 +11,8 @@ from django.db import DatabaseError
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
+from django.utils import timezone
+import pytz
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
 from . import parameters as params
@@ -137,7 +139,7 @@ def get_parameter_types(request):
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
     track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=socket.gethostbyname(socket.gethostname()),
-                              time_requested=datetime.now(), request_type=request.method, status="Submitted",
+                              time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
 
@@ -417,8 +419,8 @@ def submit_data_request(request):
                 json_obj = json.loads(dictionary['geometry'])
             except ValueError:
                 dictionary['geometry'] = {"type": "FeatureCollection",
-                                          "features": [{"type": "Feature", "properties": {}, "geometry": json.dumps(json_obj)}]}
-
+                                          "features": [
+                                              {"type": "Feature", "properties": {}, "geometry": json.dumps(json_obj)}]}
 
         # start multiprocessing here
 
@@ -445,10 +447,10 @@ def submit_data_request(request):
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=aoi,
+                                  time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
-                                  start_date=pd.to_datetime(begin_time, format='%m/%d/%Y'),
-                                  end_date=pd.to_datetime(end_time, format='%m/%d/%Y'),
+                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                  end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,
                                   status=status, progress=log_obj.progress, API_call="submitDataRequest",
                                   data_retrieved=False, ui_request=from_ui)
@@ -465,10 +467,10 @@ def submit_data_request(request):
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=socket.gethostbyname(socket.gethostname()),
-                                  time_requested=datetime.now(), AOI=aoi,
+                                  time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
-                                  start_date=pd.to_datetime(begin_time, format='%m/%d/%Y'),
-                                  end_date=pd.to_datetime(end_time, format='%m/%d/%Y'),
+                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                  end_date=pd.Timestamp(end_time, tz='UTC'),
                                   request_type=request.method, status=status, progress=log_obj.progress,
                                   API_call="submitDataRequest", data_retrieved=False, ui_request=from_ui)
 
@@ -632,10 +634,10 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
     else:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
     track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
-                              time_requested=datetime.now(),
+                              time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
-                              start_date=pd.to_datetime(seasonal_start_date, format='%Y-%m-%d'),
-                              end_date=pd.to_datetime(seasonal_end_date, format='%Y-%m-%d'),
+                              start_date=pd.Timestamp(seasonal_start_date, tz='UTC'),
+                              end_date=pd.Timestamp(seasonal_end_date, tz='UTC'),
                               request_type=request.method, status=status,
                               progress=logg.progress, API_call="submitMonthlyRainfallAnalysisRequest",
                               data_retrieved=False)
