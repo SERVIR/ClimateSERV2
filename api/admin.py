@@ -9,7 +9,6 @@ from .models import ETL_Log
 from .models import ETL_PipelineRun
 from .models import Request_Progress, Request_Log, Track_Usage
 
-
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
 
@@ -27,7 +26,7 @@ class ETLLogAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'etl_pipeline_run',
                     'etl_dataset', 'etl_granule')
     autocomplete_fields = ['etl_granule']
-    search_fields = ('etl_granule', )
+    search_fields = ('etl_granule',)
     date_hierarchy = "created_at"
 
 
@@ -39,4 +38,11 @@ class ETLPipelineRunAdmin(admin.ModelAdmin):
 
 admin.site.register(Request_Progress)
 admin.site.register(Request_Log)
-admin.site.register(Track_Usage)
+
+
+@admin.register(Track_Usage)
+class Track_UsageAdmin(admin.ModelAdmin):
+    list_display = ('unique_id', 'time_requested', 'originating_IP', 'dataset', 'start_date', 'end_date', 'file_size')
+    list_filter = ('dataset', 'calculation', 'request_type')
+    search_fields = ('unique_id', 'dataset')
+    date_hierarchy = "time_requested"

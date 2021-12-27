@@ -138,7 +138,7 @@ def get_parameter_types(request):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=socket.gethostbyname(socket.gethostname()),
+    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
@@ -305,6 +305,15 @@ def get_climate_scenario_info(request):
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+
 # Submit a data request for processing
 @csrf_exempt
 def submit_data_request(request):
@@ -332,6 +341,7 @@ def submit_data_request(request):
             try:
                 layer_id = str(request.POST["layerid"])
                 feature_ids_list = get_feature_ids_list(request)
+                feature_list = True
                 logger.debug("submitDataRequest: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
             except KeyError:
                 logger.warning("issue with finding geometry")
@@ -355,9 +365,10 @@ def submit_data_request(request):
             logger.warning("issue with operation_type" + str(request))
             error.append("Error with operation_type")
         calculation = params.parameters[int(request.POST["operationtype"])][2]
-    feature_ids_list = []
-    feature_list = False
+
     if request.method == 'GET':
+        feature_ids_list = []
+        feature_list = False
         datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
         try:
             calculation = operation_type = params.parameters[int(request.GET["operationtype"])][2]
@@ -446,7 +457,7 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=socket.gethostbyname(socket.gethostname()),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -466,7 +477,7 @@ def submit_data_request(request):
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=socket.gethostbyname(socket.gethostname()),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -633,7 +644,7 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
         aoi = request.POST['geometry']
     else:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
-    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=socket.gethostbyname(socket.gethostname()),
+    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
                               start_date=pd.Timestamp(seasonal_start_date, tz='UTC'),
@@ -680,7 +691,10 @@ def validate_vars(request, error):
 
 
 def get_feature_ids_list(request):
-    feature_ids = str(request.GET["featureids"]).split(',')
+    if request.method == 'GET':
+        feature_ids = str(request.GET["featureids"]).split(',')
+    else:
+        feature_ids = str(request.POST.get("featureids")).split(',')
     feature_ids_list = []
     for fid in feature_ids:
         value, is_int = int_try_parse(fid)
