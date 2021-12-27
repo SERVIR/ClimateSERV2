@@ -2,8 +2,8 @@ from rest_framework import serializers
 
 from ..models import ETL_Granule
 
-class ETL_GranuleSerializer(serializers.HyperlinkedModelSerializer):
 
+class ETL_GranuleSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = ETL_Granule
         fields = (

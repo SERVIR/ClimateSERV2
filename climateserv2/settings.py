@@ -38,6 +38,7 @@ CORS_ALLOWED_ORIGIN_REGEXES = [
     r".*",
 ]
 
+USE_TZ = True
 # Application definition
 
 INSTALLED_APPS = [
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
     'api',
     'etl_monitor',
     'frontend',
+    'system_admin',
 ]
 
 MIDDLEWARE = [

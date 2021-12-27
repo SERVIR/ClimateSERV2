@@ -23,6 +23,11 @@ let layer_limits = {min: null, max: null}
 let queried_layers = [];
 let control_layer;
 let current_calculation;
+let climateModelInfo;
+let rainfall_data;
+let from_compiled;
+let too_fast = 0;
+let polling_timeout;
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -302,11 +307,11 @@ function buildStyles() {
 //In here i can add the options for transparent above and below
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
+    const style_table = $("#style_table");
     if (map.hasLayer(overlayMaps[which])) {
         was_removed = true;
         map.removeLayer(overlayMaps[which]);
     }
-    // console.log(document.getElementById("above_below").value);
     overlayMaps[which] = L.timeDimension.layer.wms(
         L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
             layers: active_layer.layers,
@@ -321,7 +326,7 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             // abovemaxcolor: document.getElementById("above_below").value,
             // belowmincolor: document.getElementById("above_below").value,
             numcolorbands: 100,
-            styles: $("#style_table").val(),
+            styles: style_table.val(),
         }),
         {
             updateTimeDimension: true,
@@ -333,7 +338,7 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
     if (!bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
-    active_layer.styles = $("#style_table").val();
+    active_layer.styles = style_table.val();
     active_layer.colorrange = document.getElementById("range-min").value +
         "," +
         document.getElementById("range-max").value
@@ -439,7 +444,7 @@ function openSettings(which) {
  * @returns html
  */
 function baseSettingsHtml() {
-    return ($("#styletemplate:first").clone()).html();
+    return ($("#style_template:first").clone()).html();
 }
 
 /**
@@ -448,6 +453,7 @@ function baseSettingsHtml() {
  */
 function openLegend(which) {
     close_dialog();
+    const dialog = $("#dialog");
     let id = which.replace("TimeLayer", "") + "ens";
     const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
     const src =
@@ -458,10 +464,10 @@ function openLegend(which) {
         active_layer.colorrange +
         "&PALETTE=" +
         active_layer.styles.substr(active_layer.styles.indexOf("/") + 1);
-    $("#dialog").html(
+    dialog.html(
         '<p style="text-align:center;"><img src="' + src + '" alt="legend"></p>'
     );
-    $("#dialog").dialog({
+    dialog.dialog({
         title: active_layer.title,
         resizable: {handles: "se"},
         width: 169,
@@ -515,7 +521,7 @@ function mapSetup() {
         const map_thumb = $("<div>");
         map_thumb.addClass("map-thumb");
         map_thumb.attr("datavalue", key);
-        map_thumb.on("click", function (e) {
+        map_thumb.on("click", function () {
             handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
         });
 
@@ -526,22 +532,25 @@ function mapSetup() {
         thumb_text.text(baseLayers[key].options.displayName);
 
         thumb_text.appendTo(thumb_cap);
-        const img = $("<img>");
-        img.attr("src", static_url + 'frontend/' + baseLayers[key].options.thumb);
-        img.addClass("basemapbtn");
-        img.attr("alt", baseLayers[key].options.displayName);
-        img.attr("title", baseLayers[key].options.displayName);
-        img.attr("datavalue", key);
-        img.on("click", function (e) {
-            handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
+        const img = $("<img src='"
+            + static_url + "frontend/"
+            + baseLayers[key].options.thumb
+            + "' alt='"
+            + baseLayers[key].options.displayName + "'>", {
+            title: baseLayers[key].options.displayName,
+            datavalue: key,
+            click: function () {
+                handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
+            }
         });
-        //img.appendTo("#basemap");
+        img.addClass("basemapbtn");
+
 
         img.appendTo(map_thumb);
         thumb_cap.appendTo(map_thumb);
         map_thumb.appendTo("#basemap");
     }
-    map.on('layeradd', (e) => {
+    map.on('layeradd', () => {
         adjustLayerIndex();
     });
 
@@ -661,23 +670,24 @@ function clearAOISelections() {
     verify_ready();
 }
 
-function setPointAOI(){
-    // need to validate lat/lon
+function setPointAOI() {
     let valid_values = true;
     const point_lon = $("#point_lon").val();
     const point_lat = $("#point_lat").val();
-    if(isNaN(point_lon) || point_lon < -180 || point_lon > 180){
+    if (isNaN(point_lon) || point_lon < -180 || point_lon > 180) {
         valid_values = false;
     }
-    if(isNaN(point_lat) || point_lat < -90 || point_lat > 90){
+    if (isNaN(point_lat) || point_lat < -90 || point_lat > 90) {
         valid_values = false;
     }
-    if(valid_values){
+    if (valid_values) {
+        drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        $("#point_lon").val("")
-        $("#point_lat").val("")
-    } else{
+        point_lon.val("")
+        point_lat.val("")
+        $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+    } else {
         $("#lat-lon-error").show();
     }
 
@@ -717,23 +727,51 @@ function prevent(e) {
     e.preventDefault();
 }
 
+function verifyFeatures(data) {
+    const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
+    let verifiedRequirements = false;
+    if (!allPoints && data.features.length <= 20) {
+        verifiedRequirements = true;
+    } else if (allPoints && data.features.length === 1) {
+        verifiedRequirements = true;
+    }
+    return verifiedRequirements;
+}
+
+function addDataToMap(data){
+    try {
+            // this handles all upload situations
+            let verifiedRequirements = verifyFeatures(data);
+            if(verifiedRequirements){
+                uploadLayer.clearLayers();
+                uploadLayer.addData(data);
+                try {
+                    map.fitBounds(uploadLayer.getBounds());
+                } catch(e){
+                    map.fitBounds([
+                            [data.bbox[1], data.bbox[0]],
+                            [data.bbox[3], data.bbox[2]],
+                        ]);
+                }
+                $("#upload_error").hide();
+                collect_review_data();
+                verify_ready();
+            } else{
+                upload_file_error();
+            }
+        } catch (e) {
+            upload_file_error();
+        }
+}
+
 function handleFiles(e) {
     e.preventDefault();
     const reader = new FileReader();
     reader.onloadend = function () {
         try {
-            const data = JSON.parse(this.result);
-            uploadLayer.clearLayers();
-            uploadLayer.addData(data);
-
-            map.fitBounds(uploadLayer.getBounds());
-            $("#upload_error").hide();
-            collect_review_data();
-            verify_ready();
-        } catch (e) {
-            // When the section is built the url will need to add #pageanchorlocation
-            $("#upload_error").html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
-            $("#upload_error").show();
+            addDataToMap(JSON.parse(this.result.toString()));
+           } catch (e) {
+            upload_file_error();
         }
     };
     const files = e.target.files || e.dataTransfer.files || this.files;
@@ -754,19 +792,32 @@ function handleFiles(e) {
                     EPSG: 4326,
                 },
                 function (data) {
-                    let URL =
-                            window.URL || window.webkitURL || window.mozURL || window.msURL,
-                        url = URL.createObjectURL(
-                            new Blob([JSON.stringify(data)], {type: "application/json"})
-                        );
-                    if (data.features.length > 10) {
-                        data.features = data.features.splice(0, 10);
-                    }
-                    uploadLayer.addData(data);
-                    map.fitBounds([
-                        [data.bbox[1], data.bbox[0]],
-                        [data.bbox[3], data.bbox[2]],
-                    ]);
+                    // let URL =
+                    //         window.URL || window.webkitURL || window.mozURL || window.msURL,
+                    //     url = URL.createObjectURL(
+                    //         new Blob([JSON.stringify(data)], {type: "application/json"})
+                    //     );
+                    // if (data.features.length > 10) {
+                    //     data.features = data.features.splice(0, 10);
+                    // }
+                    // uploadLayer.addData(data);
+                    addDataToMap(data);
+                    // let verifiedRequirements = verifyFeatures(data);
+                    // if(verifiedRequirements){
+                    //     uploadLayer.clearLayers();
+                    //     uploadLayer.addData(data);
+                    //
+                    //     map.fitBounds([
+                    //         [data.bbox[1], data.bbox[0]],
+                    //         [data.bbox[3], data.bbox[2]],
+                    //     ]);
+                    //     $("#upload_error").hide();
+                    //     collect_review_data();
+                    //     verify_ready();
+                    // } else{
+                    //     upload_file_error();
+                    // }
+
                     $(".dimmer").removeClass("active");
                     $("#preview").addClass("disabled");
                     $("#epsg").val("");
@@ -777,6 +828,9 @@ function handleFiles(e) {
                     verify_ready();
                 }
             );
+            $("#upload_error").hide();
+        } else {
+            +upload_file_error();
         }
     }
 }
@@ -812,26 +866,51 @@ function enableDrawing() {
         const type = e.layerType,
             layer = e.layer;
         if (type === "marker") {
-            // Do marker specific actions
+            drawnItems.addLayer(layer);
+            drawnItems.addLayer(layer);
+        } else {
+            if (drawnItems.getLayers().length < 20) {
+                drawnItems.addLayer(layer);
+                if (drawnItems.getLayers().length === 20) {
+                    alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
+                }
+            } else {
+                alert("You may not add this polygon because you have reached the limit of 20.");
+            }
         }
-        // Do whatever else you need to. (save to db; add to map etc)
-        drawnItems.addLayer(layer);
+
         collect_review_data();
         verify_ready();
     });
 
-    map.on('draw:edited', function (e) {
+    map.on('draw:edited', function () {
         collect_review_data();
         verify_ready();
     });
 
-    map.on(L.Draw.Event.DELETED, function (e) {
+    map.on(L.Draw.Event.DELETED, function () {
         collect_review_data();
         verify_ready();
     });
 
     map.on("draw:drawstart", function (e) {
-        drawnItems.clearLayers();
+        if (e.layerType === "marker") {
+            drawnItems.clearLayers();
+        } else {
+            let BreakException = {};
+            // check to make sure drawnItems does not contain a marker
+            try {
+                drawnItems.eachLayer(function (layer) {
+                    if (layer instanceof L.Marker) {
+                        drawnItems.clearLayers();
+                        throw BreakException;
+                    }
+                });
+            } catch (e) {
+                if (e !== BreakException) throw e;
+            }
+            // check to make sure drawnItems.length <= 20
+        }
     });
 }
 
@@ -863,7 +942,7 @@ function enableAdminFeature(which) {
     map.on("click", function (e) {
         const url = getFeatureInfoUrl(map, adminLayer, e.latlng, {
             info_format: "application/json",
-            propertyName: "NAME,AREA_CODE,DESCRIPTIO",
+            propertyName: "NAME,AREA_CODE,DESCRIPTION",
         });
 
         $.ajax({
@@ -885,26 +964,33 @@ function enableAdminFeature(which) {
                     } else {
                         highlightedIDs.push(selectedID);
                     }
-
-                    adminHighlightLayer = L.tileLayer.wms(
-                        admin_layer_url,
-                        {
-                            layers: which + "_highlight",
-                            format: "image/png",
-                            transparent: true,
-                            styles: "",
-                            TILED: true,
-                            VERSION: "1.3.0",
-                            feat_ids: highlightedIDs.join(),
+                    if(highlightedIDs.length <= 20) {
+                        if (highlightedIDs.length === 20) {
+                            alert("Max selections has been reached");
                         }
-                    );
+                    } else{
+                        alert("You may only select 20 features.");
+                        highlightedIDs = highlightedIDs.filter((e) => e !== selectedID);
+                    }
+                    adminHighlightLayer = L.tileLayer.wms(
+                            admin_layer_url,
+                            {
+                                layers: which + "_highlight",
+                                format: "image/png",
+                                transparent: true,
+                                styles: "",
+                                TILED: true,
+                                VERSION: "1.3.0",
+                                feat_ids: highlightedIDs.join(),
+                            }
+                        );
 
-                    map.addLayer(adminHighlightLayer);
-                    adminHighlightLayer.setZIndex(
-                        Object.keys(baseLayers).length + client_layers.length + 6
-                    );
-                    collect_review_data();
-                    verify_ready();
+                        map.addLayer(adminHighlightLayer);
+                        adminHighlightLayer.setZIndex(
+                            Object.keys(baseLayers).length + client_layers.length + 6
+                        );
+                        collect_review_data();
+                        verify_ready();
                 }
             },
         });
@@ -946,13 +1032,10 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
     };
 
     params = L.Util.extend(defaultParams, params || {});
-
     params[params.version === "1.3.0" ? "i" : "x"] = point.x;
     params[params.version === "1.3.0" ? "j" : "y"] = point.y;
-
     return layer._url + L.Util.getParamString(params, layer._url, true);
 }
-
 
 /**
  * Sets up the sortable layers in the layer manager
@@ -966,34 +1049,47 @@ function sortableLayerSetup() {
         onEnd: function ($item, container, _super) {
             adjustLayerIndex();
         },
-        onChange: function (/**Event*/evt) {
+        onChange: function () {
             adjustLayerIndex();
         },
         filter: ".ignore-elements",
         // Called when creating a clone of element
-        onClone: function (/**Event*/evt) {
-            let origEl = evt.item;
-            let cloneEl = evt.clone;
-        },
+        // onClone: function (/**Event*/evt) {
+        //     let origEl = evt.item;
+        //     let cloneEl = evt.clone;
+        // },
     });
 }
 
+/**
+ * Displays the error when the upload file is incorrect
+ */
+function upload_file_error() {
+    const upload_error = $("#upload_error");
+    upload_error.html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+    upload_error.show();
+}
+
+/**
+ * adjusts the layer indexes to match the order in the layer manager
+ */
 function adjustLayerIndex() {
     let count = 10;
-
-    for (let i = $("ol.layers li").length; i > 0; i--) {
+    const ol_layers_li = $("ol.layers li");
+    for (let i = ol_layers_li.length; i > 0; i--) {
         if (overlayMaps[
-            $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+            ol_layers_li[i - 1].id.replace("_node", "TimeLayer")
             ]) {
             overlayMaps[
-                $("ol.layers li")[i - 1].id.replace("_node", "TimeLayer")
+                ol_layers_li[i - 1].id.replace("_node", "TimeLayer")
                 ].setZIndex(count);
             count++;
         } else {
-            let id = $("ol.layers li")[i - 1].id.replace("_node", "") + "ens";
-            for (let j = 0; j < $("[id^=" + id + "]").length; j++) {
+            let id = ol_layers_li[i - 1].id.replace("_node", "") + "ens";
+            let element = $("[id^=" + id + "]");
+            for (let j = 0; j < element.length; j++) {
                 overlayMaps[
-                $("[id^=" + id + "]")[j].id + "TimeLayer"
+                element[j].id + "TimeLayer"
                     ].setZIndex(count);
                 count++;
             }
@@ -1018,9 +1114,11 @@ function initMap() {
     const slider_range = '<div id="slider-range" onclick="open_range_picker()"' +
         '><span id="slider-range-txt">N/A to N/A</span></div>'
     $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
-
 }
 
+/**
+ * initiatives and opens the range picker
+ */
 function open_range_picker() {
     // open a dialog with 2 date fields, from and to (populated with current range) and
     // an update range button which calls setRange(from, to)
@@ -1085,10 +1183,13 @@ function open_range_picker() {
     $('#range_picker_form').validate();
 }
 
-function close_dialog_event() {
-    $('#dialog').dialog('close');
-}
+// function close_dialog_event() {
+//     $('#dialog').dialog('close');
+// }
 
+/**
+ * Sets the animation range
+ */
 function setRange() {
     const startTime = new Date($('#begin_range_date').val());
     const endTime = new Date($('#end_range_date').val());
@@ -1100,11 +1201,17 @@ function setRange() {
 
 }
 
+/**
+ * Clears the range set by the user
+ */
 function clearRange() {
     map.timeDimension.setLowerLimit(false);
     map.timeDimension.setUpperLimit(false);
 }
 
+/**
+ * downloads the user specified AOI
+ */
 function download_aoi() {
     const aoi = document.createElement('a');
     aoi.setAttribute(
@@ -1114,6 +1221,10 @@ function download_aoi() {
     aoi.click();
 }
 
+/**
+ * Helper function for completeness of the request dates
+ * @returns {boolean}
+ */
 function isComplete() {
     // what if ensemble data with forecast dates
     // this will have to check those fields,
@@ -1139,7 +1250,6 @@ function isComplete() {
                 $("#compare-error").hide();
             }
         }
-
     } else {
         $(sDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
@@ -1147,78 +1257,145 @@ function isComplete() {
     return isReady;
 }
 
+/**
+ * Verifies if the user has filled in enough information to send a request
+ * When ready, enables the request button as well and the view API button
+ */
 function verify_ready() {
     let ready = true;
-    if ($("#requestTypeSelect").val() === "datasets") {
+    const requestTypeSelect = $("#requestTypeSelect");
+    if (requestTypeSelect.val() === "datasets") {
         ready = isComplete();
     }
-    $("#btnRequest").prop("disabled",
-        !($("#geometry").text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready));
-    if ($("#geometry").text().trim().indexOf('{"type"') > -1
-        || $("#geometry").text().trim().indexOf('{\"type\"') > -1) {
-        $("#download_aoi_holder").show();
+    const geometry = $("#geometry");
+    const download_aoi_holder = $("#download_aoi_holder");
+    const disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
+    $("#btnRequest").prop("disabled", disabled);
+    $("#btnViewAPI").prop("disabled", disabled);
+    if (geometry.text().trim().indexOf('{"type"') > -1
+        || geometry.text().trim().indexOf('{\"type\"') > -1) {
+        download_aoi_holder.show();
     } else {
-        $("#download_aoi_holder").hide();
+        download_aoi_holder.hide();
+    }
+    let api_host = window.location.hostname;
+    if (window.location.port) {
+        api_host += ":" + window.location.port
+    }
+    try {
+        if (requestTypeSelect.val() === "datasets") {
+            const formData = new FormData();
+            buildForm(formData);
+            $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
+        } else {
+            $("#api_query").text(api_host + get_API_url());
+        }
+    } catch (e) {
+        console.log(e);
     }
 }
 
+/**
+ * Builds and returns the url needed to make an API call
+ * @returns {string}
+ */
+function get_API_url() {
+    let geometry_params;
+    if (highlightedIDs.length > 0) {
+        geometry_params = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+        geometry_params += "&featureids=" + highlightedIDs.join(",");
+    } else if (drawnItems.getLayers().length > 0) {
+        geometry_params = "&geometry=" + JSON.stringify(drawnItems.toGeoJSON());
+    } else if (uploadLayer) {
+        geometry_params = "&geometry=" + JSON.stringify(uploadLayer.toGeoJSON());
+    }
+
+    const csi = climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities;
+    let url = "api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
+    url += "seasonal_start_date=" + csi.startDateTime;
+    url += "&seasonal_end_date=" + csi.endDateTime;
+    url += geometry_params;
+    return url
+}
+
+/**
+ * Verifies range is within the data start and end range
+ * This function is called from a dynamically created element
+ * DO NOT REMOVE
+ * @returns {boolean}
+ */
 function verify_range() {
     let isReady = false;
     let begin_range_date = document.getElementById("begin_range_date");
     let end_range_date = document.getElementById("end_range_date");
-    if (begin_range_date.value && end_range_date.value) {
-        isReady = $(begin_range_date).valid({
-            rules: {
-                field: {
-                    required: true,
-                    dateISO: true
+    if(begin_range_date && end_range_date) {
+        if (begin_range_date.value && end_range_date.value) {
+            isReady = $(begin_range_date).valid({
+                rules: {
+                    field: {
+                        required: true,
+                        dateISO: true
+                    }
+                }
+            }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+            if (isReady) {
+                // Also should confirm s < e;
+                if (moment(begin_range_date.value) > moment(end_range_date.value)) {
+                    isReady = false;
+                    $("#range-error").show();
+                } else {
+                    $("#range-error").hide();
                 }
             }
-        }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
-        if (isReady) {
-            // Also should confirm s < e;
-            if (moment(begin_range_date.value) > moment(end_range_date.value)) {
-                isReady = false;
-                $("#range-error").show();
-            } else {
-                $("#range-error").hide();
-            }
-        }
 
-    } else {
-        $(begin_range_date).valid({rules: {field: {required: true, dateISO: true}}});
-        $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        } else {
+            $(begin_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+            $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
+        }
     }
     return isReady;
 }
 
+/**
+ * Collects all of the request data
+ */
 function collect_review_data() {
+    const geometry = $("#geometry");
+    const operation_max = $("#operation_max");
+    const operation_min = $("#operation_min");
+    const operation_average = $("#operation_average");
     if (highlightedIDs.length > 0) {
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
-        $("#geometry").text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
+        geometry.text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
     } else if (drawnItems.getLayers().length > 0) {
-        $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+        geometry.text(JSON.stringify(drawnItems.toGeoJSON()));
     } else if (uploadLayer) {
-        $("#geometry").text(JSON.stringify(uploadLayer.toGeoJSON()));
+        geometry.text(JSON.stringify(uploadLayer.toGeoJSON()));
     } else {
-        $("#geometry").text('{"type":"FeatureCollection","features":[]}');
+        geometry.text('{"type":"FeatureCollection","features":[]}');
     }
-    if ($("#geometry").text().indexOf("Point") > -1) {
-        $("#operation_max").hide();
-        $("#operation_min").hide();
-        $("#operation_average").text("Timeseries");
+    if (geometry.text().indexOf("Point") > -1) {
+        operation_max.hide();
+        operation_min.hide();
+        operation_average.text("Timeseries");
     } else {
-        $("#operation_max").show();
-        $("#operation_min").show();
-        $("#operation_average").text("Average");
+        operation_max.show();
+        operation_min.show();
+        operation_average.text("Average");
     }
 }
 
-function getEnsDataType() {
-    // will need to write this for the selected ensembles
-    return
-}
+// function getEnsDataType() {
+//     // will need to write this for the selected ensembles
+//     return
+// }
 
+/**
+ * Handles the initial return from the submitRequest by setting up progress bar and
+ * starting the polling process
+ * @param data
+ * @param isClimate
+ */
 function handle_initial_request_data(data, isClimate) {
     close_dialog();
     let progress = '<div style="width:100%; height:100%; display: flex;' +
@@ -1227,15 +1404,16 @@ function handle_initial_request_data(data, isClimate) {
     progress += '<div class="progress">';
     progress += '<div class="progress-bar progress-bar-striped progress-bar-animated"' +
         ' role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"' +
-        ' style="width: 0%"><span><span class="percentage" id="txtpercent">0%</span></span></div>';
+        ' style="width: 0"><span><span class="percentage" id="text_percent">0%</span></span></div>';
     progress += '</div></div>';
-    $("#dialog").html(progress);
-    $("#dialog").dialog({
+    const dialog = $("#dialog");
+    dialog.html(progress);
+    dialog.dialog({
         title: "Query Progress",
         resizable: false,
         width: $(window).width() / 2,
         height: 200,
-        close: function (event, ui) {
+        close: function () {
             clearTimeout(polling_timeout);
         },
         position: {
@@ -1247,6 +1425,46 @@ function handle_initial_request_data(data, isClimate) {
     pollForProgress(data[0], isClimate);
 }
 
+/**
+ * Builds the form for the API request
+ * @param formData
+ */
+function buildForm(formData) {
+
+    current_calculation = {
+        'value': parseInt($("#operationmenu").val()),
+        'text': $("#operationmenu option:selected").text()
+    };
+
+    if ($("#ensemble_builder").is(":visible")) {
+        formData.append(
+            "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
+        );
+    } else {
+        formData.append(
+            "datatype", $("#sourcemenu").val()
+        );
+    }
+
+    formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
+    formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
+    formData.append("intervaltype", 0);
+    formData.append("operationtype", current_calculation.value);
+    formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
+    formData.append("isZip_CurrentDataType", false);
+    if (highlightedIDs.length > 0) {
+        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+        formData.append("featureids", highlightedIDs.join(","));
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    } else if (uploadLayer) {
+        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    }
+}
+
+/**
+ * Initiates the processing request to ClimateSERV
+ */
 function sendRequest() {
     current_calculation = {
         'value': parseInt($("#operationmenu").val()),
@@ -1257,41 +1475,18 @@ function sendRequest() {
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
     if ($("#requestTypeSelect").val() === "datasets") {
-        if ($("#ensemble_builder").is(":visible")) {
-            formData.append(
-                "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
-            );
-        } else {
-            formData.append(
-                "datatype", $("#sourcemenu").val()
-            );
-        }
-
-        formData.append("begintime", moment(document.getElementById("sDate_new_cooked").value).format('MM/DD/YYYY')); // "01/01/2020");
-        formData.append("endtime", moment(document.getElementById("eDate_new_cooked").value).format('MM/DD/YYYY')); //"06/30/2020");
-        formData.append("intervaltype", 0);
-        formData.append("operationtype", current_calculation.value);
-        formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
-        formData.append("isZip_CurrentDataType", false);
-        if (highlightedIDs.length > 0) {
-            formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-            formData.append("featureids", highlightedIDs.join(","));
-        } else if (drawnItems.getLayers().length > 0) {
-            formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-        } else if (uploadLayer) {
-            formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-        }
+        buildForm(formData);
         let api_host = window.location.hostname;
-        if(window.location.port){
+        if (window.location.port) {
             api_host += ":" + window.location.port
         }
         $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
         $.ajax({
             url: "/api/submitDataRequest/",
             type: "POST",
+            headers: {'X-CSRFToken': csrftoken},
             processData: false,
             contentType: false,
-            async: true,
             async: true,
             crossDomain: true,
             data: formData
@@ -1307,8 +1502,9 @@ function sendRequest() {
             error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
             error_message += '</div>';
-            $("#dialog").html(error_message);
-            $("#dialog").dialog({
+            const dialog = $("#dialog");
+            dialog.html(error_message);
+            dialog.dialog({
                 title: "Processing Error",
                 resizable: false,
                 width: $(window).width() / 2,
@@ -1318,8 +1514,9 @@ function sendRequest() {
                     at: "center",
                     of: window
                 },
-                close: function (event, ui) {
+                close: function () {
                     $("#btnRequest").prop("disabled", false);
+                    $("#btnViewAPI").prop("disabled", false);
                 }
             });
         }).done(function (data, _textStatus, _jqXHR) {
@@ -1331,27 +1528,8 @@ function sendRequest() {
         });
 
     } else {
-        let geometry_params;
-
-        if (highlightedIDs.length > 0) {
-            geometry_params = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
-            geometry_params += "&featureids=" + highlightedIDs.join(",");
-        } else if (drawnItems.getLayers().length > 0) {
-            geometry_params = "&geometry=" + JSON.stringify(drawnItems.toGeoJSON());
-        } else if (uploadLayer) {
-            geometry_params = "&geometry=" + JSON.stringify(uploadLayer.toGeoJSON());
-        }
-
-
-        const csi = climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities;
-        let url = "api/submitMonthlyRainfallAnalysisRequest/?custom_job_type=monthly_rainfall_analysis&";
-        url += "seasonal_start_date=" + csi.startDateTime;
-        url += "&seasonal_end_date=" + csi.endDateTime;
-        url += geometry_params;
-
-
         $.ajax({
-            url: url,
+            url: get_API_url(),
             type: "GET",
             async: true,
             crossDomain: true
@@ -1367,13 +1545,20 @@ function sendRequest() {
     }
 }
 
+/**
+ * Updates progress bar with value sent in
+ * @param val
+ */
 function updateProgress(val) {
     $('.progress-bar').css('width', val + '%').attr('aria-valuenow', val);
-    $("#txtpercent").text(parseInt(val) + '%');
+    $("#text_percent").text(parseInt(val) + '%');
 }
 
-let polling_timeout;
-
+/**
+ * Get the progress of a submitted job and sends teh returned value to updateProgress
+ * @param id
+ * @param isClimate
+ */
 function pollForProgress(id, isClimate) {
     $.ajax({
         url: "/api/getDataRequestProgress/?id=" +
@@ -1413,6 +1598,7 @@ function pollForProgress(id, isClimate) {
                     retries = 0;
                     console.log("Server Error");
                     $("#btnRequest").prop("disabled", false);
+                    $("#btnViewAPI").prop("disabled", false);
                     close_dialog();
                     let error_message = '<div style="width:100%; height:100%; display: flex;' +
                         '    align-items: center;' +
@@ -1423,8 +1609,9 @@ function pollForProgress(id, isClimate) {
                     error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
                     error_message += '</div>';
-                    $("#dialog").html(error_message);
-                    $("#dialog").dialog({
+                    const dialog = $("#dialog");
+                    dialog.html(error_message);
+                    dialog.dialog({
                         title: "Processing Error",
                         resizable: false,
                         width: $(window).width() / 2,
@@ -1434,7 +1621,7 @@ function pollForProgress(id, isClimate) {
                             at: "center",
                             of: window
                         },
-                        close: function (event, ui) {
+                        close: function () {
                             $("#btnRequest").prop("disabled", false);
                         }
 
@@ -1445,8 +1632,10 @@ function pollForProgress(id, isClimate) {
     });
 }
 
-let debugjson;
-
+/**
+ * Sets the UI to the correct state when a different source is selected
+ * @param which
+ */
 function handleSourceSelected(which) {
     which = which.toString();
     let layer = client_layers.find(
@@ -1487,7 +1676,6 @@ function handleSourceSelected(which) {
             if (sdata.errMsg) {
                 console.info(sdata.errMsg);
             } else {
-                debugjson = sdata;
                 const data = JSON.parse(sdata);
                 const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
                 cc.startDateTime;
@@ -1533,30 +1721,38 @@ function handleSourceSelected(which) {
     $("#btnRequest").prop("disabled", false);
 }
 
+/**
+ * synchronizes the dates between start date and forecast date
+ */
 function syncDates() {
     $("#sDate_new_cooked").val($("#forecastfrommenu").val());
     $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
+/**
+ * Creates the chart dialog
+ */
 function inti_chart_dialog() {
     close_dialog();
     $("#btnPreviousChart").prop("disabled", true);
-    $("#dialog").html(
+    const dialog = $("#dialog");
+    const isMobile = $("#isMobile");
+    dialog.html(
         '<div id="chart_holder"></p>'
     );
-    $("#dialog").dialog({
+    dialog.dialog({
         title: "Statistical Query",
-        resizable: $("#isMobile").css("display") === "block" ? false : {handles: "se"},
-        width: $("#isMobile").css("display") === "block" ? $(window).width() : $(window).width() - ($("#sidebar").width() + 100),
+        resizable: isMobile.css("display") === "block" ? false : {handles: "se"},
+        width: isMobile.css("display") === "block" ? $(window).width() : $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
         resize: function () {
             Highcharts.charts[0].reflow();
             window.dispatchEvent(new Event('resize'));
         },
-        open: function (event, ui) {
+        open: function () {
             window.dispatchEvent(new Event('resize'));
         },
-        position: $("#isMobile").css("display") === "block" ? {
+        position: isMobile.css("display") === "block" ? {
             my: "center",
             at: "center",
             of: window
@@ -1567,22 +1763,28 @@ function inti_chart_dialog() {
         }
     });
 
-    $('#dialog').on('dialogclose', function (event) {
+    dialog.on('dialogclose', function () {
         $("#btnPreviousChart").prop("disabled", false);
     });
-
 }
 
+/**
+ * Opens the last chart that was closed.  Currently we only store one prior state
+ */
 function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
-
     } else {
         alert("you have no previous chart, please send a request.")
     }
 }
 
+/**
+ * Helper function for monthly rainfall analysis graphing
+ * @param which
+ * @returns {number}
+ */
 function getIndex(which) {
     switch (which) {
         case 'col02_MonthlyAverage':
@@ -1596,7 +1798,10 @@ function getIndex(which) {
     }
 }
 
-
+/**
+ * Creates the download link for a request ID and displays it in the dialog
+ * @param id
+ */
 function getDownLoadLink(id) {
     close_dialog();
     let download = '<div style="width:100%; height:100%; display: flex;' +
@@ -1608,8 +1813,9 @@ function getDownLoadLink(id) {
     const url = '/api/getFileForJobID/?id=' + id
     download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
     download += '</div></div>';
-    $("#dialog").html(download);
-    $("#dialog").dialog({
+    const dialog = $("#dialog");
+    dialog.html(download);
+    dialog.dialog({
         title: "Download Data",
         resizable: false,
         width: $(window).width() / 2,
@@ -1623,10 +1829,12 @@ function getDownLoadLink(id) {
     });
 }
 
-let rainfall_data;
-let from_compiled;
-let too_fast = 0;
-
+/**
+ * Function to retrieve the processed data from the server with the id
+ * that was created by the submitDataRequest
+ * @param id
+ * @param isClimate
+ */
 function getDataFromRequest(id, isClimate) {
     close_dialog();
     let complete = '<div style="width:100%; height:100%; display: flex;' +
@@ -1635,8 +1843,9 @@ function getDataFromRequest(id, isClimate) {
     complete += '<div style="width:100%">';
     complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
     complete += '</div>';
-    $("#dialog").html(complete);
-    $("#dialog").dialog({
+    const dialog = $("#dialog");
+    dialog.html(complete);
+    dialog.dialog({
         title: "Query Complete, Downloading Results",
         resizable: false,
         width: $(window).width() / 2,
@@ -1660,7 +1869,7 @@ function getDataFromRequest(id, isClimate) {
         if (data.errMsg) {
             console.info(data.errMsg);
         } else {
-            if (data == "need to send id") {
+            if (data === "need to send id") {
                 if (too_fast < 5) {
                     getDataFromRequest(id, isClimate);
                 }
@@ -1732,7 +1941,7 @@ function getDataFromRequest(id, isClimate) {
                         let min = 9999;
                         let max = -9999;
                         JSON.parse(data).data.forEach((d) => {
-                            let val = 0;
+                            let val;
 
                             val =
                                 otState === 0
@@ -1798,8 +2007,15 @@ function getDataFromRequest(id, isClimate) {
             }
         }
     });
-};
+}
 
+/**
+ * Fixes no data value issue by setting them to null
+ * Updated from -9999 to > -9000 as i found some values
+ * were returned not exactly as -9999 for whatever reason
+ * @param value
+ * @returns {null|number}
+ */
 function value_or_null(value) {
     if (value > -9000) {
         return Number.parseFloat(value);
@@ -1808,6 +2024,16 @@ function value_or_null(value) {
     }
 }
 
+/**
+ * Creates a graph with the supplied variables
+ * @param compiled_series
+ * @param units
+ * @param xAxis_object
+ * @param title
+ * @param isClimate
+ * @param yAxis_format
+ * @param point_format
+ */
 function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, yAxis_format, point_format) {
     previous_chart = {
         "compiled_series": compiled_series,
@@ -1903,7 +2129,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     chart_obj.chart = {
         zoomType: 'xy',
         events: {
-            redraw: function (e) {
+            redraw: function () {
                 try {
                     img.translate(
                         this.chartWidth - originalWidth,
@@ -1941,7 +2167,6 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     };
 
     Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
-
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
@@ -1952,45 +2177,13 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     });
 }
 
-
-function build_MonthlyRainFall_Analysis_Graphable_Object(raw_data_obj) {
-    const ret_dataLines_List = [];
-    let seasonal_end_month;
-    let single_climate_model_capabiliites;
-    try {
-        single_climate_model_capabiliites = JSON.parse(climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities);
-    } catch (err_Getting_Dates_From_Climate_Model_Capabilities) {  // something different needs to happen here if we don't have the capabilities object we can't continue this process
-        return;
-    }
-    const seasonal_start_date = single_climate_model_capabiliites.startDateTime; //"2017_05_01";
-    const seasonal_end_date = single_climate_model_capabiliites.endDateTime; //"2017_10_28";
-    seasonal_end_month = parseInt(seasonal_end_date.split("_")[1]);
-    let current_month_num = parseInt(seasonal_start_date.split("_")[1]);
-    let current_year_num = parseInt(seasonal_start_date.split("_")[0]);
-
-    do {
-        current_month_num = current_month_num % 12 === 0 ? 12 : current_month_num % 12;
-        const current_Month_Year_Value = moment().month(current_month_num - 1).format("MMM") + "-" + current_year_num;
-        processData(ret_dataLines_List, raw_data_obj, current_month_num, "SEASONAL_FORECAST", "col02_MonthlyAverage", current_Month_Year_Value, "SeasonalFcstAvg");
-        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col02_MonthlyAverage", current_Month_Year_Value, "LongTermAverage");
-        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col03_25thPercentile", current_Month_Year_Value, "25thPercentile");
-        processData(ret_dataLines_List, raw_data_obj, current_month_num, "CHIRPS_REQUEST", "col04_75thPercentile", current_Month_Year_Value, "75thPercentile");
-        current_month_num === 12 && current_year_num++;
-        current_month_num++;
-    } while (current_month_num % 12 != (seasonal_end_month + 1) % 12);
-
-    return ret_dataLines_List;
-}
-
-function processData(ret_dataLines_List, data_object, current_month_num, subtype, variable, current_Month_Year_Value, retrun_variable) {
-    let data = get_values_By_month(data_object, current_month_num, subtype, variable)
-    ret_dataLines_List.push(getDataLine(
-        current_Month_Year_Value,
-        retrun_variable,
-        subtype === "SEASONAL_FORECAST" ? data.reduce((a, b) => a + b) / data.length : data[0]
-    ));
-}
-
+/**
+ * Helper function for graphing the monthly rainfall analysis
+ * @param mmm_Y
+ * @param type
+ * @param data
+ * @returns {*[]}
+ */
 function getDataLine(mmm_Y, type, data) {
     const data_line = [];
     data_line['Month_Year'] = mmm_Y;
@@ -1999,6 +2192,10 @@ function getDataLine(mmm_Y, type, data) {
     return data_line;
 }
 
+/**
+ * Opens the proper panel for the datatype selected
+ * @param select_control
+ */
 function openDataTypePanel(select_control) {
     if (select_control.value === "datasets") {
         $("#panel_monthly_rainfall").hide();
@@ -2010,10 +2207,10 @@ function openDataTypePanel(select_control) {
     verify_ready();
 }
 
-let climateModelInfo;
-
+/**
+ * Calls the api to get the current Climate scenario properties
+ */
 function getClimateScenarioInfo() {
-
     $.ajax({
         url: "api/getClimateScenarioInfo/",
         type: "GET",
@@ -2030,6 +2227,9 @@ function getClimateScenarioInfo() {
     });
 }
 
+/**
+ * Toggles the About AOI section
+ */
 function toggleAOIHeight() {
     const el = $('#aoiOptions');
     const curHeight = el.height();
@@ -2043,12 +2243,20 @@ function toggleAOIHeight() {
     }
 }
 
+/**
+ * Closes the dialog if it is open
+ */
 function close_dialog() {
-    if ($("#dialog").dialog()) {
-        $("#dialog").dialog("close");
+    const dialog = $("#dialog");
+    if (dialog.dialog()) {
+        dialog.dialog("close");
     }
 }
 
+/**
+ * Framework for the statistical query info box
+ * @param which type of information requested
+ */
 function stats_info(which) {
     close_dialog();
     const title = which === "type"
@@ -2061,10 +2269,10 @@ function stats_info(which) {
     stat_info += '<div style="width:100%; text-align: left;">';
     stat_info += get_stat_body(which)
     stat_info += '</div>';
-    $("#dialog").html(stat_info);
-    $("#dialog").html(stat_info);
-    const the_width = $(window).width() < 500 ? $(window).width() + "px" : "500px";
-    $("#dialog").dialog({
+    const dialog = $("#dialog");
+    dialog.html(stat_info);
+    // const the_width = $(window).width() < 500 ? $(window).width() + "px" : "500px";
+    dialog.dialog({
         title: title,
         resizable: false,
         width: '500px',
@@ -2079,23 +2287,27 @@ function stats_info(which) {
             if ($(this).width() > $(window).width()) {
                 $(this).dialog('option', 'width', $(window).width());
             }
-
         }
     });
 }
 
+/**
+ * Gets the info body for specified type (which)
+ * @param which the type of information requested
+ * @returns {string}
+ */
 function get_stat_body(which) {
     let html = '';
     switch (which) {
         case 'type':
-            html += "<div style=''text-align:left'><p>ClimateSERV offers direct <b>Dataset</b> queries for your AOI and specific time period " +
+            html += "<div style='text-align:left'><p>ClimateSERV offers direct <b>Dataset</b> queries for your AOI and specific time period " +
                 "which result offer results in graphs with " +
                 "download options or downloadable raw data.</p><br>";
             html += "<p>In addition we offer a <b>Monthly Rainfall Analysis</b> which is derived from a combination" +
                 " of CHIRPS historical data and current NMME seasonal forecast data. </p><br></div>";
             break;
         case 'source':
-            html += "<div id=\"popup_SelectData_DataSource_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -325px auto auto 323.922px;\">    " +
+            html += "<div id=\"popup_SelectData_DataSource_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -325px auto auto 324px;\">    " +
                 "  <div class=\"servir_tooltip_header\">CHIRPS Rainfall</div>" +
                 "  <div class=\"servir_tooltip_body\">Climate Hazards group IR Precipitation with Stations (CHIRPS).</div>" +
                 "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
@@ -2113,10 +2325,10 @@ function get_stat_body(which) {
                 "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
                 "  <br>" +
                 "  <div class=\"servir_tooltip_header\">GEFS</div>" +
-                "  <div class=\"servir_tooltip_body\">Global Ensemble Forecast System (GEFS) a weather forecast model made up of 21 separate forecasts, or ensemble members. Availability: January 1, 1985 to present.</div>" +
+                "  <div class=\"servir_tooltip_body\">Global Ensemble Forecast System (GEFS) a weather forecast model made up of 21 separate forecasts, or ensemble members. Availability: January 1, 1985, to present.</div>" +
                 "    <br>" +
                 "    <div class=\"servir_tooltip_header\">Evaporative Stress Index  (ESI)</div>" +
-                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water. <a href=\"http://catalogue.servirglobal.net/Product?product_id=198\" alt=\"More about ESI\" title=\"More about ESI\" target=\"_blank\">More about ESI</a></div>" +
+                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water.</div>" +
                 "    <br>" +
                 "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
                 "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
@@ -2125,7 +2337,7 @@ function get_stat_body(which) {
                 "</div>";
             break;
         case 'calculation':
-            html += "<div id=\"popup_SelectData_Calculations_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -220.5px auto auto 323.922px;\">    " +
+            html += "<div id=\"popup_SelectData_Calculations_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -220.5px auto auto 324px;\">    " +
                 "  <div class=\"servir_tooltip_header\">Min</div>" +
                 "  <div class=\"servir_tooltip_body\">The minimum value found for all data in a given geographical selected area for each time interval in the date range.  Sometimes for large area selections, a value of 0 will be returned for every date.  If this happens, try selecting a smaller area.</div>" +
                 "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
@@ -2147,6 +2359,9 @@ function get_stat_body(which) {
     return html;
 }
 
+/**
+ * Tour variables
+ */
 let img, originalWidth, originalHeight;
 const last_step_template = "<div class='popover tour'>" +
     "   <div class='arrow'></div>" +
@@ -2163,10 +2378,13 @@ const last_step_template = "<div class='popover tour'>" +
 
 let tour;
 
+/**
+ * Initializes the tour steps and actions
+ */
 function init_tour() {
     tour = new Tour({
         smartPlacement: true,
-        onEnd: function (tour) {
+        onEnd: function () {
             localStorage.setItem("hideTour", "true");
             document.querySelector(".tour_icon_blink").style.animationPlayState = 'running';
             document.querySelector(".tour_box_blink").style.animationPlayState = 'running';
@@ -2186,18 +2404,19 @@ function init_tour() {
                 title: "Statistical Query",
                 content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
                 smartPlacement: true,
-                onShow: function (tour) {
+                onShow: function () {
                     sidebar.open('chart');
                     const el = $('#aoiOptions');
                     const curHeight = el.height();
                     const autoHeight = el.css('height', 'auto').height();
                     el.height(curHeight).animate({height: autoHeight}, 1000);
                     el.css("marginBottom", '20px');
-                    if ($("#sidebar-content").scrollTop !== 0) {
-                        $("#sidebar-content").scrollTop(0);
+                    const sidebar_content = $("#sidebar-content");
+                    if (sidebar_content.scrollTop !== 0) {
+                        sidebar_content.scrollTop(0);
                     }
                 },
-                onHide: function (tour) {
+                onHide: function () {
                     const el = $('#aoiOptions');
                     const curHeight = el.height();
                     el.height(curHeight).animate({height: 0}, 1000);
@@ -2208,9 +2427,10 @@ function init_tour() {
                 element: "#operationmenu",
                 title: "Select Data",
                 content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
-                onShow: function (tour) {
-                    if (!($("#sidebar-content").scrollTop() + $("#sidebar-content").innerHeight() >= $("#sidebar-content")[0].scrollHeight)) {
-                        $("#sidebar-content").animate({scrollTop: $('#sidebar-content').prop("scrollHeight")}, 1000);
+                onShow: function () {
+                    const sidebar_content = $("#sidebar-content");
+                    if (!(sidebar_content.scrollTop() + sidebar_content.innerHeight() >= sidebar_content[0].scrollHeight)) {
+                        sidebar_content.animate({scrollTop: sidebar_content.prop("scrollHeight")}, 1000);
                     }
                 }
             },
@@ -2218,7 +2438,7 @@ function init_tour() {
                 element: "#tab-layers",
                 title: "Display Data",
                 content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
-                onShow: function (tour) {
+                onShow: function () {
                     sidebar.open('layers');
                 },
             },
@@ -2242,7 +2462,7 @@ function init_tour() {
                 element: "#basemap_link",
                 title: "Change Basemap",
                 content: "Click here to open basemaps, then click the one you would like to use.",
-                onShow: function (tour) {
+                onShow: function () {
                     sidebar.open('basemap');
                 }
             },
@@ -2259,15 +2479,17 @@ function init_tour() {
                 template: last_step_template
             }
         ],
-        onHide: function (tour) {
+        onHide: function () {
             sidebar.open('chart');
         }
     });
 }
 
+/**
+ * Opens tour and removes the localStorage key
+ */
 function open_tour() {
     localStorage.removeItem("hideTour")
-
     tour.start(true);
 }
 
@@ -2297,7 +2519,7 @@ $(function () {
                 encoding: "UTF-8",
                 EPSG: 4326,
             },
-            function (data) {
+            function () {
                 console.log("")
             });
     } catch (e2) {
@@ -2306,7 +2528,8 @@ $(function () {
     $(function () {
         $('[data-toggle="tooltip"]').tooltip({container: 'body', trigger: 'hover'})
     });
-    $('#sourcemenu').val(0);
+    const sourcemenu = $('#sourcemenu');
+    sourcemenu.val(0);
     try {
         getClimateScenarioInfo();
     } catch (e) {
@@ -2319,7 +2542,7 @@ $(function () {
         console.log("upload handler Failed");
     }
     try {
-        $('#sourcemenu').change();
+        sourcemenu.change();
     } catch (e) {
     }
 
@@ -2340,15 +2563,15 @@ $(function () {
     try {
         document.querySelector(".tour_icon_blink").addEventListener('animationend', () => {
             document.querySelector(".tour_icon_blink").style.animationPlayState = 'paused';
-            $("#tour_icon").removeClass("tour_icon_blink");
-            document.getElementById("tour_icon").offsetWidth = document.getElementById("tour_icon").offsetWidth;
-            $("#tour_icon").addClass("tour_icon_blink");
+            const tour_icon = $("#tour_icon");
+            tour_icon.removeClass("tour_icon_blink");
+            tour_icon.addClass("tour_icon_blink");
         });
         document.querySelector(".tour_box_blink").addEventListener('animationend', () => {
             document.querySelector(".tour_box_blink").style.animationPlayState = 'paused';
-            $("#tour_box_blink").removeClass("tour_box_blink");
-            document.getElementById("tour_box_blink").offsetWidth = document.getElementById("tour_box_blink").offsetWidth;
-            $("#tour_box_blink").addClass("tour_box_blink");
+            const tour_box_blink = $("#tour_box_blink");
+            tour_box_blink.removeClass("tour_box_blink");
+            tour_box_blink.addClass("tour_box_blink");
         });
     } catch (e) {
     }
@@ -2358,9 +2581,12 @@ $(function () {
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
-
+    verify_range();
 });
 
+/**
+ * Support for layers activated via query string
+ */
 function load_queried_layers() {
     if (map.timeDimension._checkSyncedLayersReady() && !map.timeDimension.isLoading() && map.timeDimension._initHooksCalled) {
         for (let x = 0; x < queried_layers.length; x++) {
@@ -2370,7 +2596,6 @@ function load_queried_layers() {
                 setTimeout(confirm_animation, 500);
             } catch (e) {
             }
-
         }
     } else {
         try {
@@ -2380,6 +2605,9 @@ function load_queried_layers() {
     }
 }
 
+/**
+ * Support for layers activated via query string
+ */
 function confirm_animation() {
     if (!map.timeDimension.getUpperLimit()) {
         for (let x = 0; x < queried_layers.length; x++) {
@@ -2388,13 +2616,16 @@ function confirm_animation() {
                 setTimeout(confirm_animation, 500);
             } catch (e) {
             }
-
         }
     } else {
         map.timeDimension.nextTime();
     }
 }
 
+/**
+ * Helper function to filter layers by user input
+ * in the text field layer_filter
+ */
 function layer_filter() {
     const input = document.getElementById('layer_filter');
     const filter = input.value.toUpperCase();
@@ -2412,6 +2643,26 @@ function layer_filter() {
     }
 }
 
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            // Does this cookie string begin with the name we want?
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie('csrftoken');
+
+/**
+ * touch support
+ */
 (function ($) {
 
     $.support.touch = typeof Touch === 'object';
@@ -2429,43 +2680,35 @@ function layer_filter() {
                 .bind("touchstart." + this.widgetName, $.proxy(this, "_touchStart"));
             _mouseInit.apply(this, arguments);
         },
-
         _touchStart: function (event) {
-            if (event.originalEvent.targetTouches.length != 1) {
+            if (event.originalEvent.targetTouches.length !== 1) {
                 return false;
             }
-
             this.element
                 .bind("touchmove." + this.widgetName, $.proxy(this, "_touchMove"))
                 .bind("touchend." + this.widgetName, $.proxy(this, "_touchEnd"));
 
             this._modifyEvent(event);
-
             $(document).trigger($.Event("mouseup")); //reset mouseHandled flag in ui.mouse
             this._mouseDown(event);
-
             return false;
         },
-
         _touchMove: function (event) {
             this._modifyEvent(event);
             this._mouseMove(event);
         },
-
         _touchEnd: function (event) {
             this.element
                 .unbind("touchmove." + this.widgetName)
                 .unbind("touchend." + this.widgetName);
             this._mouseUp(event);
         },
-
         _modifyEvent: function (event) {
             event.which = 1;
             const target = event.originalEvent.targetTouches[0];
             event.pageX = target.clientX;
             event.pageY = target.clientY;
         }
-
     });
 
 })(jQuery);

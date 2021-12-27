@@ -1,0 +1,65 @@
+{% if items.has_other_pages %}
+    <div class="col-12 off-set-3 text-center pagination-set">
+        <nav aria-label="ClimateSERV API Usage">
+            <ul class="pagination">
+                <li class="page-item" aria-label="First">
+                    <a
+                            class="page-link"
+                            href="?page=1&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
+                        First
+                    </a>
+                </li>
+                {% if items.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link"
+                           href="?page={{ items.previous_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
+                            <<
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link">
+                            <span><<</span>
+                        </a>
+                    </li>
+                {% endif %}
+                {% for i in page_range %}
+                    {% if items.number == i %}
+                        <li class="page-item active">
+                            <a class="page-link" href="#">
+                                {{ i }}
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ i }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
+                                {{ i }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                {% if items.has_next %}
+                    <li class="page-item" aria-label="Next">
+                        <a class="page-link"
+                           href="?page={{ items.next_page_number }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
+                            >>
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link">
+                            <span>>></span>
+                        </a>
+                    </li>
+                {% endif %}
+                <li class="page-item" aria-label="Last">
+                    <a
+                            class="page-link"
+                            href="?page={{ items.paginator.num_pages }}&sorted={{ sorted }}&direction={{ direction }}&number_of_items={{ number_of_items }}&filter_key={{ filter_key }}&filter_text={{ filter_text }}">
+                        Last
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+{% endif %}

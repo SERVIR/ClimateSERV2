@@ -1,0 +1,333 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - API Usage{% endblock %}
+{% block script %}
+    <link rel="stylesheet"
+          href="{% static 'system_admin/css/system_admin.css' %}"
+    />
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
+    />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
+    />
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet.nontiledlayer@1.0.7/dist/NonTiledLayer.js"
+    ></script>
+    <script src="{% static 'system_admin/js/system_admin.js' %}"></script>
+{% endblock %}
+{% block content %}
+    <script>
+        const static_url = "{% static '' %}";
+        $(function () {
+            enable_filter_view('{% if filter_key and filter_key is not 'None' %}{{ filter_key }}{% endif %}');
+        });
+
+    </script>
+    <div class="wrapper">
+        <nav id="sidebar">
+            <div class="sidebar-header">
+                <h3>Map and filters</h3>
+            </div>
+            <div id="map">
+
+            </div>
+            <div style="padding: 5px;">
+                <form action="{% url 'ClimateSERV_SystemAdmin:usage' %}"
+                      method="POST" id="filter_form" name="filter_form">
+                    {% csrf_token %}
+                    <span>Items per page: </span>
+                    <label for="number_of_items" style="display: none">Items</label>
+                    <select onchange="this.form.submit()" name="number_of_items" id="number_of_items">
+                        <option value="2" {% if number_of_items == '2' %}selected{% endif %}>2</option>
+                        <option value="5" {% if number_of_items == '5' %}selected{% endif %}>5</option>
+                        <option value="10" {% if number_of_items == '10' %}selected{% endif %}>10</option>
+                        <option value="50" {% if number_of_items == '50' %}selected{% endif %}>50</option>
+                        <option value="100" {% if number_of_items == '100' %}selected{% endif %}>100</option>
+                        <option value="all" {% if number_of_items == 'all' %}selected{% endif %}>all</option>
+                    </select>
+
+                    <label>Filter by:</label><br>
+                    <select id="filter_key" name="filter_key" onchange="enable_filter_view(this.value)">
+                        <option value="originating_IP" {% if filter_key == 'originating_IP' %}selected{% endif %}>
+                            originating_IP
+                        </option>
+                        <option value="dataset" {% if filter_key == 'dataset' %}selected{% endif %}>dataset</option>
+                        <option value="request_type" {% if filter_key == 'request_type' %}selected{% endif %}>
+                            request_type
+                        </option>
+                        <option value="status" {% if filter_key == 'status' %}selected{% endif %}>status</option>
+                        <option value="file_size" {% if filter_key == 'file_size' %}selected{% endif %}>file_size
+                        </option>
+                        <option value="time_requested" {% if filter_key == 'time_requested' %}selected{% endif %}>
+                            time_requested
+                        </option>
+                    </select>
+                    <div id="normal_filter">
+                        <input
+                                type="text"
+                                name="filter_text"
+                                style="width:100%"
+                                value="{% if filter_text and filter_text is not 'None' %}{{ filter_text }}{% endif %}"/>
+                    </div>
+                    <div id="time_range_filter">
+                        <label for="start_range">Start range:</label>
+                        <input
+                                type="date"
+                                id="start_range"
+                                value="{% if start_range and start_range is not 'None' %}{{ start_range }}{% endif %}"
+                                name="start_range">
+                        to
+                        <label for="end_range">End range:</label>
+                        <input
+                                type="date"
+                                id="end_range"
+                                value="{% if end_range and end_range is not 'None' %}{{ end_range }}{% endif %}"
+                                name="end_range">
+                    </div>
+                    <button
+                            type="submit"
+                            style="float: right"
+                            value="Apply Filter">Apply Filter
+                    </button>
+                </form>
+
+            </div>
+        </nav>
+        <div class="usage_content" style="padding-right: 0; padding-left: 0">
+            <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto">
+
+                <table id="api_usage">
+                    <thead>
+                    <tr>
+                        <th></th>
+                        {% for header in headers %}
+                            <th>
+                                <form
+                                        name="sort_form_{{ header.name }}"
+                                        action="{% url 'ClimateSERV_SystemAdmin:usage' %}"
+                                        method="POST">
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="sort_column_{{ header.name }}" style="display: none">Sort</label>
+                                        <input
+                                                id="sort_column_{{ header.name }}"
+                                                name="sort_column"
+                                                style="display:none"
+                                                value="{{ header.name }}"
+                                        />
+                                        <label for="page" style="display:none">page</label>
+                                        <label for="page_{{ header.name }}" style="display: none">Page</label>
+                                        <input
+                                                id="page_{{ header.name }}"
+                                                name="page"
+                                                style="display:none"
+                                                value="{{ page }}"
+                                        />
+                                        {% if header.name == sorted %}
+                                            <label for="direction_{{ header.name }}"
+                                                   style="display:none">direction</label>
+                                            <input
+                                                    id="direction_{{ header.name }}"
+                                                    name="direction"
+                                                    style="display:none"
+                                                    value="{{ direction }}"
+                                            />
+                                        {% endif %}
+                                        {% if filter_key and filter_text %}
+                                            <label for="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="filter_key_{{ header.name }}_{{ number_of_items }}"
+                                                    name="filter_key"
+                                                    style="display:none"
+                                                    value="{{ filter_key }}"
+                                            />
+                                            <label for="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="filter_text_{{ header.name }}_{{ number_of_items }}"
+                                                    name="filter_text"
+                                                    style="display:none"
+                                                    value="{{ filter_text }}"
+                                            />
+
+                                        {% endif %}
+                                        {% if start_range and end_range %}
+                                            <label for="start_range_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="start_range_{{ header.name }}_{{ number_of_items }}"
+                                                    name="start_range"
+                                                    style="display:none"
+                                                    value="{{ start_range }}"
+                                            />
+                                            <label for="end_range_{{ header.name }}_{{ number_of_items }}"
+                                                   style="display: none">items</label>
+                                            <input
+                                                    id="end_range_{{ header.name }}_{{ number_of_items }}"
+                                                    name="end_range"
+                                                    style="display:none"
+                                                    value="{{ end_range }}"
+                                            />
+
+                                        {% endif %}
+                                        <label for="items_{{ header.name }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="items_{{ header.name }}_{{ number_of_items }}"
+                                                name="number_of_items"
+                                                style="display:none"
+                                                value="{{ number_of_items }}"
+                                        />
+                                    </div>
+                                </form>
+
+                                <span
+                                        onclick="document.forms['sort_form_{{ header.name }}'].submit();"
+                                        class="sort-by
+                                            {% if header.name == sorted and direction == 'asc' %}asc
+                                            {% elif  header.name == sorted and direction == 'desc' %}desc{% endif %}
+"
+                                >
+                                    {{ header.name }}
+                                </span>
+                            </th>
+                        {% endfor %}
+                    </tr>
+                    </thead>
+                    {% for record in items %}
+                        <tr>
+                            <td style="vertical-align: middle;">
+                                <form
+                                        action="{% url 'ClimateSERV_SystemAdmin:usage' %}"
+                                        onsubmit="return confirm('Are you sure you want to delete this record?');"
+                                        method="POST"
+                                        name="removeItem_{{ record.id }}"
+                                        id="removeItem_{{ record.id }}"
+                                >
+                                    {% csrf_token %}
+                                    <div class="form-group">
+                                        <label for="delete_record_id_{{ record.id }}" style="display: none">
+                                            Delete
+                                        </label>
+                                        <input
+                                                id="delete_record_id_{{ record.id }}"
+                                                name="delete_record_id"
+                                                style="display:none"
+                                                value="{{ record.id }}"
+                                        />
+                                        <label for="page_{{ page }}" style="display: none">
+                                            Page
+                                        </label>
+                                        <input
+                                                id="page_{{ page }}"
+                                                name="page"
+                                                style="display:none"
+                                                value="{{ page }}"
+                                        />
+                                    </div>
+                                    <label for="items_{{ record.id }}_{{ number_of_items }}"
+                                           style="display: none">items</label>
+                                    <input
+                                            id="items_{{ record.id }}_{{ number_of_items }}"
+                                            name="number_of_items"
+                                            style="display:none"
+                                            value="{{ number_of_items }}"
+                                    />
+                                    <button type="submit" form="removeItem_{{ record.id }}">Delete</button>
+                                    {% if sorted %}
+                                        <label for="sort_column_{{ record.id }}_{{ number_of_items }}"
+                                               style="display:none">sort_column</label>
+                                        <input
+                                                id="sort_column_{{ record.id }}_{{ number_of_items }}"
+                                                name="sort_column"
+                                                style="display:none"
+                                                value="{{ sorted }}"
+                                        />
+                                    {% endif %}
+
+                                    {% if direction %}
+                                        <label for="direction_{{ record.id }}_{{ number_of_items }}"
+                                               style="display:none">direction</label>
+                                        <input
+                                                id="direction_{{ record.id }}_{{ number_of_items }}"
+                                                name="direction"
+                                                style="display:none"
+                                                value="{{ direction }}"
+                                        />
+                                    {% endif %}
+                                    {% if filter_key and filter_text %}
+                                        <label for="filter_key_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_key_{{ record.id }}_{{ number_of_items }}"
+                                                name="filter_key"
+                                                style="display:none"
+                                                value="{{ filter_key }}"
+                                        />
+                                        <label for="filter_text_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="filter_text_{{ record.id }}_{{ number_of_items }}"
+                                                name="filter_text"
+                                                style="display:none"
+                                                value="{{ filter_text }}"
+                                        />
+
+                                    {% endif %}
+                                    {% if start_range and end_range %}
+                                        <label for="start_range_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="start_range_{{ record.id }}_{{ number_of_items }}"
+                                                name="start_range"
+                                                style="display:none"
+                                                value="{{ start_range }}"
+                                        />
+                                        <label for="end_range_{{ record.id }}_{{ number_of_items }}"
+                                               style="display: none">items</label>
+                                        <input
+                                                id="end_range_{{ record.id }}_{{ number_of_items }}"
+                                                name="end_range"
+                                                style="display:none"
+                                                value="{{ end_range }}"
+                                        />
+
+                                    {% endif %}
+
+
+                                </form>
+                            </td>
+                            {% for header in headers %}
+                                <td>
+                                    <div {% if header.name == "AOI" %}
+                                        onclick="showAOI(this)" title="Show on map"
+                                    {% endif %}
+                                        style="
+                                                max-height: 350px;
+                                                overflow-y: auto;
+                                                {% if header.name == "AOI" %} cursor:pointer; {% endif %}
+                                                ">
+                                        {{ record | key:header.name }}
+                                    </div>
+                                </td>
+                            {% endfor %}
+                        </tr>
+                    {% endfor %}
+                </table>
+            </div>
+            {% include "pagination.html" %}
+        </div>
+    </div>
+{% endblock %}
