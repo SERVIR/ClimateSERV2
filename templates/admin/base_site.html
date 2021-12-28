@@ -1,0 +1,104 @@
+{% extends "admin/base.html" %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} |
+    {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+    {% load static %}
+    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'frontend/img/apple-touch-icon.png' %}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'frontend/img/favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'frontend/img/favicon-16x16.png' %}">
+    <link rel="manifest" href="{% static 'frontend/img/site.webmanifest' %}">
+    <link rel="mask-icon" href="{% static 'frontend/img/safari-pinned-tab.svg' %}" color="#5bbad5">
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/static/frontend/img/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
+    <link
+            rel="stylesheet"
+            href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
+    />
+    <link
+            rel="stylesheet"
+            href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+    />
+    <link href="{% static 'frontend/css/App.css' %}" rel="stylesheet"/>
+    <link href="{% static 'frontend/css/card.css' %}" rel="stylesheet"/>
+    <style>
+        #header {
+            padding: 0;
+            background: #000000;
+        }
+
+        ul > li {
+            list-style-type: none;
+        }
+
+        caption > a.section {
+            background-color: unset;
+            padding: unset;
+        }
+        strong {
+            color: #758055;
+        }
+        #user-tools{
+            margin-right: 10px;
+        }
+        #user-tools a:focus, #user-tools a:hover{
+            color: #758055;
+        }
+    </style>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/2.9.2/umd/popper.min.js"
+            integrity="sha512-2rNj2KJ+D8s1ceNasTIex6z4HWyOnEYLVC3FigGOmyQCZc2eBXKgOxQmo3oKLHyfcj53uz4QMsRCWNbLd32Q1g=="
+            crossorigin="anonymous"
+            referrerpolicy="no-referrer"
+    ></script>
+    <script
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"
+    ></script>
+
+
+    <header>
+        <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
+            <a href="{% if page == 'menu-home' %}#home {% else %} / {% endif %}" class="navbar-brand">
+                <img src="{% static 'frontend/img/logo_climateserv_WithGlobe_white.png' %}" alt="ClimateSERV"/>
+            </a>
+            <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-toggle="collapse"
+                    data-target="#navbarCollapse"
+                    aria-controls="navbarCollapse"
+                    aria-expanded="false"
+                    aria-label="Toggle navigation"
+            >
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="navbar-collapse collapse" id="navbarCollapse">
+                <ul class="navbar-nav mr-auto">
+                    <li>
+                        <a aria-current="page" id="menu-home" class="nav-link"
+                           href="{% url 'ClimateSERV_UI:home' %}">HOME</a>
+                    </li>
+                    <li>
+                        <a class="nav-link" id="menu-map" href="{% url 'ClimateSERV_UI:map' %}">MAP</a>
+                    </li>
+                    <li>
+                        <a class="nav-link" id="menu-about" href="{% url 'ClimateSERV_UI:about' %}">ABOUT</a>
+                    </li>
+                </ul>
+                <div class="navbar-nav">
+                    <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">HELP CENTER</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
