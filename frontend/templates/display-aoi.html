@@ -1,0 +1,50 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - Map{% endblock %}
+{% block script %}
+    <link rel="stylesheet"
+          href="{% static 'system_admin/css/system_admin.css' %}"
+    />
+    <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.css"
+    />
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.css"
+    />
+    <link rel="stylesheet"
+          href="{% static 'frontend/css/map.css' %}"
+    />
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet@1.5.1/dist/leaflet.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.fullscreen/1.4.2/Control.FullScreen.min.js"
+    ></script>
+    <script
+            type="text/javascript"
+            src="https://cdn.jsdelivr.net/npm/leaflet.nontiledlayer@1.0.7/dist/NonTiledLayer.js"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="{% static 'frontend/js/display-aoi.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+    <script>
+        const passed_aoi = '{{ aoi }}';
+    </script>
+
+    <div id="map">
+
+    </div>
+
+    <div id="dialog" style="display: none" class="ui-widget-content">
+        <p>
+            This is the default dialog which is useful for displaying information.
+            The dialog window can be moved, resized and closed with the
+            &apos;x&apos; icon.
+        </p>
+    </div>
+{% endblock %}

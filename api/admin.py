@@ -1,6 +1,8 @@
 from django.contrib import admin
 
 # Register your models here.
+from django.urls import reverse_lazy, get_script_prefix
+from django.utils.html import format_html
 
 from .models import Config_Setting
 from .models import ETL_Dataset
@@ -42,7 +44,29 @@ admin.site.register(Request_Log)
 
 @admin.register(Track_Usage)
 class Track_UsageAdmin(admin.ModelAdmin):
-    list_display = ('unique_id', 'time_requested', 'originating_IP', 'dataset', 'start_date', 'end_date', 'file_size')
+    list_display = (
+        'unique_id',
+        'time_requested',
+        'ip_location',
+        'dataset',
+        'start_date',
+        'end_date',
+        'file_size',
+        'aoi_button')
     list_filter = ('dataset', 'calculation', 'request_type')
-    search_fields = ('unique_id', 'dataset')
+    search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
+
+    def ip_location(self, obj):
+        return format_html(
+            "<a href='https://www.ip2location.com/demo/{}' target='_blank'>{}</a>",
+            obj.originating_IP,
+            obj.originating_IP)
+
+    def aoi_button(self, obj):
+        info = get_script_prefix()
+        return format_html(
+            # "<a href='~/display-aoi/{}' target='_blank'>Display AOI</a>",
+            "<a href='javascript:open_aoi({})'>Display AOI</a>",
+            obj.id)
+        # )

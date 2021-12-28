@@ -8,7 +8,7 @@ from climateserv2.views import *
 
 urlpatterns = [
     url('', include('frontend.urls')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', admin.site.urls, name='admin'),
     url(r'^api/', include('api.urls')),
     url(r'^etl_monitor/', include('etl_monitor.urls')),
     url(r'^system_admin/', include('system_admin.urls')),

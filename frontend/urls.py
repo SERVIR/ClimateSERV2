@@ -7,4 +7,5 @@ urlpatterns = [
     path('map', views.map_app, name='map'),
     path('about', views.about, name='about'),
     path('help', views.help_center, name='help'),
+    path('display-aoi/<str:usage_id>', views.display_aoi, name='display-aoi'),
 ]

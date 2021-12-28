@@ -1,6 +1,8 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 
 from .models import *
+from api.models import Track_Usage
 
 
 def index(request):
@@ -15,6 +17,14 @@ def map_app(request):
     return render(request, 'map.html', context={
         'page': 'menu-map',
         'data_layers': DataLayer.objects.order_by('title').all(),
+    })
+
+
+@staff_member_required
+def display_aoi(request, usage_id):
+    usage = Track_Usage.objects.get(id=usage_id)
+    return render(request, 'display-aoi.html', context={
+        'aoi': usage.AOI,
     })
 
 
