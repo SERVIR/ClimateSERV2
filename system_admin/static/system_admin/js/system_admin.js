@@ -6,7 +6,7 @@ const admin_layer_url = location.hostname === "localhost" ||
 location.hostname === "127.0.0.1" ||
 location.hostname === "192.168.1.132"
     ? "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100"
-    : "servirmap_102100/?&crs=EPSG%3A102100";
+    : window.location.origin + "servirmap_102100/?&crs=EPSG%3A102100";
 
 function showAOI(which) {
     let aoi;
