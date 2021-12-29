@@ -1632,6 +1632,10 @@ function pollForProgress(id, isClimate) {
     });
 }
 
+function filter_datasets_by(which){
+    console.log("Remove non " + which + " datasets");
+}
+
 /**
  * Sets the UI to the correct state when a different source is selected
  * @param which
@@ -2199,9 +2203,18 @@ function getDataLine(mmm_Y, type, data) {
 function openDataTypePanel(select_control) {
     if (select_control.value === "datasets") {
         $("#panel_monthly_rainfall").hide();
+        $("#panel_download").hide();
         $("#panel_dataset").show();
+        $("#panel_timeseries").show();
+    } else if (select_control.value === "download") {
+        $("#panel_monthly_rainfall").hide();
+        $("#panel_timeseries").hide();
+        $("#panel_dataset").show();
+        $("#panel_download").show();
     } else {
         $("#panel_dataset").hide();
+        $("#panel_download").hide();
+        $("#panel_timeseries").hide();
         $("#panel_monthly_rainfall").show();
     }
     verify_ready();
