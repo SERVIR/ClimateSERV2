@@ -66,7 +66,10 @@ def process_callback(request, output, content_type):
         except KeyError:
             http_response = HttpResponse(output)
     if request.method == 'GET':
-        request_id = request.GET["id"]
+        if "id" in request.GET:
+            request_id = request.GET["id"]
+        else:
+            request_id = json.loads(output)["unique_id"]
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -268,8 +271,11 @@ def get_file_for_job_id(request):
 @csrf_exempt
 def get_climate_scenario_info(request):
     try:
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-        track_usage.progress = read_progress(request.GET["id"])
+        unique_id = uutools.getUUID()
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request), dataset= "climateScenarioInfo",
+                                  time_requested=timezone.now(), request_type=request.method, status="Submitted",
+                                  progress=100, API_call="getClimateScenarioInfo", data_retrieved=False
+                                  )
         track_usage.save()
     except MultiValueDictKeyError:
         error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
@@ -294,14 +300,13 @@ def get_climate_scenario_info(request):
         }
     ]
     climate_datatype_map = params.get_Climate_DatatypeMap()
-
     api_return_object = {
+        "unique_id":unique_id,
         "RequestName": "getClimateScenarioInfo",
         "climate_DatatypeMap": climate_datatype_map,
         "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
         "isError": is_error
     }
-
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
