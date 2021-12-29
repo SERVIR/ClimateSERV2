@@ -274,7 +274,8 @@ def get_climate_scenario_info(request):
         unique_id = uutools.getUUID()
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request), dataset= "climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
-                                  progress=100, API_call="getClimateScenarioInfo", data_retrieved=False
+                                  progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
+                                  AOI=json.dumps({})
                                   )
         track_usage.save()
     except MultiValueDictKeyError:
