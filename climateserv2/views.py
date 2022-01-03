@@ -436,16 +436,11 @@ def submit_data_request(request):
             try:
                 if dictionary['geometry'].index('FeatureCollection') > -1:
                     json_obj = json.loads(dictionary['geometry'])
-                else:
-                    dictionary['geometry'] = {"type": "FeatureCollection",
-                                                         "features": [
-                                                             {"type": "Feature", "properties": {},
-                                                              "geometry": polygon_string}]}
             except ValueError:
                 dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
-                                                         "features": [
-                                                             {"type": "Feature", "properties": {},
-                                                              "geometry": json.loads(polygon_string)}]})
+                                                     "features": [
+                                                         {"type": "Feature", "properties": {},
+                                                          "geometry": json.loads(polygon_string)}]})
 
         # start multiprocessing here
 
