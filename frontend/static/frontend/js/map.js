@@ -1431,8 +1431,9 @@ function handle_initial_request_data(data, isClimate) {
  */
 function buildForm(formData) {
 
+    const calc = $("#requestTypeSelect").val() === "datasets" ? $("#operationmenu").val(): $("#format-menu").val();
     current_calculation = {
-        'value': parseInt($("#operationmenu").val()),
+        'value': parseInt(calc),
         'text': $("#operationmenu option:selected").text()
     };
 
@@ -1474,7 +1475,7 @@ function sendRequest() {
     clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
-    if ($("#requestTypeSelect").val() === "datasets") {
+    if ($("#requestTypeSelect").val() === "datasets" || $("#requestTypeSelect").val() === "download") {
         buildForm(formData);
         let api_host = window.location.hostname;
         if (window.location.port) {
@@ -1582,7 +1583,9 @@ function pollForProgress(id, isClimate) {
 
             } else if (val === 100) {
                 retries = 0;
-                if ($("#operationmenu").val() === "6") {
+                if ($("#requestTypeSelect").val() === "datasets"
+                    ? $("#operationmenu").val()
+                    : $("#format-menu").val() === "6") {
                     getDownLoadLink(id);
                 } else {
                     getDataFromRequest(id, isClimate);
