@@ -69,7 +69,7 @@ def process_callback(request, output, content_type):
         if "id" in request.GET:
             request_id = request.GET["id"]
         else:
-            request_id = json.loads(output)["unique_id"]
+            request_id = json.loads(output)[0]
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -272,7 +272,8 @@ def get_file_for_job_id(request):
 def get_climate_scenario_info(request):
     try:
         unique_id = uutools.getUUID()
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request), dataset= "climateScenarioInfo",
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
                                   AOI=json.dumps({})
@@ -302,7 +303,7 @@ def get_climate_scenario_info(request):
     ]
     climate_datatype_map = params.get_Climate_DatatypeMap()
     api_return_object = {
-        "unique_id":unique_id,
+        "unique_id": unique_id,
         "RequestName": "getClimateScenarioInfo",
         "climate_DatatypeMap": climate_datatype_map,
         "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
@@ -433,11 +434,18 @@ def submit_data_request(request):
         else:
             dictionary['geometry'] = polygon_string
             try:
-                json_obj = json.loads(dictionary['geometry'])
+                if dictionary['geometry'].index('FeatureCollection') > -1:
+                    json_obj = json.loads(dictionary['geometry'])
+                else:
+                    dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
+                                                         "features": [
+                                                             {"type": "Feature", "properties": {},
+                                                              "geometry": json.dumps(polygon_string)}]})
             except ValueError:
-                dictionary['geometry'] = {"type": "FeatureCollection",
-                                          "features": [
-                                              {"type": "Feature", "properties": {}, "geometry": json.dumps(json_obj)}]}
+                dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
+                                                     "features": [
+                                                         {"type": "Feature", "properties": {},
+                                                          "geometry": json.dumps(json_obj)}]})
 
         # start multiprocessing here
 
