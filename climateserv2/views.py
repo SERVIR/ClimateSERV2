@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import socket
+import subprocess
 from datetime import datetime, timedelta
 import pandas as pd
 import xarray as xr
@@ -710,3 +711,9 @@ def get_feature_ids_list(request):
         if is_int:
             feature_ids_list.append(value)
     return feature_ids_list
+
+def restart_climateserv(request):
+    try:
+        subprocess.call(["crestart"])
+    except Exception as e:
+        print(e)
