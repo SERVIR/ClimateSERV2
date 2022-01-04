@@ -30,7 +30,7 @@ urlpatterns = [
     url(r'api/getRequestLogs/', get_request_logs),
     url('api/getFileForJobID/', get_file_for_job_id),
     url(r'api/submitMonthlyRainfallAnalysisRequest/', submit_monthly_rainfall_analysis_request),
-    url(r'api/restartClimateSERV/',restart_climateserv),
+    url(r'api/restartClimateSERV/', restart_climateserv),
 
     # support old script access path
     url(r'chirps/scriptAccess/getParameterTypes/', get_parameter_types),

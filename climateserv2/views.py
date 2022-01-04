@@ -712,8 +712,9 @@ def get_feature_ids_list(request):
             feature_ids_list.append(value)
     return feature_ids_list
 
+
 def restart_climateserv(request):
     try:
-        subprocess.call(["crestart"])
+        subprocess.call(['/bin/bash', '-i', '-c', "crestart"])
     except Exception as e:
         print(e)
