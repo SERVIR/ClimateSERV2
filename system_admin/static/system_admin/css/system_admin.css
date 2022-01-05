@@ -5,8 +5,8 @@
 }
 
 #sidebar {
-    min-width: 250px;
-    max-width: 250px;
+    min-width: 350px;
+    max-width: 350px;
     min-height: 100vh;
     position: -webkit-sticky;
     position: sticky;
@@ -16,12 +16,12 @@
 }
 
 #sidebar.active {
-    margin-left: -250px;
+    margin-left: -350px;
 }
 
-#map {
-    width: 250px;
-    height: 250px;
+#map{
+    width:350px;
+    height:350px;
 }
 
 .sidebar-header h3 {
@@ -35,6 +35,7 @@
 
 #api_usage {
     font-family: Arial, Helvetica, sans-serif;
+    font-size: x-small;
     border-collapse: collapse;
     width: 100%;
 }

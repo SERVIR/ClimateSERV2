@@ -46,16 +46,16 @@
                 <form action="{% url 'ClimateSERV_SystemAdmin:usage' %}"
                       method="POST" id="filter_form" name="filter_form">
                     {% csrf_token %}
+                    <br/>
                     <span>Items per page: </span>
                     <label for="number_of_items" style="display: none">Items</label>
                     <select onchange="this.form.submit()" name="number_of_items" id="number_of_items">
-                        <option value="2" {% if number_of_items == '2' %}selected{% endif %}>2</option>
-                        <option value="5" {% if number_of_items == '5' %}selected{% endif %}>5</option>
                         <option value="10" {% if number_of_items == '10' %}selected{% endif %}>10</option>
                         <option value="50" {% if number_of_items == '50' %}selected{% endif %}>50</option>
                         <option value="100" {% if number_of_items == '100' %}selected{% endif %}>100</option>
                         <option value="all" {% if number_of_items == 'all' %}selected{% endif %}>all</option>
                     </select>
+                    <br/>
 
                     <label>Filter by:</label><br>
                     <select id="filter_key" name="filter_key" onchange="enable_filter_view(this.value)">
@@ -107,7 +107,7 @@
         <div class="usage_content" style="padding-right: 0; padding-left: 0">
             <div style="background-color: #f6f6f6; margin:50px 50px 0 50px; overflow-x: auto">
 
-                <table id="api_usage">
+                <table class="table table-striped" id="api_usage">
                     <thead>
                     <tr>
                         <th></th>
@@ -315,7 +315,7 @@
                                         onclick="showAOI(this)" title="Show on map"
                                     {% endif %}
                                         style="
-                                                max-height: 350px;
+                                                max-height: 80px;
                                                 overflow-y: auto;
                                                 {% if header.name == "AOI" %} cursor:pointer; {% endif %}
                                                 ">

@@ -17,10 +17,11 @@ admin.site.register(ETL_Dataset)
 
 @admin.register(ETL_Granule)
 class ETLGranuleAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'granule_name', 'granule_contextual_information', 'etl_pipeline_run',
-                    'etl_dataset', 'is_missing', 'granule_pipeline_state', 'additional_json', 'created_at',
-                    'created_by', 'is_test_object')
-    search_fields = ('uuid',)
+    list_display = ('uuid', 'etl_pipeline_run', 'etl_dataset', 'granule_name',
+                    'is_missing', 'granule_pipeline_state', 'created_at', 'created_by')
+    list_filter = ('is_missing', 'is_test_object', 'granule_pipeline_state', 'etl_dataset')
+    search_fields = ('uuid', 'etl_pipeline_run')
+    autocomplete_fields = ['etl_pipeline_run']
 
 
 @admin.register(ETL_Log)
@@ -35,6 +36,7 @@ class ETLLogAdmin(admin.ModelAdmin):
 @admin.register(ETL_PipelineRun)
 class ETLPipelineRunAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'created_at')
+    search_fields = ('uuid',)
     date_hierarchy = "created_at"
 
 
@@ -48,12 +50,14 @@ class Track_UsageAdmin(admin.ModelAdmin):
         'unique_id',
         'time_requested',
         'ip_location',
+        'country_ISO',
+        'aoi_button',
         'dataset',
         'start_date',
         'end_date',
         'file_size',
-        'aoi_button')
-    list_filter = ('dataset', 'calculation', 'request_type')
+        'ui_request')
+    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation')
     search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
 
