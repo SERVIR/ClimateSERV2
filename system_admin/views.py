@@ -22,7 +22,7 @@ def usage(request):
     page = 1
     order_by = 'id'
     direction = "asc"
-    number_of_items = 2
+    number_of_items = 50
     filter_key = None
     filter_value = None
     start_range = ''
