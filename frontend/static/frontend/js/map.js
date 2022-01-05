@@ -1583,9 +1583,9 @@ function pollForProgress(id, isClimate) {
 
             } else if (val === 100) {
                 retries = 0;
-                if ($("#requestTypeSelect").val() === "datasets"
+                if (($("#requestTypeSelect").val() === "datasets"
                     ? $("#operationmenu").val()
-                    : $("#format-menu").val() === "6") {
+                    : $("#format-menu").val() ) === "6") {
                     getDownLoadLink(id);
                 } else {
                     getDataFromRequest(id, isClimate);
