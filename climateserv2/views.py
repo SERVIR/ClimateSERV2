@@ -70,7 +70,14 @@ def process_callback(request, output, content_type):
         if "id" in request.GET:
             request_id = request.GET["id"]
         else:
-            request_id = json.loads(output)[0]
+            try:
+            	output_json = json.loads(output)
+            	if "unique_id" in output_json:
+            		request_id = output_json["unique_id"]
+            	else:
+            		request_id = uutools.getUUID()
+            except:
+            	pass
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
