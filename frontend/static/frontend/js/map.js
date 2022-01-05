@@ -738,30 +738,30 @@ function verifyFeatures(data) {
     return verifiedRequirements;
 }
 
-function addDataToMap(data){
+function addDataToMap(data) {
     try {
-            // this handles all upload situations
-            let verifiedRequirements = verifyFeatures(data);
-            if(verifiedRequirements){
-                uploadLayer.clearLayers();
-                uploadLayer.addData(data);
-                try {
-                    map.fitBounds(uploadLayer.getBounds());
-                } catch(e){
-                    map.fitBounds([
-                            [data.bbox[1], data.bbox[0]],
-                            [data.bbox[3], data.bbox[2]],
-                        ]);
-                }
-                $("#upload_error").hide();
-                collect_review_data();
-                verify_ready();
-            } else{
-                upload_file_error();
+        // this handles all upload situations
+        let verifiedRequirements = verifyFeatures(data);
+        if (verifiedRequirements) {
+            uploadLayer.clearLayers();
+            uploadLayer.addData(data);
+            try {
+                map.fitBounds(uploadLayer.getBounds());
+            } catch (e) {
+                map.fitBounds([
+                    [data.bbox[1], data.bbox[0]],
+                    [data.bbox[3], data.bbox[2]],
+                ]);
             }
-        } catch (e) {
+            $("#upload_error").hide();
+            collect_review_data();
+            verify_ready();
+        } else {
             upload_file_error();
         }
+    } catch (e) {
+        upload_file_error();
+    }
 }
 
 function handleFiles(e) {
@@ -770,7 +770,7 @@ function handleFiles(e) {
     reader.onloadend = function () {
         try {
             addDataToMap(JSON.parse(this.result.toString()));
-           } catch (e) {
+        } catch (e) {
             upload_file_error();
         }
     };
@@ -964,33 +964,33 @@ function enableAdminFeature(which) {
                     } else {
                         highlightedIDs.push(selectedID);
                     }
-                    if(highlightedIDs.length <= 20) {
+                    if (highlightedIDs.length <= 20) {
                         if (highlightedIDs.length === 20) {
                             alert("Max selections has been reached");
                         }
-                    } else{
+                    } else {
                         alert("You may only select 20 features.");
                         highlightedIDs = highlightedIDs.filter((e) => e !== selectedID);
                     }
                     adminHighlightLayer = L.tileLayer.wms(
-                            admin_layer_url,
-                            {
-                                layers: which + "_highlight",
-                                format: "image/png",
-                                transparent: true,
-                                styles: "",
-                                TILED: true,
-                                VERSION: "1.3.0",
-                                feat_ids: highlightedIDs.join(),
-                            }
-                        );
+                        admin_layer_url,
+                        {
+                            layers: which + "_highlight",
+                            format: "image/png",
+                            transparent: true,
+                            styles: "",
+                            TILED: true,
+                            VERSION: "1.3.0",
+                            feat_ids: highlightedIDs.join(),
+                        }
+                    );
 
-                        map.addLayer(adminHighlightLayer);
-                        adminHighlightLayer.setZIndex(
-                            Object.keys(baseLayers).length + client_layers.length + 6
-                        );
-                        collect_review_data();
-                        verify_ready();
+                    map.addLayer(adminHighlightLayer);
+                    adminHighlightLayer.setZIndex(
+                        Object.keys(baseLayers).length + client_layers.length + 6
+                    );
+                    collect_review_data();
+                    verify_ready();
                 }
             },
         });
@@ -1328,7 +1328,7 @@ function verify_range() {
     let isReady = false;
     let begin_range_date = document.getElementById("begin_range_date");
     let end_range_date = document.getElementById("end_range_date");
-    if(begin_range_date && end_range_date) {
+    if (begin_range_date && end_range_date) {
         if (begin_range_date.value && end_range_date.value) {
             isReady = $(begin_range_date).valid({
                 rules: {
@@ -1431,7 +1431,7 @@ function handle_initial_request_data(data, isClimate) {
  */
 function buildForm(formData) {
 
-    const calc = $("#requestTypeSelect").val() === "datasets" ? $("#operationmenu").val(): $("#format-menu").val();
+    const calc = $("#requestTypeSelect").val() === "datasets" ? $("#operationmenu").val() : $("#format-menu").val();
     current_calculation = {
         'value': parseInt(calc),
         'text': $("#operationmenu option:selected").text()
@@ -1585,7 +1585,7 @@ function pollForProgress(id, isClimate) {
                 retries = 0;
                 if (($("#requestTypeSelect").val() === "datasets"
                     ? $("#operationmenu").val()
-                    : $("#format-menu").val() ) === "6") {
+                    : $("#format-menu").val()) === "6") {
                     getDownLoadLink(id);
                 } else {
                     getDataFromRequest(id, isClimate);
@@ -1635,7 +1635,7 @@ function pollForProgress(id, isClimate) {
     });
 }
 
-function filter_datasets_by(which){
+function filter_datasets_by(which) {
     console.log("Remove non " + which + " datasets");
 }
 
@@ -2233,7 +2233,21 @@ function getClimateScenarioInfo() {
         async: true,
         crossDomain: true
     }).fail(function (jqXHR, textStatus, errorThrown) {
-        console.warn(jqXHR + textStatus + errorThrown);
+        $.ajax({
+            url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
+            type: "GET",
+            async: true,
+            crossDomain: true
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                climateModelInfo = JSON.parse(data);
+            }
+        });
+        console.warn("NMME queries may not work if you are doing local development");
     }).done(function (data, _textStatus, _jqXHR) {
         if (data.errMsg) {
             console.info(data.errMsg);
@@ -2674,6 +2688,7 @@ function getCookie(name) {
     }
     return cookieValue;
 }
+
 const csrftoken = getCookie('csrftoken');
 
 /**
