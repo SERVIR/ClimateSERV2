@@ -1,7 +1,6 @@
 from django.db import models
 import uuid
 
-
 class ETL_Dataset(models.Model):
     uuid = models.CharField(default=uuid.uuid4, editable=True, max_length=40, primary_key=True, auto_created=True)
     #
@@ -99,6 +98,12 @@ class ETL_Dataset(models.Model):
                                          help_text="Is this Instance meant to be used ONLY for internal platform "
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
+    start_year = models.CharField(max_length=4, blank=False)
+    end_year = models.CharField(max_length=4, blank=False)
+    start_month = models.CharField(max_length=2, blank=False)
+    end_month = models.CharField(max_length=2, blank=False)
+    start_day = models.CharField(max_length=2, blank=False)
+    end_day = models.CharField(max_length=2, blank=False)
 
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
