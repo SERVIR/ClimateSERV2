@@ -9,7 +9,7 @@ from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
 from .models import ETL_PipelineRun
-from .models import Request_Progress, Request_Log, Track_Usage
+from .models import Request_Progress, Request_Log, Track_Usage, Storage_Review
 
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
@@ -74,3 +74,9 @@ class Track_UsageAdmin(admin.ModelAdmin):
             "<a href='javascript:open_aoi({})'>Display AOI</a>",
             obj.id)
         # )
+@admin.register(Storage_Review)
+class Storage_ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'unique_id',
+        'API_request_txt_files',
+        'API_request_zip_files')
