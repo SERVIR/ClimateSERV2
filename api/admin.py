@@ -69,11 +69,15 @@ class Track_UsageAdmin(admin.ModelAdmin):
 
     def aoi_button(self, obj):
         info = get_script_prefix()
-        return format_html(
-            # "<a href='~/display-aoi/{}' target='_blank'>Display AOI</a>",
-            "<a href='javascript:open_aoi({})'>Display AOI</a>",
-            obj.id)
+        if obj.AOI == '{}':
+            return format_html("<span>No AOI</span>")
+        else:
+            return format_html(
+                "<a href='javascript:open_aoi({})'>Display AOI</a>",
+                obj.id)
         # )
+
+
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):
     list_display = (

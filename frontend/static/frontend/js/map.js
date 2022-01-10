@@ -1475,7 +1475,8 @@ function sendRequest() {
     clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
-    if ($("#requestTypeSelect").val() === "datasets" || $("#requestTypeSelect").val() === "download") {
+    const request_type_value = $("#requestTypeSelect").val();
+    if (request_type_value === "datasets" || request_type_value === "download") {
         buildForm(formData);
         let api_host = window.location.hostname;
         if (window.location.port) {
@@ -1639,6 +1640,52 @@ function filter_datasets_by(which) {
     console.log("Remove non " + which + " datasets");
 }
 
+function configure_nmme(sdata) {
+    if (sdata.errMsg) {
+        console.info(sdata.errMsg);
+    } else {
+        const data = JSON.parse(sdata);
+        const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
+        cc.startDateTime;
+
+        $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
+
+        // create date dropdowns
+        const mformat = "YYYY-MM-DD"
+        let sdate = moment(cc.startDateTime, mformat);
+        let edate = moment(cc.endDateTime, mformat);
+        let count = 1;
+
+        $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+        $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+
+        do {
+            $("#forecastfrommenu")
+                .append
+                (
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+            $("#forecasttomenu")
+                .append
+                (
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+            count++;
+            sdate.add(1, "days");
+        } while (sdate < edate)
+
+        cc.endDateTime;
+        cc.date_FormatString_For_ForecastRange;
+        cc.number_Of_ForecastDays;
+        $("#ensemblevarmenu").empty();
+        data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
+            // add variable with label to select
+
+            $("#ensemblevarmenu")
+                .append(
+                    '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
+        });
+    }
+}
+
 /**
  * Sets the UI to the correct state when a different source is selected
  * @param which
@@ -1677,52 +1724,24 @@ function handleSourceSelected(which) {
             type: "GET",
             async: true,
             crossDomain: true
-        }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.warn(jqXHR + textStatus + errorThrown);
+        }).fail(function () {
+            $.ajax({
+                url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
+                type: "GET",
+                async: true,
+                crossDomain: true
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.warn(jqXHR + textStatus + errorThrown);
+            }).done(function (data, _textStatus, _jqXHR) {
+                if (data.errMsg) {
+                    console.info(data.errMsg);
+                } else {
+                    configure_nmme(data);
+                }
+            });
+            console.warn("NMME queries may not work if you are doing local development");
         }).done(function (sdata, _textStatus, _jqXHR) {
-            if (sdata.errMsg) {
-                console.info(sdata.errMsg);
-            } else {
-                const data = JSON.parse(sdata);
-                const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
-                cc.startDateTime;
-
-                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
-
-                // create date dropdowns
-                const mformat = "YYYY-MM-DD"
-                let sdate = moment(cc.startDateTime, mformat);
-                let edate = moment(cc.endDateTime, mformat);
-                let count = 1;
-
-                $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
-                $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
-
-                do {
-                    $("#forecastfrommenu")
-                        .append
-                        (
-                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
-                    $("#forecasttomenu")
-                        .append
-                        (
-                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
-                    count++;
-                    sdate.add(1, "days");
-                } while (sdate < edate)
-
-                cc.endDateTime;
-                cc.date_FormatString_For_ForecastRange;
-                cc.number_Of_ForecastDays;
-                $("#ensemblevarmenu").empty();
-                data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
-                    // add variable with label to select
-
-                    $("#ensemblevarmenu")
-                        .append(
-                            '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
-                });
-            }
+            configure_nmme(sdata);
         });
     }
     $("#btnRequest").prop("disabled", false);
@@ -2232,7 +2251,7 @@ function getClimateScenarioInfo() {
         type: "GET",
         async: true,
         crossDomain: true
-    }).fail(function (jqXHR, textStatus, errorThrown) {
+    }).fail(function () {
         $.ajax({
             url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
             type: "GET",

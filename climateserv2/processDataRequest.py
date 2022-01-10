@@ -219,7 +219,7 @@ def start_worker_process(job_item):
         dates = job_item["dates"]
         values, LTA = GetTDSData.get_nmme_data(job_item["bounds"])
     else:
-        if job_item['operation'] == 'download':
+        if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf':
             zipfilepath = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
                                                         job_item['end_date'], job_item['variable'], job_item['geom'],
                                                         job_item['operation'], job_item['file_list'])
