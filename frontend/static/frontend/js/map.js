@@ -639,6 +639,12 @@ function selectAOI(which) {
         enableDrawing();
     } else if (which === "upload") {
         enableUpload();
+    } else if (which === "select") {
+        if($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
+            $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+        }
+        enableAdminFeature($("#adminLayerOptions option:first").val());
+
     }
 }
 
@@ -672,8 +678,10 @@ function clearAOISelections() {
 
 function setPointAOI() {
     let valid_values = true;
-    const point_lon = $("#point_lon").val();
-    const point_lat = $("#point_lat").val();
+    const lon_control = $("#point_lon");
+    const lat_control = $("#point_lat");
+    const point_lon = lon_control.val();
+    const point_lat = lat_control.val();
     if (isNaN(point_lon) || point_lon < -180 || point_lon > 180) {
         valid_values = false;
     }
@@ -684,9 +692,16 @@ function setPointAOI() {
         drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        point_lon.val("")
-        point_lat.val("")
+        // Removed clear to allow in place edit rather than new entry edit
+        // lon_control.val("")
+        // lat_control.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+        try {
+            if ($(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0]) {
+                $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0].click();
+            }
+        } catch (e) {
+        }
     } else {
         $("#lat-lon-error").show();
     }
@@ -895,8 +910,10 @@ function enableDrawing() {
 
     map.on("draw:drawstart", function (e) {
         if (e.layerType === "marker") {
+            $("#point_manual_entry").show();
             drawnItems.clearLayers();
         } else {
+            $("#point_manual_entry").hide();
             let BreakException = {};
             // check to make sure drawnItems does not contain a marker
             try {
@@ -2279,17 +2296,8 @@ function getClimateScenarioInfo() {
 /**
  * Toggles the About AOI section
  */
-function toggleAOIHeight() {
-    const el = $('#aoiOptions');
-    const curHeight = el.height();
-    if (curHeight === 0) {
-        const autoHeight = el.css('height', 'auto').height();
-        el.height(curHeight).animate({height: autoHeight}, 1000);
-        el.css("marginBottom", '20px');
-    } else {
-        el.height(curHeight).animate({height: 0}, 1000);
-        el.css("marginBottom", '0px');
-    }
+function toggleUpDownIcon(which) {
+    const el = $('#' + which).toggleClass("fa-angle-up fa-angle-down");
 }
 
 /**
@@ -2690,6 +2698,15 @@ function layer_filter() {
             layers[i].style.display = "none";
         }
     }
+}
+
+function review_query() {
+    toggle_query_tabs();
+}
+
+function toggle_query_tabs() {
+    $("#query_list_checkout").toggle();
+    $("#chart-builder").toggle();
 }
 
 function getCookie(name) {

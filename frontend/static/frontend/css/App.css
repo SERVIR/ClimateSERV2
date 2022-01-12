@@ -449,7 +449,7 @@ body {
     margin: 0;
     width: 800px;
     height: 200px;
-    border: 4px dashed #4aa1f3;
+    border: 4px dashed #747F54;
 }
 
 .upload-icon {
@@ -555,7 +555,7 @@ button.w-100.bread-crumb.active {
 
 .drop-message {
     text-align: center;
-    color: #4aa1f3;
+    color: #747F54;
     font-family: Arial;
     font-size: 20px;
 }

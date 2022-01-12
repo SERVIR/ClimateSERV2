@@ -115,364 +115,420 @@
                 <!-- Tab panes -->
                 <div id="sidebar-content" class="sidebar-content">
                     <div class="sidebar-pane" id="chart">
-                        <h1 class="sidebar-header">
-                            Statistical Query
-                            <span class="sidebar-close">
+                        <div id="chart-builder">
+                            <h1 class="sidebar-header">
+                                Statistical Query
+                                <span class="sidebar-close">
                               <i class="fas fa-caret-left"></i>
                             </span>
-                        </h1>
-                        <h2 class="step-marker">Set Area of Interest</h2>
-                        <button
-                                type="button"
-                                class="bread-crumb"
-                                onclick="toggleAOIHeight()">
-                            About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
-                        </button>
-                        <div id="aoiOptions" style="padding: 0 10px 0 20px; height:0; overflow: hidden;">
-                            <p>
-                                Choose how you would like to define your area of interest
-                                (AOI)
-                            </p>
-                            <ul class="step-list">
-                                <li>
-                                    <span class="bold">Draw:</span> Enables drawing on the map.
-                                    Select <span class="bold">polygon, rectangle, or point</span> from the toolbar,
-                                    then
-                                    interact with the map to define your AOI.
-                                </li>
-                                <li>
-                                    <span class="bold">Upload:</span> Enables either drag and
-                                    drop or click to upload a json file with your defined AOI
-                                </li>
-                                <li>
-                                    <span class="bold">Select:</span> Adds administrative
-                                    boundaries at different levels for you to choose your AOI.
-                                </li>
-                            </ul>
-                        </div>
-                        <div class="btn-group d-flex">
+                            </h1>
+                            <h2 class="step-marker">Set Area of Interest</h2>
                             <button
-                                    id="btnAOIdraw"
-                                    class="tablinks w-100"
-                                    title="Draw AOI on map"
-                                    onclick="selectAOI('draw')">
-                                Draw
+                                    type="button"
+                                    class="bread-crumb"
+                                    data-toggle="collapse"
+                                    href="#aoiOptions"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="aoiOptions"
+                                    onclick="toggleUpDownIcon('aoiOptionToggle')"
+                            >
+                                About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
-                            <button
-                                    id="btnAOIupload"
-                                    class="tablinks w-100"
-                                    title="Upload geojson or .shp file containing AOI"
-                                    onclick="selectAOI('upload')">
-                                Upload
-                            </button>
-                            <button
-                                    id="btnAOIselect"
-                                    class="tablinks w-100"
-                                    title="Select Admin feature from map"
-                                    onclick="selectAOI('select')">
-                                Select
-                            </button>
-                        </div>
-                        <div class="tab-content selectAOI"
-                             id="drawAOI"
-                             style="display: none"
-                        >
-                            <p style="padding: 15px 10px;">
-                                Choose drawing tool on the map or you may enter Lat/Lon values for point if
-                                preferred.
-                            </p>
-                            <div class="form-group panel-buffer">
-                                <label for="point_lat">Point Lat</label>
-                                <input type="text" id="point_lat" placeholder="Point Lat" class="form-control"/>
+                            <div id="aoiOptions" class="collapse" style="padding: 0 10px 0 20px;">
+                                <p>
+                                    Choose how you would like to define your area of interest
+                                    (AOI)
+                                </p>
+                                <ul class="step-list">
+                                    <li>
+                                        <span class="bold">Draw:</span> Enables drawing on the map.
+                                        Select <span class="bold">polygon, rectangle, or point</span> from the toolbar,
+                                        then
+                                        interact with the map to define your AOI.
+                                    </li>
+                                    <li>
+                                        <span class="bold">Upload:</span> Enables either drag and
+                                        drop or click to upload a json file with your defined AOI
+                                    </li>
+                                    <li>
+                                        <span class="bold">Select:</span> Adds administrative
+                                        boundaries at different levels for you to choose your AOI.
+                                    </li>
+                                </ul>
                             </div>
-
-                            <div class="form-group panel-buffer">
-                                <label for="point_lon">Point Lon</label>
-                                <input type="text" id="point_lon" placeholder="Point Lon" class="form-control"/>
-                                <label id="lat-lon-error" for="point_lon"
-                                       style="color: rgb(218, 32, 32); display:none;">
-                                    Lat must be a number between -90 and 90, lon must be a number between -180 and
-                                    180.
-                                </label>
-                            </div>
-
-                            <div class="form-group panel-buffer" style="text-align: right;">
-                                <button
-                                        id="btnSetPoint"
-                                        onclick="setPointAOI()"
-                                >
-                                    Set Point
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="tab-content selectAOI"
-                             id="uploadAOI"
-                             style="display: none"
-                        >
-                            <div class="acontainer">
-                                <div class="drop-container" id="drop-container">
-                                    <div class="drop-message" onclick="triggerUpload(event)">
-                                        <div class="upload-icon"></div>
-                                        Drag &amp; Drop json, geojson, or zipped shapefile here
-                                        or click to select file
-                                    </div>
-                                    <input id="upload_files" class="upload_files" type="file" multiple=""
-                                           style="display: none;"/>
-                                </div>
-                                <div class="file-display-container"></div>
-                            </div>
-                            <div class="errors" id="upload_error" style="display:none;">
-
-                            </div>
-                            <div class="modal">
-                                <div class="overlay"></div>
-                                <span class="close">X</span>
-                                <div class="modal-image"></div>
-                            </div>
-                            <div class="upload-modal" style="display: none">
-                                <div class="overlay"></div>
-                                <div class="close">X</div>
-                                <div class="progress-container">
-                                    <span></span>
-                                    <div class="progress">
-                                        <div class="progress-bar"></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="selectAOI" id="selectAOI" style="display: none">
-                            <p style="font-weight: 900; padding: 20px 0 10px">
-                                Select features by:
-                            </p>
                             <div class="btn-group d-flex">
                                 <button
-                                        id="btnAdminFeatcountry"
+                                        id="btnAOIdraw"
                                         class="tablinks w-100"
-                                        onclick="enableAdminFeature('country')"
-                                >
-                                    Country
+                                        title="Draw AOI on map"
+                                        onclick="selectAOI('draw')">
+                                    Draw
                                 </button>
                                 <button
-                                        id="btnAdminFeatadmin_1_earth"
+                                        id="btnAOIupload"
                                         class="tablinks w-100"
-                                        onclick="enableAdminFeature('admin_1_earth')"
-                                >
-                                    Admin #1
+                                        title="Upload geojson or .shp file containing AOI"
+                                        onclick="selectAOI('upload')">
+                                    Upload
                                 </button>
                                 <button
-                                        id="btnAdminFeatadmin_2_af"
+                                        id="btnAOIselect"
                                         class="tablinks w-100"
-                                        onclick="enableAdminFeature('admin_2_af')"
-                                >
-                                    Admin #2
+                                        title="Select Admin feature from map"
+                                        onclick="selectAOI('select')">
+                                    Select
                                 </button>
                             </div>
-                        </div>
-                        <div class="form-group panel-buffer">
-                            <label for="geometry">Geometry</label>
-                            <span class="form-control" id="geometry"
-                                  style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">
-                                    {"type":"FeatureCollection","features":[]}
-                                </span>
-                        </div>
-                        <div
-                                class="form-group panel-buffer"
-                                id="download_aoi_holder"
-                                style="display: none; text-align:right;">
-                            <button
-                                    id="btn_download_aoi"
-                                    onclick="download_aoi()"
-                                    title="Download AOI as geojson"
+                            <div class="selectAOI"
+                                 id="drawAOI"
+                                 style="display: none"
                             >
-                                Download AOI
-                            </button>
+                                <p style="padding: 15px 10px;">
+                                    Choose drawing tool on the map, or you may enter Lat/Lon values manually for point
+                                    if preferred by selecting the marker tool.
+                                </p>
+                                <div id="point_manual_entry" style="display: none">
+                                    <div class="form-group panel-buffer">
+                                        <label for="point_lat">Point Lat</label>
+                                        <input type="text" id="point_lat" placeholder="Point Lat" class="form-control"/>
+                                    </div>
 
-                        </div>
-                        <form id="query-form" onsubmit="return false;">
-                            <h2 class="step-marker">Select Data</h2>
-                            <div class="form-group panel-buffer">
-                                <label for="requestTypeSelect">Type of Request</label>
-                                <i
-                                        onclick="stats_info('type')"
-                                        class="fas fa-question-circle"
-                                        aria-hidden="true"
-                                        style="float: right;"></i>
-                                <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
-                                        onchange="openDataTypePanel(this)">
-                                    <option value="datasets">Time-series Analysis</option>
-                                    <option value="download">Download Raw Data</option>
-                                    <option value="monthly_analysis">Monthly Rainfall Analysis</option>
+                                    <div class="form-group panel-buffer">
+                                        <label for="point_lon">Point Lon</label>
+                                        <input type="text" id="point_lon" placeholder="Point Lon" class="form-control"/>
+                                        <label id="lat-lon-error" for="point_lon"
+                                               style="color: rgb(218, 32, 32); display:none;">
+                                            Lat must be a number between -90 and 90, lon must be a number between -180
+                                            and
+                                            180.
+                                        </label>
+                                    </div>
+
+                                    <div class="form-group panel-buffer" style="text-align: right;">
+                                        <button
+                                                id="btnSetPoint"
+                                                onclick="setPointAOI()"
+                                        >
+                                            Set Point
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-content selectAOI"
+                                 id="uploadAOI"
+                                 style="display: none"
+                            >
+                                <div class="acontainer">
+                                    <div class="drop-container" id="drop-container">
+                                        <div class="drop-message" onclick="triggerUpload(event)">
+                                            <div class="upload-icon"></div>
+                                            Drag &amp; Drop json, geojson, or zipped shapefile here
+                                            or click to select file
+                                        </div>
+                                        <input id="upload_files" class="upload_files" type="file" multiple=""
+                                               style="display: none;"/>
+                                    </div>
+                                    <div class="file-display-container"></div>
+                                </div>
+                                <div class="errors" id="upload_error" style="display:none;">
+
+                                </div>
+                                <div class="modal">
+                                    <div class="overlay"></div>
+                                    <span class="close">X</span>
+                                    <div class="modal-image"></div>
+                                </div>
+                                <div class="upload-modal" style="display: none">
+                                    <div class="overlay"></div>
+                                    <div class="close">X</div>
+                                    <div class="progress-container">
+                                        <span></span>
+                                        <div class="progress">
+                                            <div class="progress-bar"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="selectAOI" id="selectAOI" style="display: none">
+                                <p style="font-weight: 900; padding: 20px 0 10px">
+                                    Select features by:
+                                </p>
+                                 <select name="adminLayerOptions" class="form-control" id="adminLayerOptions"
+                                            onchange="enableAdminFeature(this.value)">
+                                    <option value="country">Country</option>
+                                     <option value="admin_1_earth">Admin #1</option>
+                                     <option value="admin_2_af">Admin #2</option>
                                 </select>
                             </div>
-                            <div id="panel_dataset">
-                                <div class="form-group panel-buffer">
-                                    <label for="dataset-type-menu">Dataset Type</label>
-                                    <i
-                                            onclick="stats_info('dataset-type')"
-                                            class="fas fa-question-circle"
-                                            aria-hidden="true"
-                                            style="float: right;"></i>
-                                    <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
-                                            onchange="filter_datasets_by(this.value)">
-                                        <option value="observation">Observation</option>
-                                        <option value="model-forecast">Model Forecast</option>
-
-                                    </select>
-                                </div>
-                                <div class="form-group panel-buffer">
-                                    <label for="sourcemenu">Data Source</label>
-                                    <i
-                                            onclick="stats_info('source')"
-                                            class="fas fa-question-circle"
-                                            aria-hidden="true"
-                                            style="float: right;"></i>
-                                    <select name="sourcemenu" class="form-control" id="sourcemenu"
-                                            onchange="handleSourceSelected(this.value)">
-                                        {% for layer in data_layers %}
-                                            {% if layer.isMultiEnsemble %}
-                                                <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
-                                            {% else %}
-                                                <option value="{{ layer.api_id }}">{{ layer.title }}</option>
-                                            {% endif %}
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div id="ensemble_builder">
-                                    <div class="form-group panel-buffer">
-                                        <label for="model_run_menu">Select a model run</label>
-                                        <select name="model_run_menu" class="form-control" id="model_run_menu"
-                                                disabled>
-                                        </select>
-                                    </div>
-                                    <div class="form-group panel-buffer">
-                                        <label for="ensemblemenu">Select a model ensemble</label>
-                                        <select name="ensemblemenu"
-                                                class="form-control" id="ensemblemenu"
-                                                onchange="verify_ready()">
-                                        </select>
-                                    </div>
-                                    <div class="form-group panel-buffer">
-                                        <label for="ensemblevarmenu">Select a variable</label>
-                                        <select name="ensemblevarmenu"
-                                                class="form-control"
-                                                id="ensemblevarmenu"
-                                                onchange="verify_ready()">
-                                        </select>
-                                    </div>
-                                    <h2 class="text-center">Select Forecast Range</h2>
-                                    <div class="form-group panel-buffer">
-
-                                        <label for="forecastfrommenu">From date</label>
-                                        <select name="forecastfrommenu"
-                                                id="forecastfrommenu"
-                                                class="form-control"
-                                                onchange="syncDates(); verify_ready()"
-                                        >
-                                        </select>
-                                    </div>
-                                    <div class="form-group panel-buffer">
-
-                                        <label for="forecasttomenu">From date</label>
-                                        <select name="forecasttomenu"
-                                                id="forecasttomenu"
-                                                class="form-control"
-                                                onchange="syncDates(); verify_ready()"
-                                        >
-                                        </select>
-                                    </div>
-
-                                </div>
-                                <div class="form-group panel-buffer" id="panel_timeseries">
-                                    <label for="operationmenu">Calculation</label>
-                                    <i
-                                            onclick="stats_info('calculation')"
-                                            class="fas fa-question-circle"
-                                            aria-hidden="true"
-                                            style="float: right;"></i>
-                                    <select
-                                            name="operationmenu"
-                                            id="operationmenu"
-                                            onchange="verify_ready()"
-                                            class="form-control">
-                                        <option value="1" id="operation_min">Minimum</option>
-                                        <option value="0" id="operation_max">Maximum</option>
-                                        <option value="5" id="operation_average">Average</option>
-                                    </select>
-                                </div>
-                                <div class="form-group panel-buffer" id="panel_download" style="display: none;">
-                                    <label for="operationmenu">Download Format</label>
-                                    <i
-                                            onclick="stats_info('format')"
-                                            class="fas fa-question-circle"
-                                            aria-hidden="true"
-                                            style="float: right;"></i>
-                                    <select
-                                            name="format-menu"
-                                            id="format-menu"
-                                            onchange="verify_ready()"
-                                            class="form-control">
-                                        <option value="7" id="netcdf">NetCDF</option>
-                                        <option value="6" id="tif">TIF</option>
-                                        <option value="8" id="csv">CSV</option>
-                                    </select>
-                                </div>
-                                <div class="form-group panel-buffer" id="non-multi-ensemble-dates">
-                                    <label for="sDate_new_cooked">Date Range</label>
-                                    <input type="date" class="form-control" placeholder="YYYY-MM-DD"
-                                           id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                           onchange="verify_ready()">
-                                    <div class="input-group-addon">to</div>
-                                    <input type="date" class="form-control" placeholder="YYYY-MM-DD"
-                                           id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
-                                           onchange="verify_ready()">
-                                    <label id="compare-error" for="eDate_new_cooked"
-                                           style="color:#da2020; display: none;">End date must be equal or greater
-                                        than
-                                        the start date</label>
-                                </div>
-                            </div>
-                            <div id="panel_monthly_rainfall" style="display: none;">
-                                <div class="form-group panel-buffer">
-                                    <p style="text-align: justify;">
-                                        No other options are necessary. Choose 'Next' below to proceed to the
-                                        review panel, then click 'Submit Request'.
-                                    </p>
-                                    <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
-                                        Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
-                                        data and current NMME Seasonal Forecast data.
-
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="just-buttons">
-                                <button id="btnPreviousChart" disabled onclick="open_previous_chart()">Previous Chart
-                                </button>
-                                <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
-                            </div>
-                            <div class="just-buttons">
-                                <button id="btnViewAPI"
-                                        disabled
+                            <div class="form-group panel-buffer">
+                                <button
+                                        type="button"
+                                        class="bread-crumb"
                                         data-toggle="collapse"
-                                        href="#api_panel"
+                                        href="#selectedGeometry"
                                         role="button"
-                                        class="w-100"
+                                        aria-expanded="false"
+                                        aria-controls="selectedGeometry"
+                                        onclick="toggleUpDownIcon('selectedGeometryToggle')"
                                 >
-                                    View API Call
+                                    Show Current AOI <i id="selectedGeometryToggle" class="fa fa-angle-down"></i>
                                 </button>
+                                <div id="selectedGeometry" class="collapse" style="padding: 0 10px 0 20px;">
+                                <span class="form-control" id="geometry"
+                                      style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">
+                                    {"type":"FeatureCollection","features":[]}
+                                </span>
+                                    <div
+                                            class="form-group panel-buffer"
+                                            id="download_aoi_holder"
+                                            style="display: none; text-align:right;">
+                                        <button
+                                                id="btn_download_aoi"
+                                                onclick="download_aoi()"
+                                                title="Download AOI as geojson"
+                                                class="bread-crumb"
+                                        >
+                                            Download AOI
+                                        </button>
+
+                                    </div>
+                                </div>
                             </div>
 
-                            <div class="form-group panel-buffer collapse" id="api_panel">
-                                <label for="api_query">API Query</label>
-                                <span name="api_query"
-                                      class="form-control"
-                                      style="word-wrap: break-word; height: fit-content;"
-                                      id="api_query"
-                                >
+                            <form id="query-form" onsubmit="return false;">
+                                <h2 class="step-marker">Select Data</h2>
+                                <div class="form-group panel-buffer">
+                                    <label for="requestTypeSelect">Type of Request</label>
+                                    <i
+                                            onclick="stats_info('type')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
+                                    <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
+                                            onchange="openDataTypePanel(this)">
+                                        <option value="datasets">Time-series Analysis</option>
+                                        <option value="download">Download Raw Data</option>
+                                        <option value="monthly_analysis">Monthly Rainfall Analysis</option>
+                                    </select>
+                                </div>
+                                <div id="panel_dataset">
+                                    <div class="form-group panel-buffer">
+                                        <label for="dataset-type-menu">Dataset Type</label>
+                                        <i
+                                                onclick="stats_info('dataset-type')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
+                                                onchange="filter_datasets_by(this.value)">
+                                            <option value="observation">Observation</option>
+                                            <option value="model-forecast">Model Forecast</option>
+
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer">
+                                        <label for="sourcemenu">Data Source</label>
+                                        <i
+                                                onclick="stats_info('source')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select name="sourcemenu" class="form-control" id="sourcemenu"
+                                                onchange="handleSourceSelected(this.value)">
+                                            {% for layer in data_layers %}
+                                                {% if layer.isMultiEnsemble %}
+                                                    <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
+                                                {% else %}
+                                                    <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div id="ensemble_builder">
+                                        <div class="form-group panel-buffer">
+                                            <label for="model_run_menu">Select a model run</label>
+                                            <select name="model_run_menu" class="form-control" id="model_run_menu"
+                                                    disabled>
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblemenu">Select a model ensemble</label>
+                                            <select name="ensemblemenu"
+                                                    class="form-control" id="ensemblemenu"
+                                                    onchange="verify_ready()">
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+                                            <label for="ensemblevarmenu">Select a variable</label>
+                                            <select name="ensemblevarmenu"
+                                                    class="form-control"
+                                                    id="ensemblevarmenu"
+                                                    onchange="verify_ready()">
+                                            </select>
+                                        </div>
+                                        <h2 class="text-center">Select Forecast Range</h2>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecastfrommenu">From date</label>
+                                            <select name="forecastfrommenu"
+                                                    id="forecastfrommenu"
+                                                    class="form-control"
+                                                    onchange="syncDates(); verify_ready()"
+                                            >
+                                            </select>
+                                        </div>
+                                        <div class="form-group panel-buffer">
+
+                                            <label for="forecasttomenu">From date</label>
+                                            <select name="forecasttomenu"
+                                                    id="forecasttomenu"
+                                                    class="form-control"
+                                                    onchange="syncDates(); verify_ready()"
+                                            >
+                                            </select>
+                                        </div>
+
+                                    </div>
+                                    <div class="form-group panel-buffer" id="panel_timeseries">
+                                        <label for="operationmenu">Calculation</label>
+                                        <i
+                                                onclick="stats_info('calculation')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select
+                                                name="operationmenu"
+                                                id="operationmenu"
+                                                onchange="verify_ready()"
+                                                class="form-control">
+                                            <option value="1" id="operation_min">Minimum</option>
+                                            <option value="0" id="operation_max">Maximum</option>
+                                            <option value="5" id="operation_average">Average</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer" id="panel_download" style="display: none;">
+                                        <label for="operationmenu">Download Format</label>
+                                        <i
+                                                onclick="stats_info('format')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select
+                                                name="format-menu"
+                                                id="format-menu"
+                                                onchange="verify_ready()"
+                                                class="form-control">
+                                            <option value="7" id="netcdf">NetCDF</option>
+                                            <option value="6" id="tif">TIF</option>
+                                            <option value="8" id="csv">CSV</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer" id="non-multi-ensemble-dates">
+                                        <label for="sDate_new_cooked">Date Range</label>
+                                        <input type="date" class="form-control" placeholder="YYYY-MM-DD"
+                                               id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
+                                               onchange="verify_ready()">
+                                        <div class="input-group-addon">to</div>
+                                        <input type="date" class="form-control" placeholder="YYYY-MM-DD"
+                                               id="eDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
+                                               onchange="verify_ready()">
+                                        <label id="compare-error" for="eDate_new_cooked"
+                                               style="color:#da2020; display: none;">End date must be equal or greater
+                                            than
+                                            the start date</label>
+                                    </div>
+                                </div>
+                                <div id="panel_monthly_rainfall" style="display: none;">
+                                    <div class="form-group panel-buffer">
+                                        <p style="text-align: justify;">
+                                            No other options are necessary. Choose 'Next' below to proceed to the
+                                            review panel, then click 'Submit Request'.
+                                        </p>
+                                        <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
+                                            Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
+                                            data and current NMME Seasonal Forecast data.
+
+                                        </p>
+                                    </div>
+                                </div>
+                                <div class="query_cart">
+                                    <i class="fa" style="font-size:24px"><img
+                                            src="{% static 'frontend/img/query_icon.png' %}"
+                                            onclick="review_query()"
+                                            alt="Review Queries"
+                                            title="Review Queries"
+                                            style="cursor: pointer"
+                                    ></i><span
+                                        class="badge badge-warning"
+                                        onclick="review_query()"
+                                        alt="Review Queries"
+                                        title="Review Queries"
+                                        style="cursor: pointer"
+                                        id="lblCartCount"> 0 </span>
+                                </div>
+                                <div class="just-buttons">
+                                    <button
+                                            id="btnRequest"
+                                            disabled
+                                            class="button-50"
+                                            onclick="sendRequest()">
+                                        Instant Query (0)
+                                    </button>
+                                    <button
+                                            id="btnAddToQuery"
+                                            disabled
+                                            class="button-50"
+                                            onclick="open_previous_chart()">
+                                        Add to Multi-Query
+                                    </button>
+                                </div>
+                                <div class="just-buttons">
+                                    <button
+                                            id="btnPreviousChart"
+                                            disabled
+                                            class="button-50"
+                                            onclick="open_previous_chart()">
+                                        Previous Chart
+                                    </button>
+                                    <button id="btnViewAPI"
+                                            disabled
+                                            data-toggle="collapse"
+                                            href="#api_panel"
+                                            role="button"
+                                            class="button-50"
+                                    >
+                                        View API Call
+                                    </button>
+                                </div>
+
+                                <div class="form-group panel-buffer collapse" id="api_panel">
+                                    <label for="api_query">API Query</label>
+                                    <span name="api_query"
+                                          class="form-control"
+                                          style="word-wrap: break-word; height: fit-content;"
+                                          id="api_query"
+                                    >
                                             </span>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="query_list_checkout" style="display:none;">
+                            <b>NOTE: This will have the queries listed</b>
+
+                            <h1 style="text-align: center;">You currently have no Queries</h1>
+
+                            <div class="just-buttons">
+                                <button id="btnMultiQuerySubmit" class="button-50" onclick="sendRequest()">
+                                    Submit Query
+                                </button>
+                                <button id="btnBack" class="button-50" onclick="toggle_query_tabs()">
+                                    Back
+                                </button>
                             </div>
-                        </form>
+                        </div>
                     </div>
                     <div class="sidebar-pane" id="chart2">
                         <h1 class="sidebar-header">
