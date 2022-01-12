@@ -359,7 +359,7 @@ class ETL_Pipeline():
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
+                activity_event_type             =  Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
                 activity_event_type             = activity_event_type + ": " + str(step_name)
                 activity_description            = "The pipeline just completed step: {}".format(str(step_name))
                 additional_json                 = self.to_JSONable_Object()
