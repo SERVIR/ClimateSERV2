@@ -674,8 +674,8 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
 
 def validate_seasonal_dates(request, error):
     try:
-        seasonal_start_date = str(request.POST["seasonal_start_date"])
-        seasonal_end_date = str(request.POST["seasonal_end_date"])
+        seasonal_start_date = str(request.POST.get("seasonal_start_date", request.GET.get("seasonal_start_date")))
+        seasonal_end_date = str(request.POST.get("seasonal_end_date", request.GET.get("seasonal_end_date")))
         seasonal_start_date = seasonal_start_date[0:10]
         seasonal_end_date = seasonal_end_date[0:10]
         return seasonal_start_date, seasonal_end_date
