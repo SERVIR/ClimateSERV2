@@ -328,7 +328,34 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+@csrf_exempt
+def run_etl(request):
+    if request.method == 'POST':
+        uuid =request.POST["uuid"]
+        start_year=request.POST["start_year"]
+        end_year=request.POST["end_year"]
+        start_month=request.POST["start_month"]
+        end_month=request.POST["end_month"]
+        start_day=request.POST["start_day"]
+        end_day=request.POST["end_day"]
+        from_last_processed=request.POST["from_last_processed"]
+        merge_option=request.POST["merge_option"]
+        if merge_option=="monthly":
+            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--merge_monthly"])
+        elif merge_option=="yearly":
+            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--merge_yearly"])
+        elif from_last_processed=="true":
+            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--from_last_processed"])
+        else:
+            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
+                         "--etl_dataset_uuid", str(request.POST["uuid"]),
+                         "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM", start_month,
+                         "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
 
+    return "success"
 # Submit a data request for processing
 @csrf_exempt
 def submit_data_request(request):

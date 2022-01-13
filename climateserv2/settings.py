@@ -56,7 +56,9 @@ INSTALLED_APPS = [
     'etl_monitor',
     'frontend',
     'system_admin',
+    'accounts',
 ]
+AUTH_USER_MODEL = 'accounts.User'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
