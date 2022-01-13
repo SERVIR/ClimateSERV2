@@ -137,7 +137,16 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         ds_vals = data.max(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
-    elif operation == "download":
+    elif operation == "netcdf":
+        try:
+            data.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc')
+            with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
+                zipObj.write(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc',
+                             params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc')
+                zipObj.close()
+        except Exception as e:
+            print(e)
+    elif operation == "download" or operation == "csv":
         if jsonn['features'][0]['geometry']['type'] == "Point":
             values = data.values
             values[np.isnan(values)] = -9999

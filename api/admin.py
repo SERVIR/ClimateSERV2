@@ -74,19 +74,21 @@ class Track_UsageAdmin(admin.ModelAdmin):
 
     def aoi_button(self, obj):
         info = get_script_prefix()
-        return format_html(
-            # "<a href='~/display-aoi/{}' target='_blank'>Display AOI</a>",
-            "<a href='javascript:open_aoi({})'>Display AOI</a>",
-            obj.id)
+        if obj.AOI == '{}':
+            return format_html("<span>No AOI</span>")
+        else:
+            return format_html(
+                "<a href='javascript:open_aoi({})'>Display AOI</a>",
+                obj.id)
         # )
+
+
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):
     list_display = (
         'unique_id',
         'API_request_txt_files',
         'API_request_zip_files')
-
-
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'show_save': False,
@@ -110,3 +112,4 @@ class Run_ETLAdmin(admin.ModelAdmin):
             'from_etl':True
         })
         return super().render_change_form(request, context, add, change, form_url, obj)
+

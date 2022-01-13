@@ -639,6 +639,12 @@ function selectAOI(which) {
         enableDrawing();
     } else if (which === "upload") {
         enableUpload();
+    } else if (which === "select") {
+        if($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
+            $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+        }
+        enableAdminFeature($("#adminLayerOptions option:first").val());
+
     }
 }
 
@@ -672,8 +678,10 @@ function clearAOISelections() {
 
 function setPointAOI() {
     let valid_values = true;
-    const point_lon = $("#point_lon").val();
-    const point_lat = $("#point_lat").val();
+    const lon_control = $("#point_lon");
+    const lat_control = $("#point_lat");
+    const point_lon = lon_control.val();
+    const point_lat = lat_control.val();
     if (isNaN(point_lon) || point_lon < -180 || point_lon > 180) {
         valid_values = false;
     }
@@ -684,9 +692,16 @@ function setPointAOI() {
         drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        point_lon.val("")
-        point_lat.val("")
+        // Removed clear to allow in place edit rather than new entry edit
+        // lon_control.val("")
+        // lat_control.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
+        try {
+            if ($(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0]) {
+                $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0].click();
+            }
+        } catch (e) {
+        }
     } else {
         $("#lat-lon-error").show();
     }
@@ -895,8 +910,10 @@ function enableDrawing() {
 
     map.on("draw:drawstart", function (e) {
         if (e.layerType === "marker") {
+            $("#point_manual_entry").show();
             drawnItems.clearLayers();
         } else {
+            $("#point_manual_entry").hide();
             let BreakException = {};
             // check to make sure drawnItems does not contain a marker
             try {
@@ -1475,7 +1492,8 @@ function sendRequest() {
     clearTimeout(polling_timeout);
     $("#btnRequest").prop("disabled", true);
     const formData = new FormData();
-    if ($("#requestTypeSelect").val() === "datasets" || $("#requestTypeSelect").val() === "download") {
+    const request_type_value = $("#requestTypeSelect").val();
+    if (request_type_value === "datasets" || request_type_value === "download") {
         buildForm(formData);
         let api_host = window.location.hostname;
         if (window.location.port) {
@@ -1639,6 +1657,52 @@ function filter_datasets_by(which) {
     console.log("Remove non " + which + " datasets");
 }
 
+function configure_nmme(sdata) {
+    if (sdata.errMsg) {
+        console.info(sdata.errMsg);
+    } else {
+        const data = JSON.parse(sdata);
+        const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
+        cc.startDateTime;
+
+        $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
+
+        // create date dropdowns
+        const mformat = "YYYY-MM-DD"
+        let sdate = moment(cc.startDateTime, mformat);
+        let edate = moment(cc.endDateTime, mformat);
+        let count = 1;
+
+        $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+        $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+
+        do {
+            $("#forecastfrommenu")
+                .append
+                (
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+            $("#forecasttomenu")
+                .append
+                (
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+            count++;
+            sdate.add(1, "days");
+        } while (sdate < edate)
+
+        cc.endDateTime;
+        cc.date_FormatString_For_ForecastRange;
+        cc.number_Of_ForecastDays;
+        $("#ensemblevarmenu").empty();
+        data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
+            // add variable with label to select
+
+            $("#ensemblevarmenu")
+                .append(
+                    '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
+        });
+    }
+}
+
 /**
  * Sets the UI to the correct state when a different source is selected
  * @param which
@@ -1677,52 +1741,24 @@ function handleSourceSelected(which) {
             type: "GET",
             async: true,
             crossDomain: true
-        }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.warn(jqXHR + textStatus + errorThrown);
+        }).fail(function () {
+            $.ajax({
+                url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
+                type: "GET",
+                async: true,
+                crossDomain: true
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.warn(jqXHR + textStatus + errorThrown);
+            }).done(function (data, _textStatus, _jqXHR) {
+                if (data.errMsg) {
+                    console.info(data.errMsg);
+                } else {
+                    configure_nmme(data);
+                }
+            });
+            console.warn("NMME queries may not work if you are doing local development");
         }).done(function (sdata, _textStatus, _jqXHR) {
-            if (sdata.errMsg) {
-                console.info(sdata.errMsg);
-            } else {
-                const data = JSON.parse(sdata);
-                const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
-                cc.startDateTime;
-
-                $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
-
-                // create date dropdowns
-                const mformat = "YYYY-MM-DD"
-                let sdate = moment(cc.startDateTime, mformat);
-                let edate = moment(cc.endDateTime, mformat);
-                let count = 1;
-
-                $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
-                $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
-
-                do {
-                    $("#forecastfrommenu")
-                        .append
-                        (
-                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
-                    $("#forecasttomenu")
-                        .append
-                        (
-                            '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
-                    count++;
-                    sdate.add(1, "days");
-                } while (sdate < edate)
-
-                cc.endDateTime;
-                cc.date_FormatString_For_ForecastRange;
-                cc.number_Of_ForecastDays;
-                $("#ensemblevarmenu").empty();
-                data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
-                    // add variable with label to select
-
-                    $("#ensemblevarmenu")
-                        .append(
-                            '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
-                });
-            }
+            configure_nmme(sdata);
         });
     }
     $("#btnRequest").prop("disabled", false);
@@ -2232,7 +2268,7 @@ function getClimateScenarioInfo() {
         type: "GET",
         async: true,
         crossDomain: true
-    }).fail(function (jqXHR, textStatus, errorThrown) {
+    }).fail(function () {
         $.ajax({
             url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
             type: "GET",
@@ -2260,17 +2296,8 @@ function getClimateScenarioInfo() {
 /**
  * Toggles the About AOI section
  */
-function toggleAOIHeight() {
-    const el = $('#aoiOptions');
-    const curHeight = el.height();
-    if (curHeight === 0) {
-        const autoHeight = el.css('height', 'auto').height();
-        el.height(curHeight).animate({height: autoHeight}, 1000);
-        el.css("marginBottom", '20px');
-    } else {
-        el.height(curHeight).animate({height: 0}, 1000);
-        el.css("marginBottom", '0px');
-    }
+function toggleUpDownIcon(which) {
+    const el = $('#' + which).toggleClass("fa-angle-up fa-angle-down");
 }
 
 /**
@@ -2671,6 +2698,15 @@ function layer_filter() {
             layers[i].style.display = "none";
         }
     }
+}
+
+function review_query() {
+    toggle_query_tabs();
+}
+
+function toggle_query_tabs() {
+    $("#query_list_checkout").toggle();
+    $("#chart-builder").toggle();
 }
 
 function getCookie(name) {
