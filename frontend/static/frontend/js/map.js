@@ -1272,8 +1272,10 @@ function isComplete() {
     }
     return isReady;
 }
+
 const query_list = [];
 let query_list_confirmed = 0;
+
 /**
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
@@ -1409,7 +1411,7 @@ function collect_review_data() {
         tif.hide();
         netCDF.hide();
         csv.text("Timeseries");
-        $('#format-menu option[value=8]').attr('selected','selected');
+        $('#format-menu option[value=8]').attr('selected', 'selected');
     } else {
         tif.show();
         netCDF.show();
@@ -1501,7 +1503,7 @@ function buildForm(formData) {
      */
 }
 
-function add_multi_query(){
+function add_multi_query() {
     const formData = new FormData();
     buildForm(formData);
     query_list.push(formData);
@@ -2074,6 +2076,44 @@ function getDataFromRequest(id, isClimate) {
                                 false,
                                 yAxis_format,
                                 point_format);
+                            bobby.addSeries({
+                                color: "#758055",
+                                connectNulls: false,
+                                marker: {
+                                    radius: 3,
+                                    fillColor: "#758055",
+                                    states: {
+                                        hover: {
+                                            fillColor: '#758055',
+                                        },
+                                        halo: {
+                                            fillColor: '#758055',
+                                        }
+                                    },
+                                },
+                                lineWidth: 2,
+                                states: {
+                                    hover: {
+                                        lineWidth: 2
+                                    },
+                                    halo: {
+                                        fillColor: '#758055',
+                                    }
+                                },
+                                threshold: null,
+                                allowPointSelect: true,
+                                point: {
+                                    events: {
+                                        select: function (e) {
+                                            const full = new Date(e.target.x);
+                                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                                            // maybe set current time for layers to this date
+                                            console.log(date);
+                                        }
+                                    }
+                                },
+                                data: compiledData.sort((a, b) => a[0] - b[0])
+                            })
                         }
                     }
                 }
@@ -2213,7 +2253,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
             }
         }
     };
-    chart_obj.series = compiled_series;
+    chart_obj.series = {}; // compiled_series;
     if (point_format) {
         chart_obj.tooltip = point_format;
         chart_obj.tooltip.borderColor = "#758055";
@@ -2239,7 +2279,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         }]
     };
 
-    Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
+    bobby = Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
@@ -2249,6 +2289,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
             .add();
     });
 }
+
+let bobby;
 
 /**
  * Helper function for graphing the monthly rainfall analysis
