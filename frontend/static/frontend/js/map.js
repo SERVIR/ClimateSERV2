@@ -640,11 +640,10 @@ function selectAOI(which) {
     } else if (which === "upload") {
         enableUpload();
     } else if (which === "select") {
-        if($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
+        if ($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
             $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
         }
         enableAdminFeature($("#adminLayerOptions option:first").val());
-
     }
 }
 
@@ -1273,12 +1272,14 @@ function isComplete() {
     }
     return isReady;
 }
-
+const query_list = [];
+let query_list_confirmed = 0;
 /**
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
+    console.log("verify_ready");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
     if (requestTypeSelect.val() === "datasets") {
@@ -1287,7 +1288,16 @@ function verify_ready() {
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
     const disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
+    /***********this is not right*********************/
+    /**** I need to have a list for multi queries which only has ones added to it
+     * by clicking add to multi-query
+     * this would not be editable on this tab, only the current is editable
+     * so the number would be the multilist length + the new one if it is enabled or
+     * take away 1 if needed for disabled. ****/
+
     $("#btnRequest").prop("disabled", disabled);
+    $("#btnAddToQuery").prop("disabled", disabled);
+
     $("#btnViewAPI").prop("disabled", disabled);
     if (geometry.text().trim().indexOf('{"type"') > -1
         || geometry.text().trim().indexOf('{\"type\"') > -1) {
@@ -1381,6 +1391,10 @@ function collect_review_data() {
     const operation_max = $("#operation_max");
     const operation_min = $("#operation_min");
     const operation_average = $("#operation_average");
+    const netCDF = $("#netcdf");
+    const tif = $("#tif");
+    const csv = $("#csv");
+
     if (highlightedIDs.length > 0) {
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
         geometry.text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
@@ -1391,14 +1405,15 @@ function collect_review_data() {
     } else {
         geometry.text('{"type":"FeatureCollection","features":[]}');
     }
-    if (geometry.text().indexOf("Point") > -1) {
-        operation_max.hide();
-        operation_min.hide();
-        operation_average.text("Timeseries");
+    if ($("#requestTypeSelect").val() === "download" && geometry.text().indexOf("Point") > -1) {
+        tif.hide();
+        netCDF.hide();
+        csv.text("Timeseries");
+        $('#format-menu option[value=8]').attr('selected','selected');
     } else {
-        operation_max.show();
-        operation_min.show();
-        operation_average.text("Average");
+        tif.show();
+        netCDF.show();
+        csv.text("CSV");
     }
 }
 
@@ -1478,6 +1493,21 @@ function buildForm(formData) {
     } else if (uploadLayer) {
         formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
     }
+    /*
+    This will get data out of the form when we need to review/edit
+    for(var pair of formData.entries()) {
+       console.log(pair[0]+ ', '+ pair[1]);
+    }
+     */
+}
+
+function add_multi_query(){
+    const formData = new FormData();
+    buildForm(formData);
+    query_list.push(formData);
+
+    const query_button_number_control = $("#query_button_number");
+    query_button_number_control.text("(" + query_list.length + ")");
 }
 
 /**
@@ -2256,6 +2286,7 @@ function openDataTypePanel(select_control) {
         $("#panel_timeseries").hide();
         $("#panel_monthly_rainfall").show();
     }
+    collect_review_data();
     verify_ready();
 }
 

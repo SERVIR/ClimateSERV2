@@ -67,15 +67,15 @@ class Track_UsageAdmin(admin.ModelAdmin):
             obj.originating_IP,
             obj.originating_IP)
 
+    ip_location.admin_order_field = 'originating_IP'
+
     def aoi_button(self, obj):
-        info = get_script_prefix()
         if obj.AOI == '{}':
             return format_html("<span>No AOI</span>")
         else:
             return format_html(
                 "<a href='javascript:open_aoi({})'>Display AOI</a>",
                 obj.id)
-        # )
 
 
 @admin.register(Storage_Review)
