@@ -11,3 +11,4 @@ media
 *.pyc
 data.json
 logfile
+migrations/
