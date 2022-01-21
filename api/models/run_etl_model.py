@@ -24,6 +24,3 @@ class Run_ETL(models.Model):
     class Meta:
         verbose_name = 'ETL Run'
         verbose_name_plural = 'ETL runs'
-    @classmethod
-    def do_a_thing(cls):
-        print('fjfhfffffffffff')
