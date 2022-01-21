@@ -209,6 +209,7 @@
                                         <button
                                                 id="btnSetPoint"
                                                 onclick="setPointAOI()"
+                                                class="bread-crumb"
                                         >
                                             Set Point
                                         </button>
@@ -410,7 +411,7 @@
                                         </select>
                                     </div>
                                     <div class="form-group panel-buffer" id="panel_download" style="display: none;">
-                                        <label for="operationmenu">Download Format</label>
+                                        <label for="format-menu">Download Format</label>
                                         <i
                                                 onclick="stats_info('format')"
                                                 class="fas fa-question-circle"
@@ -470,20 +471,22 @@
                                         id="lblCartCount"> 0 </span>
                                 </div>
                                 <div class="just-buttons">
+
+                                    <button
+                                            id="btnAddToQuery"
+                                            disabled
+                                            class="button-50"
+                                            onclick="add_multi_query()">
+                                        Add Query
+                                    </button>
                                     <button
                                             id="btnRequest"
                                             disabled
                                             class="button-50"
                                             onclick="sendRequest()">
-                                        Instant Query (0)
+                                        Submit Query <span id="query_button_number">(0)</span>
                                     </button>
-                                    <button
-                                            id="btnAddToQuery"
-                                            disabled
-                                            class="button-50"
-                                            onclick="open_previous_chart()">
-                                        Add to Multi-Query
-                                    </button>
+
                                 </div>
                                 <div class="just-buttons">
                                     <button

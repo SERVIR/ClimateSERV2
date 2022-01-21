@@ -1,8 +1,9 @@
 from django.contrib import admin
 
 # Register your models here.
+from django.utils.html import format_html
 
-from .models import Config_Setting
+from .models import Config_Setting, Storage_Review, Run_ETL
 from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
@@ -42,7 +43,64 @@ admin.site.register(Request_Log)
 
 @admin.register(Track_Usage)
 class Track_UsageAdmin(admin.ModelAdmin):
-    list_display = ('unique_id', 'time_requested', 'originating_IP', 'dataset', 'start_date', 'end_date', 'file_size')
-    list_filter = ('dataset', 'calculation', 'request_type')
-    search_fields = ('unique_id', 'dataset')
+    list_display = (
+        'unique_id',
+        'time_requested',
+        'ip_location',
+        'country_ISO',
+        'aoi_button',
+        'dataset',
+        'start_date',
+        'end_date',
+        'file_size',
+        'ui_request')
+    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation')
+    search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
+
+    def ip_location(self, obj):
+        return format_html(
+            "<a href='https://www.ip2location.com/demo/{}' target='_blank'>{}</a>",
+            obj.originating_IP,
+            obj.originating_IP)
+
+    ip_location.admin_order_field = 'originating_IP'
+
+    def aoi_button(self, obj):
+        if obj.AOI == '{}':
+            return format_html("<span>No AOI</span>")
+        else:
+            return format_html(
+                "<a href='javascript:open_aoi({})'>Display AOI</a>",
+                obj.id)
+
+
+@admin.register(Storage_Review)
+class Storage_ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        'unique_id',
+        'API_request_txt_files',
+        'API_request_zip_files')
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        context.update({
+            'show_save': False,
+            'show_save_and_continue': False,
+            'show_save_and_add_another': False,
+            'show_delete': False
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)
+
+@admin.register(Run_ETL)
+class Run_ETLAdmin(admin.ModelAdmin):
+    list_display = (
+        'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_option')
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        context.update({
+            'show_save': False,
+            'show_save_and_continue': False,
+            'show_save_and_add_another': False,
+            'show_delete': False,
+            'from_etl':True
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)
