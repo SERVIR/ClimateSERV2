@@ -43,6 +43,10 @@ class ETL_Log(models.Model):
                                          help_text="Is this Instance meant to be used ONLY for internal platform "
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
+    status = models.CharField('Status', max_length=90, blank=False,
+                                           default="In Progress")
+    start_time = models.DateTimeField('start_time', blank=True,null=True)
+    end_time = models.DateTimeField('end_time', blank=True,null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.activity_event_type, self.created_by)

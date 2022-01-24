@@ -1,38 +1,31 @@
+from django.contrib import admin
+
 # Register your models here.
-from django.urls import get_script_prefix
 from django.utils.html import format_html
 
-from .models import Config_Setting
+from .models import Config_Setting, Storage_Review, Run_ETL
 from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
 from .models import ETL_PipelineRun
-from .models import Request_Progress, Request_Log, Track_Usage, Storage_Review, Run_ETL
-from django.contrib import admin
-from django.contrib.auth.admin import Group
+from .models import Request_Progress, Request_Log, Track_Usage
+
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
-
-from accounts.models import User
-
-@admin.register(User)
-class ETLGranuleAdmin(admin.ModelAdmin):
-    list_display = ('username','email','first_name','last_name','is_staff','storage_alerts','feedback_alerts','etl_alerts')
 
 
 @admin.register(ETL_Granule)
 class ETLGranuleAdmin(admin.ModelAdmin):
-    list_display = ('uuid', 'etl_pipeline_run', 'etl_dataset', 'granule_name',
-                    'is_missing', 'granule_pipeline_state', 'created_at', 'created_by')
-    list_filter = ('is_missing', 'is_test_object', 'granule_pipeline_state', 'etl_dataset')
-    search_fields = ('uuid', 'etl_pipeline_run')
-    autocomplete_fields = ['etl_pipeline_run']
+    list_display = ('uuid', 'granule_name', 'granule_contextual_information', 'etl_pipeline_run',
+                    'etl_dataset', 'is_missing', 'granule_pipeline_state', 'additional_json', 'created_at',
+                    'created_by', 'is_test_object')
+    search_fields = ('uuid',)
 
 
 @admin.register(ETL_Log)
 class ETLLogAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'etl_pipeline_run',
-                    'etl_dataset', 'etl_granule')
+                    'etl_dataset', 'etl_granule', 'start_time', 'end_time', 'status')
     autocomplete_fields = ['etl_granule']
     search_fields = ('etl_granule',)
     date_hierarchy = "created_at"
@@ -41,7 +34,6 @@ class ETLLogAdmin(admin.ModelAdmin):
 @admin.register(ETL_PipelineRun)
 class ETLPipelineRunAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'created_at')
-    search_fields = ('uuid',)
     date_hierarchy = "created_at"
 
 
@@ -85,16 +77,27 @@ class Track_UsageAdmin(admin.ModelAdmin):
 
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):
+    list_display_links = None
     list_display = (
         'unique_id',
-        'API_request_txt_files',
-        'API_request_zip_files')
+        'directory',
+        'file_size',
+        'free_space')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = {'title': 'Storage space occupied by datasets'}
+        return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'show_save': False,
             'show_save_and_continue': False,
             'show_save_and_add_another': False,
-            'show_delete': False
+            'show_delete': False,
+            'from_sto': True
+
         })
         return super().render_change_form(request, context, add, change, form_url, obj)
 
@@ -112,4 +115,3 @@ class Run_ETLAdmin(admin.ModelAdmin):
             'from_etl':True
         })
         return super().render_change_form(request, context, add, change, form_url, obj)
-
