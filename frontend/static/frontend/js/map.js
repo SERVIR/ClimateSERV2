@@ -1410,12 +1410,14 @@ function collect_review_data() {
     if ($("#requestTypeSelect").val() === "download" && geometry.text().indexOf("Point") > -1) {
         tif.hide();
         netCDF.hide();
-        csv.text("Timeseries");
+        csv.show()
+        $('#format-menu option:selected').removeAttr('selected');
         $('#format-menu option[value=8]').attr('selected', 'selected');
     } else {
         tif.show();
         netCDF.show();
-        csv.text("CSV");
+        csv.hide();
+        $('#format-menu option:selected').removeAttr('selected');
     }
 }
 
@@ -2421,16 +2423,21 @@ function openDataTypePanel(select_control) {
         $("#panel_download").hide();
         $("#panel_dataset").show();
         $("#panel_timeseries").show();
+        $('#graph_options').show();
     } else if (select_control.value === "download") {
         $("#panel_monthly_rainfall").hide();
         $("#panel_timeseries").hide();
         $("#panel_dataset").show();
         $("#panel_download").show();
+        $('#graph_options').hide();
+        // need to check the AOI state, if no AOI leave just NetCDF or TIF
+        // if point type, show csv only
     } else {
         $("#panel_dataset").hide();
         $("#panel_download").hide();
         $("#panel_timeseries").hide();
         $("#panel_monthly_rainfall").show();
+        $('#graph_options').hide();
     }
     collect_review_data();
     verify_ready();
