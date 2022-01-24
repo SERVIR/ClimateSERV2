@@ -257,11 +257,11 @@
                                 <p style="font-weight: 900; padding: 20px 0 10px">
                                     Select features by:
                                 </p>
-                                 <select name="adminLayerOptions" class="form-control" id="adminLayerOptions"
-                                            onchange="enableAdminFeature(this.value)">
+                                <select name="adminLayerOptions" class="form-control" id="adminLayerOptions"
+                                        onchange="enableAdminFeature(this.value)">
                                     <option value="country">Country</option>
-                                     <option value="admin_1_earth">Admin #1</option>
-                                     <option value="admin_2_af">Admin #2</option>
+                                    <option value="admin_1_earth">Admin #1</option>
+                                    <option value="admin_2_af">Admin #2</option>
                                 </select>
                             </div>
                             <div class="form-group panel-buffer">
@@ -456,6 +456,12 @@
                                     </div>
                                 </div>
                                 <div class="query_cart">
+                                    <p style="position: absolute; left: 10px; text-align: left;">
+                                        <input type="radio" id="simple_axis" name="axis_type" value="simple">
+                                        <label for="simple_axis">Simple Axis</label><br>
+                                        <input type="radio" id="multi_axis" name="axis_type" value="multi">
+                                        <label for="multi_axis">Multi-Axis</label><br>
+                                    </p>
                                     <i class="fa" style="font-size:24px"><img
                                             src="{% static 'frontend/img/query_icon.png' %}"
                                             onclick="review_query()"

@@ -1633,12 +1633,18 @@ function pollForProgress(id, isClimate) {
 
             } else if (val === 100) {
                 retries = 0;
-                if (($("#requestTypeSelect").val() === "datasets"
+                const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
                     ? $("#operationmenu").val()
-                    : $("#format-menu").val()) === "6") {
+                    : $("#format-menu").val());
+                if (request_operation_format === "6" || request_operation_format === "7" ) {
                     getDownLoadLink(id);
                 } else {
+                    if (!isClimate) {
+                        inti_chart_dialog();
+                        multiChart = Highcharts.chart('chart_holder', {});
+                    }
                     getDataFromRequest(id, isClimate);
+
                 }
             } else {
                 if (retries < 5) {
@@ -1904,6 +1910,9 @@ function getDownLoadLink(id) {
     });
 }
 
+const mulitQueryData = [];
+let simpleAxis = true;
+
 /**
  * Function to retrieve the processed data from the server with the id
  * that was created by the submitDataRequest
@@ -2048,7 +2057,9 @@ function getDataFromRequest(id, isClimate) {
                         });
                         from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
                         inti_chart_dialog();
-
+                        // multiChart = Highcharts.chart('chart_holder', {xAxis:{
+                        //             type: "datetime"
+                        //         }});
                         if (compiledData.length === 0) {
                             //inti_chart_dialog
                             $("#chart_holder").html("<h1>No data available</h1>");
@@ -2063,57 +2074,150 @@ function getDataFromRequest(id, isClimate) {
                                 : layer.units
                             //const units = layer.units;  // if layer units contains |units| split, then index
 
-                            const yAxis_format = layer.yAxis_format || null;
-                            const point_format = layer.point_format || null
-                            finalize_chart([{
+                            mulitQueryData.push(
+                                compiledData
+                            );
+
+                            /* this is the paradigm to add the initial series.
+                            secondary ones should work with addSeries
+
+                            tested this: colors need adjusting:
+
+                            multiChart.addSeries({
+                                     color: "#758055",
+                                     type: "line",
+                                     name: "figure later",
+                                     data: mulitQueryData[1].sort((a, b) => a[0] - b[0])
+                                 })
+
+                                 need axis and label as well like
+
+                                   multiChart.addAxis({
+                                title: {
+                                    text: units
+                                }
+                            }, false, false);
+
+                             */
+                            multiChart = Highcharts.chart('chart_holder', {
+                                xAxis: {
+                                    type: "datetime"
+                                }, yAxis: {
+                                    id: "simple",
+                                    title: {
+                                        text: units
+                                    },
+                                    // max: 350,
+                                    // min: 0,
+                                }, series: [{
                                     color: "#758055",
                                     type: "line",
-                                    name: current_calculation.text,
-                                    data: compiledData.sort((a, b) => a[0] - b[0])
-                                }], units, {
-                                    type: "datetime"
-                                }, $("#sourcemenu option:selected").text(),
-                                false,
-                                yAxis_format,
-                                point_format);
-                            bobby.addSeries({
-                                color: "#758055",
-                                connectNulls: false,
-                                marker: {
-                                    radius: 3,
-                                    fillColor: "#758055",
-                                    states: {
-                                        hover: {
-                                            fillColor: '#758055',
-                                        },
-                                        halo: {
-                                            fillColor: '#758055',
-                                        }
-                                    },
-                                },
-                                lineWidth: 2,
-                                states: {
-                                    hover: {
-                                        lineWidth: 2
-                                    },
-                                    halo: {
-                                        fillColor: '#758055',
+                                    name: "figure later",
+                                    data: mulitQueryData[0].sort((a, b) => a[0] - b[0])
+                                }]
+                            });
+
+
+                            const colors = [
+                                "#bafc02",
+                                "#022cfc",
+                                "#02f4fc",
+                                "#283601"
+                            ]
+                            simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
+                            if (mulitQueryData.length > 1) {
+                                for (let i = 1; i < mulitQueryData.length; i++) {
+                                    if(! simpleAxis) {
+                                        multiChart.addAxis({
+                                            id: "yaxis-" + i,
+                                            opposite: i % 2 !== 0,
+                                            title: {
+                                                text: units
+                                            },
+                                            // max: 350,
+                                            // min: 0,
+                                        }, false, false);
                                     }
-                                },
-                                threshold: null,
-                                allowPointSelect: true,
-                                point: {
-                                    events: {
-                                        select: function (e) {
-                                            const full = new Date(e.target.x);
-                                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                                            // maybe set current time for layers to this date
-                                            console.log(date);
-                                        }
-                                    }
-                                },
-                                data: compiledData.sort((a, b) => a[0] - b[0])
-                            })
+                                    multiChart.addSeries({
+                                        yAxis: simpleAxis ? "simple" : "yaxis-" + i,
+                                        color: colors[i - 1],
+                                        type: "line",
+                                        name: "figure later",
+                                        data: mulitQueryData[i].sort((a, b) => a[0] - b[0])
+                                    });
+                                }
+
+
+                            }
+
+
+                            const yAxis_format = layer.yAxis_format || null;
+                            const point_format = layer.point_format || null
+
+                            /*
+                            Finalize chart will now turn into create chart that will happen on
+                            submit request, I will have to bare bone the chart, then add new axis
+                            if rainfall analysis this is not relative, only 1 of that type is allowed
+                            at a time.
+                             */
+
+                            // finalize_chart([{
+                            //         color: "#758055",
+                            //         type: "line",
+                            //         name: current_calculation.text,
+                            //         data: compiledData.sort((a, b) => a[0] - b[0])
+                            //     }], units, {
+                            //         type: "datetime"
+                            //     }, $("#sourcemenu option:selected").text(),
+                            //     false,
+                            //     yAxis_format,
+                            //     point_format);
+                            // multiChart.yaxis = {
+                            //         type: "datetime"
+                            //     };
+                            // multiChart.addAxis({
+                            //     title: {
+                            //         text: units
+                            //     }
+                            // }, false, false);
+                            // multiChart.addSeries({
+                            //     color: "#758055",
+                            //     connectNulls: false,
+                            //     marker: {
+                            //         radius: 3,
+                            //         fillColor: "#758055",
+                            //         states: {
+                            //             hover: {
+                            //                 fillColor: '#758055',
+                            //             },
+                            //             halo: {
+                            //                 fillColor: '#758055',
+                            //             }
+                            //         },
+                            //     },
+                            //     lineWidth: 2,
+                            //     states: {
+                            //         hover: {
+                            //             lineWidth: 2
+                            //         },
+                            //         halo: {
+                            //             fillColor: '#758055',
+                            //         }
+                            //     },
+                            //     threshold: null,
+                            //     allowPointSelect: true,
+                            //     point: {
+                            //         events: {
+                            //             select: function (e) {
+                            //                 const full = new Date(e.target.x);
+                            //                 const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                            //                 // maybe set current time for layers to this date
+                            //                 console.log(date);
+                            //             }
+                            //         }
+                            //     },
+                            //     data: compiledData.sort((a, b) => a[0] - b[0])
+                            // })
                         }
                     }
                 }
@@ -2165,15 +2269,15 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         text: 'Source: climateserv.servirglobal.net'
     };
     chart_obj.xAxis = xAxis_object;
-    chart_obj.yAxis = {
-        title: {
-            text: units
-        }
-    };
-
-    if (yAxis_format) {
-        chart_obj.yAxis.labels = yAxis_format
-    }
+    // chart_obj.yAxis = {
+    //     title: {
+    //         text: units
+    //     }
+    // };
+    //
+    // if (yAxis_format) {
+    //     chart_obj.yAxis.labels = yAxis_format
+    // }
 
     chart_obj.legend = {
         layout: 'vertical',
@@ -2181,44 +2285,44 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         verticalAlign: 'middle'
     };
 
-    chart_obj.plotOptions = {
-        series: {
-            connectNulls: false,
-            marker: {
-                radius: 3,
-                fillColor: "#758055",
-                states: {
-                    hover: {
-                        fillColor: '#758055',
-                    },
-                    halo: {
-                        fillColor: '#758055',
-                    }
-                },
-            },
-            lineWidth: 2,
-            states: {
-                hover: {
-                    lineWidth: 2
-                },
-                halo: {
-                    fillColor: '#758055',
-                }
-            },
-            threshold: null,
-            allowPointSelect: true,
-            point: {
-                events: {
-                    select: function (e) {
-                        const full = new Date(e.target.x);
-                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                        // maybe set current time for layers to this date
-                        console.log(date);
-                    }
-                }
-            }
-        }
-    };
+    // chart_obj.plotOptions = {
+    //     series: {
+    //         connectNulls: false,
+    //         marker: {
+    //             radius: 3,
+    //             fillColor: "#758055",
+    //             states: {
+    //                 hover: {
+    //                     fillColor: '#758055',
+    //                 },
+    //                 halo: {
+    //                     fillColor: '#758055',
+    //                 }
+    //             },
+    //         },
+    //         lineWidth: 2,
+    //         states: {
+    //             hover: {
+    //                 lineWidth: 2
+    //             },
+    //             halo: {
+    //                 fillColor: '#758055',
+    //             }
+    //         },
+    //         threshold: null,
+    //         allowPointSelect: true,
+    //         point: {
+    //             events: {
+    //                 select: function (e) {
+    //                     const full = new Date(e.target.x);
+    //                     const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+    //                     // maybe set current time for layers to this date
+    //                     console.log(date);
+    //                 }
+    //             }
+    //         }
+    //     }
+    // };
     if (isClimate) {
         chart_obj.plotOptions.series.marker = {
             radius: 3
@@ -2279,7 +2383,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         }]
     };
 
-    bobby = Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
+    multiChart = Highcharts.chart('chart_holder', chart_obj, function (chart) { // on complete
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
@@ -2290,7 +2394,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     });
 }
 
-let bobby;
+let multiChart;
 
 /**
  * Helper function for graphing the monthly rainfall analysis
