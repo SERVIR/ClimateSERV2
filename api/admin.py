@@ -25,7 +25,7 @@ class ETLGranuleAdmin(admin.ModelAdmin):
 @admin.register(ETL_Log)
 class ETLLogAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'etl_pipeline_run',
-                    'etl_dataset', 'etl_granule')
+                    'etl_dataset', 'etl_granule', 'start_time', 'end_time', 'status')
     autocomplete_fields = ['etl_granule']
     search_fields = ('etl_granule',)
     date_hierarchy = "created_at"
@@ -77,16 +77,27 @@ class Track_UsageAdmin(admin.ModelAdmin):
 
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):
+    list_display_links = None
     list_display = (
         'unique_id',
-        'API_request_txt_files',
-        'API_request_zip_files')
+        'directory',
+        'file_size',
+        'free_space')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = {'title': 'Storage space occupied by datasets'}
+        return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             'show_save': False,
             'show_save_and_continue': False,
             'show_save_and_add_another': False,
-            'show_delete': False
+            'show_delete': False,
+            'from_sto': True
+
         })
         return super().render_change_form(request, context, add, change, form_url, obj)
 

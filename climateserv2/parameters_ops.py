@@ -26,7 +26,9 @@ nmme_cfsv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest
 base_data_path = '/mnt/climateserv/'  # '''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
               [5, 'avg', 'Average'], [6, 'download', 'Download'], [7, 'netcdf', 'NetCDF'], [8, 'csv', 'CSV']]
-
+email="email_address"
+password="password"
+threshold = 30.0
 
 def get_dataLocation(type):
     path = ""

@@ -2,6 +2,7 @@ import json
 import logging
 import multiprocessing
 import os
+import shutil
 import socket
 import subprocess
 from datetime import datetime, timedelta
@@ -16,6 +17,8 @@ from django.utils import timezone
 import pytz
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
+from api.models import Storage_Review
+
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
@@ -27,8 +30,42 @@ Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
+from pathlib import Path
+Storage_Review.objects.all().delete()
+from django.contrib.auth.models import User
+import smtplib
 
 
+id=0
+list =[params.base_data_path,params.workpath]
+for l in list:
+    size_str=""
+    stat = shutil.disk_usage(l)
+    free=stat.free
+    size =sum(p.stat().st_size for p in Path(l).rglob('*'))
+    for unit in ("B", "K", "M", "G", "T"):
+       if free < 1024:
+           break
+       free /= 1024
+       if size < 1024:
+           break
+       size /= 1024
+    free_str= str(round(free,2))+unit
+    used_str = str(round(size, 2)) + unit
+    id=id+1
+    if size > params.threshold:
+        SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
+        TEXT = "This email informs you that the memory usage in the path "+l+" has reached "+used_str+" and the free space available is "+free_str+"."
+        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+        mail = smtplib.SMTP('smtp.gmail.com', 587)
+        mail.ehlo()
+        mail.starttls()
+        User.objects.values()[0]['email']
+        mail.login(params.email, params.password)
+        mail.sendmail(params.email, User.objects.values()[0]['email'], message)
+        mail.close()
+    storage_review = Storage_Review(unique_id=str(id), directory=l,file_size=used_str,free_space=free_str)
+    storage_review.save()
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
     filename = params.getResultsFilename(uid)
