@@ -53,17 +53,17 @@ for l in list:
     free_str= str(round(free,2))+unit
     used_str = str(round(size, 2)) + unit
     id=id+1
-    if size > params.threshold:
-        SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
-        TEXT = "This email informs you that the memory usage in the path "+l+" has reached "+used_str+" and the free space available is "+free_str+"."
-        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
-        mail = smtplib.SMTP('smtp.gmail.com', 587)
-        mail.ehlo()
-        mail.starttls()
-        User.objects.values()[0]['email']
-        mail.login(params.email, params.password)
-        mail.sendmail(params.email, User.objects.values()[0]['email'], message)
-        mail.close()
+    # if size > params.threshold:
+    #     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
+    #     TEXT = "This email informs you that the memory usage in the path "+l+" has reached "+used_str+" and the free space available is "+free_str+"."
+    #     message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+    #     mail = smtplib.SMTP('smtp.gmail.com', 587)
+    #     mail.ehlo()
+    #     mail.starttls()
+    #     User.objects.values()[0]['email']
+    #     mail.login(params.email, params.password)
+    #     mail.sendmail(params.email, User.objects.values()[0]['email'], message)
+    #     mail.close()
     storage_review = Storage_Review(unique_id=str(id), directory=l,file_size=used_str,free_space=free_str)
     storage_review.save()
 # To read a results file from the filesystem based on uuid
@@ -275,6 +275,32 @@ def get_file_for_job_id(request):
                     expected_file_name = request_id + ".csv"
                     expected_file_location = os.path.join(params.zipFile_ScratchWorkspace_Path, expected_file_name)
                     does_file_exist = os.path.exists(expected_file_location)
+                if not does_file_exist:
+                    ext = "csv"
+                    expected_file_name = request_id + ".txt"
+                    expected_file_location = os.path.join(params.zipFile_ScratchWorkspace_Path, expected_file_name)
+                    does_file_exist = os.path.exists(expected_file_location)
+                    # create csv from txt
+
+                    f = open(expected_file_location)
+                    values = data.values
+                    values[np.isnan(values)] = -9999
+                    keylist = ["Date", "Value"]
+                    dct = {}
+                    for ind in range(len(dates)):
+                        dct[dates[ind]] = values[ind]
+                    with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
+                        outfile = csv.DictWriter(file, fieldnames=keylist)
+                        outfile.writeheader()
+                    if len(dates) > 0:
+                        for k, v in dct.items():
+                            outfile.writerow({"Date": k, "Value": v})
+                    else:
+                        outfile.writerow({"Date": "No data", "Value": "No data"})
+
+                    zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
+
+
             except IOError:
                 does_file_exist = False
 

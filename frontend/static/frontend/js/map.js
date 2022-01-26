@@ -1638,7 +1638,11 @@ function pollForProgress(id, isClimate) {
                 const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
                     ? $("#operationmenu").val()
                     : $("#format-menu").val());
-                if (request_operation_format === "6" || request_operation_format === "7" ) {
+                if (
+                    request_operation_format === "6"
+                    || request_operation_format === "7"
+                    || request_operation_format === "8"
+                ) {
                     getDownLoadLink(id);
                 } else {
                     if (!isClimate) {

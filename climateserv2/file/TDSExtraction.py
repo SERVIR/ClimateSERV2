@@ -157,11 +157,11 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
             with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
                 outfile = csv.DictWriter(file, fieldnames=keylist)
                 outfile.writeheader()
-            if len(dates) > 0:
-                for k, v in dct.items():
-                    outfile.writerow({"Date": k, "Value": v})
-            else:
-                outfile.writerow({"Date": "No data", "Value": "No data"})
+                if len(dates) > 0:
+                    for k, v in dct.items():
+                        outfile.writerow({"Date": k, "Value": v[0][0]})
+                else:
+                    outfile.writerow({"Date": "No data", "Value": "No data"})
 
             zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
         else:
