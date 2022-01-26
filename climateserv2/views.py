@@ -275,31 +275,6 @@ def get_file_for_job_id(request):
                     expected_file_name = request_id + ".csv"
                     expected_file_location = os.path.join(params.zipFile_ScratchWorkspace_Path, expected_file_name)
                     does_file_exist = os.path.exists(expected_file_location)
-                if not does_file_exist:
-                    ext = "csv"
-                    expected_file_name = request_id + ".txt"
-                    expected_file_location = os.path.join(params.zipFile_ScratchWorkspace_Path, expected_file_name)
-                    does_file_exist = os.path.exists(expected_file_location)
-                    # create csv from txt
-
-                    f = open(expected_file_location)
-                    values = data.values
-                    values[np.isnan(values)] = -9999
-                    keylist = ["Date", "Value"]
-                    dct = {}
-                    for ind in range(len(dates)):
-                        dct[dates[ind]] = values[ind]
-                    with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
-                        outfile = csv.DictWriter(file, fieldnames=keylist)
-                        outfile.writeheader()
-                    if len(dates) > 0:
-                        for k, v in dct.items():
-                            outfile.writerow({"Date": k, "Value": v})
-                    else:
-                        outfile.writerow({"Date": "No data", "Value": "No data"})
-
-                    zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
-
 
             except IOError:
                 does_file_exist = False
