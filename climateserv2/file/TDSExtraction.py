@@ -25,64 +25,68 @@ logger = llog.getNamedLogger("request_processor")
 def get_filelist(dataset, datatype, start_date, end_date):
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
-    dsname = dataset.split('_')
-    if "ucsb-chirps" == dsname[0]:
+    dataset_name = dataset.split('_')
+
+    if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dsname[
+            name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dataset_name[
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "ucsb-chirp" == dsname[0]:
+    elif "ucsb-chirp" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
-                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirp" + ".global." + dsname[
+                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirp" + ".global." + dataset_name[
                     2] + ".daily." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                 if os.path.exists(name):
                     filelist.append(name)
-    elif "ucsb-chirps-gefs" == dsname[0]:
+    elif "ucsb-chirps-gefs" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
-                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb-chirps-gefs" + ".global." + dsname[
-                    2] + ".10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
+                name = params.dataTypes[datatype]['inputDataLocation'] \
+                       + "ucsb-chirps-gefs" + ".global." + dataset_name[2] \
+                       + ".10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                 if os.path.exists(name):
                     filelist.append(name)
-    elif "usda-smap" == dsname[0]:
+    elif "usda-smap" == dataset_name[0]:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".3dy." + str(
-                year) + ".nc4"
+            name = params.dataTypes[datatype]['inputDataLocation'] \
+                   + dataset_name[0] + ".global." + dataset_name[2] \
+                   + ".3dy." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "nmme-ccsm4" == dsname[0]:
+    elif "nmme-ccsm4" == dataset_name[0]:
         name = params.nmme_ccsm4_path + dataset
         if os.path.exists(name):
             filelist.append(name)
-    elif "nmme-cfsv2" == dsname[0]:
+    elif "nmme-cfsv2" == dataset_name[0]:
         name = params.nmme_cfsv2_path + dataset
         if os.path.exists(name):
             filelist.append(name)
     elif "imerg" in dataset:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".1dy." + str(
-                year) + ".nc4"
+            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] \
+                   + ".global." + dataset_name[2] \
+                   + ".1dy." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     elif "sport-esi" in dataset and "12wk" in dataset:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[
+            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] + ".global." + dataset_name[
                 2] + ".12wk." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     elif "sport-esi" in dataset and "4wk" in dataset:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + ".global." + dsname[2] + ".4wk." + str(
-                year) + ".nc4"
+            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] \
+                   + ".global." + dataset_name[2] + ".4wk." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     else:
         if "ndvi" in dataset:
             for year in year_nums:
                 for month in range(12):
-                    name = params.dataTypes[datatype]['inputDataLocation'] + dsname[0] + "." + dsname[
+                    name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] + "." + dataset_name[
                         1] + ".250m.10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                     if os.path.exists(name):
                         filelist.append(name)
@@ -98,7 +102,8 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         start_date = datetime.strftime(st, '%Y-%m-%d')
         end_date = datetime.strftime(et, '%Y-%m-%d')
     except:
-        # If there is an exception with date format while converting, we can just ignore the conversion and use the passed dates
+        # If there is an exception with date format while converting, we can just ignore the conversion and use the
+        # passed dates
         pass
     try:
         jsonn = json.loads(str(geom))
@@ -165,7 +170,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
 
             zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
         else:
-            files = [writeToTiff(data.sel(time=[x]), uniqueid) for x in data.time.values]
+            files = [write_to_tiff(data.sel(time=[x]), uniqueid) for x in data.time.values]
             if len(files) > 0:
                 try:
                     with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
@@ -260,41 +265,50 @@ def get_monthlyanalysis_dates_bounds(geom):
     return month_list, month_nums, aoi.total_bounds
 
 
-def writeToTiff(dataObj, uniqueid):
+def write_to_tiff(data_object, uniqueid):
     os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid, exist_ok=True)
     os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid, 0o777)
     os.chdir(params.zipFile_ScratchWorkspace_Path + uniqueid)
-    fileName = dataObj.time.dt.strftime('%Y%m%d').values[0] + '.tif'
+    file_name = data_object.time.dt.strftime('%Y%m%d').values[0] + '.tif'
     try:
-        dataObj.load()
+        data_object.load()
     except Exception as e:
         print(e)
     # print(fileName)
-    width = dataObj.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
-    height = dataObj.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
-    dataType = str(dataObj.dtype)
-    missingValue = np.nan  # This could change if we are not using float arrays.
+    width = data_object.longitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+    height = data_object.latitude.size  # HOW DOES THIS CHANGE IF WE HAVE 2D LAT/LON ARRAYS
+    data_type = str(data_object.dtype)
+    missing_value = np.nan  # This could change if we are not using float arrays.
     crs = 'EPSG:4326'
-    xres = np.abs(
-        dataObj.longitude.values[1] - dataObj.longitude.values[0])  # again, could change if using 2D coord arrays.
-    yres = np.abs(
-        dataObj.latitude.values[1] - dataObj.latitude.values[0])  # again, could change if using 2D coord arrays.
-    xmin = dataObj.longitude.values.min() - xres / 2.0  # shift to corner by 1/2 grid cell res
-    ymax = dataObj.latitude.values.max() + yres / 2.0  # shift to corner by 1/2 grid cell res
-    affTransform = rio.transform.from_origin(xmin, ymax, xres, yres)
+    x_res = np.abs(
+        data_object.longitude.values[1]
+        - data_object.longitude.values[0])  # again, could change if using 2D coord arrays.
+    y_res = np.abs(
+        data_object.latitude.values[1]
+        - data_object.latitude.values[0])  # again, could change if using 2D coord arrays.
+    x_min = data_object.longitude.values.min() - x_res / 2.0  # shift to corner by 1/2 grid cell res
+    y_max = data_object.latitude.values.max() + y_res / 2.0  # shift to corner by 1/2 grid cell res
+    aff_transform = rio.transform.from_origin(x_min, y_max, x_res, y_res)
     # Open the file.
-    dst = rio.open(fileName, 'w', driver='GTiff', dtype=dataType, nodata=missingValue, \
-                   width=width, height=height, count=1, \
-                   crs=crs, transform=affTransform, \
+    dst = rio.open(file_name,
+                   'w',
+                   driver='GTiff',
+                   dtype=data_type,
+                   nodata=missing_value,
+                   width=width,
+                   height=height,
+                   count=1,
+                   crs=crs,
+                   transform=aff_transform,
                    compress='lzw')
     # Write the data.
     try:
-        dst.write(np.flip(dataObj.values,
-                          axis=1))  # Note, we  flip the data along the latitude dimension so that is is monotonically decreasing (i.e. N to S)
+        dst.write(np.flip(data_object.values, axis=1))  # Note, we  flip the data along the latitude dimension
+        # so that it is monotonically decreasing (i.e. N to S)
     except Exception as e:
         print(e)
         logger.info(e)
 
     # Close the file.
     dst.close()
-    return fileName
+    return file_name
