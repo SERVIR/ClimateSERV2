@@ -1,9 +1,13 @@
+import shutil
+from pathlib import Path
+
 from django.contrib import admin
 
 # Register your models here.
+from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
 
-from .models import Config_Setting, Storage_Review, Run_ETL
+from .models import Config_Setting, Storage_Review, Run_ETL, Profile
 from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
@@ -12,6 +16,10 @@ from .models import Request_Progress, Request_Log, Track_Usage
 
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user','etl_alerts','feedback_alerts','storage_alerts')
 
 
 @admin.register(ETL_Granule)
@@ -82,20 +90,21 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
         'unique_id',
         'directory',
         'file_size',
-        'free_space')
-
-    def has_add_permission(self, request, obj=None):
-        return False
+        'free_space',
+        'last_notified_time',
+        'threshold')
+    # def has_add_permission(self, request, obj=None):
+    #     return False
 
     def changelist_view(self, request, extra_context=None):
-        extra_context = {'title': 'Storage space occupied by datasets'}
+        extra_context = {'title': 'Storage space statistics'}
         return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
-            'show_save': False,
-            'show_save_and_continue': False,
-            'show_save_and_add_another': False,
-            'show_delete': False,
+            # 'show_save': False,
+            # 'show_save_and_continue': False,
+            # 'show_save_and_add_another': False,
+            # 'show_delete': False,
             'from_sto': True
 
         })

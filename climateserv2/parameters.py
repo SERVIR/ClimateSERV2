@@ -34,9 +34,6 @@ nmme_cfsv2_path=params.nmme_cfsv2_path
 nmme_ccsm4_path=params.nmme_ccsm4_path
 base_data_path=params.base_data_path
 resultsdir = params.resultsdir
-email = params.email
-password = params.password
-threshold = params.threshold
 
 # To get the file name wth unique id
 def getResultsFilename(id):

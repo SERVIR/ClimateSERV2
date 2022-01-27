@@ -2,8 +2,6 @@ import json
 import logging
 import multiprocessing
 import os
-import shutil
-import socket
 import subprocess
 from datetime import datetime, timedelta
 import pandas as pd
@@ -14,11 +12,8 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-import pytz
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
-from api.models import Storage_Review
-
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
@@ -30,42 +25,8 @@ Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
-from pathlib import Path
-Storage_Review.objects.all().delete()
-from django.contrib.auth.models import User
-import smtplib
 
 
-id=0
-list =[params.base_data_path,params.workpath]
-for l in list:
-    size_str=""
-    stat = shutil.disk_usage(l)
-    free=stat.free
-    size =sum(p.stat().st_size for p in Path(l).rglob('*'))
-    for unit in ("B", "K", "M", "G", "T"):
-       if free < 1024:
-           break
-       free /= 1024
-       if size < 1024:
-           break
-       size /= 1024
-    free_str= str(round(free,2))+unit
-    used_str = str(round(size, 2)) + unit
-    id=id+1
-    # if size > params.threshold:
-    #     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
-    #     TEXT = "This email informs you that the memory usage in the path "+l+" has reached "+used_str+" and the free space available is "+free_str+"."
-    #     message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
-    #     mail = smtplib.SMTP('smtp.gmail.com', 587)
-    #     mail.ehlo()
-    #     mail.starttls()
-    #     User.objects.values()[0]['email']
-    #     mail.login(params.email, params.password)
-    #     mail.sendmail(params.email, User.objects.values()[0]['email'], message)
-    #     mail.close()
-    storage_review = Storage_Review(unique_id=str(id), directory=l,file_size=used_str,free_space=free_str)
-    storage_review.save()
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
     filename = params.getResultsFilename(uid)
@@ -108,13 +69,13 @@ def process_callback(request, output, content_type):
             request_id = request.GET["id"]
         else:
             try:
-            	output_json = json.loads(output)
-            	if "unique_id" in output_json:
-            		request_id = output_json["unique_id"]
-            	else:
-            		request_id = uutools.getUUID()
+                output_json = json.loads(output)
+                if "unique_id" in output_json:
+                    request_id = output_json["unique_id"]
+                else:
+                    request_id = uutools.getUUID()
             except:
-            	pass
+                pass
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -366,34 +327,38 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
+
 @csrf_exempt
 def run_etl(request):
     if request.method == 'POST':
-        uuid =request.POST["uuid"]
-        start_year=request.POST["start_year"]
-        end_year=request.POST["end_year"]
-        start_month=request.POST["start_month"]
-        end_month=request.POST["end_month"]
-        start_day=request.POST["start_day"]
-        end_day=request.POST["end_day"]
-        from_last_processed=request.POST["from_last_processed"]
-        merge_option=request.POST["merge_option"]
-        if merge_option=="monthly":
+        uuid = request.POST["uuid"]
+        start_year = request.POST["start_year"]
+        end_year = request.POST["end_year"]
+        start_month = request.POST["start_month"]
+        end_month = request.POST["end_month"]
+        start_day = request.POST["start_day"]
+        end_day = request.POST["end_day"]
+        from_last_processed = request.POST["from_last_processed"]
+        merge_option = request.POST["merge_option"]
+        if merge_option == "monthly":
             subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--merge_monthly"])
-        elif merge_option=="yearly":
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--merge_monthly"])
+        elif merge_option == "yearly":
             subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--merge_yearly"])
-        elif from_last_processed=="true":
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--merge_yearly"])
+        elif from_last_processed == "true":
             subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--from_last_processed"])
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--from_last_processed"])
         else:
             subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                         "--etl_dataset_uuid", str(request.POST["uuid"]),
-                         "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM", start_month,
-                         "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),
+                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                             start_month,
+                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
 
     return "success"
+
+
 # Submit a data request for processing
 @csrf_exempt
 def submit_data_request(request):
