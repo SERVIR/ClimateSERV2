@@ -19,16 +19,16 @@ class Command(BaseCommand):
             stat = shutil.disk_usage(l.directory)
             free = stat.free
             size = sum(p.stat().st_size for p in Path(l.directory).rglob('*'))
-            for unit in ("B", "K", "M", "G", "T"):
+            for funit in ("B", "K", "M", "G", "T"):
                 if free < 1024:
                     break
                 free /= 1024
+            for sunit in ("B", "K", "M", "G", "T"):
                 if size < 1024:
                     break
                 size /= 1024
-            free_str = str(round(free, 2)) + unit
-            used_str = str(round(size, 2)) + unit
-
+            free_str = str(round(free, 2)) + funit
+            used_str = str(round(size, 2)) + sunit
             try:
                 if size > l.threshold:
                     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
