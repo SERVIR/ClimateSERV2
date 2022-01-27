@@ -98,12 +98,6 @@ class ETL_Dataset(models.Model):
                                          help_text="Is this Instance meant to be used ONLY for internal platform "
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
-    start_year = models.CharField(max_length=4, blank=False, default="2020")
-    end_year = models.CharField(max_length=4, blank=False,default="2020")
-    start_month = models.CharField(max_length=2, blank=False,default="1")
-    end_month = models.CharField(max_length=2, blank=False,default="12")
-    start_day = models.CharField(max_length=2, blank=False,default="1")
-    end_day = models.CharField(max_length=2, blank=False,default="30")
 
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
