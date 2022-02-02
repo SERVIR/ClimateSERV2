@@ -57,7 +57,7 @@
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
                         id: "{{ enslayer.ui_id }}",
-                        dataset: "{{ enslayer.dataset_type }}",
+                        dataset: "{{ layer.dataset_type }}",
                         app_id: "{{ enslayer.api_id }}",
                         units: "{{ enslayer.units }}"
                     })
@@ -309,7 +309,7 @@
                                             aria-hidden="true"
                                             style="float: right;"></i>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
-                                            onchange="openDataTypePanel(this)">
+                                            onchange="openDataTypePanel(this)" onfocus="check_query_status(this)">
                                         <option value="datasets">Time-series Analysis</option>
                                         <option value="download">Download Raw Data</option>
                                         <option value="monthly_analysis">Monthly Rainfall Analysis</option>
@@ -341,9 +341,14 @@
                                                 onchange="handleSourceSelected(this.value)">
                                             {% for layer in data_layers %}
                                                 {% if layer.isMultiEnsemble %}
-                                                    <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
+
+                                                    <option
+                                                            class="{% if "Observation" in layer.dataset_type|stringformat:'s' %}layer-on{% else %}layer-off{% endif %}"
+                                                            value="{{ layer.ui_id }}">{{ layer.title }}</option>
                                                 {% else %}
-                                                    <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                    <option
+                                                            class="{% if "Observation" in layer.dataset_type|stringformat:'s' %}layer-on{% else %}layer-off{% endif %}"
+                                                            value="{{ layer.api_id }}">{{ layer.title }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -457,7 +462,7 @@
                                 </div>
                                 <div class="query_cart">
                                     <p style="position: absolute; left: 10px; text-align: left;" id="graph_options">
-                                        <input type="radio" id="simple_axis" name="axis_type" value="simple">
+                                        <input type="radio" id="simple_axis" name="axis_type" value="simple" checked>
                                         <label for="simple_axis">Simple Axis</label><br>
                                         <input type="radio" id="multi_axis" name="axis_type" value="multi">
                                         <label for="multi_axis">Multi-Axis</label><br>
@@ -490,7 +495,7 @@
                                             disabled
                                             class="button-50"
                                             onclick="sendRequest()">
-                                        Submit Query <span id="query_button_number">(0)</span>
+                                        Submit <span id="query_button_number">(0) Queries</span>
                                     </button>
 
                                 </div>
@@ -525,12 +530,14 @@
                             </form>
                         </div>
                         <div id="query_list_checkout" style="display:none;">
-                            <b>NOTE: This will have the queries listed</b>
 
-                            <h1 style="text-align: center;">You currently have no Queries</h1>
+                            <h1 style="text-align: center;">You currently have <span id="checkout_number">0 Queries</span> </h1>
+                            <div id="checkout_list">
+
+                            </div>
 
                             <div class="just-buttons">
-                                <button id="btnMultiQuerySubmit" class="button-50" onclick="sendRequest()">
+                                <button id="btnMultiQuerySubmit" class="button-50" disabled onclick="sendRequest()">
                                     Submit Query
                                 </button>
                                 <button id="btnBack" class="button-50" onclick="toggle_query_tabs()">
@@ -744,7 +751,7 @@
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+{#    <script src="https://code.highcharts.com/modules/series-label.js"></script>#}
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>

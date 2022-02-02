@@ -4,6 +4,11 @@ from django.shortcuts import render
 from .models import *
 from api.models import Track_Usage
 
+from django import template
+from django.template.defaultfilters import stringfilter
+
+
+register = template.Library()
 
 def index(request):
     return render(request, 'index.html', context={
@@ -37,3 +42,10 @@ def help_center(request):
         'page': 'menu-help',
         'datasets': DataSet.objects.all()
     })
+
+
+@register.filter(is_safe=True)
+@stringfilter
+def trim(value):
+    return value.strip()
+
