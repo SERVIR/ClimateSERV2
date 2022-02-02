@@ -596,6 +596,7 @@ class ETL_Pipeline():
         try:
             step_result = self.Subtype_ETL_Instance.execute__Step__Clean_Up()
             has_error = step_result['is_error']
+            print('Completed running the ETL')
         except:
             sysErrorData = str(sys.exc_info())
             step_result['sys_error'] = "System Error in function: execute__Step__Clean_Up:  System Error Message: " + str(sysErrorData)

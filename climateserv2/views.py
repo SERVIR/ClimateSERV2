@@ -27,7 +27,7 @@ global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 data = Run_ETL.objects.all()
 for i in range(len(data)):
-    if data[i].from_last_processed==True:
+    if i>0 and data[i].from_last_processed==True:
         data[i].start_month=data[i-1].start_month
         data[i].end_month=data[i-1].end_month
         data[i].start_year=data[i-1].start_year
@@ -350,15 +350,48 @@ def run_etl(request):
         from_last_processed = request.POST["from_last_processed"]
         merge_option = request.POST["merge_option"]
         if merge_option == "monthly":
+            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),
+                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                             start_month,
+                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            p1.wait()
             subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),"--YEAR_YYY", start_year, "--MONTH_MM",
                              start_month])
         elif merge_option == "yearly":
+            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),
+                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                             start_month,
+                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            p1.wait()
             subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
                              "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
         elif from_last_processed == "true":
             obj = Run_ETL.objects.last()
-            subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+            if merge_option == "monthly":
+                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                             obj.start_month,
+                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
+                p.wait()
+                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
+                                 "--MONTH_MM",
+                                 obj.start_month])
+            elif merge_option == "yearly":
+                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                             obj.start_month,
+                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
+                p.wait()
+                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
+                                 "--MONTH_MM",
+                                 obj.start_month])
+            else:
+                subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
                              obj.start_month,
                              "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])

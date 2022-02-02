@@ -33,6 +33,7 @@ class Command(BaseCommand):
         temp_aggregate_filepath = etl_dataset.temp_working_dir
         pattern_filepath = etl_dataset.final_load_dir
         temp_fast_path = '/mnt/climateserv/process_tmp/'
+
         pattern_filename = ''
         aggregate_filename = ''
         ncrcat_options = ''
@@ -130,6 +131,8 @@ class Command(BaseCommand):
 
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
+            if not os.path.exists(temp_fast_path):
+                os.makedirs(temp_fast_path)
             shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
             shutil.rmtree(temp_aggregate_path)
 
