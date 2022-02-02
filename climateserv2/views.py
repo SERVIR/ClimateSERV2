@@ -13,7 +13,7 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import climateserv2.requestLog as requestLog
-from api.models import Track_Usage
+from api.models import Track_Usage, Run_ETL
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
@@ -25,7 +25,16 @@ Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
-
+data = Run_ETL.objects.all()
+for i in range(len(data)):
+    if data[i].from_last_processed==True:
+        data[i].start_month=data[i-1].start_month
+        data[i].end_month=data[i-1].end_month
+        data[i].start_year=data[i-1].start_year
+        data[i].end_year=data[i-1].end_year
+        data[i].start_day=data[i-1].start_day
+        data[i].end_day=data[i-1].end_day
+        data[i].save()
 
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
@@ -341,16 +350,20 @@ def run_etl(request):
         from_last_processed = request.POST["from_last_processed"]
         merge_option = request.POST["merge_option"]
         if merge_option == "monthly":
-            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--merge_monthly"])
+            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--YEAR_YYY", start_year, "--MONTH_MM",
+                             start_month])
         elif merge_option == "yearly":
-            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--merge_yearly"])
+            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
         elif from_last_processed == "true":
-            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--from_last_processed"])
+            obj = Run_ETL.objects.last()
+            subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                             obj.start_month,
+                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
         else:
-            subprocess.call(["/home/tethys/miniconda/envs/ClimateSERV2/bin/python", "manage.py", "start_etl_pipeline",
+            subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),
                              "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                              start_month,

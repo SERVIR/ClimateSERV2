@@ -142,7 +142,7 @@ class ETL_Pipeline():
     # Standard Function to record Events to the database
     # Wrapper for creating a row in the ETL Log Table (Logging Events) - Defaults are set
     def log_etl_event(self, activity_event_type="default_activity", activity_description="", etl_granule_uuid="", is_alert=False, additional_json={}):
-        if "Pipeline Ended" in activity_event_type:
+        if "Pipeline Ended" in activity_event_type[0]:
             status = "Complete"
         else:
             status = "In Progress"
@@ -248,7 +248,6 @@ class ETL_Pipeline():
     def execute_pipeline_control_function(self):
 
         try:
-
             list_of_valid__dataset_subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
 
             # Create a new ETL_PipelineRun Database object and store the ID
@@ -257,7 +256,6 @@ class ETL_Pipeline():
                 self.ETL_PipelineRun__UUID = str(new_pipeline_run_uuid).strip()
                 # Log Activity - Pipeline Started
                 self.start_time =datetime.now(tz=timezone.utc)
-                print(self.start_time)
                 activity_event_type     = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STARTED", default_or_error_return_value="ETL Pipeline Started")
                 activity_description    = "Starting Pipeline for Dataset: " + str(self.dataset_name)
                 additional_json         = self.to_JSONable_Object()
@@ -277,12 +275,11 @@ class ETL_Pipeline():
             dataset_subtype = str(self.dataset_JSONable_Object['dataset_subtype']).strip()
             if dataset_subtype == '':
                 raise etl_exceptions.BlankDatasetSubtypeException()
-
             # Validate that the dataset subtype is valid
             is_valid_subtype = ETL_DatasetService.is_a_valid_subtype_string(input__string=dataset_subtype)
             if is_valid_subtype == False:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
-
+            dataset_subtype = (dataset_subtype).lower()
             # Create dataset instance
             if dataset_subtype in ('chirp', 'chirps'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, dataset_subtype)

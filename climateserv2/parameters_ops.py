@@ -11,6 +11,7 @@ except ImportError:
 
 DEBUG_LIVE = False
 logToConsole = True
+pythonPath = '''/home/tethys/miniconda/envs/ClimateSERV2/bin/python'''
 serviringestroot = '''/cserv2/tmp/data/pythonCode/serviringest/'''
 dbfilepath = '''/cserv2/tmp/servirchirps.db'''
 newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db'''

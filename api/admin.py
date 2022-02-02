@@ -99,6 +99,7 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
     def changelist_view(self, request, extra_context=None):
         extra_context = {'title': 'Storage space statistics'}
         return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
+
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({
             # 'show_save': False,
@@ -114,6 +115,9 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
 class Run_ETLAdmin(admin.ModelAdmin):
     list_display = (
         'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_option')
+    def start_month(self, obj):
+        if obj.from_last_processed == "true":
+            return ""
 
     def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
         context.update({

@@ -36,18 +36,18 @@ class Command(BaseCommand):
         pattern_filename = ''
         aggregate_filename = ''
         ncrcat_options = ''
-        if MONTH_MM:
-            if etl_dataset.dataset_subtype == 'chirp':
+        if MONTH_MM != 'None':
+            if etl_dataset.dataset_subtype.lower()  == 'chirp':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirp')
                 pattern_filename = 'ucsb-chirp.{}{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirp.global.0.05deg.daily.{}{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
-            elif etl_dataset.dataset_subtype == 'chirps_gefs':
+            elif etl_dataset.dataset_subtype.lower()  == 'chirps_gefs':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps_gefs')
                 pattern_filename = 'ucsb-chirps-gefs.{}{}*10dy.nc4'
                 aggregate_filename = 'ucsb-chirps-gefs.global.0.05deg.10dy.{}{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
-            elif etl_dataset.dataset_subtype == 'emodis':
+            elif etl_dataset.dataset_subtype.lower()  == 'emodis':
                 if etl_dataset.tds_region == 'eastafrica':
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_eastafrica')
                     pattern_filename = 'emodis-ndvi.{}{}*.eastafrica.250m.10dy.nc4'
@@ -78,22 +78,22 @@ class Command(BaseCommand):
                 os.makedirs(temp_aggregate_path)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY, MONTH_MM))
         else:
-            if etl_dataset.dataset_subtype == 'chirps':
+            if etl_dataset.dataset_subtype.lower() == 'chirps':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps')
                 pattern_filename = 'ucsb-chirps.{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirps.global.0.05deg.daily.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
-            elif etl_dataset.dataset_subtype == 'esi_12week':
+            elif etl_dataset.dataset_subtype.lower()  == 'esi_12week':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_esi_12wk')
                 pattern_filename = 'sport-esi.{}*.nc4'
                 aggregate_filename = 'sport-esi.global.0.05deg.12wk.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
-            elif etl_dataset.dataset_subtype == 'esi_4week':
+            elif etl_dataset.dataset_subtype.lower()  == 'esi_4week':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_esi_4wk')
                 pattern_filename = 'sport-esi.{}*.nc4'
                 aggregate_filename = 'sport-esi.global.0.05deg.4wk.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
-            elif etl_dataset.dataset_subtype == 'imerg_early_1dy':
+            elif etl_dataset.dataset_subtype.lower()  == 'imerg_early_1dy':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_nasa_imerg_early_daily')
                 pattern_filename = 'nasa-imerg-early.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-early.global.0.1deg.1dy.{}.nc4'
@@ -103,7 +103,7 @@ class Command(BaseCommand):
                 pattern_filename = 'nasa-imerg-late.{}*.global.0.1deg.1dy.nc4'
                 aggregate_filename = 'nasa-imerg-late.global.0.1deg.1dy.{}.nc4'
                 ncrcat_options = '-4 -h -L 7 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
-            elif etl_dataset.dataset_subtype == 'usda_smap':
+            elif etl_dataset.dataset_subtype.lower()  == 'usda_smap':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_usda_smap')
                 pattern_filename = 'usda-smap.{}*.nc4'
                 aggregate_filename = 'usda-smap.global.10km.3dy.{}.nc4'
@@ -115,7 +115,7 @@ class Command(BaseCommand):
             if not os.path.exists(temp_aggregate_path):
                 os.makedirs(temp_aggregate_path)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY))
-
+            print(temp_aggregate_filepath)
         if ncrcat_options == '':
             raise Exception()
 
