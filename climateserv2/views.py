@@ -348,7 +348,15 @@ def run_etl(request):
         start_day = request.POST["start_day"]
         end_day = request.POST["end_day"]
         from_last_processed = request.POST["from_last_processed"]
-        merge_option = request.POST["merge_option"]
+        merge = request.POST["merge"]
+        etl_dataset = request.POST["etl"]
+        merge_option = "nomerge"
+        if merge == "true":
+            if str(etl_dataset.lower()) in ['chirp','chirps_gefs','emodis']:
+
+                merge_option = "monthly"
+            else:
+                merge_option = "yearly"
         if merge_option == "monthly":
             p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),

@@ -15,12 +15,8 @@ class Run_ETL(models.Model):
     start_day = models.CharField(max_length=2, blank=False,default="1")
     end_day = models.CharField(max_length=2, blank=False,default="30")
     from_last_processed = models.BooleanField(default=False)
-    MERGE_CHOICES = (
-        ('no_merge', 'No Merge'),
-        ('monthly', 'Monthly'),
-        ('yearly', 'Yearly'),
-    )
-    merge_option = models.CharField(choices=MERGE_CHOICES, max_length=10, default='never')
+    merge_periodically = models.BooleanField("Merge",default=False)
+
     class Meta:
         verbose_name = 'ETL Run'
         verbose_name_plural = 'ETL runs'

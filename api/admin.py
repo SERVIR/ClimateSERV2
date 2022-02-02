@@ -114,7 +114,7 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
 @admin.register(Run_ETL)
 class Run_ETLAdmin(admin.ModelAdmin):
     list_display = (
-        'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_option')
+        'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_periodically')
     def start_month(self, obj):
         if obj.from_last_processed == "true":
             return ""

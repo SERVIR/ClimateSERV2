@@ -120,7 +120,9 @@
                 "start_day":document.getElementById("id_start_day").value,
                 "end_day":document.getElementById("id_end_day").value,
                 "from_last_processed":document.getElementById("id_from_last_processed").checked,
-                "merge_option":document.getElementById("id_merge_option").options[document.getElementById("id_merge_option").selectedIndex].value
+                "merge":document.getElementById("id_merge_periodically").checked,
+                "etl":document.getElementById("id_etl").options[document.getElementById("id_etl").selectedIndex].text
+
             }
         }).done(function (data) {
             alert(data);
