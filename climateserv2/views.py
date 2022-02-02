@@ -387,9 +387,7 @@ def run_etl(request):
                              "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
                 p.wait()
                 subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
-                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
-                                 "--MONTH_MM",
-                                 obj.start_month])
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year])
             else:
                 subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
