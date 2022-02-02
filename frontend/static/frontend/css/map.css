@@ -205,6 +205,14 @@ body {
     color: #bdd12f; /*#7eaddb;*/
 }
 
+.layer-on {
+    display: block;
+}
+
+.layer-off {
+    display: none;
+}
+
 .leaflet-control-layers.leaflet-control {
     display: none;
 }

@@ -147,7 +147,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
             data.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc')
             with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
                 zipObj.write(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc',
-                             params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc')
+                             uniqueid + '.nc')
                 zipObj.close()
         except Exception as e:
             print(e)

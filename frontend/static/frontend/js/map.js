@@ -27,7 +27,8 @@ let climateModelInfo;
 let rainfall_data;
 let from_compiled;
 let too_fast = 0;
-let polling_timeout;
+let polling_timeout = [];
+let multi_progress_value = [];
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -628,22 +629,37 @@ function onlyUnique(value, index, self) {
  * @param {string} which - name of selection method to activate
  */
 function selectAOI(which) {
-    $("[id^=btnAOI]").removeClass("active");
-    $("#btnAOI" + which).addClass("active");
-    $(".selectAOI").hide();
-    $("#" + which + "AOI").show();
-
-    clearAOISelections();
-
-    if (which === "draw") {
-        enableDrawing();
-    } else if (which === "upload") {
-        enableUpload();
-    } else if (which === "select") {
-        if ($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
-            $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+    let new_aoi = true;
+    if (query_list.length > 0) {
+        let text = "Only one geometry allowed for multi-queries.\nClick ok to change AOI or Cancel to keep it.";
+        if (confirm(text) == true) {
+            new_aoi = true;
+        } else {
+            new_aoi = false;
         }
-        enableAdminFeature($("#adminLayerOptions option:first").val());
+    }
+    if (new_aoi) {
+        $("[id^=btnAOI]").removeClass("active");
+        $("#btnAOI" + which).addClass("active");
+        $(".selectAOI").hide();
+        $("#" + which + "AOI").show();
+
+        clearAOISelections();
+
+        if (which === "draw") {
+            enableDrawing();
+        } else if (which === "upload") {
+            enableUpload();
+        } else if (which === "select") {
+            if ($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
+                $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+            }
+            enableAdminFeature($("#adminLayerOptions option:first").val());
+        }
+
+        // need to make sure all formData is updated with the correct AOI if this is changed.
+        // maybe re-think when the AOI is added to the formData, possibly just add it when
+        // sending the requests will be better so there is no sync issues
     }
 }
 
@@ -1259,20 +1275,25 @@ function isComplete() {
         }) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         if (isReady) {
             // Also should confirm s < e;
+            $("#invalid-error").hide();
             if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
                 isReady = false;
                 $("#compare-error").show();
             } else {
                 $("#compare-error").hide();
             }
+        } else {
+            $("#invalid-error").show();
         }
     } else {
+        $("#invalid-error").show();
         $(sDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
     }
     return isReady;
 }
 
+let load_complete = false;
 const query_list = [];
 let query_list_confirmed = 0;
 
@@ -1281,7 +1302,6 @@ let query_list_confirmed = 0;
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
-    console.log("verify_ready");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
     if (requestTypeSelect.val() === "datasets") {
@@ -1289,18 +1309,25 @@ function verify_ready() {
     }
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
-    const disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
+    let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
     /***********this is not right*********************/
     /**** I need to have a list for multi queries which only has ones added to it
      * by clicking add to multi-query
      * this would not be editable on this tab, only the current is editable
      * so the number would be the multilist length + the new one if it is enabled or
      * take away 1 if needed for disabled. ****/
+    if (query_list.length === 0) {
+        $("#btnViewAPI").prop("disabled", true);
+    } else {
+        $("#btnViewAPI").prop("disabled", disabled);
+    }
+    if (query_list.length >= 5) {
+        disabled = true;
+    }
 
-    $("#btnRequest").prop("disabled", disabled);
     $("#btnAddToQuery").prop("disabled", disabled);
 
-    $("#btnViewAPI").prop("disabled", disabled);
+
     if (geometry.text().trim().indexOf('{"type"') > -1
         || geometry.text().trim().indexOf('{\"type\"') > -1) {
         download_aoi_holder.show();
@@ -1313,11 +1340,17 @@ function verify_ready() {
     }
     try {
         if (requestTypeSelect.val() === "datasets") {
-            const formData = new FormData();
-            buildForm(formData);
-            $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
+            $("#api_panel").empty();
+            query_list.forEach(buildAPIReference);
+
+            function buildAPIReference(value, index, array) {
+                $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
+            }
         } else {
-            $("#api_query").text(api_host + get_API_url());
+            $("#api_panel").empty();
+            $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+                + api_host + get_API_url() + "</span>");
         }
     } catch (e) {
         console.log(e);
@@ -1432,7 +1465,7 @@ function collect_review_data() {
  * @param data
  * @param isClimate
  */
-function handle_initial_request_data(data, isClimate) {
+function handle_initial_request_data(data, isClimate, query_index) {
     close_dialog();
     let progress = '<div style="width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
@@ -1450,7 +1483,7 @@ function handle_initial_request_data(data, isClimate) {
         width: $(window).width() / 2,
         height: 200,
         close: function () {
-            clearTimeout(polling_timeout);
+            clearTimeout(polling_timeout[query_index]);
         },
         position: {
             my: "center",
@@ -1458,7 +1491,7 @@ function handle_initial_request_data(data, isClimate) {
             of: window
         }
     });
-    pollForProgress(data[0], isClimate);
+    pollForProgress(data[0], isClimate, query_index);
 }
 
 /**
@@ -1489,14 +1522,14 @@ function buildForm(formData) {
     formData.append("operationtype", current_calculation.value);
     formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
     formData.append("isZip_CurrentDataType", false);
-    if (highlightedIDs.length > 0) {
-        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-        formData.append("featureids", highlightedIDs.join(","));
-    } else if (drawnItems.getLayers().length > 0) {
-        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-    } else if (uploadLayer) {
-        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-    }
+    // if (highlightedIDs.length > 0) {
+    //     formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+    //     formData.append("featureids", highlightedIDs.join(","));
+    // } else if (drawnItems.getLayers().length > 0) {
+    //     formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    // } else if (uploadLayer) {
+    //     formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    // }
     /*
     This will get data out of the form when we need to review/edit
     for(var pair of formData.entries()) {
@@ -1505,13 +1538,46 @@ function buildForm(formData) {
      */
 }
 
+function update_number_queries() {
+    const query_button_number_control = $("#query_button_number");
+    query_button_number_control.text("(" + query_list.length + ")" + (query_list.length === 1 ? " Query" : " Queries"));
+    $("#lblCartCount").text(query_list.length);
+    if (query_list.length === 0) {
+        $("#btnRequest").prop("disabled", true);
+        $("#btnMultiQuerySubmit").prop("disabled", true);
+        $("#btnViewAPI").prop("disabled", true);
+    } else {
+        $("#btnRequest").prop("disabled", false);
+        $("#btnMultiQuerySubmit").prop("disabled", false);
+        $("#btnViewAPI").prop("disabled", false);
+    }
+}
+
 function add_multi_query() {
     const formData = new FormData();
     buildForm(formData);
     query_list.push(formData);
+    update_number_queries();
+    if (drawToolbar) {
+        drawToolbar.remove();
+    }
+    map.off('click');
+    try {
+        const targetEl = document.getElementById("drop-container");
+        targetEl.removeEventListener("dragenter", prevent);
+        targetEl.removeEventListener("dragover", prevent);
 
-    const query_button_number_control = $("#query_button_number");
-    query_button_number_control.text("(" + query_list.length + ")");
+        targetEl.removeEventListener("drop", handleFiles);
+    } catch (e) {
+    }
+    $(".selectAOI").hide();
+    $("[id^=btnAOI]").removeClass("active");
+    $("#btnAOIdraw").addClass("active");
+    $("#drawAOI").show();
+    if (query_list.length >= 5) {
+        $("#btnAddToQuery").prop("disabled", true);
+    }
+    verify_ready();
 }
 
 /**
@@ -1523,62 +1589,86 @@ function sendRequest() {
         'text': $("#operationmenu option:selected").text()
     };
     //set the calculation info here
-    clearTimeout(polling_timeout);
+    for (let t = 0; t < polling_timeout.length; t++) {
+        clearTimeout(polling_timeout[t]);
+    }
+    multi_progress_value.length = 0;
+    polling_timeout.length = 0;
     $("#btnRequest").prop("disabled", true);
-    const formData = new FormData();
+    $("#btnMultiQuerySubmit").prop("disabled", true);
+    //let formData = new FormData();
     const request_type_value = $("#requestTypeSelect").val();
     if (request_type_value === "datasets" || request_type_value === "download") {
-        buildForm(formData);
-        let api_host = window.location.hostname;
-        if (window.location.port) {
-            api_host += ":" + window.location.port
-        }
-        $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
-        $.ajax({
-            url: "/api/submitDataRequest/",
-            type: "POST",
-            headers: {'X-CSRFToken': csrftoken},
-            processData: false,
-            contentType: false,
-            async: true,
-            crossDomain: true,
-            data: formData
-        }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.warn(jqXHR + textStatus + errorThrown);
-            close_dialog();
-            let error_message = '<div style="width:100%; height:100%; display: flex;' +
-                '    align-items: center;' +
-                '}">';
-            error_message += '<div style="width:100%; text-align: center;">';
-            error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-            error_message += '<p style="line-height: 2em;">There was am error processing this request';
-            error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+        //buildForm(formData);
+        mulitQueryData.length = 0;
+        // This is where i need to break out and send each query
+        // currently just sending the first query over and over
 
-            error_message += '</div>';
-            const dialog = $("#dialog");
-            dialog.html(error_message);
-            dialog.dialog({
-                title: "Processing Error",
-                resizable: false,
-                width: $(window).width() / 2,
-                height: 200,
-                position: {
-                    my: "center",
-                    at: "center",
-                    of: window
-                },
-                close: function () {
-                    $("#btnRequest").prop("disabled", false);
-                    $("#btnViewAPI").prop("disabled", false);
+        // const formData = query_list[0];
+        for (let i = 0; i < query_list.length; i++) {
+            let formData = query_list[i];
+
+            if (highlightedIDs.length > 0) {
+                formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+                formData.append("featureids", highlightedIDs.join(","));
+            } else if (drawnItems.getLayers().length > 0) {
+                formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+            } else if (uploadLayer) {
+                formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+            }
+
+            let api_host = window.location.hostname;
+            if (window.location.port) {
+                api_host += ":" + window.location.port
+            }
+            $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
+            $.ajax({
+                url: "/api/submitDataRequest/",
+                type: "POST",
+                headers: {'X-CSRFToken': csrftoken},
+                processData: false,
+                contentType: false,
+                async: true,
+                crossDomain: true,
+                data: formData,
+                query_index: i,
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.warn(jqXHR + textStatus + errorThrown);
+                close_dialog();
+                let error_message = '<div style="width:100%; height:100%; display: flex;' +
+                    '    align-items: center;' +
+                    '}">';
+                error_message += '<div style="width:100%; text-align: center;">';
+                error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
+                error_message += '<p style="line-height: 2em;">There was am error processing this request';
+                error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+
+                error_message += '</div>';
+                const dialog = $("#dialog");
+                dialog.html(error_message);
+                dialog.dialog({
+                    title: "Processing Error",
+                    resizable: false,
+                    width: $(window).width() / 2,
+                    height: 200,
+                    position: {
+                        my: "center",
+                        at: "center",
+                        of: window
+                    },
+                    close: function () {
+                        $("#btnAddToQuery").prop("disabled", false);
+                        //$("#btnViewAPI").prop("disabled", false);
+                    }
+                });
+            }).done(function (data, _textStatus, _jqXHR) {
+                if (data.errMsg) {
+                    console.info(data.errMsg);
+                } else {
+                    handle_initial_request_data(JSON.parse(data), false, this.query_index);
                 }
             });
-        }).done(function (data, _textStatus, _jqXHR) {
-            if (data.errMsg) {
-                console.info(data.errMsg);
-            } else {
-                handle_initial_request_data(JSON.parse(data), false);
-            }
-        });
+        }
 
     } else {
         $.ajax({
@@ -1602,9 +1692,26 @@ function sendRequest() {
  * Updates progress bar with value sent in
  * @param val
  */
-function updateProgress(val) {
-    $('.progress-bar').css('width', val + '%').attr('aria-valuenow', val);
-    $("#text_percent").text(parseInt(val) + '%');
+function updateProgress(val, index) {
+    let final;
+    if (query_list.length > 0) {
+
+        multi_progress_value[index] = val;
+
+        let combined = 0;
+        multi_progress_value.forEach(combine);
+
+        function combine(value) {
+            combined += value;
+        }
+
+        final = (combined / query_list.length).toString();
+    } else {
+        final = val
+    }
+
+    $('.progress-bar').css('width', final + '%').attr('aria-valuenow', final);
+    $("#text_percent").text(parseInt(final).toString() + '%');
 }
 
 /**
@@ -1612,7 +1719,7 @@ function updateProgress(val) {
  * @param id
  * @param isClimate
  */
-function pollForProgress(id, isClimate) {
+function pollForProgress(id, isClimate, query_index) {
     $.ajax({
         url: "/api/getDataRequestProgress/?id=" +
             id,
@@ -1628,10 +1735,10 @@ function pollForProgress(id, isClimate) {
             const val = JSON.parse(data)[0];
             if (val !== -1 && val !== 100) {
                 retries = 0;
-                updateProgress(val);
-                polling_timeout = setTimeout(function () {
-                    pollForProgress(id, isClimate);
-                }, 500);
+                updateProgress(val, query_index);
+                polling_timeout.push(setTimeout(function () {
+                    pollForProgress(id, isClimate, query_index);
+                }, 500));
 
             } else if (val === 100) {
                 retries = 0;
@@ -1649,7 +1756,7 @@ function pollForProgress(id, isClimate) {
                         inti_chart_dialog();
                         multiChart = Highcharts.chart('chart_holder', {});
                     }
-                    getDataFromRequest(id, isClimate);
+                    getDataFromRequest(id, isClimate, query_index);
 
                 }
             } else {
@@ -1662,8 +1769,8 @@ function pollForProgress(id, isClimate) {
                 } else {
                     retries = 0;
                     console.log("Server Error");
-                    $("#btnRequest").prop("disabled", false);
-                    $("#btnViewAPI").prop("disabled", false);
+                    $("#btnAddToQuery").prop("disabled", false);
+                    //$("#btnViewAPI").prop("disabled", false);
                     close_dialog();
                     let error_message = '<div style="width:100%; height:100%; display: flex;' +
                         '    align-items: center;' +
@@ -1687,7 +1794,7 @@ function pollForProgress(id, isClimate) {
                             of: window
                         },
                         close: function () {
-                            $("#btnRequest").prop("disabled", false);
+                            $("#btnAddToQuery").prop("disabled", false);
                         }
 
                     });
@@ -1698,7 +1805,9 @@ function pollForProgress(id, isClimate) {
 }
 
 function filter_datasets_by(which) {
-    console.log("Remove non " + which + " datasets");
+    $(".layer-on, .layer-off").toggleClass("layer-on layer-off");
+    $("#sourcemenu")[0].selectedIndex = $('#sourcemenu option.layer-on:first').index()
+    handleSourceSelected($('#sourcemenu option.layer-on:first').val());
 }
 
 function configure_nmme(sdata) {
@@ -1805,7 +1914,7 @@ function handleSourceSelected(which) {
             configure_nmme(sdata);
         });
     }
-    $("#btnRequest").prop("disabled", false);
+    $("#btnAddToQuery").prop("disabled", false);
 }
 
 /**
@@ -1856,12 +1965,15 @@ function inti_chart_dialog() {
 }
 
 /**
- * Opens the last chart that was closed.  Currently we only store one prior state
+ * Opens the last chart that was closed.
  */
 function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
+    } else if (mulitQueryData.length !== 0) {
+        inti_chart_dialog();
+        multi_chart_builder();
     } else {
         alert("you have no previous chart, please send a request.")
     }
@@ -1918,6 +2030,134 @@ function getDownLoadLink(id) {
 
 const mulitQueryData = [];
 let simpleAxis = true;
+let debug_data = [];
+
+function multi_chart_builder() {
+    simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
+    multiChart = Highcharts.chart('chart_holder', {
+        title: {text: "ClimateSERV Statistical Query"},
+        tooltip: {
+            shared: true,
+        },
+        xAxis: {
+            type: "datetime"
+        }, yAxis: {
+            id: "simple",
+            title: {
+                text: simpleAxis ? "values" : mulitQueryData[0].units
+            },
+            // max: 350,
+            // min: 0,
+        }, series: [{
+            color: "#758055",
+            type: "line",
+            name: mulitQueryData[0].label,
+            data: mulitQueryData[0].data.sort((a, b) => a[0] - b[0]),
+            tooltip: {
+                pointFormatter: function () {
+                    return Highcharts.numberFormat(this.y, 2) + " " + (mulitQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                }
+            }
+        }],
+        chart: {
+            zoomType: 'xy',
+            events: {
+                redraw: function () {
+                    try {
+                        img.translate(
+                            this.chartWidth - originalWidth,
+                            this.chartHeight - originalHeight
+                        );
+                    } catch (e) {
+                    }
+                }
+            }
+        },
+        exporting: {
+            chartOptions: {
+                chart: {
+                    events: {
+                        load: function () {
+                            const width = this.chartWidth - 105;
+                            const height = this.chartHeight - 130;
+                            this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                            ).add();
+                        }
+                    }
+                }
+            }
+        },
+        subtitle: {
+            text: 'Source: climateserv.servirglobal.net'
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'middle'
+        },
+
+        responsive: {
+            rules: [{
+                condition: {
+                    maxWidth: 500
+                },
+                chartOptions: {
+                    legend: {
+                        layout: 'horizontal',
+                        align: 'center',
+                        verticalAlign: 'bottom'
+                    }
+                }
+            }]
+        }
+    }, function (chart) { // on complete
+        originalWidth = chart.chartWidth;
+        originalHeight = chart.chartHeight;
+        const width = chart.chartWidth - 105;
+        const height = chart.chartHeight - 130;
+        img = chart.renderer
+            .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
+            .add();
+    });
+
+
+    const colors = [
+        "#bafc02",
+        "#022cfc",
+        "#02f4fc",
+        "#283601"
+    ]
+
+    if (mulitQueryData.length > 1) {
+        for (let i = 1; i < mulitQueryData.length; i++) {
+            if (!simpleAxis) {
+                multiChart.addAxis({
+                    id: "yaxis-" + i,
+                    opposite: i % 2 !== 0,
+                    title: {
+                        text: mulitQueryData[i].units
+                    },
+                    // max: 350,
+                    // min: 0,
+                }, false, false);
+            }
+            multiChart.addSeries({
+                yAxis: simpleAxis ? "simple" : "yaxis-" + i,
+                color: colors[i - 1],
+                type: "line",
+                name: mulitQueryData[i].label,
+                data: mulitQueryData[i].data.sort((a, b) => a[0] - b[0]),
+                tooltip: {
+                    pointFormatter: function () {
+                        return Highcharts.numberFormat(this.y, 2) + " " + mulitQueryData[i].units + "<br>" //"Value: " + this.value + units;
+                    }
+                }
+            });
+        }
+
+
+    }
+}
 
 /**
  * Function to retrieve the processed data from the server with the id
@@ -1925,8 +2165,8 @@ let simpleAxis = true;
  * @param id
  * @param isClimate
  */
-function getDataFromRequest(id, isClimate) {
-    close_dialog();
+function getDataFromRequest(id, isClimate, query_index) {
+    //close_dialog();
     let complete = '<div style="width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
         '}">';
@@ -1961,7 +2201,7 @@ function getDataFromRequest(id, isClimate) {
         } else {
             if (data === "need to send id") {
                 if (too_fast < 5) {
-                    getDataFromRequest(id, isClimate);
+                    getDataFromRequest(id, isClimate, query_index);
                 }
             } else {
                 too_fast = 0;
@@ -2023,209 +2263,151 @@ function getDataFromRequest(id, isClimate) {
 
                 } else {
                     const compiledData = [];
-                    // change this, set it on send request
-                    const otState = current_calculation.value;
-                    if (otState === 6) {
-                        // this is a download request form download link
-                    } else {
-                        let min = 9999;
-                        let max = -9999;
-                        JSON.parse(data).data.forEach((d) => {
-                            let val;
+                    let min = 9999;
+                    let max = -9999;
+                    debug_data.push(data);
+                    JSON.parse(data).data.forEach((d) => {
+                        let val;
+                        val = d.value.hasOwnProperty('max')
+                            ? d.value.max
+                            : d.value.hasOwnProperty('min')
+                                ? d.value.min
+                                : d.value.hasOwnProperty('avg')
+                                    ? d.value.avg
+                                    : -9191;
 
-                            val =
-                                otState === 0
-                                    ? d.value.max
-                                    : otState === 1
-                                        ? d.value.min
-                                        : otState === 5
-                                            ? d.value.avg
-                                            : -9191;
-
-                            if (val > -9000) {
-                                const darray = [];
-                                darray.push(parseInt(d.epochTime) * 1000);
-                                //fix this
-                                if (val < min) {
-                                    min = val;
-                                }
-                                if (val > max) {
-                                    max = val;
-                                }
-                                darray.push(val);
-                                compiledData.push(darray); // i can likely store min and max here
-                            } else {
-                                const null_array = [];
-                                null_array.push(parseInt(d.epochTime) * 1000);
-                                null_array.push(null);
-                                compiledData.push(null_array); // i can likely store min and max here
+                        if (val > -9000) {
+                            const darray = [];
+                            darray.push(parseInt(d.epochTime) * 1000);
+                            //fix this
+                            if (val < min) {
+                                min = val;
                             }
-                        });
-                        from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
-                        inti_chart_dialog();
-                        // multiChart = Highcharts.chart('chart_holder', {xAxis:{
-                        //             type: "datetime"
-                        //         }});
-                        if (compiledData.length === 0) {
-                            //inti_chart_dialog
-                            $("#chart_holder").html("<h1>No data available</h1>");
+                            if (val > max) {
+                                max = val;
+                            }
+                            darray.push(val);
+                            compiledData.push(darray); // i can likely store min and max here
                         } else {
-                            let layer = client_layers.find(
-                                (item) => item.app_id === $("#sourcemenu").val()
-                            ) || client_layers.find(
-                                (item) => item.app_id === $("#ensemblemenu").val()
-                            );
-                            const units = layer.units.includes("|units|")
-                                ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                                : layer.units
-                            //const units = layer.units;  // if layer units contains |units| split, then index
-
-                            mulitQueryData.push(
-                                compiledData
-                            );
-
-                            /* this is the paradigm to add the initial series.
-                            secondary ones should work with addSeries
-
-                            tested this: colors need adjusting:
-
-                            multiChart.addSeries({
-                                     color: "#758055",
-                                     type: "line",
-                                     name: "figure later",
-                                     data: mulitQueryData[1].sort((a, b) => a[0] - b[0])
-                                 })
-
-                                 need axis and label as well like
-
-                                   multiChart.addAxis({
-                                title: {
-                                    text: units
-                                }
-                            }, false, false);
-
-                             */
-                            multiChart = Highcharts.chart('chart_holder', {
-                                xAxis: {
-                                    type: "datetime"
-                                }, yAxis: {
-                                    id: "simple",
-                                    title: {
-                                        text: units
-                                    },
-                                    // max: 350,
-                                    // min: 0,
-                                }, series: [{
-                                    color: "#758055",
-                                    type: "line",
-                                    name: "figure later",
-                                    data: mulitQueryData[0].sort((a, b) => a[0] - b[0])
-                                }]
-                            });
-
-
-                            const colors = [
-                                "#bafc02",
-                                "#022cfc",
-                                "#02f4fc",
-                                "#283601"
-                            ]
-                            simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
-                            if (mulitQueryData.length > 1) {
-                                for (let i = 1; i < mulitQueryData.length; i++) {
-                                    if(! simpleAxis) {
-                                        multiChart.addAxis({
-                                            id: "yaxis-" + i,
-                                            opposite: i % 2 !== 0,
-                                            title: {
-                                                text: units
-                                            },
-                                            // max: 350,
-                                            // min: 0,
-                                        }, false, false);
-                                    }
-                                    multiChart.addSeries({
-                                        yAxis: simpleAxis ? "simple" : "yaxis-" + i,
-                                        color: colors[i - 1],
-                                        type: "line",
-                                        name: "figure later",
-                                        data: mulitQueryData[i].sort((a, b) => a[0] - b[0])
-                                    });
-                                }
-
-
-                            }
-
-
-                            const yAxis_format = layer.yAxis_format || null;
-                            const point_format = layer.point_format || null
-
-                            /*
-                            Finalize chart will now turn into create chart that will happen on
-                            submit request, I will have to bare bone the chart, then add new axis
-                            if rainfall analysis this is not relative, only 1 of that type is allowed
-                            at a time.
-                             */
-
-                            // finalize_chart([{
-                            //         color: "#758055",
-                            //         type: "line",
-                            //         name: current_calculation.text,
-                            //         data: compiledData.sort((a, b) => a[0] - b[0])
-                            //     }], units, {
-                            //         type: "datetime"
-                            //     }, $("#sourcemenu option:selected").text(),
-                            //     false,
-                            //     yAxis_format,
-                            //     point_format);
-                            // multiChart.yaxis = {
-                            //         type: "datetime"
-                            //     };
-                            // multiChart.addAxis({
-                            //     title: {
-                            //         text: units
-                            //     }
-                            // }, false, false);
-                            // multiChart.addSeries({
-                            //     color: "#758055",
-                            //     connectNulls: false,
-                            //     marker: {
-                            //         radius: 3,
-                            //         fillColor: "#758055",
-                            //         states: {
-                            //             hover: {
-                            //                 fillColor: '#758055',
-                            //             },
-                            //             halo: {
-                            //                 fillColor: '#758055',
-                            //             }
-                            //         },
-                            //     },
-                            //     lineWidth: 2,
-                            //     states: {
-                            //         hover: {
-                            //             lineWidth: 2
-                            //         },
-                            //         halo: {
-                            //             fillColor: '#758055',
-                            //         }
-                            //     },
-                            //     threshold: null,
-                            //     allowPointSelect: true,
-                            //     point: {
-                            //         events: {
-                            //             select: function (e) {
-                            //                 const full = new Date(e.target.x);
-                            //                 const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                            //                 // maybe set current time for layers to this date
-                            //                 console.log(date);
-                            //             }
-                            //         }
-                            //     },
-                            //     data: compiledData.sort((a, b) => a[0] - b[0])
-                            // })
+                            const null_array = [];
+                            null_array.push(parseInt(d.epochTime) * 1000);
+                            null_array.push(null);
+                            compiledData.push(null_array); // i can likely store min and max here
                         }
+                    });
+                    from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
+
+                    // multiChart = Highcharts.chart('chart_holder', {xAxis:{
+                    //             type: "datetime"
+                    //         }});
+                    if (compiledData.length === 0) {
+                        //inti_chart_dialog
+                        $("#chart_holder").html("<h1>No data available</h1>");
+                    } else {
+
+                        let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
+
+                        let layer = client_layers.find(
+                            (item) => item.app_id === queried_data.datatype
+                        );
+                        const units = layer.units.includes("|units|")
+                            ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
+                            : layer.units
+
+                        mulitQueryData.push({
+                            data: compiledData,
+                            units: units,
+                            yAxis_format: layer.yAxis_format || null,
+                            point_format: layer.point_format || null,
+                            label: layer.title + ": " + (queried_data.operationtype === "0"
+                                ? "max"
+                                : queried_data.operationtype === "1"
+                                    ? "min"
+                                    : queried_data.operationtype === "5"
+                                        ? "avg"
+                                        : "n/a")
+                        });
+
+                        if (mulitQueryData.length == query_list.length) {
+                            close_dialog();
+                            inti_chart_dialog();
+                            multi_chart_builder();
+
+
+                            query_list.length = 0;
+                            update_number_queries();
+                            $("#checkout_list").empty();
+                            $("#checkout_number").text("0 Queries");
+                            $("#chart-builder").show();
+                            $("#query_list_checkout").hide();
+                        }
+
+                        /*
+                        Finalize chart will now turn into create chart that will happen on
+                        submit request, I will have to bare bone the chart, then add new axis
+                        if rainfall analysis this is not relative, only 1 of that type is allowed
+                        at a time.
+                         */
+
+                        // finalize_chart([{
+                        //         color: "#758055",
+                        //         type: "line",
+                        //         name: current_calculation.text,
+                        //         data: compiledData.sort((a, b) => a[0] - b[0])
+                        //     }], units, {
+                        //         type: "datetime"
+                        //     }, $("#sourcemenu option:selected").text(),
+                        //     false,
+                        //     yAxis_format,
+                        //     point_format);
+                        // multiChart.yaxis = {
+                        //         type: "datetime"
+                        //     };
+                        // multiChart.addAxis({
+                        //     title: {
+                        //         text: units
+                        //     }
+                        // }, false, false);
+                        // multiChart.addSeries({
+                        //     color: "#758055",
+                        //     connectNulls: false,
+                        //     marker: {
+                        //         radius: 3,
+                        //         fillColor: "#758055",
+                        //         states: {
+                        //             hover: {
+                        //                 fillColor: '#758055',
+                        //             },
+                        //             halo: {
+                        //                 fillColor: '#758055',
+                        //             }
+                        //         },
+                        //     },
+                        //     lineWidth: 2,
+                        //     states: {
+                        //         hover: {
+                        //             lineWidth: 2
+                        //         },
+                        //         halo: {
+                        //             fillColor: '#758055',
+                        //         }
+                        //     },
+                        //     threshold: null,
+                        //     allowPointSelect: true,
+                        //     point: {
+                        //         events: {
+                        //             select: function (e) {
+                        //                 const full = new Date(e.target.x);
+                        //                 const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                        //                 // maybe set current time for layers to this date
+                        //                 console.log(date);
+                        //             }
+                        //         }
+                        //     },
+                        //     data: compiledData.sort((a, b) => a[0] - b[0])
+                        // })
                     }
+
                 }
             }
         }
@@ -2417,23 +2599,43 @@ function getDataLine(mmm_Y, type, data) {
     return data_line;
 }
 
+function check_query_status(control) {
+    if (query_list.length > 0) {
+        let text = "All multi-queries must be of type Time-series Analysis.\nClick ok to clear all added queries and " +
+            "start over or Cancel to keep queries and continue.";
+        if (confirm(text) == true) {
+            query_list.length = 0;
+            update_number_queries();
+            clearAOISelections();
+            // will need to reset the numbered UI things here as well as remove and geometry
+        } else {
+            $(control).blur();
+        }
+    }
+}
+
 /**
  * Opens the proper panel for the datatype selected
  * @param select_control
  */
 function openDataTypePanel(select_control) {
+    const query_button_number_control = $("#query_button_number");
     if (select_control.value === "datasets") {
         $("#panel_monthly_rainfall").hide();
         $("#panel_download").hide();
         $("#panel_dataset").show();
         $("#panel_timeseries").show();
-        $('#graph_options').show();
+        $('.query_cart').show();
+        $("#btnAddToQuery").css('visibility', 'visible');
+        update_number_queries();
     } else if (select_control.value === "download") {
         $("#panel_monthly_rainfall").hide();
         $("#panel_timeseries").hide();
         $("#panel_dataset").show();
         $("#panel_download").show();
-        $('#graph_options').hide();
+        $('.query_cart').hide();
+        $("#btnAddToQuery").css('visibility', 'hidden');
+        query_button_number_control.text("Query");
         // need to check the AOI state, if no AOI leave just NetCDF or TIF
         // if point type, show csv only
     } else {
@@ -2441,7 +2643,9 @@ function openDataTypePanel(select_control) {
         $("#panel_download").hide();
         $("#panel_timeseries").hide();
         $("#panel_monthly_rainfall").show();
-        $('#graph_options').hide();
+        $('.query_cart').hide();
+        $("#btnAddToQuery").css('visibility', 'hidden');
+        query_button_number_control.text("Query");
     }
     collect_review_data();
     verify_ready();
@@ -2792,6 +2996,11 @@ $(function () {
     }
 
     try {
+        const date = new Date();
+        const firstDay = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+        const lastDay = new Date(date.getFullYear(), date.getMonth(), 0);
+        $("#sDate_new_cooked").val(firstDay.toISOString().split('T')[0]);
+        $("#eDate_new_cooked").val(lastDay.toISOString().split('T')[0]);
         verify_ready();
     } catch (e) {
     }
@@ -2889,7 +3098,75 @@ function layer_filter() {
 }
 
 function review_query() {
+    const checkout_list = $("#checkout_list");
+    checkout_list.empty();
+    $("#checkout_number").text(query_list.length + (query_list.length === 1 ? " Query" : " Queries"));
+    let init = true;
+    if (query_list.length > 0) {
+        for (let formData of query_list) {
+            const structured_data = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
+            if (init) {
+
+                checkout_list.append('<br><h1 class="step-marker">Common Geometry</h1>');
+                let geometry_element = '<span class="form-control panel-buffer" id="geometry_review" ';
+                geometry_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
+                geometry_element += $("#geometry").text();
+                geometry_element += '</span>';
+                checkout_list.append(geometry_element);
+                checkout_list.append('<br><h1 class="step-marker">Queries</h1>');
+                init = false;
+            }
+            checkout_list.append(
+                get_form_group(
+                    'Datatype',
+                    'datatype_review',
+                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                )
+            );
+            checkout_list.append(
+                get_form_group(
+                    'Begin time',
+                    'begin_time_review',
+                    structured_data["begintime"]
+                )
+            );
+            checkout_list.append(
+                get_form_group(
+                    'End time',
+                    'end_time_review',
+                    structured_data["endtime"]
+                )
+            );
+            checkout_list.append(
+                get_form_group(
+                    'Calculation',
+                    'calculation_review',
+                    $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
+                )
+            );
+            //requestTypeSelect
+            //Type of Request
+            //operationmenu
+
+
+            // for (let pair of formData.entries()) {
+            //
+            //     console.log(pair[0] + ', ' + pair[1]);
+            // }
+
+            checkout_list.append("<hr>");
+        }
+    }
+
+
     toggle_query_tabs();
+}
+
+function get_form_group(label, element_id, text) {
+    let form_group = '<div class="form-group panel-buffer">';
+    form_group += '<label for="' + element_id + '">' + label + '</label>';
+    form_group += '<p class="form-control" id="' + element_id + '">' + text + '</p>';
+    return form_group;
 }
 
 function toggle_query_tabs() {
