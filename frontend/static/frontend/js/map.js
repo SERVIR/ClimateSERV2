@@ -1275,20 +1275,25 @@ function isComplete() {
         }) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         if (isReady) {
             // Also should confirm s < e;
+            $("#invalid-error").hide();
             if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
                 isReady = false;
                 $("#compare-error").show();
             } else {
                 $("#compare-error").hide();
             }
+        } else {
+            $("#invalid-error").show();
         }
     } else {
+        $("#invalid-error").show();
         $(sDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
     }
     return isReady;
 }
 
+let load_complete = false;
 const query_list = [];
 let query_list_confirmed = 0;
 
@@ -1297,7 +1302,6 @@ let query_list_confirmed = 0;
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
-    // console.log("verify_ready");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
     if (requestTypeSelect.val() === "datasets") {
@@ -1312,12 +1316,12 @@ function verify_ready() {
      * this would not be editable on this tab, only the current is editable
      * so the number would be the multilist length + the new one if it is enabled or
      * take away 1 if needed for disabled. ****/
-    if(query_list.length === 0) {
+    if (query_list.length === 0) {
         $("#btnViewAPI").prop("disabled", true);
-    } else{
+    } else {
         $("#btnViewAPI").prop("disabled", disabled);
     }
-    if(query_list.length >= 5){
+    if (query_list.length >= 5) {
         disabled = true;
     }
 
@@ -1340,13 +1344,13 @@ function verify_ready() {
             query_list.forEach(buildAPIReference);
 
             function buildAPIReference(value, index, array) {
-              $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                  + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>") ;
+                $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
             }
         } else {
             $("#api_panel").empty();
             $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                  + api_host + get_API_url() + "</span>") ;
+                + api_host + get_API_url() + "</span>");
         }
     } catch (e) {
         console.log(e);
@@ -1538,11 +1542,11 @@ function update_number_queries() {
     const query_button_number_control = $("#query_button_number");
     query_button_number_control.text("(" + query_list.length + ")" + (query_list.length === 1 ? " Query" : " Queries"));
     $("#lblCartCount").text(query_list.length);
-    if(query_list.length === 0){
+    if (query_list.length === 0) {
         $("#btnRequest").prop("disabled", true);
         $("#btnMultiQuerySubmit").prop("disabled", true);
         $("#btnViewAPI").prop("disabled", true);
-    } else{
+    } else {
         $("#btnRequest").prop("disabled", false);
         $("#btnMultiQuerySubmit").prop("disabled", false);
         $("#btnViewAPI").prop("disabled", false);
@@ -1570,7 +1574,7 @@ function add_multi_query() {
     $("[id^=btnAOI]").removeClass("active");
     $("#btnAOIdraw").addClass("active");
     $("#drawAOI").show();
-    if(query_list.length >= 5) {
+    if (query_list.length >= 5) {
         $("#btnAddToQuery").prop("disabled", true);
     }
     verify_ready();
@@ -1585,7 +1589,7 @@ function sendRequest() {
         'text': $("#operationmenu option:selected").text()
     };
     //set the calculation info here
-    for(let t = 0; t < polling_timeout.length; t++){
+    for (let t = 0; t < polling_timeout.length; t++) {
         clearTimeout(polling_timeout[t]);
     }
     multi_progress_value.length = 0;
@@ -1661,7 +1665,6 @@ function sendRequest() {
                 if (data.errMsg) {
                     console.info(data.errMsg);
                 } else {
-                    // console.log(this.query_index);
                     handle_initial_request_data(JSON.parse(data), false, this.query_index);
                 }
             });
@@ -1691,7 +1694,7 @@ function sendRequest() {
  */
 function updateProgress(val, index) {
     let final;
-    if(query_list.length > 0) {
+    if (query_list.length > 0) {
 
         multi_progress_value[index] = val;
 
@@ -1803,7 +1806,7 @@ function pollForProgress(id, isClimate, query_index) {
 
 function filter_datasets_by(which) {
     $(".layer-on, .layer-off").toggleClass("layer-on layer-off");
-   $("#sourcemenu")[0].selectedIndex = $('#sourcemenu option.layer-on:first').index()
+    $("#sourcemenu")[0].selectedIndex = $('#sourcemenu option.layer-on:first').index()
     handleSourceSelected($('#sourcemenu option.layer-on:first').val());
 }
 
@@ -1968,7 +1971,7 @@ function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
-    } else if(mulitQueryData.length !== 0) {
+    } else if (mulitQueryData.length !== 0) {
         inti_chart_dialog();
         multi_chart_builder();
     } else {
@@ -2993,6 +2996,11 @@ $(function () {
     }
 
     try {
+        const date = new Date();
+        const firstDay = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+        const lastDay = new Date(date.getFullYear(), date.getMonth(), 0);
+        $("#sDate_new_cooked").val(firstDay.toISOString().split('T')[0]);
+        $("#eDate_new_cooked").val(lastDay.toISOString().split('T')[0]);
         verify_ready();
     } catch (e) {
     }
