@@ -1,8 +1,13 @@
+import shutil
+from pathlib import Path
+
 from django.contrib import admin
 
 # Register your models here.
+from django.contrib.auth.admin import UserAdmin
+from django.utils.html import format_html
 
-from .models import Config_Setting
+from .models import Config_Setting, Storage_Review, Run_ETL, Profile
 from .models import ETL_Dataset
 from .models import ETL_Granule
 from .models import ETL_Log
@@ -11,6 +16,10 @@ from .models import Request_Progress, Request_Log, Track_Usage
 
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
+
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ('user','etl_alerts','feedback_alerts','storage_alerts')
 
 
 @admin.register(ETL_Granule)
@@ -24,7 +33,7 @@ class ETLGranuleAdmin(admin.ModelAdmin):
 @admin.register(ETL_Log)
 class ETLLogAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'etl_pipeline_run',
-                    'etl_dataset', 'etl_granule')
+                    'etl_dataset', 'etl_granule', 'start_time', 'end_time', 'status')
     autocomplete_fields = ['etl_granule']
     search_fields = ('etl_granule',)
     date_hierarchy = "created_at"
@@ -42,7 +51,80 @@ admin.site.register(Request_Log)
 
 @admin.register(Track_Usage)
 class Track_UsageAdmin(admin.ModelAdmin):
-    list_display = ('unique_id', 'time_requested', 'originating_IP', 'dataset', 'start_date', 'end_date', 'file_size')
-    list_filter = ('dataset', 'calculation', 'request_type')
-    search_fields = ('unique_id', 'dataset')
+    list_display = (
+        'unique_id',
+        'time_requested',
+        'ip_location',
+        'country_ISO',
+        'aoi_button',
+        'dataset',
+        'start_date',
+        'end_date',
+        'file_size',
+        'ui_request')
+    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation')
+    search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
+
+    def ip_location(self, obj):
+        return format_html(
+            "<a href='https://www.ip2location.com/demo/{}' target='_blank'>{}</a>",
+            obj.originating_IP,
+            obj.originating_IP)
+
+    ip_location.admin_order_field = 'originating_IP'
+
+    def aoi_button(self, obj):
+        if obj.AOI == '{}':
+            return format_html("<span>No AOI</span>")
+        else:
+            return format_html(
+                "<a href='javascript:open_aoi({})'>Display AOI</a>",
+                obj.id)
+
+
+@admin.register(Storage_Review)
+class Storage_ReviewAdmin(admin.ModelAdmin):
+    list_display_links = None
+    list_display = (
+        'unique_id',
+        'directory',
+        'file_size',
+        'free_space',
+        'last_notified_time',
+        'threshold')
+    # def has_add_permission(self, request, obj=None):
+    #     return False
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = {'title': 'Storage space statistics'}
+        return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        context.update({
+            # 'show_save': False,
+            # 'show_save_and_continue': False,
+            # 'show_save_and_add_another': False,
+            # 'show_delete': False,
+            'from_sto': True
+
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)
+
+@admin.register(Run_ETL)
+class Run_ETLAdmin(admin.ModelAdmin):
+    list_display = (
+        'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_periodically')
+    def start_month(self, obj):
+        if obj.from_last_processed == "true":
+            return ""
+
+    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
+        context.update({
+            'show_save': False,
+            'show_save_and_continue': False,
+            'show_save_and_add_another': False,
+            'show_delete': False,
+            'from_etl':True
+        })
+        return super().render_change_form(request, context, add, change, form_url, obj)

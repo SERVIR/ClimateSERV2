@@ -97,6 +97,9 @@
                 </li>
             </ul>
             <div class="navbar-nav">
+                {% if request.user.is_staff %}
+                <a class="nav-link" id="menu-help" href="{% url 'admin:index' %}">Admin</a>
+                {% endif %}
                 <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">HELP CENTER</a>
             </div>
         </div>

@@ -2,7 +2,7 @@ import json
 import logging
 import multiprocessing
 import os
-import socket
+import subprocess
 from datetime import datetime, timedelta
 import pandas as pd
 import xarray as xr
@@ -12,9 +12,8 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-import pytz
 import climateserv2.requestLog as requestLog
-from api.models import Track_Usage
+from api.models import Track_Usage, Run_ETL
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
@@ -26,6 +25,16 @@ Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
+data = Run_ETL.objects.all()
+for i in range(len(data)):
+    if i > 0 and data[i].from_last_processed == True:
+        data[i].start_month = data[i - 1].start_month
+        data[i].end_month = data[i - 1].end_month
+        data[i].start_year = data[i - 1].start_year
+        data[i].end_year = data[i - 1].end_year
+        data[i].start_day = data[i - 1].start_day
+        data[i].end_day = data[i - 1].end_day
+        data[i].save()
 
 
 # To read a results file from the filesystem based on uuid
@@ -70,13 +79,13 @@ def process_callback(request, output, content_type):
             request_id = request.GET["id"]
         else:
             try:
-            	output_json = json.loads(output)
-            	if "unique_id" in output_json:
-            		request_id = output_json["unique_id"]
-            	else:
-            		request_id = json.loads(output)[0]
+                output_json = json.loads(output)
+                if "unique_id" in output_json:
+                    request_id = output_json["unique_id"]
+                else:
+                    request_id = json.loads(output)[0]
             except:
-            	request_id = uutools.getUUID()
+                request_id = uutools.getUUID()
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -237,6 +246,7 @@ def get_file_for_job_id(request):
                     expected_file_name = request_id + ".csv"
                     expected_file_location = os.path.join(params.zipFile_ScratchWorkspace_Path, expected_file_name)
                     does_file_exist = os.path.exists(expected_file_location)
+
             except IOError:
                 does_file_exist = False
 
@@ -326,6 +336,86 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
+
+@csrf_exempt
+def run_etl(request):
+    if request.method == 'POST':
+        uuid = request.POST["uuid"]
+        start_year = request.POST["start_year"]
+        end_year = request.POST["end_year"]
+        start_month = request.POST["start_month"]
+        end_month = request.POST["end_month"]
+        start_day = request.POST["start_day"]
+        end_day = request.POST["end_day"]
+        from_last_processed = request.POST["from_last_processed"]
+        merge = request.POST["merge"]
+        etl_dataset = request.POST["etl"]
+        merge_option = "nomerge"
+        if merge == "true":
+            if str(etl_dataset.lower()) in ['chirp', 'chirps_gefs', 'emodis']:
+
+                merge_option = "monthly"
+            else:
+                merge_option = "yearly"
+        if merge_option == "monthly":
+            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month,
+                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            p1.wait()
+            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year, "--MONTH_MM",
+                             start_month])
+        elif merge_option == "yearly":
+            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month,
+                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            p1.wait()
+            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
+        elif from_last_processed == "true":
+            obj = Run_ETL.objects.last()
+            if merge_option == "monthly":
+                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
+                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                      obj.start_month,
+                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                      obj.end_day])
+                p.wait()
+                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
+                                 "--MONTH_MM",
+                                 obj.start_month])
+            elif merge_option == "yearly":
+                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
+                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                      obj.start_month,
+                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                      obj.end_day])
+                p.wait()
+                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year])
+            else:
+                subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY", obj.start_year,
+                                 "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                 obj.start_month,
+                                 "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                 obj.end_day])
+        else:
+            subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]),
+                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                             start_month,
+                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+
+    return "success"
 
 
 # Submit a data request for processing
@@ -717,3 +807,10 @@ def get_feature_ids_list(request):
         if is_int:
             feature_ids_list.append(value)
     return feature_ids_list
+
+
+def restart_climateserv(request):
+    try:
+        subprocess.call(['/bin/bash', '-i', '-c', "crestart"])
+    except Exception as e:
+        print(e)

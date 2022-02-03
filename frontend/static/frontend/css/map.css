@@ -8,6 +8,28 @@ html {
     z-index: 3000 !important;
 }
 
+.query_cart {
+    text-align: right;
+    margin-right: 10px;
+}
+
+.badge {
+    padding-left: 9px;
+    padding-right: 9px;
+    -webkit-border-radius: 9px;
+    -moz-border-radius: 9px;
+    border-radius: 9px;
+}
+
+.button-50{
+    width: calc(50% - 4px);
+}
+
+.badge-warning {
+    color: #ffffff;
+    background-color: #747F54;
+}
+
 #isMobile {
     display: none;
 }
@@ -181,6 +203,14 @@ body {
 
 .legend-btn:hover, .settings-btn:hover {
     color: #bdd12f; /*#7eaddb;*/
+}
+
+.layer-on {
+    display: block;
+}
+
+.layer-off {
+    display: none;
 }
 
 .leaflet-control-layers.leaflet-control {

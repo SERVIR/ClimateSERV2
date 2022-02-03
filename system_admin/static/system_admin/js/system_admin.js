@@ -7,6 +7,17 @@ location.hostname === "127.0.0.1" ||
 location.hostname === "192.168.1.132"
     ? "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100"
     : window.location.origin + "/servirmap_102100/?&crs=EPSG%3A102100";
+function RestartClimateSERV(which) {
+    $.ajax({
+        url: "/api/restartClimateSERV/",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data) {
+        alert("done restart");
+    });
+}
 
 function showAOI(which) {
     let aoi;

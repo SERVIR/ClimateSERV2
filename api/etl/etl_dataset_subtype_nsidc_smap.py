@@ -433,6 +433,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
 
                 except Exception as e:
                     print(e)
+                    ret__is_error = True
 
                     sysErrorData = str(sys.exc_info())
 

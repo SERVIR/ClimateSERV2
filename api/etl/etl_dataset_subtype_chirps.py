@@ -86,14 +86,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                            day=self.DD__Day__Start)
             end_date = datetime.datetime(year=self.YYYY__Year__End, month=self.MM__Month__End, day=self.DD__Day__End)
             delta = end_date - start_date
-
             for i in range(delta.days + 1):
 
                 current_date = start_date + datetime.timedelta(days=i)
                 current_year__yyyy_str = "{:0>4d}".format(current_date.year)
                 current_month__mm_str = "{:02d}".format(current_date.month)
                 current_day__dd_str = "{:02d}".format(current_date.day)
-
                 # Create the base filename
                 base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.mode,
                                                                               datetime_obj=current_date)
@@ -279,7 +277,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(
                         num_of_objects_to_process)
-                    print(event_message)
                     activity_event_type = Config_SettingService.get_value(
                         setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__DOWNLOAD_PROGRESS",
                         default_or_error_return_value="ETL Download Progress")
@@ -300,14 +297,12 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 # Download the file - Actually do the download now
                 try:
                     current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
-                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
                     if r.ok:
                         with open(local_full_filepath_tif_gz, 'wb') as outfile:
                             outfile.write(r.content)
                     elif r.status_code == 404:
                         current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
-                        print(current_url_to_download)
                         r = requests.get(current_url_to_download)
                         with open(local_full_filepath_tif, 'wb') as outfile:
                             outfile.write(r.content)
@@ -384,7 +379,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 local_extract_path = expected_granules_object['local_extract_path']
                 extracted_tif_filename = expected_granules_object['tif_filename']
                 local_extract_full_filepath = os.path.join(local_extract_path, extracted_tif_filename)
-
                 print(local_full_filepath_tif_gz)
 
                 try:
@@ -607,10 +601,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     # print("G")
 
-                    print(outputFile_FullPath)
-
                 except Exception as e:
                     print(e)
+                    ret__is_error = True
+
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -629,6 +623,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     new__granule_pipeline_state = Config_SettingService.get_value(
                         setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
+
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
                         granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
                         is_error=is_error)
@@ -638,7 +633,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         sub_jsonable_object=error_JSON)
 
         except:
-
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON[
@@ -690,8 +684,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                                                                 final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_final_nc4_file = expected_granules_object[
                         'local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
-                    print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file,

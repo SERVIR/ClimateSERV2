@@ -32,9 +32,9 @@ intervals = params.intervals
 ageInDaysToPurgeData = params.ageInDaysToPurgeData
 nmme_cfsv2_path=params.nmme_cfsv2_path
 nmme_ccsm4_path=params.nmme_ccsm4_path
-
+base_data_path=params.base_data_path
 resultsdir = params.resultsdir
-
+pythonPath = params.pythonPath
 # To get the file name wth unique id
 def getResultsFilename(id):
     filename = resultsdir + id + ".txt"

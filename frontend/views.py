@@ -1,7 +1,14 @@
+from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
 
 from .models import *
+from api.models import Track_Usage
 
+from django import template
+from django.template.defaultfilters import stringfilter
+
+
+register = template.Library()
 
 def index(request):
     return render(request, 'index.html', context={
@@ -18,6 +25,14 @@ def map_app(request):
     })
 
 
+@staff_member_required
+def display_aoi(request, usage_id):
+    usage = Track_Usage.objects.get(id=usage_id)
+    return render(request, 'display-aoi.html', context={
+        'aoi': usage.AOI,
+    })
+
+
 def about(request):
     return render(request, 'about.html', context={'page': 'menu-about'})
 
@@ -27,3 +42,10 @@ def help_center(request):
         'page': 'menu-help',
         'datasets': DataSet.objects.all()
     })
+
+
+@register.filter(is_safe=True)
+@stringfilter
+def trim(value):
+    return value.strip()
+

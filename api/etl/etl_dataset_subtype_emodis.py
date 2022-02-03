@@ -306,7 +306,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
         if is_error_creating_directory == True:
             error_JSON = {}
-            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(rootWorking_Dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
+            error_JSON['error'] = "Error: There was an error when the pipeline tried to create a new directory on the filesystem.  The path that the pipeline tried to create was: " + str(self.temp_working_dir) + ".  There should be another error logged just before this one that contains system error info.  That info should give clues to why the directory was not able to be created."
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
@@ -639,6 +639,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                 except Exception as e:
                     print(e)
+                    ret__is_error = True
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']

@@ -6,46 +6,48 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
 try:
     from climateserv2.processtools import dateIndexTools as dit
-except:
+except ImportError:
     from .processtools import dateIndexTools as dit
 
 DEBUG_LIVE = False
 logToConsole = True
+pythonPath = '''/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/python'''
 serviringestroot = '''/cserv2/tmp/data/pythonCode/serviringest/'''
 dbfilepath = '''/cserv2/tmp/servirchirps.db'''
 newdbfilepath = '''/cserv2/tmp/servirchirps_bsddb.db'''
 capabilities_db_filepath = '''/cserv2/tmp/servirchirps_bsddb_capabilities.db'''
 requestLog_db_basepath = '''/cserv2/tmp/'''
-zipFile_ScratchWorkspace_Path = '''/mnt/cs-temp/request_out/'''#'''/cserv2/tmp/zipout/Zipfile_Scratch/'''
+zipFile_ScratchWorkspace_Path = '''/mnt/cs-temp/request_out/'''  # '''/cserv2/tmp/zipout/Zipfile_Scratch/'''
 logfilepath = '''/cserv2/tmp/'''
 workpath = '''/cserv2/tmp/'''
 shapefilepath = '''/cserv2/tmp/mapfiles/'''
 ageInDaysToPurgeData = 7
-nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/''' #'''/cserv2/tmp/data/nmme/'''
+nmme_ccsm4_path = '''/mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/'''  # '''/cserv2/tmp/data/nmme/'''
 nmme_cfsv2_path = '''/mnt/climateserv/nmme-cfsv2_bcsd/global/0.5deg/daily/latest/'''
-base_data_path='/mnt/climateserv/'#'''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
+base_data_path = '/mnt/climateserv/'  # '''/mnt/climateserv/ucsb-chirps/global/0.05deg/daily/'''
 parameters = [[0, 'max', "Max"], [1, 'min', "Min"], [2, 'median', "Median"], [3, 'range', "Range"], [4, 'sum', "Sum"],
-              [5, 'avg', 'Average'], [6, 'download', 'Download']]
+              [5, 'avg', 'Average'], [6, 'download', 'Download'], [7, 'netcdf', 'NetCDF'], [8, 'csv', 'CSV']]
+
 def get_dataLocation(type):
-    path=""
-    if type=="ucsb-chirps":
+    path = ""
+    if type == "ucsb-chirps":
         path = 'process_tmp/fast_chirps/'
-    elif type=="ucsb-chirp":
+    elif type == "ucsb-chirp":
         path = 'process_tmp/fast_chirp/'
-    elif type=="ucsb-chirps-gefs":
+    elif type == "ucsb-chirps-gefs":
         path = 'process_tmp/fast_chirps_gefs/'
-    elif type=="nmme-ccsm4_bcsd" or type=="nmme-cfsv2_bcsd":
-        path =  type + '/global/0.05deg/daily/latest/'
-    elif type=="usda-smap":
-        path =  'process_tmp/fast_usda_smap/'
-    elif type=="centralasia" or type=="westafrica" or type=="eastafrica" or type=="southernafrica":
-        path= 'process_tmp/fast_emodis_'+type+'/'
-    elif type=="sport-esi/12wk":
-        path= 'process_tmp/fast_sport_esi_12wk/'
-    elif type=="sport-esi/4wk":
-        path= 'process_tmp/fast_sport_esi_4wk/'
-    elif type=="nasa-imerg-late":
-        path='process_tmp/fast_nasa_imerg_late_daily/'
+    elif type == "nmme-ccsm4_bcsd" or type == "nmme-cfsv2_bcsd":
+        path = type + '/global/0.05deg/daily/latest/'
+    elif type == "usda-smap":
+        path = 'process_tmp/fast_usda_smap/'
+    elif type == "centralasia" or type == "westafrica" or type == "eastafrica" or type == "southernafrica":
+        path = 'process_tmp/fast_emodis_' + type + '/'
+    elif type == "sport-esi/12wk":
+        path = 'process_tmp/fast_sport_esi_12wk/'
+    elif type == "sport-esi/4wk":
+        path = 'process_tmp/fast_sport_esi_4wk/'
+    elif type == "nasa-imerg-late":
+        path = 'process_tmp/fast_nasa_imerg_late_daily/'
     elif type == "nasa-imerg-early":
         path = 'process_tmp/fast_nasa_imerg_early_daily/'
     return base_data_path + path
@@ -53,27 +55,33 @@ def get_dataLocation(type):
 
 # To get the file path of a CCSM4 file
 def get_ClimateChangeParam__inputDataLocation(ensembleName):
-    return nmme_ccsm4_path+'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
+    return nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.' + ensembleName + '.nc4'
+
 
 # To get the file path of a CSFV2 file
 def get_ClimateChangeParam__inputDataLocation_cfsv2(ensembleName):
-    return nmme_cfsv2_path+'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.'+ensembleName+'.nc4'
+    return nmme_cfsv2_path + 'nmme-cfsv2_bcsd.latest.global.0.5deg.daily.' + ensembleName + '.nc4'
+
 
 # To get size
 def get_ClimateChangeParam__size():
     return [720, 360]
 
+
 # to get fill value
 def get_ClimateChangeParam__fillValue():
     return -9999.
+
 
 # To get an indexer
 def get_ClimateChangeParam__indexer():
     return dit.DailyIndex()
 
+
 # to get number of forecast days
 def get_ClimateChangeParam__number_Of_ForecastDays():
     return 180
+
 
 dataTypes = [
     {'number': 0,
@@ -86,7 +94,7 @@ dataTypes = [
      'data_category': 'CHIRPS',
      'variable': 'precipitation_amount',
      'dataset_name': 'ucsb-chirps_global_0.05deg_daily',
-    },
+     },
 
     {'number': 1,
      'name': 'NDVI MODIS-West Africa',
@@ -480,7 +488,7 @@ dataTypes = [
      'directory': '/data/data2/image/processed/eMODIS/ndvi-afghanistan/np/',
      'fillValue': -9999.,
      'indexer': dit.EveryFiveDaysIndex(),
-     'inputDataLocation':get_dataLocation("centralasia"),
+     'inputDataLocation': get_dataLocation("centralasia"),
      'data_category': 'NDVI',
      },
     {'number': 28, 'name': 'NDVI MODIS-Asia',
@@ -540,7 +548,7 @@ dataTypes = [
      'directory': '/data/data3/image/processed/esi/12WK/',
      'fillValue': -9999.,
      'indexer': dit.DynamicIndex("P8D"),  # dit.EveryEightDaysIndex(),
-     'inputDataLocation':get_dataLocation("sport-esi/12wk"),
+     'inputDataLocation': get_dataLocation("sport-esi/12wk"),
      'data_category': 'ESI',
      'variable': 'esi',
      'dataset_name': 'sport-esi_global_0.05deg_12wk',
@@ -1360,5 +1368,4 @@ intervals = [
     {'name': 'year', 'pattern': '%Y'}
 ]
 
-resultsdir = '''/mnt/cs-temp/request_out/''' #'''/cserv2/tmp/'''
-
+resultsdir = '''/mnt/cs-temp/request_out/'''  # '''/cserv2/tmp/'''

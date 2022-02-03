@@ -17,7 +17,16 @@ class Track_Usage(models.Model):
     API_call = models.CharField(max_length=250, null=True, blank=True)
     data_retrieved = models.BooleanField(default=False)
     progress = models.CharField(default='0', max_length=50)
-    ui_request = models.BooleanField(default=False)
+    ui_request = models.BooleanField(help_text="Is this request originated through the CS UI?", default=False)
+    country_ISO = models.CharField(help_text='ISO Country Code for originating IP', max_length=2, null=True)
+    metadata_request = models.BooleanField(help_text="Is this a request for metadata instead of actual data (eg., "
+                                                     "information about what data is available)?", default=False,
+                                           null=True)
 
     def __str__(self):
         return f"{self.unique_id}"
+
+    class Meta:
+        verbose_name = 'Usage Record'
+        verbose_name_plural = 'Usage Records'
+        ordering = ['-time_requested']

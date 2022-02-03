@@ -43,7 +43,7 @@ class Command(BaseCommand):
             # DEBUG
             self.stdout.write(self.style.SUCCESS(
                 'start_etl_pipeline.py: (does_etl_dataset_exist) {}'.format(str(does_etl_dataset_exist))))
-
+            print("Working to get files....")
             # Create an instance of the pipeline
             etl_pipeline = ETL_Pipeline(etl_dataset_uuid)
 

@@ -1,7 +1,6 @@
 from django.db import models
 import uuid
 
-
 class ETL_Dataset(models.Model):
     uuid = models.CharField(default=uuid.uuid4, editable=True, max_length=40, primary_key=True, auto_created=True)
     #

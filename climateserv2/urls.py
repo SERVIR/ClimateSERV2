@@ -8,7 +8,7 @@ from climateserv2.views import *
 
 urlpatterns = [
     url('', include('frontend.urls')),
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', admin.site.urls, name='admin'),
     url(r'^api/', include('api.urls')),
     url(r'^etl_monitor/', include('etl_monitor.urls')),
     url(r'^system_admin/', include('system_admin.urls')),
@@ -30,6 +30,8 @@ urlpatterns = [
     url(r'api/getRequestLogs/', get_request_logs),
     url('api/getFileForJobID/', get_file_for_job_id),
     url(r'api/submitMonthlyRainfallAnalysisRequest/', submit_monthly_rainfall_analysis_request),
+    url(r'api/restartClimateSERV/', restart_climateserv),
+    url(r'api/run_etl/',run_etl),
 
     # support old script access path
     url(r'chirps/scriptAccess/getParameterTypes/', get_parameter_types),

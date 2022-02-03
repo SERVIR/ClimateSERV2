@@ -57,7 +57,7 @@
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
                         id: "{{ enslayer.ui_id }}",
-                        dataset: "{{ enslayer.dataset_type }}",
+                        dataset: "{{ layer.dataset_type }}",
                         app_id: "{{ enslayer.api_id }}",
                         units: "{{ enslayer.units }}"
                     })
@@ -83,6 +83,7 @@
         {% endfor %}
 
     </script>
+    {#    rework query order#}
     <div id="root">
         <div>
             <div id="sidebar" class="sidebar collapsed">
@@ -113,23 +114,28 @@
 
                 <!-- Tab panes -->
                 <div id="sidebar-content" class="sidebar-content">
-
                     <div class="sidebar-pane" id="chart">
-                        <h1 class="sidebar-header">
-                            Statistical Query
-                            <span class="sidebar-close">
+                        <div id="chart-builder">
+                            <h1 class="sidebar-header">
+                                Statistical Query
+                                <span class="sidebar-close">
                               <i class="fas fa-caret-left"></i>
                             </span>
-                        </h1>
-                        <div id="step1">
+                            </h1>
                             <h2 class="step-marker">Set Area of Interest</h2>
                             <button
                                     type="button"
                                     class="bread-crumb"
-                                    onclick="toggleAOIHeight()">
+                                    data-toggle="collapse"
+                                    href="#aoiOptions"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="aoiOptions"
+                                    onclick="toggleUpDownIcon('aoiOptionToggle')"
+                            >
                                 About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
-                            <div id="aoiOptions" style="padding: 0 10px 0 20px; height:0; overflow: hidden;">
+                            <div id="aoiOptions" class="collapse" style="padding: 0 10px 0 20px;">
                                 <p>
                                     Choose how you would like to define your area of interest
                                     (AOI)
@@ -174,34 +180,41 @@
                                     Select
                                 </button>
                             </div>
-                            <div class="tab-content selectAOI"
+                            <div class="selectAOI"
                                  id="drawAOI"
                                  style="display: none"
                             >
-                                                            <p style="padding: 15px 10px;" >
-                                                                Choose drawing tool on the map or you may enter Lat/Lon values for point if preferred.
-                                                            </p>
-                                <div class="form-group panel-buffer">
-                                <label for="point_lat">Point Lat</label>
-                                <input type="text" id="point_lat" placeholder="Point Lat" class="form-control"/>
-                            </div>
+                                <p style="padding: 15px 10px;">
+                                    Choose drawing tool on the map, or you may enter Lat/Lon values manually for point
+                                    if preferred by selecting the marker tool.
+                                </p>
+                                <div id="point_manual_entry" style="display: none">
+                                    <div class="form-group panel-buffer">
+                                        <label for="point_lat">Point Lat</label>
+                                        <input type="text" id="point_lat" placeholder="Point Lat" class="form-control"/>
+                                    </div>
 
-                                <div class="form-group panel-buffer">
-                                <label for="point_lon">Point Lon</label>
-                                <input type="text" id="point_lon" placeholder="Point Lon" class="form-control"/>
-                                    <label id="lat-lon-error" for="point_lon" style="color: rgb(218, 32, 32); display:none;">
-                                        Lat must be a number between -90 and 90, lon must be a number between -180 and 180.
-                                    </label>
-                            </div>
+                                    <div class="form-group panel-buffer">
+                                        <label for="point_lon">Point Lon</label>
+                                        <input type="text" id="point_lon" placeholder="Point Lon" class="form-control"/>
+                                        <label id="lat-lon-error" for="point_lon"
+                                               style="color: rgb(218, 32, 32); display:none;">
+                                            Lat must be a number between -90 and 90, lon must be a number between -180
+                                            and
+                                            180.
+                                        </label>
+                                    </div>
 
-                                 <div class="form-group panel-buffer" style="text-align: right;">
-                                    <button
-                                            id="btnSetPoint"
-                                            onclick="setPointAOI()"
-                                    >
-                                        Set Point
-                                    </button>
-                                 </div>
+                                    <div class="form-group panel-buffer" style="text-align: right;">
+                                        <button
+                                                id="btnSetPoint"
+                                                onclick="setPointAOI()"
+                                                class="bread-crumb"
+                                        >
+                                            Set Point
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div class="tab-content selectAOI"
@@ -244,66 +257,79 @@
                                 <p style="font-weight: 900; padding: 20px 0 10px">
                                     Select features by:
                                 </p>
-                                <div class="btn-group d-flex">
-                                    <button
-                                            id="btnAdminFeatcountry"
-                                            class="tablinks w-100"
-                                            onclick="enableAdminFeature('country')"
-                                    >
-                                        Country
-                                    </button>
-                                    <button
-                                            id="btnAdminFeatadmin_1_earth"
-                                            class="tablinks w-100"
-                                            onclick="enableAdminFeature('admin_1_earth')"
-                                    >
-                                        Admin #1
-                                    </button>
-                                    <button
-                                            id="btnAdminFeatadmin_2_af"
-                                            class="tablinks w-100"
-                                            onclick="enableAdminFeature('admin_2_af')"
-                                    >
-                                        Admin #2
-                                    </button>
-                                </div>
+                                <select name="adminLayerOptions" class="form-control" id="adminLayerOptions"
+                                        onchange="enableAdminFeature(this.value)">
+                                    <option value="country">Country</option>
+                                    <option value="admin_1_earth">Admin #1</option>
+                                    <option value="admin_2_af">Admin #2</option>
+                                </select>
                             </div>
                             <div class="form-group panel-buffer">
-                                <label for="geometry">Geometry</label>
+                                <button
+                                        type="button"
+                                        class="bread-crumb"
+                                        data-toggle="collapse"
+                                        href="#selectedGeometry"
+                                        role="button"
+                                        aria-expanded="false"
+                                        aria-controls="selectedGeometry"
+                                        onclick="toggleUpDownIcon('selectedGeometryToggle')"
+                                >
+                                    Show Current AOI <i id="selectedGeometryToggle" class="fa fa-angle-down"></i>
+                                </button>
+                                <div id="selectedGeometry" class="collapse" style="padding: 0 10px 0 20px;">
                                 <span class="form-control" id="geometry"
                                       style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">
                                     {"type":"FeatureCollection","features":[]}
                                 </span>
-                            </div>
-                            <div
-                                    class="form-group panel-buffer"
-                                    id="download_aoi_holder"
-                                    style="display: none; text-align:right;">
-                                <button
-                                        id="btn_download_aoi"
-                                        onclick="download_aoi()"
-                                        title="Download AOI as geojson"
-                                >
-                                    Download AOI
-                                </button>
+                                    <div
+                                            class="form-group panel-buffer"
+                                            id="download_aoi_holder"
+                                            style="display: none; text-align:right;">
+                                        <button
+                                                id="btn_download_aoi"
+                                                onclick="download_aoi()"
+                                                title="Download AOI as geojson"
+                                                class="bread-crumb"
+                                        >
+                                            Download AOI
+                                        </button>
 
+                                    </div>
+                                </div>
                             </div>
+
                             <form id="query-form" onsubmit="return false;">
                                 <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
-                                    <label for="requestTypeSelect">Type</label>
+                                    <label for="requestTypeSelect">Type of Request</label>
                                     <i
                                             onclick="stats_info('type')"
                                             class="fas fa-question-circle"
                                             aria-hidden="true"
                                             style="float: right;"></i>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
-                                            onchange="openDataTypePanel(this)">
-                                        <option value="datasets">Dataset</option>
+                                            onchange="openDataTypePanel(this)" onfocus="check_query_status(this)">
+                                        <option value="datasets">Time-series Analysis</option>
+                                        <option value="download">Download Raw Data</option>
                                         <option value="monthly_analysis">Monthly Rainfall Analysis</option>
                                     </select>
                                 </div>
                                 <div id="panel_dataset">
+                                    <div class="form-group panel-buffer">
+                                        <label for="dataset-type-menu">Dataset Type</label>
+                                        <i
+                                                onclick="stats_info('dataset-type')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
+                                                onchange="filter_datasets_by(this.value)">
+                                            <option value="observation">Observation</option>
+                                            <option value="model-forecast">Model Forecast</option>
+
+                                        </select>
+                                    </div>
                                     <div class="form-group panel-buffer">
                                         <label for="sourcemenu">Data Source</label>
                                         <i
@@ -315,9 +341,14 @@
                                                 onchange="handleSourceSelected(this.value)">
                                             {% for layer in data_layers %}
                                                 {% if layer.isMultiEnsemble %}
-                                                    <option value="{{ layer.ui_id }}">{{ layer.title }}</option>
+
+                                                    <option
+                                                            class="{% if "Observation" in layer.dataset_type|stringformat:'s' %}layer-on{% else %}layer-off{% endif %}"
+                                                            value="{{ layer.ui_id }}">{{ layer.title }}</option>
                                                 {% else %}
-                                                    <option value="{{ layer.api_id }}">{{ layer.title }}</option>
+                                                    <option
+                                                            class="{% if "Observation" in layer.dataset_type|stringformat:'s' %}layer-on{% else %}layer-off{% endif %}"
+                                                            value="{{ layer.api_id }}">{{ layer.title }}</option>
                                                 {% endif %}
                                             {% endfor %}
                                         </select>
@@ -367,7 +398,7 @@
                                         </div>
 
                                     </div>
-                                    <div class="form-group panel-buffer">
+                                    <div class="form-group panel-buffer" id="panel_timeseries">
                                         <label for="operationmenu">Calculation</label>
                                         <i
                                                 onclick="stats_info('calculation')"
@@ -379,13 +410,30 @@
                                                 id="operationmenu"
                                                 onchange="verify_ready()"
                                                 class="form-control">
+                                            <option value="1" id="operation_min">Minimum</option>
+                                            <option value="0" id="operation_max">Maximum</option>
                                             <option value="5" id="operation_average">Average</option>
-                                            <option value="0" id="operation_max">Max</option>
-                                            <option value="1" id="operation_min">Min</option>
-                                            <option value="6">Download Raw Data</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group panel-buffer" id="panel_download" style="display: none;">
+                                        <label for="format-menu">Download Format</label>
+                                        <i
+                                                onclick="stats_info('format')"
+                                                class="fas fa-question-circle"
+                                                aria-hidden="true"
+                                                style="float: right;"></i>
+                                        <select
+                                                name="format-menu"
+                                                id="format-menu"
+                                                onchange="verify_ready()"
+                                                class="form-control">
+                                            <option value="7" id="netcdf">NetCDF</option>
+                                            <option value="6" id="tif">TIF</option>
+                                            <option value="8" id="csv">Timeseries</option>
                                         </select>
                                     </div>
                                     <div class="form-group panel-buffer" id="non-multi-ensemble-dates">
+                                        <label for="sDate_new_cooked">Date Range</label>
                                         <input type="date" class="form-control" placeholder="YYYY-MM-DD"
                                                id="sDate_new_cooked" value="" min="1980-01-01" max="2035-12-31"
                                                onchange="verify_ready()">
@@ -397,6 +445,8 @@
                                                style="color:#da2020; display: none;">End date must be equal or greater
                                             than
                                             the start date</label>
+                                        <label id="invalid-error" for="eDate_new_cooked"
+                                               style="color:#da2020; display: none;">Invalid date</label>
                                     </div>
                                 </div>
                                 <div id="panel_monthly_rainfall" style="display: none;">
@@ -412,35 +462,121 @@
                                         </p>
                                     </div>
                                 </div>
+                                <div class="query_cart">
+                                    <p style="position: absolute; left: 10px; text-align: left;" id="graph_options">
+                                        <input type="radio" id="simple_axis" name="axis_type" value="simple" checked>
+                                        <label for="simple_axis">Simple Axis</label><br>
+                                        <input type="radio" id="multi_axis" name="axis_type" value="multi">
+                                        <label for="multi_axis">Multi-Axis</label><br>
+                                    </p>
+                                    <i class="fa" style="font-size:24px"><img
+                                            src="{% static 'frontend/img/query_icon.png' %}"
+                                            onclick="review_query()"
+                                            alt="Review Queries"
+                                            title="Review Queries"
+                                            style="cursor: pointer"
+                                    ></i><span
+                                        class="badge badge-warning"
+                                        onclick="review_query()"
+                                        alt="Review Queries"
+                                        title="Review Queries"
+                                        style="cursor: pointer"
+                                        id="lblCartCount"> 0 </span>
+                                </div>
+                                <div class="just-buttons">
+
+                                    <button
+                                            id="btnAddToQuery"
+                                            disabled
+                                            class="button-50"
+                                            onclick="add_multi_query()">
+                                        Add Query
+                                    </button>
+                                    <button
+                                            id="btnRequest"
+                                            disabled
+                                            class="button-50"
+                                            onclick="sendRequest()">
+                                        Submit <span id="query_button_number">(0) Queries</span>
+                                    </button>
+
+                                </div>
+                                <div class="just-buttons">
+                                    <button
+                                            id="btnPreviousChart"
+                                            disabled
+                                            class="button-50"
+                                            onclick="open_previous_chart()">
+                                        Previous Chart
+                                    </button>
+                                    <button id="btnViewAPI"
+                                            disabled
+                                            data-toggle="collapse"
+                                            href="#api_panel"
+                                            role="button"
+                                            class="button-50"
+                                    >
+                                        View API Call
+                                    </button>
+                                </div>
+
+                                <div class="form-group panel-buffer collapse" id="api_panel">
+                                    <label for="api_query">API Query</label>
+                                    <span name="api_query"
+                                          class="form-control"
+                                          style="word-wrap: break-word; height: fit-content;"
+                                          id="api_query"
+                                    >
+                                            </span>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="query_list_checkout" style="display:none;">
+
+                            <h1 style="text-align: center;">You currently have <span id="checkout_number">0 Queries</span> </h1>
+                            <div id="checkout_list">
+
+                            </div>
+
+                            <div class="just-buttons">
+                                <button id="btnMultiQuerySubmit" class="button-50" disabled onclick="sendRequest()">
+                                    Submit Query
+                                </button>
+                                <button id="btnBack" class="button-50" onclick="toggle_query_tabs()">
+                                    Back
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="sidebar-pane" id="chart2">
+                        <h1 class="sidebar-header">
+                            Statistical Query
+                            <span class="sidebar-close">
+                              <i class="fas fa-caret-left"></i>
+                            </span>
+                        </h1>
+                        <div id="step1">
+
+                            <form id="query-form2" onsubmit="return false;">
+                                <h2 class="step-marker">Select Data</h2>
+                                <div class="form-group panel-buffer">
+                                    <label for="requestTypeSelect">Type</label>
+                                    <i
+                                            onclick="stats_info('type')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
+                                    <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
+                                            onchange="openDataTypePanel(this)">
+                                        <option value="datasets">Dataset</option>
+                                        <option value="monthly_analysis">Monthly Rainfall Analysis</option>
+                                    </select>
+                                </div>
+
 
                             </form>
 
-                            <div class="just-buttons">
-                                <button id="btnPreviousChart" disabled onclick="open_previous_chart()">Previous Chart
-                                </button>
-                                <button id="btnRequest" disabled onclick="sendRequest()">Send Request</button>
-                            </div>
-                            <div class="just-buttons">
-                                <button id="btnViewAPI"
-                                        disabled
-                                        data-toggle="collapse"
-                                        href="#api_panel"
-                                        role="button"
-                                        class="w-100"
-                                >
-                                    View API Call
-                                </button>
-                            </div>
 
-                            <div class="form-group panel-buffer collapse" id="api_panel">
-                                <label for="api_query">API Query</label>
-                                <span name="api_query"
-                                      class="form-control"
-                                      style="word-wrap: break-word; height: fit-content;"
-                                      id="api_query"
-                                >
-                                            </span>
-                            </div>
                         </div>
                     </div>
                     <div class="sidebar-pane" id="layers">
@@ -617,7 +753,7 @@
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-    <script src="https://code.highcharts.com/modules/series-label.js"></script>
+{#    <script src="https://code.highcharts.com/modules/series-label.js"></script>#}
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
