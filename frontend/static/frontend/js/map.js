@@ -1316,6 +1316,10 @@ function verify_ready() {
      * this would not be editable on this tab, only the current is editable
      * so the number would be the multilist length + the new one if it is enabled or
      * take away 1 if needed for disabled. ****/
+     if(requestTypeSelect.val() === 'monthly_analysis'
+         && (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')){
+         $("#btnRequest").prop("disabled", false);
+     }
     if(requestTypeSelect.val() !== 'monthly_analysis') {
         if (query_list.length === 0) {
             $("#btnViewAPI").prop("disabled", true);
