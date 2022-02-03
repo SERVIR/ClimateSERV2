@@ -1,11 +1,14 @@
 import glob, os, sys
+import smtplib
 from datetime import datetime
+
+from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.functions import Now
 
 from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
 
-from ..models import Config_Setting, ETL_Dataset
+from ..models import Config_Setting, ETL_Dataset, Storage_Review, Profile
 
 from ..serializers import ETL_DatasetSerializer
 
@@ -41,7 +44,7 @@ class ETL_Pipeline():
     END_MONTH_MM                = ""
     START_DAY_DD                = ""
     END_DAY_DD                  = ""
-
+    count = 0
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
     dataset_JSONable_Object = {}
@@ -135,15 +138,48 @@ class ETL_Pipeline():
         # END OF        if not os.path.exists(dir_path):
         return ret_IsError
 
+    def sendNotification(self,activity_description):
+        user_arr = []
+        etl_user_arr = []
+        admin = []
+        SUBJECT = "ClimateSERV2.0 ETL run failed!!"
+        TEXT = "This email informs you that the ETL run with ETL_PipelineRun__UUID " + self.ETL_PipelineRun__UUID + " has failed with the following error.\n\n " + activity_description
+        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+        for profile in Profile.objects.all():
+            if profile.storage_alerts:
+                user_arr.append(profile.user)
+        for user in User.objects.all():
+            for us in user_arr:
+                if str(us) == str(user.username):
+                    etl_user_arr.append(user.email)
+        for user in User.objects.all():
+            if str(user.username) == "email_admin":
+                for p in Profile.objects.all():
+                    if str(p.user) == "email_admin":
+                        admin.append(user.email)
+                        admin.append(p.gmail_password)
+                        break
+                break
+        for storage_user in etl_user_arr:
+            mail = smtplib.SMTP('smtp.gmail.com', 587)
+            mail.ehlo()
+            mail.starttls()
+            mail.login(admin[0], admin[1])
+            mail.sendmail(admin[0], storage_user, message)
+            mail.close()
+
     # ###########################################################################################
     # # STANDARD WRAPPER FUNCTIONS - Used by this class and many of the ETL Script Sub Classes
     # ###########################################################################################
-
     # Standard Function to record Events to the database
     # Wrapper for creating a row in the ETL Log Table (Logging Events) - Defaults are set
     def log_etl_event(self, activity_event_type="default_activity", activity_description="", etl_granule_uuid="", is_alert=False, additional_json={}):
-        if "Pipeline Ended" in activity_event_type[0]:
-            status = "Complete"
+        status = "In Progress"
+        if " Completed for Dataset" in activity_description:
+            self.count=self.count+1
+            print(self.count)
+            if self.count ==2:
+                status = "Complete"
         else:
             status = "In Progress"
         etl_log_row_uuid = ETL_LogService.create_etl_log_row(
@@ -165,6 +201,7 @@ class ETL_Pipeline():
     # Wrapper for creating a row in the ETL Log Table but with Error info set and storing the Error ID Row
     def log_etl_error(self, activity_event_type="default_error", activity_description="an error occurred", etl_granule_uuid="", is_alert=True, additional_json={}):
         status = "Failed"
+        self.sendNotification(activity_description)
         etl_log_row_uuid = ETL_LogService.create_etl_log_row(
             activity_event_type=activity_event_type,
             activity_description=activity_description,
@@ -246,7 +283,6 @@ class ETL_Pipeline():
     # Execute The Pipeline based on what ever was pre-configured.
     # # This is the main control function for the ETL pipeline
     def execute_pipeline_control_function(self):
-
         try:
             list_of_valid__dataset_subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
 

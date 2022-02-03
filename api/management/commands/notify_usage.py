@@ -32,8 +32,6 @@ class Command(BaseCommand):
             free_str = str(round(free, 2)) + funit
             used_str = str(round(size, 2)) + sunit
             try:
-                print(bsize)
-                print(bthreshold)
                 if bsize > bthreshold:
                     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
                     TEXT = "This email informs you that the memory usage in the path "+l.directory+" has reached "+used_str+" and the free space available is "+free_str+"."

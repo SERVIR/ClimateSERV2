@@ -603,6 +603,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                 except Exception as e:
                     print(e)
+                    ret__is_error = True
+
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -621,6 +623,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     new__granule_pipeline_state = Config_SettingService.get_value(
                         setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")
                     is_error = True
+
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
                         granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
                         is_error=is_error)
@@ -630,7 +633,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         sub_jsonable_object=error_JSON)
 
         except:
-
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON[
@@ -682,8 +684,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                                                                 final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_final_nc4_file = expected_granules_object[
                         'local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
-                    print(expected_full_path_to_local_final_nc4_file)
 
                     # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
                     super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file,

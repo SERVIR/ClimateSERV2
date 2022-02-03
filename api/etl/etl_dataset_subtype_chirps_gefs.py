@@ -451,6 +451,8 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
 
                 except Exception as e:
                     print(e)
+                    ret__is_error = True
+
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
