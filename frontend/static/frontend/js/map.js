@@ -1316,17 +1316,18 @@ function verify_ready() {
      * this would not be editable on this tab, only the current is editable
      * so the number would be the multilist length + the new one if it is enabled or
      * take away 1 if needed for disabled. ****/
-    if (query_list.length === 0) {
-        $("#btnViewAPI").prop("disabled", true);
-    } else {
-        $("#btnViewAPI").prop("disabled", disabled);
-    }
-    if (query_list.length >= 5) {
-        disabled = true;
-    }
+    if(requestTypeSelect.val() !== 'monthly_analysis') {
+        if (query_list.length === 0) {
+            $("#btnViewAPI").prop("disabled", true);
+        } else {
+            $("#btnViewAPI").prop("disabled", disabled);
+        }
+        if (query_list.length >= 5) {
+            disabled = true;
+        }
 
-    $("#btnAddToQuery").prop("disabled", disabled);
-
+        $("#btnAddToQuery").prop("disabled", disabled);
+    }
 
     if (geometry.text().trim().indexOf('{"type"') > -1
         || geometry.text().trim().indexOf('{\"type\"') > -1) {
