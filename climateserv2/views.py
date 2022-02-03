@@ -27,14 +27,15 @@ global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 data = Run_ETL.objects.all()
 for i in range(len(data)):
-    if i>0 and data[i].from_last_processed==True:
-        data[i].start_month=data[i-1].start_month
-        data[i].end_month=data[i-1].end_month
-        data[i].start_year=data[i-1].start_year
-        data[i].end_year=data[i-1].end_year
-        data[i].start_day=data[i-1].start_day
-        data[i].end_day=data[i-1].end_day
+    if i > 0 and data[i].from_last_processed == True:
+        data[i].start_month = data[i - 1].start_month
+        data[i].end_month = data[i - 1].end_month
+        data[i].start_year = data[i - 1].start_year
+        data[i].end_year = data[i - 1].end_year
+        data[i].start_day = data[i - 1].start_day
+        data[i].end_day = data[i - 1].end_day
         data[i].save()
+
 
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
@@ -82,9 +83,9 @@ def process_callback(request, output, content_type):
                 if "unique_id" in output_json:
                     request_id = output_json["unique_id"]
                 else:
-                    request_id = uutools.getUUID()
+                    request_id = json.loads(output)[0]
             except:
-                pass
+                request_id = uutools.getUUID()
         try:
             callback = request.GET["callback"]
             http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -352,27 +353,27 @@ def run_etl(request):
         etl_dataset = request.POST["etl"]
         merge_option = "nomerge"
         if merge == "true":
-            if str(etl_dataset.lower()) in ['chirp','chirps_gefs','emodis']:
+            if str(etl_dataset.lower()) in ['chirp', 'chirps_gefs', 'emodis']:
 
                 merge_option = "monthly"
             else:
                 merge_option = "yearly"
         if merge_option == "monthly":
             p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),
-                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
-                             start_month,
-                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month,
+                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             p1.wait()
             subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--YEAR_YYY", start_year, "--MONTH_MM",
+                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year, "--MONTH_MM",
                              start_month])
         elif merge_option == "yearly":
             p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),
-                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
-                             start_month,
-                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month,
+                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             p1.wait()
             subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
                              "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
@@ -380,9 +381,11 @@ def run_etl(request):
             obj = Run_ETL.objects.last()
             if merge_option == "monthly":
                 p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                             obj.start_month,
-                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
+                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
+                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                      obj.start_month,
+                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                      obj.end_day])
                 p.wait()
                 subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
                                  "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
@@ -390,17 +393,21 @@ def run_etl(request):
                                  obj.start_month])
             elif merge_option == "yearly":
                 p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                             obj.start_month,
-                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
+                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
+                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                      obj.start_month,
+                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                      obj.end_day])
                 p.wait()
                 subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
                                  "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year])
             else:
                 subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),"--START_YEAR_YYY", obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                             obj.start_month,
-                             "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD", obj.end_day])
+                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY", obj.start_year,
+                                 "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
+                                 obj.start_month,
+                                 "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
+                                 obj.end_day])
         else:
             subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),
@@ -757,8 +764,8 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
 
 def validate_seasonal_dates(request, error):
     try:
-        seasonal_start_date = str(request.POST["seasonal_start_date"])
-        seasonal_end_date = str(request.POST["seasonal_end_date"])
+        seasonal_start_date = str(request.POST.get("seasonal_start_date", request.GET.get("seasonal_start_date")))
+        seasonal_end_date = str(request.POST.get("seasonal_end_date", request.GET.get("seasonal_end_date")))
         seasonal_start_date = seasonal_start_date[0:10]
         seasonal_end_date = seasonal_end_date[0:10]
         return seasonal_start_date, seasonal_end_date

@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
         parser.add_argument('--YEAR_YYYY', nargs='?', type=int)
-        parser.add_argument('--MONTH_MM', nargs='?', type=int)
+        parser.add_argument('--MONTH_MM', nargs='?', type=int, default=None) 
 
     # Function Handler
     def handle(self, *args, **options):
@@ -20,7 +20,11 @@ class Command(BaseCommand):
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
         YEAR_YYYY = str(options.get('YEAR_YYYY'))
-        MONTH_MM = str(options.get('MONTH_MM')).zfill(2)
+        temp_mm = options.get('MONTH_MM')
+        if temp_mm:
+            MONTH_MM = str(temp_mm).zfill(2)
+        else:
+            MONTH_MM = None
 
         try:
             etl_dataset = ETL_Dataset.objects.get(pk=etl_dataset_uuid)
@@ -45,7 +49,7 @@ class Command(BaseCommand):
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype.lower()  == 'chirps_gefs':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps_gefs')
-                pattern_filename = 'ucsb-chirps-gefs.{}{}*10dy.nc4'
+                pattern_filename = 'ucsb-chirps-gefs.{}{}.10dy.nc4'
                 aggregate_filename = 'ucsb-chirps-gefs.global.0.05deg.10dy.{}{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,16 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype.lower()  == 'emodis':
@@ -120,7 +124,7 @@ class Command(BaseCommand):
         if ncrcat_options == '':
             raise Exception()
 
-        command_str = f'ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
+        command_str = f'sudo ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
         if os.name == 'nt':
             command_str = f'ncra -Y {command_str}'
         print(command_str)
