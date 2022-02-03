@@ -8,11 +8,7 @@ from .etl_granule_model import ETL_Granule
 class ETL_Log(models.Model):
     uuid = models.CharField(default=uuid.uuid4, editable=False, max_length=40, primary_key=True)
     #
-<<<<<<< HEAD
-    activity_event_type = models.CharField('Standardized Activity Event Type', max_length=255, blank=False,
-=======
-    activity_event_type = models.TextField('Standardized Activity Event Type', blank=False,
->>>>>>> main
+    activity_event_type = models.TextField('Standardized Activity Event Type', max_length=255,blank=False,
                                            default="Unknown ETL Activity Event Type",
                                            help_text="What is the standardized type for this ETL Activity Event?")
     activity_description = models.TextField('Activity Description', default="No Description",
