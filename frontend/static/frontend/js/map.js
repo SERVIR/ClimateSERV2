@@ -2265,6 +2265,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
                 } else {
+                    previous_chart = null;
                     const compiledData = [];
                     let min = 9999;
                     let max = -9999;
@@ -2460,22 +2461,22 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         text: 'Source: climateserv.servirglobal.net'
     };
     chart_obj.xAxis = xAxis_object;
-    // chart_obj.yAxis = {
-    //     title: {
-    //         text: units
-    //     }
-    // };
-    //
-    // if (yAxis_format) {
-    //     chart_obj.yAxis.labels = yAxis_format
-    // }
+    chart_obj.yAxis = {
+        title: {
+            text: units
+        }
+    };
+
+    if (yAxis_format) {
+        chart_obj.yAxis.labels = yAxis_format
+    }
 
     chart_obj.legend = {
         layout: 'vertical',
         align: 'right',
         verticalAlign: 'middle'
     };
-    if (isClimate) {
+
         chart_obj.plotOptions = {
             series: {
                 connectNulls: false,
@@ -2514,7 +2515,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
                 }
             }
         };
-
+    if (isClimate) {
         chart_obj.plotOptions.series.marker = {
             radius: 3
         };
@@ -2548,7 +2549,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
             }
         }
     };
-    chart_obj.series = {}; // compiled_series;
+    chart_obj.series = compiled_series;
     if (point_format) {
         chart_obj.tooltip = point_format;
         chart_obj.tooltip.borderColor = "#758055";
