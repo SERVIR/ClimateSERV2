@@ -409,11 +409,32 @@ def run_etl(request):
                                  "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
                                  obj.end_day])
         else:
-            subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+            logger.debug("more anything")
+            logger.debug(params.pythonPath)
+
+            logger.debug(str(request.POST["uuid"]))
+
+            logger.debug(start_year)
+            logger.debug(end_year)
+            logger.debug(start_month)
+            logger.debug(end_month)
+            logger.debug(end_day)
+            logger.debug(start_day)
+
+            proc = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                              "--etl_dataset_uuid", str(request.POST["uuid"]),
                              "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                              start_month,
                              "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            proc.wait()
+            (stdout, stderr) = proc.communicate()
+
+            if proc.returncode != 0:
+               logger.debug("@@@@@@@@@@@@@@@@  stderr  @@@@@@@@@@@@@@@@@@@@@@")
+               logger.debug(stderr)
+               logger.debug(stdout)
+            else:
+               logger.debug("success ###########################")
 
     return "success"
 
