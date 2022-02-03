@@ -359,50 +359,50 @@ def run_etl(request):
             else:
                 merge_option = "yearly"
         if merge_option == "monthly":
-            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                                    "--etl_dataset_uuid", str(request.POST["uuid"]),
                                    "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                                    start_month,
                                    "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             p1.wait()
-            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+            subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
                              "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year, "--MONTH_MM",
                              start_month])
         elif merge_option == "yearly":
-            p1 = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                                    "--etl_dataset_uuid", str(request.POST["uuid"]),
                                    "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                                    start_month,
                                    "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             p1.wait()
-            subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+            subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
                              "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
         elif from_last_processed == "true":
             obj = Run_ETL.objects.last()
             if merge_option == "monthly":
-                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                p = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                                       "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
                                       obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
                                       obj.start_month,
                                       "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
                                       obj.end_day])
                 p.wait()
-                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
                                  "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
                                  "--MONTH_MM",
                                  obj.start_month])
             elif merge_option == "yearly":
-                p = subprocess.Popen([params.pythonPath, "manage.py", "start_etl_pipeline",
+                p = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                                       "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
                                       obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
                                       obj.start_month,
                                       "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
                                       obj.end_day])
                 p.wait()
-                subprocess.call([params.pythonPath, "manage.py", "merge_etl_dataset",
+                subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
                                  "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year])
             else:
-                subprocess.call([params.pythonPath, "manage.py", "start_etl_pipeline",
+                subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                                  "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY", obj.start_year,
                                  "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
                                  obj.start_month,
@@ -426,15 +426,6 @@ def run_etl(request):
                              "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                              start_month,
                              "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
-            proc.wait()
-            (stdout, stderr) = proc.communicate()
-
-            if proc.returncode != 0:
-               logger.debug("@@@@@@@@@@@@@@@@  stderr  @@@@@@@@@@@@@@@@@@@@@@")
-               logger.debug(stderr)
-               logger.debug(stdout)
-            else:
-               logger.debug("success ###########################")
 
     return "success"
 
