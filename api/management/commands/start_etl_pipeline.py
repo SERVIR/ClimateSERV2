@@ -1,6 +1,9 @@
 from django.core.management.base import BaseCommand
 from api.services import ETL_DatasetService
 from api.etl.etl_pipeline import ETL_Pipeline
+import logging
+
+logger = logging.getLogger("request_processor")
 
 
 class Command(BaseCommand):
@@ -8,6 +11,9 @@ class Command(BaseCommand):
 
     # Parsing params
     def add_arguments(self, parser):
+
+        logger.debug("I made it every where") 
+
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
         parser.add_argument('--no_duplicates', action='store_true', default=False)
         parser.add_argument('--from_last_processed', action='store_true', default=False)
@@ -22,10 +28,10 @@ class Command(BaseCommand):
 
     # Function Handler
     def handle(self, *args, **options):
-
+        logger.debug("I made it here") 
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
-
+        
         # DEBUG
         self.stdout.write(self.style.SUCCESS(
             'start_etl_pipeline.py: Successfully called handle(): with param: (etl_dataset_uuid) {}'.format(

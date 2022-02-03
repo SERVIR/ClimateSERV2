@@ -35,6 +35,7 @@ class Command(BaseCommand):
                 if bsize > bthreshold:
                     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
                     TEXT = "This email informs you that the memory usage in the path "+l.directory+" has reached "+used_str+" and the free space available is "+free_str+"."
+
                     message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
                     #get users registered for storgae alerts
                     user_arr=[]
@@ -62,6 +63,8 @@ class Command(BaseCommand):
                         mail.login(admin[0], admin[1])
                         storage_Review = Storage_Review.objects.get(directory=l.directory)
                         storage_Review.last_notified_time=timezone.now()
+                        storage_Review.free_space = free_str
+                        storage_Review.file_size = used_str
                         storage_Review.save()
                         mail.sendmail(admin[0], storage_user, message)
                         mail.close()

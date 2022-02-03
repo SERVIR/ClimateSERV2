@@ -1,9 +1,6 @@
-import shutil
 import uuid
-from pathlib import Path
 
 from django.db import models
-from django.db.models.signals import post_save
 
 
 class Storage_Review(models.Model):
@@ -17,22 +14,5 @@ class Storage_Review(models.Model):
     class Meta:
         verbose_name = 'Storage Review'
         verbose_name_plural = 'Storage Review'
-    def update_on_test(sender, instance, **kwargs):
-         # custome operation as you want to perform
-         stat = shutil.disk_usage(sender.directory)
-         free = stat.free
-         size = sum(p.stat().st_size for p in Path(sender.directory).rglob('*'))
-         for unit in ("B", "K", "M", "G", "T"):
-             if free < 1024:
-                 break
-             free /= 1024
-             if size < 1024:
-                 break
-             size /= 1024
-         free_str = str(round(free, 2)) + unit
-         used_str = str(round(size, 2)) + unit
-         sender.file_size = used_str
-         sender.free_space = free_str
-         post_save.connect(sender.update_on_test, sender=Storage_Review)
 
 
