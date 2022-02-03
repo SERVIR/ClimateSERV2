@@ -1743,9 +1743,11 @@ function pollForProgress(id, isClimate, query_index) {
             } else if (val === 100) {
                 retries = 0;
                 const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
-                    || $("#requestTypeSelect").val() === "download"
                     ? $("#operationmenu").val()
-                    : $("#format-menu").val());
+                    : $("#requestTypeSelect").val() === "download"
+                        ? $("#format-menu").val()
+                            : "987654"
+                );
                 if (
                     request_operation_format === "6"
                     || request_operation_format === "7"
