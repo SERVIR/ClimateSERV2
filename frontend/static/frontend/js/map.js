@@ -1743,6 +1743,7 @@ function pollForProgress(id, isClimate, query_index) {
             } else if (val === 100) {
                 retries = 0;
                 const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
+                    || $("#requestTypeSelect").val() === "download"
                     ? $("#operationmenu").val()
                     : $("#format-menu").val());
                 if (
