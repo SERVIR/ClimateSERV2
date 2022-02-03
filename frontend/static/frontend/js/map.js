@@ -2460,15 +2460,15 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         text: 'Source: climateserv.servirglobal.net'
     };
     chart_obj.xAxis = xAxis_object;
-    // chart_obj.yAxis = {
-    //     title: {
-    //         text: units
-    //     }
-    // };
-    //
-    // if (yAxis_format) {
-    //     chart_obj.yAxis.labels = yAxis_format
-    // }
+    chart_obj.yAxis = {
+        title: {
+            text: units
+        }
+    };
+
+    if (yAxis_format) {
+        chart_obj.yAxis.labels = yAxis_format
+    }
 
     chart_obj.legend = {
         layout: 'vertical',
@@ -2476,44 +2476,44 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         verticalAlign: 'middle'
     };
 
-    // chart_obj.plotOptions = {
-    //     series: {
-    //         connectNulls: false,
-    //         marker: {
-    //             radius: 3,
-    //             fillColor: "#758055",
-    //             states: {
-    //                 hover: {
-    //                     fillColor: '#758055',
-    //                 },
-    //                 halo: {
-    //                     fillColor: '#758055',
-    //                 }
-    //             },
-    //         },
-    //         lineWidth: 2,
-    //         states: {
-    //             hover: {
-    //                 lineWidth: 2
-    //             },
-    //             halo: {
-    //                 fillColor: '#758055',
-    //             }
-    //         },
-    //         threshold: null,
-    //         allowPointSelect: true,
-    //         point: {
-    //             events: {
-    //                 select: function (e) {
-    //                     const full = new Date(e.target.x);
-    //                     const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-    //                     // maybe set current time for layers to this date
-    //                     console.log(date);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // };
+    chart_obj.plotOptions = {
+        series: {
+            connectNulls: false,
+            marker: {
+                radius: 3,
+                fillColor: "#758055",
+                states: {
+                    hover: {
+                        fillColor: '#758055',
+                    },
+                    halo: {
+                        fillColor: '#758055',
+                    }
+                },
+            },
+            lineWidth: 2,
+            states: {
+                hover: {
+                    lineWidth: 2
+                },
+                halo: {
+                    fillColor: '#758055',
+                }
+            },
+            threshold: null,
+            allowPointSelect: true,
+            point: {
+                events: {
+                    select: function (e) {
+                        const full = new Date(e.target.x);
+                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                        // maybe set current time for layers to this date
+                        console.log(date);
+                    }
+                }
+            }
+        }
+    };
     if (isClimate) {
         chart_obj.plotOptions.series.marker = {
             radius: 3
