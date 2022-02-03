@@ -19,6 +19,8 @@ class Command(BaseCommand):
             stat = shutil.disk_usage(l.directory)
             free = stat.free
             size = sum(p.stat().st_size for p in Path(l.directory).rglob('*'))
+            bsize=size
+            bthreshold=l.threshold*1024*1024
             for funit in ("B", "K", "M", "G", "T"):
                 if free < 1024:
                     break
@@ -30,7 +32,9 @@ class Command(BaseCommand):
             free_str = str(round(free, 2)) + funit
             used_str = str(round(size, 2)) + sunit
             try:
-                if size > l.threshold:
+                print(bsize)
+                print(bthreshold)
+                if bsize > bthreshold:
                     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
                     TEXT = "This email informs you that the memory usage in the path "+l.directory+" has reached "+used_str+" and the free space available is "+free_str+"."
                     message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
