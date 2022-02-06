@@ -2306,117 +2306,58 @@ function getDataFromRequest(id, isClimate, query_index) {
                     });
                     from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
 
-                    // multiChart = Highcharts.chart('chart_holder', {xAxis:{
-                    //             type: "datetime"
-                    //         }});
-                    if (compiledData.length === 0) {
-                        //inti_chart_dialog
-                        $("#chart_holder").html("<h1>No data available</h1>");
-                    } else {
 
-                        let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
+                    let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
 
-                        let layer = client_layers.find(
-                            (item) => item.app_id === queried_data.datatype
-                        );
-                        const units = layer.units.includes("|units|")
-                            ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                            : layer.units
+                    let layer = client_layers.find(
+                        (item) => item.app_id === queried_data.datatype
+                    );
+                    const units = layer.units.includes("|units|")
+                        ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
+                        : layer.units
 
-                        mulitQueryData.push({
-                            data: compiledData,
-                            units: units,
-                            yAxis_format: layer.yAxis_format || null,
-                            point_format: layer.point_format || null,
-                            label: layer.title + ": " + (queried_data.operationtype === "0"
-                                ? "max"
-                                : queried_data.operationtype === "1"
-                                    ? "min"
-                                    : queried_data.operationtype === "5"
-                                        ? "avg"
-                                        : "n/a")
-                        });
+                    mulitQueryData.push({
+                        data: compiledData,
+                        units: units,
+                        yAxis_format: layer.yAxis_format || null,
+                        point_format: layer.point_format || null,
+                        label: layer.title + ": " + (queried_data.operationtype === "0"
+                            ? "max"
+                            : queried_data.operationtype === "1"
+                                ? "min"
+                                : queried_data.operationtype === "5"
+                                    ? "avg"
+                                    : "n/a")
+                    });
 
-                        if (mulitQueryData.length == query_list.length) {
+                    if (mulitQueryData.length == query_list.length) {
+                        let hasData = false;
+                        for (let i = 0; i < mulitQueryData.length; i++) {
+                            if (mulitQueryData[i].data.length > 0) {
+                                hasData = true;
+                                break;
+                            }
+                        }
+                        if (hasData) {
+
                             close_dialog();
                             inti_chart_dialog();
                             multi_chart_builder();
 
 
-                            query_list.length = 0;
-                            update_number_queries();
-                            $("#checkout_list").empty();
-                            $("#checkout_number").text("0 Queries");
-                            $("#chart-builder").show();
-                            $("#query_list_checkout").hide();
+                        } else {
+
+                            inti_chart_dialog();
+                            $("#chart_holder").html("<h1>No data available</h1>");
+
                         }
-
-                        /*
-                        Finalize chart will now turn into create chart that will happen on
-                        submit request, I will have to bare bone the chart, then add new axis
-                        if rainfall analysis this is not relative, only 1 of that type is allowed
-                        at a time.
-                         */
-
-                        // finalize_chart([{
-                        //         color: "#758055",
-                        //         type: "line",
-                        //         name: current_calculation.text,
-                        //         data: compiledData.sort((a, b) => a[0] - b[0])
-                        //     }], units, {
-                        //         type: "datetime"
-                        //     }, $("#sourcemenu option:selected").text(),
-                        //     false,
-                        //     yAxis_format,
-                        //     point_format);
-                        // multiChart.yaxis = {
-                        //         type: "datetime"
-                        //     };
-                        // multiChart.addAxis({
-                        //     title: {
-                        //         text: units
-                        //     }
-                        // }, false, false);
-                        // multiChart.addSeries({
-                        //     color: "#758055",
-                        //     connectNulls: false,
-                        //     marker: {
-                        //         radius: 3,
-                        //         fillColor: "#758055",
-                        //         states: {
-                        //             hover: {
-                        //                 fillColor: '#758055',
-                        //             },
-                        //             halo: {
-                        //                 fillColor: '#758055',
-                        //             }
-                        //         },
-                        //     },
-                        //     lineWidth: 2,
-                        //     states: {
-                        //         hover: {
-                        //             lineWidth: 2
-                        //         },
-                        //         halo: {
-                        //             fillColor: '#758055',
-                        //         }
-                        //     },
-                        //     threshold: null,
-                        //     allowPointSelect: true,
-                        //     point: {
-                        //         events: {
-                        //             select: function (e) {
-                        //                 const full = new Date(e.target.x);
-                        //                 const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                        //                 // maybe set current time for layers to this date
-                        //                 console.log(date);
-                        //             }
-                        //         }
-                        //     },
-                        //     data: compiledData.sort((a, b) => a[0] - b[0])
-                        // })
+                        query_list.length = 0;
+                        update_number_queries();
+                        $("#checkout_list").empty();
+                        $("#checkout_number").text("0 Queries");
+                        $("#chart-builder").show();
+                        $("#query_list_checkout").hide();
                     }
-
                 }
             }
         }
