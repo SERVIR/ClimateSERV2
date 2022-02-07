@@ -45,8 +45,6 @@ function createLayer(item) {
             colorscalerange: item.colorrange,
             abovemaxcolor: "extend",
             belowmincolor: "extend",
-            // abovemaxcolor: "transparent",
-            // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
             tileSize: 1024,
@@ -85,7 +83,6 @@ function getLayer(which) {
  * Retrieves the current TDS styles available and stores them in the
  * styleOptions array, which will be used to load the styles dropdown box
  */
-
 function buildStyles() {
     $.ajax({
         url: client_layers[0].url + "&request=GetCapabilities",
@@ -305,7 +302,16 @@ function buildStyles() {
     });
 }
 
-//In here i can add the options for transparent above and below
+
+/***
+ *
+ * @param which
+ * @param active_layer
+ * @param bypass_auto_on
+ */
+// In here I can add the options for transparent above and below
+// I just need to add controls to the layer settings panel
+// Already added placeholder code to get values
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     const style_table = $("#style_table");
@@ -324,8 +330,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-max").value,
             abovemaxcolor: "extend",
             belowmincolor: "extend",
-            // abovemaxcolor: document.getElementById("above_below").value,
-            // belowmincolor: document.getElementById("above_below").value,
+            // abovemaxcolor: document.getElementById("above_max").value,
+            // belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
             styles: style_table.val(),
         }),
@@ -1352,6 +1358,11 @@ function verify_ready() {
                 $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
             }
+        } else if (requestTypeSelect.val() === "download") {
+            $("#api_panel").empty();
+            $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+                + api_host + "/api/submitDataRequest/?fixthis</span>");
+            $("#btnRequest").prop("disabled", disabled);
         } else {
             $("#api_panel").empty();
             $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
@@ -1610,6 +1621,11 @@ function sendRequest() {
         // currently just sending the first query over and over
 
         // const formData = query_list[0];
+        if(request_type_value === "download"){
+            let formData = new FormData();
+            buildForm(formData);
+            query_list.push(formData);
+        }
         for (let i = 0; i < query_list.length; i++) {
             let formData = query_list[i];
 
