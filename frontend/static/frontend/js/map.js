@@ -2026,6 +2026,7 @@ function getIndex(which) {
  * @param id
  */
 function getDownLoadLink(id) {
+    query_list.length = 0;
     close_dialog();
     let download = '<div style="width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
