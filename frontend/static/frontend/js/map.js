@@ -302,7 +302,6 @@ function buildStyles() {
     });
 }
 
-
 /***
  *
  * @param which
@@ -353,6 +352,13 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
     overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
 }
 
+/**
+ *
+ * @param which
+ * @param active_layer
+ * @param is_multi
+ * @param multi_ids
+ */
 function apply_settings(which, active_layer, is_multi, multi_ids) {
     $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
 
@@ -373,8 +379,8 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
     applyStylebtn.onclick = function () {
         if (is_multi) {
             // loop
-            multi_ids.forEach(e => {
-                apply_style_click(e + "TimeLayer", getLayer(multi_ids[0]), true);
+            multi_ids.forEach((e, i) => {
+                apply_style_click(e + "TimeLayer", getLayer(multi_ids[i]), true);
             })
         } else {
             apply_style_click(which, active_layer);
@@ -391,8 +397,6 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
-close_dialog();
-
 function openSettings(which) {
     let active_layer = getLayer(which);
     let multi = false;
@@ -2998,7 +3002,7 @@ $(function () {
     }
 
     load_queried_layers();
-    $("#dialog").dialog('close');
+    close_dialog();
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
