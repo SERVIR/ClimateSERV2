@@ -30,10 +30,19 @@ let too_fast = 0;
 let polling_timeout = [];
 let multi_progress_value = [];
 const query_list = [];
+const multiQueryData = [];
+let simpleAxis = true;
+let debug_data = [];
+let multiChart;
+const csrftoken = getCookie('csrftoken');
 
 /**
+ * createLayer
  * Evokes getLayerHtml, appends the result to the layer-list, then
- * creates the map layer and stores it in the overlayMaps array
+ * creates the map layer and stores it in the overlayMaps object
+ * with the key of the layers' id + TimeLayer.  This also checks to
+ * see if the layer has been sent in the query string to be activated
+ * if so it adds to queried_layers, which will be loaded later in the init.
  * @param {object} item  - layer json object
  */
 function createLayer(item) {
@@ -59,7 +68,7 @@ function createLayer(item) {
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
-
+    // Add to list to be activated if query string requested it
     if (item.id.includes(passedLayer)) {
         queried_layers.push(item.id)
     } else {
@@ -70,6 +79,7 @@ function createLayer(item) {
 }
 
 /**
+ * getLayer
  * Helper function to get a layer out of globalLayerArray
  * @param {string} which - name of layer requesting
  * @returns layer json object
@@ -305,7 +315,8 @@ function buildStyles() {
 }
 
 /***
- *
+ * apply_style_click
+ * Applies the selected style properties to the passed active_layer
  * @param which
  * @param active_layer
  * @param bypass_auto_on
@@ -323,9 +334,9 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             format: "image/png",
             transparent: true,
             colorscalerange:
-                document.getElementById("range-min").value +
-                "," +
-                document.getElementById("range-max").value,
+                document.getElementById("range-min").value
+                + ","
+                + document.getElementById("range-max").value,
             abovemaxcolor: document.getElementById("above_max").value,
             belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
@@ -342,15 +353,18 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
     active_layer.styles = style_table.val();
-    active_layer.colorrange = document.getElementById("range-min").value +
-        "," +
-        document.getElementById("range-max").value
+    active_layer.colorrange = document.getElementById("range-min").value
+        + ","
+        + document.getElementById("range-max").value
     overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
     overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
 }
 
 /**
- *
+ * apply_settings
+ * Handles the setting changes and calls apply_style_click to complete the
+ * application of the settings.  If the settings are for a multi layer
+ * apply_style_click will be called for each layer
  * @param which
  * @param active_layer
  * @param is_multi
@@ -377,7 +391,6 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
 
     applyStylebtn.onclick = function () {
         if (is_multi) {
-            // loop
             multi_ids.forEach((e, i) => {
                 apply_style_click(e + "TimeLayer", getLayer(multi_ids[i]), true);
             })
@@ -393,6 +406,7 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
 }
 
 /**
+ * openSettings
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
@@ -450,6 +464,7 @@ function openSettings(which) {
 }
 
 /**
+ * baseSettingsHtml
  * Clones the base html settings and returns the html
  * @returns html
  */
@@ -458,6 +473,7 @@ function baseSettingsHtml() {
 }
 
 /**
+ * openLegend
  * Opens the legend for the selected layer
  * @param {string} which - Name of layer to open legend for
  */
@@ -492,6 +508,7 @@ function openLegend(which) {
 }
 
 /**
+ * mapSetup
  * Basic map setup and creates the basemap thumbnails in the basemaps tab
  */
 function mapSetup() {
@@ -574,6 +591,7 @@ function mapSetup() {
 }
 
 /**
+ * handleBaseMapSwitch
  * Switches the basemap to the user selected map.
  * @param {string} which - The Key of the basemap
  */
@@ -584,6 +602,7 @@ function handleBaseMapSwitch(which) {
 }
 
 /**
+ * toggleLayer
  * Closes any open dialog and either adds or removes the selected layer.
  * @param {string} which - The id of the layer to toggle
  */
@@ -626,14 +645,20 @@ function toggleLayer(which) {
 }
 
 /**
- *
- *
+ * onlyUnique
+ * Used for a filter to ensure only unique values are returned
+ * this is specifically used for the available_times of multiple time series layers
+ * @param value
+ * @param index
+ * @param self
+ * @returns {boolean}
  */
 function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 
 /**
+ * selectAOI
  * Opens the user selected method of selecting their AOI
  * @param {string} which - name of selection method to activate
  */
@@ -663,15 +688,12 @@ function selectAOI(which) {
             }
             enableAdminFeature(firstOption.val());
         }
-
-        // need to make sure all formData is updated with the correct AOI if this is changed.
-        // maybe re-think when the AOI is added to the formData, possibly just add it when
-        // sending the requests will be better so there is no sync issues
     }
 }
 
 /**
- * Removes all existing AOI selections and map click event
+ * clearAOISelections
+ * Removes any and all existing AOI selections and map click event
  */
 function clearAOISelections() {
     if (drawToolbar) {
@@ -698,6 +720,12 @@ function clearAOISelections() {
     verify_ready();
 }
 
+/**
+ * setPointAOI
+ * This is used to manually set the point AOI when the user has supplied the
+ * values in the input boxes.  It adds the marker to the map and updates
+ * the current AOI display
+ */
 function setPointAOI() {
     let valid_values = true;
     const lon_control = $("#point_lon");
@@ -714,9 +742,6 @@ function setPointAOI() {
         drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        // Removed clear to allow in place edit rather than new entry edit
-        // lon_control.val("")
-        // lat_control.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
         try {
             const draw_button = $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a");
@@ -731,6 +756,12 @@ function setPointAOI() {
 
 }
 
+/**
+ * triggerUpload
+ * This opens the users file upload browser for them to select the
+ * AOI file they want to upload
+ * @param e
+ */
 function triggerUpload(e) {
     document.getElementById("upload_files").value = "";
     e.preventDefault();
@@ -738,6 +769,7 @@ function triggerUpload(e) {
 }
 
 /**
+ * enableUpload
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
@@ -748,23 +780,30 @@ function enableUpload() {
         uploadLayer = null;
         targetEl.removeEventListener("dragenter", prevent);
         targetEl.removeEventListener("dragover", prevent);
-
         targetEl.removeEventListener("drop", handleFiles);
     }
     targetEl.addEventListener("dragenter", prevent);
     targetEl.addEventListener("dragover", prevent);
-
     targetEl.addEventListener("drop", handleFiles);
-
     uploadLayer = L.geoJson().addTo(map);
-
-
 }
 
+/**
+ * prevent
+ * This is a helper function to make adding and removing
+ * the event listener easier
+ * @param e
+ */
 function prevent(e) {
     e.preventDefault();
 }
 
+/**
+ * verifyFeatures
+ * Verifies that the uploaded features meet the requirements
+ * @param data
+ * @returns {boolean}
+ */
 function verifyFeatures(data) {
     const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
     let verifiedRequirements = false;
@@ -776,6 +815,11 @@ function verifyFeatures(data) {
     return verifiedRequirements;
 }
 
+/**
+ * addDataToMap
+ * Adds the data passed in to the map if it is valid data
+ * @param data
+ */
 function addDataToMap(data) {
     try {
         // this handles all upload situations
@@ -802,6 +846,12 @@ function addDataToMap(data) {
     }
 }
 
+/**
+ * handleFiles
+ * This is the file upload handler.  It handles json, geojson, and zip files
+ * It will process based on the type and pass the data on to addDataToMap
+ * @param e
+ */
 function handleFiles(e) {
     e.preventDefault();
     const reader = new FileReader();
@@ -819,7 +869,6 @@ function handleFiles(e) {
         } else if (file.name.indexOf(".geojson") > -1) {
             reader.readAsText(file);
         } else if (file.type === "application/x-zip-compressed" || file.type === "application/zip") {
-            // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
             if (uploadLayer) {
                 uploadLayer.clearLayers();
             }
@@ -830,31 +879,7 @@ function handleFiles(e) {
                     EPSG: 4326,
                 },
                 function (data) {
-                    // let URL =
-                    //         window.URL || window.webkitURL || window.mozURL || window.msURL,
-                    //     url = URL.createObjectURL(
-                    //         new Blob([JSON.stringify(data)], {type: "application/json"})
-                    //     );
-                    // if (data.features.length > 10) {
-                    //     data.features = data.features.splice(0, 10);
-                    // }
-                    // uploadLayer.addData(data);
                     addDataToMap(data);
-                    // let verifiedRequirements = verifyFeatures(data);
-                    // if(verifiedRequirements){
-                    //     uploadLayer.clearLayers();
-                    //     uploadLayer.addData(data);
-                    //
-                    //     map.fitBounds([
-                    //         [data.bbox[1], data.bbox[0]],
-                    //         [data.bbox[3], data.bbox[2]],
-                    //     ]);
-                    //     $("#upload_error").hide();
-                    //     collect_review_data();
-                    //     verify_ready();
-                    // } else{
-                    //     upload_file_error();
-                    // }
 
                     $(".dimmer").removeClass("active");
                     $("#preview").addClass("disabled");
@@ -874,7 +899,11 @@ function handleFiles(e) {
 }
 
 /**
- * Enables the drawing of an AOI on the map
+ * enableDrawing
+ * Enables the drawing of an AOI on the map by adding the
+ * draw toolbar which a user may select the draw type they
+ * would like to use.  It also adds the draw handlers to
+ * the map, which enforce the limit of 20 features.
  */
 function enableDrawing() {
     clearAOISelections();
@@ -916,7 +945,6 @@ function enableDrawing() {
                 alert("You may not add this polygon because you have reached the limit of 20.");
             }
         }
-
         collect_review_data();
         verify_ready();
     });
@@ -949,12 +977,12 @@ function enableDrawing() {
             } catch (e) {
                 if (e !== BreakException) throw e;
             }
-            // check to make sure drawnItems.length <= 20
         }
     });
 }
 
 /**
+ * enableAdminFeature
  * Adds the selected admin features to the map for the user to select the AOI.
  * @param {string} which - name of admin layer to activate
  */
@@ -1038,7 +1066,9 @@ function enableAdminFeature(which) {
 }
 
 /**
- *
+ * getFeatureInfoUrl
+ * Builds and returns the url needed to make the feature info call
+ * for the selected admin layer
  * @param {object} map - the map object
  * @param {object} layer - L.tileLayer.wms
  * @param {object} latlng - location clicked
@@ -1078,6 +1108,7 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
 }
 
 /**
+ * sortableLayerSetup
  * Sets up the sortable layers in the layer manager
  */
 function sortableLayerSetup() {
@@ -1093,15 +1124,11 @@ function sortableLayerSetup() {
             adjustLayerIndex();
         },
         filter: ".ignore-elements",
-        // Called when creating a clone of element
-        // onClone: function (/**Event*/evt) {
-        //     let origEl = evt.item;
-        //     let cloneEl = evt.clone;
-        // },
     });
 }
 
 /**
+ * upload_file_error
  * Displays the error when the upload file is incorrect
  */
 function upload_file_error() {
@@ -1113,6 +1140,7 @@ function upload_file_error() {
 }
 
 /**
+ * adjustLayerIndex
  * adjusts the layer indexes to match the order in the layer manager
  */
 function adjustLayerIndex() {
@@ -1140,6 +1168,7 @@ function adjustLayerIndex() {
 }
 
 /**
+ * initMap
  * Page load functions, initializes all parts of application
  */
 function initMap() {
@@ -1159,6 +1188,7 @@ function initMap() {
 }
 
 /**
+ * open_range_picker
  * initiatives and opens the range picker
  */
 function open_range_picker() {
@@ -1225,11 +1255,8 @@ function open_range_picker() {
     $('#range_picker_form').validate();
 }
 
-// function close_dialog_event() {
-//     $('#dialog').dialog('close');
-// }
-
 /**
+ * setRange
  * Sets the animation range
  */
 function setRange() {
@@ -1244,6 +1271,7 @@ function setRange() {
 }
 
 /**
+ * clearRange
  * Clears the range set by the user
  */
 function clearRange() {
@@ -1252,6 +1280,7 @@ function clearRange() {
 }
 
 /**
+ * download_aoi
  * downloads the user specified AOI
  */
 function download_aoi() {
@@ -1264,6 +1293,7 @@ function download_aoi() {
 }
 
 /**
+ * isComplete
  * Helper function for completeness of the request dates
  * @returns {boolean}
  */
@@ -1304,6 +1334,7 @@ function isComplete() {
 }
 
 /**
+ * verify_ready
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
  */
@@ -1368,6 +1399,7 @@ function verify_ready() {
 }
 
 /**
+ * get_API_url
  * Builds and returns the url needed to make an API call
  * @returns {string}
  */
@@ -1391,6 +1423,7 @@ function get_API_url() {
 }
 
 /**
+ * verify_range
  * Verifies range is within the data start and end range
  * This function is called from a dynamically created element
  * DO NOT REMOVE
@@ -1429,6 +1462,7 @@ function verify_range() {
 }
 
 /**
+ * collect_review_data
  * Collects all the request data
  */
 function collect_review_data() {
@@ -1469,12 +1503,8 @@ function collect_review_data() {
     }
 }
 
-// function getEnsDataType() {
-//     // will need to write this for the selected ensembles
-//     return
-// }
-
 /**
+ * handle_initial_request_data
  * Handles the initial return from the submitRequest by setting up progress bar and
  * starting the polling process
  * @param data
@@ -1511,7 +1541,9 @@ function handle_initial_request_data(data, isClimate, query_index) {
 }
 
 /**
- * Builds the form for the API request
+ * buildForm
+ * Builds the form that is sent with the API request.  The form is passed
+ * in as a reference variable, so it does not need to be returned.
  * @param formData
  */
 function buildForm(formData) {
@@ -1538,22 +1570,13 @@ function buildForm(formData) {
     formData.append("operationtype", current_calculation.value);
     formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
     formData.append("isZip_CurrentDataType", false);
-    // if (highlightedIDs.length > 0) {
-    //     formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-    //     formData.append("featureids", highlightedIDs.join(","));
-    // } else if (drawnItems.getLayers().length > 0) {
-    //     formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-    // } else if (uploadLayer) {
-    //     formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-    // }
-    /*
-    This will get data out of the form when we need to review/edit
-    for(var pair of formData.entries()) {
-       console.log(pair[0]+ ', '+ pair[1]);
-    }
-     */
 }
 
+/**
+ * update_number_queries
+ * Helper function to handle the UI display of the number of
+ * queries currently in the queue
+ */
 function update_number_queries() {
     const query_button_number_control = $("#query_button_number");
     query_button_number_control.text("(" + query_list.length + ")" + (query_list.length === 1 ? " Query" : " Queries"));
@@ -1569,6 +1592,10 @@ function update_number_queries() {
     }
 }
 
+/**
+ * add_multi_query
+ * Adds the currently configured query to the list of queries
+ */
 function add_multi_query() {
     const formData = new FormData();
     buildForm(formData);
@@ -1597,6 +1624,7 @@ function add_multi_query() {
 }
 
 /**
+ * sendRequest
  * Initiates the processing request to ClimateSERV
  */
 function sendRequest() {
@@ -1706,6 +1734,7 @@ function sendRequest() {
 }
 
 /**
+ * updateProgress
  * Updates progress bar with value sent in
  * @param val
  * @param index
@@ -1733,6 +1762,7 @@ function updateProgress(val, index) {
 }
 
 /**
+ * pollForProgress
  * Get the progress of a submitted job and sends teh returned value to updateProgress
  * @param id
  * @param isClimate
@@ -1841,6 +1871,13 @@ function filter_datasets_by() {
     handleSourceSelected(firstLayerOn.val());
 }
 
+/**
+ * configure_nmme
+ * Sets the variables needed to query the NMME dataset based on
+ * the return value from the getClimateScenarioInfo call
+ * which is passed in as the parameter
+ * @param sdata
+ */
 function configure_nmme(sdata) {
     if (sdata.errMsg) {
         console.info(sdata.errMsg);
@@ -1888,6 +1925,7 @@ function configure_nmme(sdata) {
 }
 
 /**
+ * handleSourceSelected
  * Sets the UI to the correct state when a different source is selected
  * @param which
  */
@@ -1905,7 +1943,6 @@ function handleSourceSelected(which) {
         $("#ensemble_builder").show();
         $("#non-multi-ensemble-dates").hide();
         //hide date range controls
-
         $('#model_run_menu').find('option').remove();
         $('#ensemblemenu').find('option').remove();
         $("#forecastfrommenu").find('option').remove();
@@ -1949,6 +1986,7 @@ function handleSourceSelected(which) {
 }
 
 /**
+ * syncDates
  * synchronizes the dates between start date and forecast date
  */
 function syncDates() {
@@ -1957,6 +1995,7 @@ function syncDates() {
 }
 
 /**
+ * inti_chart_dialog
  * Creates the chart dialog
  */
 function inti_chart_dialog() {
@@ -1996,6 +2035,7 @@ function inti_chart_dialog() {
 }
 
 /**
+ * open_previous_chart
  * Opens the last chart that was closed.
  */
 function open_previous_chart() {
@@ -2011,6 +2051,7 @@ function open_previous_chart() {
 }
 
 /**
+ * getIndex
  * Helper function for monthly rainfall analysis graphing
  * @param which
  * @returns {number}
@@ -2029,6 +2070,7 @@ function getIndex(which) {
 }
 
 /**
+ * getDownLoadLink
  * Creates the download link for a request ID and displays it in the dialog
  * @param id
  */
@@ -2060,10 +2102,12 @@ function getDownLoadLink(id) {
     });
 }
 
-const multiQueryData = [];
-let simpleAxis = true;
-let debug_data = [];
-
+/**
+ * multi_chart_builder
+ * This will build the chart with the data that has been stored
+ * in the multiQueryData list.  This should only be called after
+ * data has been added to the list
+ */
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     multiChart = Highcharts.chart('chart_holder', {
@@ -2127,7 +2171,6 @@ function multi_chart_builder() {
             align: 'right',
             verticalAlign: 'middle'
         },
-
         responsive: {
             rules: [{
                 condition: {
@@ -2151,7 +2194,6 @@ function multi_chart_builder() {
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
     });
-
 
     const colors = [
         "#bafc02",
@@ -2186,12 +2228,11 @@ function multi_chart_builder() {
                 }
             });
         }
-
-
     }
 }
 
 /**
+ * getDataFromRequest
  * Function to retrieve the processed data from the server with the id
  * that was created by the submitDataRequest
  * @param id
@@ -2291,7 +2332,6 @@ function getDataFromRequest(id, isClimate, query_index) {
 
                     });
                     inti_chart_dialog();
-
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
                 } else {
@@ -2331,7 +2371,6 @@ function getDataFromRequest(id, isClimate, query_index) {
                     });
                     from_compiled = compiledData; // if this is empty, I need to let the user know there was no data
 
-
                     let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
 
                     let layer = client_layers.find(
@@ -2364,17 +2403,12 @@ function getDataFromRequest(id, isClimate, query_index) {
                             }
                         }
                         if (hasData) {
-
                             close_dialog();
                             inti_chart_dialog();
                             multi_chart_builder();
-
-
                         } else {
-
                             inti_chart_dialog();
                             $("#chart_holder").html("<h1>No data available</h1>");
-
                         }
                         query_list.length = 0;
                         update_number_queries();
@@ -2390,6 +2424,7 @@ function getDataFromRequest(id, isClimate, query_index) {
 }
 
 /**
+ * value_or_null
  * Fixes no data value issue by setting them to null
  * Updated from -9999 to > -9000 as I found some values
  * were returned not exactly as -9999 for whatever reason
@@ -2405,7 +2440,9 @@ function value_or_null(value) {
 }
 
 /**
- * Creates a graph with the supplied variables
+ * finalize_chart
+ * Creates a graph with the supplied variables.  Used for
+ * monthly rainfall analysis
  * @param compiled_series
  * @param units
  * @param xAxis_object
@@ -2557,9 +2594,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     });
 }
 
-let multiChart;
-
 /**
+ * getDataLine
  * Helper function for graphing the monthly rainfall analysis
  * @param mmm_Y
  * @param type
@@ -2574,6 +2610,13 @@ function getDataLine(mmm_Y, type, data) {
     return data_line;
 }
 
+/**
+ * check_query_status
+ * Prompts user about changing the query type if they have
+ * already added one or more to the list.  The user may select to
+ * abandon the list or keep the list.
+ * @param control
+ */
 function check_query_status(control) {
     if (query_list.length > 0) {
         let text = "All multi-queries must be of type Time-series Analysis.\nClick ok to clear all added queries and " +
@@ -2590,6 +2633,7 @@ function check_query_status(control) {
 }
 
 /**
+ * openDataTypePanel
  * Opens the proper panel for the datatype selected
  * @param select_control
  */
@@ -2627,6 +2671,7 @@ function openDataTypePanel(select_control) {
 }
 
 /**
+ * getClimateScenarioInfo
  * Calls the api to get the current Climate scenario properties
  */
 function getClimateScenarioInfo() {
@@ -2661,6 +2706,7 @@ function getClimateScenarioInfo() {
 }
 
 /**
+ * toggleUpDownIcon
  * Toggles the About AOI section
  */
 function toggleUpDownIcon(which) {
@@ -2668,6 +2714,7 @@ function toggleUpDownIcon(which) {
 }
 
 /**
+ * close_dialog
  * Closes the dialog if it is open
  */
 function close_dialog() {
@@ -2678,6 +2725,7 @@ function close_dialog() {
 }
 
 /**
+ * stats_info
  * Framework for the statistical query info box
  * @param which type of information requested
  */
@@ -2716,6 +2764,7 @@ function stats_info(which) {
 }
 
 /**
+ * get_stat_body
  * Gets the info body for specified type (which)
  * @param which the type of information requested
  * @returns {string}
@@ -2803,6 +2852,7 @@ const last_step_template = "<div class='popover tour'>" +
 let tour;
 
 /**
+ * init_tour
  * Initializes the tour steps and actions
  */
 function init_tour() {
@@ -2910,6 +2960,7 @@ function init_tour() {
 }
 
 /**
+ * open_tour
  * Opens tour and removes the localStorage key
  */
 function open_tour() {
@@ -3014,6 +3065,7 @@ $(function () {
 });
 
 /**
+ * load_queried_layers
  * Support for layers activated via query string
  */
 function load_queried_layers() {
@@ -3035,6 +3087,7 @@ function load_queried_layers() {
 }
 
 /**
+ * confirm_animation
  * Support for layers activated via query string
  */
 function confirm_animation() {
@@ -3052,6 +3105,7 @@ function confirm_animation() {
 }
 
 /**
+ * layer_filter
  * Helper function to filter layers by user input
  * in the text field layer_filter
  */
@@ -3072,6 +3126,10 @@ function layer_filter() {
     }
 }
 
+/**
+ * review_query
+ * Adds all selected queries to the UI for review by the user
+ */
 function review_query() {
     const checkout_list = $("#checkout_list");
     checkout_list.empty();
@@ -3119,16 +3177,6 @@ function review_query() {
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
-            //requestTypeSelect
-            //Type of Request
-            //operationmenu
-
-
-            // for (let pair of formData.entries()) {
-            //
-            //     console.log(pair[0] + ', ' + pair[1]);
-            // }
-
             checkout_list.append("<hr>");
         }
     }
@@ -3137,6 +3185,14 @@ function review_query() {
     toggle_query_tabs();
 }
 
+/**
+ * get_form_group
+ * Helper function to build form groups
+ * @param label
+ * @param element_id
+ * @param text
+ * @returns {string}
+ */
 function get_form_group(label, element_id, text) {
     let form_group = '<div class="form-group panel-buffer">';
     form_group += '<label for="' + element_id + '">' + label + '</label>';
@@ -3144,11 +3200,20 @@ function get_form_group(label, element_id, text) {
     return form_group;
 }
 
+/**
+ * toggle_query_tabs
+ * Toggles the tabs
+ */
 function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
 }
 
+/**
+ * Checks to see if the cookie is set
+ * @param name
+ * @returns {null}
+ */
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -3165,19 +3230,15 @@ function getCookie(name) {
     return cookieValue;
 }
 
-const csrftoken = getCookie('csrftoken');
-
 /**
- * touch support
+ * touch support, this adds missing events to help enable
+ * a mobile friendly UX
  */
 (function ($) {
-
     $.support.touch = typeof Touch === 'object';
-
     if (!$.support.touch) {
         return;
     }
-
     const proto = $.ui.mouse.prototype,
         _mouseInit = proto._mouseInit;
 
@@ -3217,5 +3278,4 @@ const csrftoken = getCookie('csrftoken');
             event.pageY = target.clientY;
         }
     });
-
 })(jQuery);
