@@ -29,6 +29,7 @@ let from_compiled;
 let too_fast = 0;
 let polling_timeout = [];
 let multi_progress_value = [];
+const query_list = [];
 
 /**
  * Evokes getLayerHtml, appends the result to the layer-list, then
@@ -80,8 +81,9 @@ function getLayer(which) {
 }
 
 /**
+ * buildStyles
  * Retrieves the current TDS styles available and stores them in the
- * styleOptions array, which will be used to load the styles dropdown box
+ * styleOptions array, which will be used to load the styles' dropdown box
  */
 function buildStyles() {
     $.ajax({
@@ -308,9 +310,6 @@ function buildStyles() {
  * @param active_layer
  * @param bypass_auto_on
  */
-// In here I can add the options for transparent above and below
-// I just need to add controls to the layer settings panel
-// Already added placeholder code to get values
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     const style_table = $("#style_table");
@@ -327,10 +326,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
                 document.getElementById("range-min").value +
                 "," +
                 document.getElementById("range-max").value,
-            abovemaxcolor: "extend",
-            belowmincolor: "extend",
-            // abovemaxcolor: document.getElementById("above_max").value,
-            // belowmincolor: document.getElementById("below_min").value,
+            abovemaxcolor: document.getElementById("above_max").value,
+            belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
             styles: style_table.val(),
         }),
@@ -361,6 +358,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
  */
 function apply_settings(which, active_layer, is_multi, multi_ids) {
     $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+    $("#above_max").val(overlayMaps[which]._baseLayer.wmsParams.abovemaxcolor);
+    $("#below_min").val(overlayMaps[which]._baseLayer.wmsParams.belowmincolor);
 
     const slider = document.getElementById("opacityctrl");
     slider.value = overlayMaps[which].options.opacity;
@@ -642,11 +641,7 @@ function selectAOI(which) {
     let new_aoi = true;
     if (query_list.length > 0) {
         let text = "Only one geometry allowed for multi-queries.\nClick ok to change AOI or Cancel to keep it.";
-        if (confirm(text) == true) {
-            new_aoi = true;
-        } else {
-            new_aoi = false;
-        }
+        new_aoi = confirm(text);
     }
     if (new_aoi) {
         $("[id^=btnAOI]").removeClass("active");
@@ -661,10 +656,12 @@ function selectAOI(which) {
         } else if (which === "upload") {
             enableUpload();
         } else if (which === "select") {
-            if ($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
-                $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+            const adminLayerOptions = $("#adminLayerOptions");
+            const firstOption = $("#adminLayerOptions option:first");
+            if (adminLayerOptions.val() !== firstOption.val()) {
+                adminLayerOptions.val(firstOption.val());
             }
-            enableAdminFeature($("#adminLayerOptions option:first").val());
+            enableAdminFeature(firstOption.val());
         }
 
         // need to make sure all formData is updated with the correct AOI if this is changed.
@@ -722,8 +719,9 @@ function setPointAOI() {
         // lat_control.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
         try {
-            if ($(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0]) {
-                $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0].click();
+            const draw_button = $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a");
+            if (draw_button[0]) {
+                draw_button[0].click();
             }
         } catch (e) {
         }
@@ -1108,7 +1106,9 @@ function sortableLayerSetup() {
  */
 function upload_file_error() {
     const upload_error = $("#upload_error");
-    upload_error.html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+    upload_error.html(
+        "* invalid file upload, please see the <a href='" + $("#menu-help").attr('href')
+        + "#geojson'>Help Center</a> for more info about upload formats.")
     upload_error.show();
 }
 
@@ -1199,8 +1199,8 @@ function open_range_picker() {
         range_picker += 'id="end_range_date" value="' + current_max + '" min="' + min_date + ' " max="' + max_date + '"';
         range_picker += 'onchange="verify_range()">';
         range_picker += '<label id="range-error" for="end_range_date"';
-        range_picker += 'style="color:#da2020; display: none;">End date must be equal or greater';
-        range_picker += 'than the start date</label></div>';
+        range_picker += 'style="color:#da2020; display: none;">End date must be equal or ';
+        range_picker += 'greater than the start date</label></div>';
         range_picker += '</form>';
         range_picker += '<div class="just-buttons">';
         range_picker += '<button style="width:45%" onclick="clearRange()">Clear Range</button>';
@@ -1284,7 +1284,7 @@ function isComplete() {
             }
         }) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         if (isReady) {
-            // Also should confirm s < e;
+            // Also, should confirm s < e;
             $("#invalid-error").hide();
             if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
                 isReady = false;
@@ -1303,15 +1303,12 @@ function isComplete() {
     return isReady;
 }
 
-let load_complete = false;
-const query_list = [];
-let query_list_confirmed = 0;
-
 /**
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
+    const btnRequest = $("#btnRequest");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
     if (requestTypeSelect.val() === "datasets") {
@@ -1320,22 +1317,14 @@ function verify_ready() {
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
     let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
-    /***********this is not right*********************/
-    /**** I need to have a list for multi queries which only has ones added to it
-     * by clicking add to multi-query
-     * this would not be editable on this tab, only the current is editable
-     * so the number would be the multilist length + the new one if it is enabled or
-     * take away 1 if needed for disabled. ****/
-     if(requestTypeSelect.val() === 'monthly_analysis'
-         && (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')){
-         $("#btnRequest").prop("disabled", false);
-     }
-    if(requestTypeSelect.val() !== 'monthly_analysis') {
-        if (query_list.length === 0) {
-            $("#btnViewAPI").prop("disabled", true);
-        } else {
-            $("#btnViewAPI").prop("disabled", disabled);
-        }
+
+    if (requestTypeSelect.val() === 'monthly_analysis'
+        && (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')) {
+        btnRequest.prop("disabled", false);
+    }
+    if (requestTypeSelect.val() !== 'monthly_analysis') {
+        const btnViewAPI = $("#btnViewAPI");
+        btnViewAPI.prop("disabled", query_list.length === 0);
         if (query_list.length >= 5) {
             disabled = true;
         }
@@ -1354,22 +1343,23 @@ function verify_ready() {
         api_host += ":" + window.location.port
     }
     try {
+        const api_panel = $("#api_panel");
         if (requestTypeSelect.val() === "datasets") {
-            $("#api_panel").empty();
+            api_panel.empty();
             query_list.forEach(buildAPIReference);
 
-            function buildAPIReference(value, index, array) {
-                $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+            function buildAPIReference(value) {
+                api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
-            $("#api_panel").empty();
-            $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+            api_panel.empty();
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                 + api_host + "/api/submitDataRequest/?fixthis</span>");
-            $("#btnRequest").prop("disabled", disabled);
+            btnRequest.prop("disabled", disabled);
         } else {
-            $("#api_panel").empty();
-            $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+            api_panel.empty();
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                 + api_host + get_API_url() + "</span>");
         }
     } catch (e) {
@@ -1421,7 +1411,7 @@ function verify_range() {
                 }
             }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
             if (isReady) {
-                // Also should confirm s < e;
+                // Also, should confirm s < e;
                 if (moment(begin_range_date.value) > moment(end_range_date.value)) {
                     isReady = false;
                     $("#range-error").show();
@@ -1439,20 +1429,25 @@ function verify_range() {
 }
 
 /**
- * Collects all of the request data
+ * Collects all the request data
  */
 function collect_review_data() {
     const geometry = $("#geometry");
-    const operation_max = $("#operation_max");
-    const operation_min = $("#operation_min");
-    const operation_average = $("#operation_average");
     const netCDF = $("#netcdf");
     const tif = $("#tif");
     const csv = $("#csv");
 
     if (highlightedIDs.length > 0) {
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
-        geometry.text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
+        geometry.text(
+            adminHighlightLayer
+                .options
+                .layers
+                .replace("_highlight", " - " + feature_label + ": ")
+                .replace("admin_2_af", "Admin #2")
+                .replace("admin_1_earth", "Admin #1")
+                .replace("country", "Country") + highlightedIDs.join()
+        );
     } else if (drawnItems.getLayers().length > 0) {
         geometry.text(JSON.stringify(drawnItems.toGeoJSON()));
     } else if (uploadLayer) {
@@ -1460,17 +1455,17 @@ function collect_review_data() {
     } else {
         geometry.text('{"type":"FeatureCollection","features":[]}');
     }
+    const selectedOption = $('#format-menu option:selected');
+    selectedOption.removeAttr('selected');
     if ($("#requestTypeSelect").val() === "download" && geometry.text().indexOf("Point") > -1) {
         tif.hide();
         netCDF.hide();
-        csv.show()
-        $('#format-menu option:selected').removeAttr('selected');
+        csv.show();
         $('#format-menu option[value=8]').attr('selected', 'selected');
     } else {
         tif.show();
         netCDF.show();
         csv.hide();
-        $('#format-menu option:selected').removeAttr('selected');
     }
 }
 
@@ -1484,6 +1479,7 @@ function collect_review_data() {
  * starting the polling process
  * @param data
  * @param isClimate
+ * @param query_index
  */
 function handle_initial_request_data(data, isClimate, query_index) {
     close_dialog();
@@ -1592,7 +1588,7 @@ function add_multi_query() {
     }
     $(".selectAOI").hide();
     $("[id^=btnAOI]").removeClass("active");
-    $("#btnAOIdraw").addClass("active");
+    $("#btnAOIDraw").addClass("active");
     $("#drawAOI").show();
     if (query_list.length >= 5) {
         $("#btnAddToQuery").prop("disabled", true);
@@ -1616,16 +1612,12 @@ function sendRequest() {
     polling_timeout.length = 0;
     $("#btnRequest").prop("disabled", true);
     $("#btnMultiQuerySubmit").prop("disabled", true);
-    //let formData = new FormData();
+
     const request_type_value = $("#requestTypeSelect").val();
     if (request_type_value === "datasets" || request_type_value === "download") {
-        //buildForm(formData);
-        mulitQueryData.length = 0;
-        // This is where i need to break out and send each query
-        // currently just sending the first query over and over
+        multiQueryData.length = 0;
 
-        // const formData = query_list[0];
-        if(request_type_value === "download"){
+        if (request_type_value === "download") {
             let formData = new FormData();
             buildForm(formData);
             query_list.push(formData);
@@ -1716,6 +1708,7 @@ function sendRequest() {
 /**
  * Updates progress bar with value sent in
  * @param val
+ * @param index
  */
 function updateProgress(val, index) {
     let final;
@@ -1743,6 +1736,7 @@ function updateProgress(val, index) {
  * Get the progress of a submitted job and sends teh returned value to updateProgress
  * @param id
  * @param isClimate
+ * @param query_index
  */
 function pollForProgress(id, isClimate, query_index) {
     $.ajax({
@@ -1767,10 +1761,11 @@ function pollForProgress(id, isClimate, query_index) {
 
             } else if (val === 100) {
                 retries = 0;
-                const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
-                    ? $("#operationmenu").val()
-                    : $("#requestTypeSelect").val() === "download"
-                        ? $("#format-menu").val()
+                const requestTypeValue = $("#requestTypeSelect").val();
+                const request_operation_format = (requestTypeValue === "datasets"
+                        ? $("#operationmenu").val()
+                        : requestTypeValue === "download"
+                            ? $("#format-menu").val()
                             : "987654"
                 );
                 if (
@@ -1832,10 +1827,18 @@ function pollForProgress(id, isClimate, query_index) {
     });
 }
 
-function filter_datasets_by(which) {
+/**
+ * filter_datasets_by
+ * This function filters the possible data sources by toggling
+ * layer-on and layer-off classes, setting the selected value to the
+ * first layer with the layer-on class, then handles any UI updates
+ * necessary based on the newly selected data source.
+ */
+function filter_datasets_by() {
     $(".layer-on, .layer-off").toggleClass("layer-on layer-off");
-    $("#sourcemenu")[0].selectedIndex = $('#sourcemenu option.layer-on:first').index()
-    handleSourceSelected($('#sourcemenu option.layer-on:first').val());
+    const firstLayerOn = $('#sourcemenu option.layer-on:first');
+    $("#sourcemenu")[0].selectedIndex = firstLayerOn.index();
+    handleSourceSelected(firstLayerOn.val());
 }
 
 function configure_nmme(sdata) {
@@ -1999,7 +2002,7 @@ function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
-    } else if (mulitQueryData.length !== 0) {
+    } else if (multiQueryData.length !== 0) {
         inti_chart_dialog();
         multi_chart_builder();
     } else {
@@ -2057,7 +2060,7 @@ function getDownLoadLink(id) {
     });
 }
 
-const mulitQueryData = [];
+const multiQueryData = [];
 let simpleAxis = true;
 let debug_data = [];
 
@@ -2073,18 +2076,18 @@ function multi_chart_builder() {
         }, yAxis: {
             id: "simple",
             title: {
-                text: simpleAxis ? "values" : mulitQueryData[0].units
+                text: simpleAxis ? "values" : multiQueryData[0].units
             },
             // max: 350,
             // min: 0,
         }, series: [{
             color: "#758055",
             type: "line",
-            name: mulitQueryData[0].label,
-            data: mulitQueryData[0].data.sort((a, b) => a[0] - b[0]),
+            name: multiQueryData[0].label,
+            data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
             tooltip: {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + (mulitQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                    return Highcharts.numberFormat(this.y, 2) + " " + (multiQueryData[0].units) + "<br>"//"Value: " + this.value + units;
                 }
             }
         }],
@@ -2157,14 +2160,14 @@ function multi_chart_builder() {
         "#283601"
     ]
 
-    if (mulitQueryData.length > 1) {
-        for (let i = 1; i < mulitQueryData.length; i++) {
+    if (multiQueryData.length > 1) {
+        for (let i = 1; i < multiQueryData.length; i++) {
             if (!simpleAxis) {
                 multiChart.addAxis({
                     id: "yaxis-" + i,
                     opposite: i % 2 !== 0,
                     title: {
-                        text: mulitQueryData[i].units
+                        text: multiQueryData[i].units
                     },
                     // max: 350,
                     // min: 0,
@@ -2174,11 +2177,11 @@ function multi_chart_builder() {
                 yAxis: simpleAxis ? "simple" : "yaxis-" + i,
                 color: colors[i - 1],
                 type: "line",
-                name: mulitQueryData[i].label,
-                data: mulitQueryData[i].data.sort((a, b) => a[0] - b[0]),
+                name: multiQueryData[i].label,
+                data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
                 tooltip: {
                     pointFormatter: function () {
-                        return Highcharts.numberFormat(this.y, 2) + " " + mulitQueryData[i].units + "<br>" //"Value: " + this.value + units;
+                        return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>" //"Value: " + this.value + units;
                     }
                 }
             });
@@ -2193,6 +2196,7 @@ function multi_chart_builder() {
  * that was created by the submitDataRequest
  * @param id
  * @param isClimate
+ * @param query_index
  */
 function getDataFromRequest(id, isClimate, query_index) {
     //close_dialog();
@@ -2317,15 +2321,15 @@ function getDataFromRequest(id, isClimate, query_index) {
                                 max = val;
                             }
                             darray.push(val);
-                            compiledData.push(darray); // i can likely store min and max here
+                            compiledData.push(darray); // I can likely store min and max here
                         } else {
                             const null_array = [];
                             null_array.push(parseInt(d.epochTime) * 1000);
                             null_array.push(null);
-                            compiledData.push(null_array); // i can likely store min and max here
+                            compiledData.push(null_array); // I can likely store min and max here
                         }
                     });
-                    from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
+                    from_compiled = compiledData; // if this is empty, I need to let the user know there was no data
 
 
                     let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
@@ -2337,7 +2341,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
                         : layer.units
 
-                    mulitQueryData.push({
+                    multiQueryData.push({
                         data: compiledData,
                         units: units,
                         yAxis_format: layer.yAxis_format || null,
@@ -2351,10 +2355,10 @@ function getDataFromRequest(id, isClimate, query_index) {
                                     : "n/a")
                     });
 
-                    if (mulitQueryData.length == query_list.length) {
+                    if (multiQueryData.length === query_list.length) {
                         let hasData = false;
-                        for (let i = 0; i < mulitQueryData.length; i++) {
-                            if (mulitQueryData[i].data.length > 0) {
+                        for (let i = 0; i < multiQueryData.length; i++) {
+                            if (multiQueryData[i].data.length > 0) {
                                 hasData = true;
                                 break;
                             }
@@ -2387,7 +2391,7 @@ function getDataFromRequest(id, isClimate, query_index) {
 
 /**
  * Fixes no data value issue by setting them to null
- * Updated from -9999 to > -9000 as i found some values
+ * Updated from -9999 to > -9000 as I found some values
  * were returned not exactly as -9999 for whatever reason
  * @param value
  * @returns {null|number}
@@ -2444,44 +2448,44 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         verticalAlign: 'middle'
     };
 
-        chart_obj.plotOptions = {
-            series: {
-                connectNulls: false,
-                marker: {
-                    radius: 3,
-                    fillColor: "#758055",
-                    states: {
-                        hover: {
-                            fillColor: '#758055',
-                        },
-                        halo: {
-                            fillColor: '#758055',
-                        }
-                    },
-                },
-                lineWidth: 2,
+    chart_obj.plotOptions = {
+        series: {
+            connectNulls: false,
+            marker: {
+                radius: 3,
+                fillColor: "#758055",
                 states: {
                     hover: {
-                        lineWidth: 2
+                        fillColor: '#758055',
                     },
                     halo: {
                         fillColor: '#758055',
                     }
                 },
-                threshold: null,
-                allowPointSelect: true,
-                point: {
-                    events: {
-                        select: function (e) {
-                            const full = new Date(e.target.x);
-                            const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                            // maybe set current time for layers to this date
-                            console.log(date);
-                        }
+            },
+            lineWidth: 2,
+            states: {
+                hover: {
+                    lineWidth: 2
+                },
+                halo: {
+                    fillColor: '#758055',
+                }
+            },
+            threshold: null,
+            allowPointSelect: true,
+            point: {
+                events: {
+                    select: function (e) {
+                        const full = new Date(e.target.x);
+                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                        // maybe set current time for layers to this date
+                        console.log(date);
                     }
                 }
             }
-        };
+        }
+    };
     if (isClimate) {
         chart_obj.plotOptions.series.marker = {
             radius: 3
@@ -2574,7 +2578,7 @@ function check_query_status(control) {
     if (query_list.length > 0) {
         let text = "All multi-queries must be of type Time-series Analysis.\nClick ok to clear all added queries and " +
             "start over or Cancel to keep queries and continue.";
-        if (confirm(text) == true) {
+        if (confirm(text) === true) {
             query_list.length = 0;
             update_number_queries();
             clearAOISelections();
@@ -2660,7 +2664,7 @@ function getClimateScenarioInfo() {
  * Toggles the About AOI section
  */
 function toggleUpDownIcon(which) {
-    const el = $('#' + which).toggleClass("fa-angle-up fa-angle-down");
+    $('#' + which).toggleClass("fa-angle-up fa-angle-down");
 }
 
 /**
