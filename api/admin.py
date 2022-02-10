@@ -1,12 +1,5 @@
-import shutil
-from pathlib import Path
-
 from django.contrib import admin
-
-# Register your models here.
-from django.contrib.auth.admin import UserAdmin
 from django.utils.html import format_html
-
 from .models import Config_Setting, Storage_Review, Run_ETL, Profile
 from .models import ETL_Dataset
 from .models import ETL_Granule
@@ -93,23 +86,9 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
         'free_space',
         'last_notified_time',
         'threshold')
-    # def has_add_permission(self, request, obj=None):
-    #     return False
-
     def changelist_view(self, request, extra_context=None):
         extra_context = {'title': 'Storage space statistics'}
         return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
-
-    def render_change_form(self, request, context, add=False, change=False, form_url='', obj=None):
-        context.update({
-            # 'show_save': False,
-            # 'show_save_and_continue': False,
-            # 'show_save_and_add_another': False,
-            # 'show_delete': False,
-            'from_sto': True
-
-        })
-        return super().render_change_form(request, context, add, change, form_url, obj)
 
 @admin.register(Run_ETL)
 class Run_ETLAdmin(admin.ModelAdmin):

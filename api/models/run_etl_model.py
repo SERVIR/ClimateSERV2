@@ -3,7 +3,7 @@ from django.db import models
 from api.models import ETL_Dataset
 
 class Run_ETL(models.Model):
-    datasets= ETL_Dataset.objects.all()
+    datasets = ETL_Dataset.objects.all()
     DS=()
     for x in range(len(datasets)):
         DS=DS+((datasets[x].uuid,datasets[x].dataset_name,),)
