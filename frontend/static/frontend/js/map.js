@@ -29,10 +29,20 @@ let from_compiled;
 let too_fast = 0;
 let polling_timeout = [];
 let multi_progress_value = [];
+const query_list = [];
+const multiQueryData = [];
+let simpleAxis = true;
+let debug_data = [];
+let multiChart;
+const csrftoken = getCookie('csrftoken');
 
 /**
+ * createLayer
  * Evokes getLayerHtml, appends the result to the layer-list, then
- * creates the map layer and stores it in the overlayMaps array
+ * creates the map layer and stores it in the overlayMaps object
+ * with the key of the layers' id + TimeLayer.  This also checks to
+ * see if the layer has been sent in the query string to be activated
+ * if so it adds to queried_layers, which will be loaded later in the init.
  * @param {object} item  - layer json object
  */
 function createLayer(item) {
@@ -45,8 +55,6 @@ function createLayer(item) {
             colorscalerange: item.colorrange,
             abovemaxcolor: "extend",
             belowmincolor: "extend",
-            // abovemaxcolor: "transparent",
-            // belowmincolor: "transparent",
             numcolorbands: 100,
             styles: item.styles,
             tileSize: 1024,
@@ -60,7 +68,7 @@ function createLayer(item) {
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
-
+    // Add to list to be activated if query string requested it
     if (item.id.includes(passedLayer)) {
         queried_layers.push(item.id)
     } else {
@@ -71,6 +79,7 @@ function createLayer(item) {
 }
 
 /**
+ * getLayer
  * Helper function to get a layer out of globalLayerArray
  * @param {string} which - name of layer requesting
  * @returns layer json object
@@ -82,10 +91,10 @@ function getLayer(which) {
 }
 
 /**
+ * buildStyles
  * Retrieves the current TDS styles available and stores them in the
- * styleOptions array, which will be used to load the styles dropdown box
+ * styleOptions array, which will be used to load the styles' dropdown box
  */
-
 function buildStyles() {
     $.ajax({
         url: client_layers[0].url + "&request=GetCapabilities",
@@ -305,7 +314,13 @@ function buildStyles() {
     });
 }
 
-//In here i can add the options for transparent above and below
+/***
+ * apply_style_click
+ * Applies the selected style properties to the passed active_layer
+ * @param which
+ * @param active_layer
+ * @param bypass_auto_on
+ */
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     const style_table = $("#style_table");
@@ -319,13 +334,11 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             format: "image/png",
             transparent: true,
             colorscalerange:
-                document.getElementById("range-min").value +
-                "," +
-                document.getElementById("range-max").value,
-            abovemaxcolor: "extend",
-            belowmincolor: "extend",
-            // abovemaxcolor: document.getElementById("above_below").value,
-            // belowmincolor: document.getElementById("above_below").value,
+                document.getElementById("range-min").value
+                + ","
+                + document.getElementById("range-max").value,
+            abovemaxcolor: document.getElementById("above_max").value,
+            belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
             styles: style_table.val(),
         }),
@@ -340,15 +353,27 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
     active_layer.styles = style_table.val();
-    active_layer.colorrange = document.getElementById("range-min").value +
-        "," +
-        document.getElementById("range-max").value
+    active_layer.colorrange = document.getElementById("range-min").value
+        + ","
+        + document.getElementById("range-max").value
     overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
     overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
 }
 
+/**
+ * apply_settings
+ * Handles the setting changes and calls apply_style_click to complete the
+ * application of the settings.  If the settings are for a multi layer
+ * apply_style_click will be called for each layer
+ * @param which
+ * @param active_layer
+ * @param is_multi
+ * @param multi_ids
+ */
 function apply_settings(which, active_layer, is_multi, multi_ids) {
     $("#style_table").val(overlayMaps[which]._baseLayer.wmsParams.styles);
+    $("#above_max").val(overlayMaps[which]._baseLayer.wmsParams.abovemaxcolor);
+    $("#below_min").val(overlayMaps[which]._baseLayer.wmsParams.belowmincolor);
 
     const slider = document.getElementById("opacityctrl");
     slider.value = overlayMaps[which].options.opacity;
@@ -366,9 +391,8 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
 
     applyStylebtn.onclick = function () {
         if (is_multi) {
-            // loop
-            multi_ids.forEach(e => {
-                apply_style_click(e + "TimeLayer", getLayer(multi_ids[0]), true);
+            multi_ids.forEach((e, i) => {
+                apply_style_click(e + "TimeLayer", getLayer(multi_ids[i]), true);
             })
         } else {
             apply_style_click(which, active_layer);
@@ -382,11 +406,10 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
 }
 
 /**
+ * openSettings
  * Populates the Settings box for the specific layer and opens the settings popup.
  * @param {string} which - Name of layer to open settings for
  */
-close_dialog();
-
 function openSettings(which) {
     let active_layer = getLayer(which);
     let multi = false;
@@ -441,6 +464,7 @@ function openSettings(which) {
 }
 
 /**
+ * baseSettingsHtml
  * Clones the base html settings and returns the html
  * @returns html
  */
@@ -449,6 +473,7 @@ function baseSettingsHtml() {
 }
 
 /**
+ * openLegend
  * Opens the legend for the selected layer
  * @param {string} which - Name of layer to open legend for
  */
@@ -483,6 +508,7 @@ function openLegend(which) {
 }
 
 /**
+ * mapSetup
  * Basic map setup and creates the basemap thumbnails in the basemaps tab
  */
 function mapSetup() {
@@ -565,6 +591,7 @@ function mapSetup() {
 }
 
 /**
+ * handleBaseMapSwitch
  * Switches the basemap to the user selected map.
  * @param {string} which - The Key of the basemap
  */
@@ -575,6 +602,7 @@ function handleBaseMapSwitch(which) {
 }
 
 /**
+ * toggleLayer
  * Closes any open dialog and either adds or removes the selected layer.
  * @param {string} which - The id of the layer to toggle
  */
@@ -617,14 +645,20 @@ function toggleLayer(which) {
 }
 
 /**
- *
- *
+ * onlyUnique
+ * Used for a filter to ensure only unique values are returned
+ * this is specifically used for the available_times of multiple time series layers
+ * @param value
+ * @param index
+ * @param self
+ * @returns {boolean}
  */
 function onlyUnique(value, index, self) {
     return self.indexOf(value) === index;
 }
 
 /**
+ * selectAOI
  * Opens the user selected method of selecting their AOI
  * @param {string} which - name of selection method to activate
  */
@@ -632,11 +666,7 @@ function selectAOI(which) {
     let new_aoi = true;
     if (query_list.length > 0) {
         let text = "Only one geometry allowed for multi-queries.\nClick ok to change AOI or Cancel to keep it.";
-        if (confirm(text) == true) {
-            new_aoi = true;
-        } else {
-            new_aoi = false;
-        }
+        new_aoi = confirm(text);
     }
     if (new_aoi) {
         $("[id^=btnAOI]").removeClass("active");
@@ -651,20 +681,19 @@ function selectAOI(which) {
         } else if (which === "upload") {
             enableUpload();
         } else if (which === "select") {
-            if ($("#adminLayerOptions").val() !== $("#adminLayerOptions option:first").val()) {
-                $("#adminLayerOptions").val($("#adminLayerOptions option:first").val());
+            const adminLayerOptions = $("#adminLayerOptions");
+            const firstOption = $("#adminLayerOptions option:first");
+            if (adminLayerOptions.val() !== firstOption.val()) {
+                adminLayerOptions.val(firstOption.val());
             }
-            enableAdminFeature($("#adminLayerOptions option:first").val());
+            enableAdminFeature(firstOption.val());
         }
-
-        // need to make sure all formData is updated with the correct AOI if this is changed.
-        // maybe re-think when the AOI is added to the formData, possibly just add it when
-        // sending the requests will be better so there is no sync issues
     }
 }
 
 /**
- * Removes all existing AOI selections and map click event
+ * clearAOISelections
+ * Removes any and all existing AOI selections and map click event
  */
 function clearAOISelections() {
     if (drawToolbar) {
@@ -691,6 +720,12 @@ function clearAOISelections() {
     verify_ready();
 }
 
+/**
+ * setPointAOI
+ * This is used to manually set the point AOI when the user has supplied the
+ * values in the input boxes.  It adds the marker to the map and updates
+ * the current AOI display
+ */
 function setPointAOI() {
     let valid_values = true;
     const lon_control = $("#point_lon");
@@ -707,13 +742,11 @@ function setPointAOI() {
         drawnItems.clearLayers();
         drawnItems.addLayer(L.marker([point_lat, point_lon]));
         $("#lat-lon-error").hide();
-        // Removed clear to allow in place edit rather than new entry edit
-        // lon_control.val("")
-        // lat_control.val("")
         $("#geometry").text(JSON.stringify(drawnItems.toGeoJSON()));
         try {
-            if ($(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0]) {
-                $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a")[0].click();
+            const draw_button = $(".leaflet-draw-actions.leaflet-draw-actions-bottom li a");
+            if (draw_button[0]) {
+                draw_button[0].click();
             }
         } catch (e) {
         }
@@ -723,6 +756,12 @@ function setPointAOI() {
 
 }
 
+/**
+ * triggerUpload
+ * This opens the users file upload browser for them to select the
+ * AOI file they want to upload
+ * @param e
+ */
 function triggerUpload(e) {
     document.getElementById("upload_files").value = "";
     e.preventDefault();
@@ -730,6 +769,7 @@ function triggerUpload(e) {
 }
 
 /**
+ * enableUpload
  * Enables AOI upload capabilities by adding drop events to the drop zone
  */
 function enableUpload() {
@@ -740,23 +780,30 @@ function enableUpload() {
         uploadLayer = null;
         targetEl.removeEventListener("dragenter", prevent);
         targetEl.removeEventListener("dragover", prevent);
-
         targetEl.removeEventListener("drop", handleFiles);
     }
     targetEl.addEventListener("dragenter", prevent);
     targetEl.addEventListener("dragover", prevent);
-
     targetEl.addEventListener("drop", handleFiles);
-
     uploadLayer = L.geoJson().addTo(map);
-
-
 }
 
+/**
+ * prevent
+ * This is a helper function to make adding and removing
+ * the event listener easier
+ * @param e
+ */
 function prevent(e) {
     e.preventDefault();
 }
 
+/**
+ * verifyFeatures
+ * Verifies that the uploaded features meet the requirements
+ * @param data
+ * @returns {boolean}
+ */
 function verifyFeatures(data) {
     const allPoints = data.features.map(f => f.geometry.type.toLowerCase() === "point").every(v => v === true);
     let verifiedRequirements = false;
@@ -768,6 +815,11 @@ function verifyFeatures(data) {
     return verifiedRequirements;
 }
 
+/**
+ * addDataToMap
+ * Adds the data passed in to the map if it is valid data
+ * @param data
+ */
 function addDataToMap(data) {
     try {
         // this handles all upload situations
@@ -794,6 +846,12 @@ function addDataToMap(data) {
     }
 }
 
+/**
+ * handleFiles
+ * This is the file upload handler.  It handles json, geojson, and zip files
+ * It will process based on the type and pass the data on to addDataToMap
+ * @param e
+ */
 function handleFiles(e) {
     e.preventDefault();
     const reader = new FileReader();
@@ -811,7 +869,6 @@ function handleFiles(e) {
         } else if (file.name.indexOf(".geojson") > -1) {
             reader.readAsText(file);
         } else if (file.type === "application/x-zip-compressed" || file.type === "application/zip") {
-            // https://gis.stackexchange.com/questions/368033/how-to-display-shapefiles-on-an-openlayers-web-mapping-application-that-are-prov
             if (uploadLayer) {
                 uploadLayer.clearLayers();
             }
@@ -822,31 +879,7 @@ function handleFiles(e) {
                     EPSG: 4326,
                 },
                 function (data) {
-                    // let URL =
-                    //         window.URL || window.webkitURL || window.mozURL || window.msURL,
-                    //     url = URL.createObjectURL(
-                    //         new Blob([JSON.stringify(data)], {type: "application/json"})
-                    //     );
-                    // if (data.features.length > 10) {
-                    //     data.features = data.features.splice(0, 10);
-                    // }
-                    // uploadLayer.addData(data);
                     addDataToMap(data);
-                    // let verifiedRequirements = verifyFeatures(data);
-                    // if(verifiedRequirements){
-                    //     uploadLayer.clearLayers();
-                    //     uploadLayer.addData(data);
-                    //
-                    //     map.fitBounds([
-                    //         [data.bbox[1], data.bbox[0]],
-                    //         [data.bbox[3], data.bbox[2]],
-                    //     ]);
-                    //     $("#upload_error").hide();
-                    //     collect_review_data();
-                    //     verify_ready();
-                    // } else{
-                    //     upload_file_error();
-                    // }
 
                     $(".dimmer").removeClass("active");
                     $("#preview").addClass("disabled");
@@ -866,7 +899,11 @@ function handleFiles(e) {
 }
 
 /**
- * Enables the drawing of an AOI on the map
+ * enableDrawing
+ * Enables the drawing of an AOI on the map by adding the
+ * draw toolbar which a user may select the draw type they
+ * would like to use.  It also adds the draw handlers to
+ * the map, which enforce the limit of 20 features.
  */
 function enableDrawing() {
     clearAOISelections();
@@ -908,7 +945,6 @@ function enableDrawing() {
                 alert("You may not add this polygon because you have reached the limit of 20.");
             }
         }
-
         collect_review_data();
         verify_ready();
     });
@@ -941,12 +977,12 @@ function enableDrawing() {
             } catch (e) {
                 if (e !== BreakException) throw e;
             }
-            // check to make sure drawnItems.length <= 20
         }
     });
 }
 
 /**
+ * enableAdminFeature
  * Adds the selected admin features to the map for the user to select the AOI.
  * @param {string} which - name of admin layer to activate
  */
@@ -1030,7 +1066,9 @@ function enableAdminFeature(which) {
 }
 
 /**
- *
+ * getFeatureInfoUrl
+ * Builds and returns the url needed to make the feature info call
+ * for the selected admin layer
  * @param {object} map - the map object
  * @param {object} layer - L.tileLayer.wms
  * @param {object} latlng - location clicked
@@ -1070,6 +1108,7 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
 }
 
 /**
+ * sortableLayerSetup
  * Sets up the sortable layers in the layer manager
  */
 function sortableLayerSetup() {
@@ -1085,24 +1124,23 @@ function sortableLayerSetup() {
             adjustLayerIndex();
         },
         filter: ".ignore-elements",
-        // Called when creating a clone of element
-        // onClone: function (/**Event*/evt) {
-        //     let origEl = evt.item;
-        //     let cloneEl = evt.clone;
-        // },
     });
 }
 
 /**
+ * upload_file_error
  * Displays the error when the upload file is incorrect
  */
 function upload_file_error() {
     const upload_error = $("#upload_error");
-    upload_error.html("* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') + "#geojson'>Help Center</a> for more info about upload formats..")
+    upload_error.html(
+        "* invalid file upload, please see the <a href='" + $("#menu-help").attr('href')
+        + "#geojson'>Help Center</a> for more info about upload formats.")
     upload_error.show();
 }
 
 /**
+ * adjustLayerIndex
  * adjusts the layer indexes to match the order in the layer manager
  */
 function adjustLayerIndex() {
@@ -1130,6 +1168,7 @@ function adjustLayerIndex() {
 }
 
 /**
+ * initMap
  * Page load functions, initializes all parts of application
  */
 function initMap() {
@@ -1149,6 +1188,7 @@ function initMap() {
 }
 
 /**
+ * open_range_picker
  * initiatives and opens the range picker
  */
 function open_range_picker() {
@@ -1189,8 +1229,8 @@ function open_range_picker() {
         range_picker += 'id="end_range_date" value="' + current_max + '" min="' + min_date + ' " max="' + max_date + '"';
         range_picker += 'onchange="verify_range()">';
         range_picker += '<label id="range-error" for="end_range_date"';
-        range_picker += 'style="color:#da2020; display: none;">End date must be equal or greater';
-        range_picker += 'than the start date</label></div>';
+        range_picker += 'style="color:#da2020; display: none;">End date must be equal or ';
+        range_picker += 'greater than the start date</label></div>';
         range_picker += '</form>';
         range_picker += '<div class="just-buttons">';
         range_picker += '<button style="width:45%" onclick="clearRange()">Clear Range</button>';
@@ -1215,11 +1255,8 @@ function open_range_picker() {
     $('#range_picker_form').validate();
 }
 
-// function close_dialog_event() {
-//     $('#dialog').dialog('close');
-// }
-
 /**
+ * setRange
  * Sets the animation range
  */
 function setRange() {
@@ -1234,6 +1271,7 @@ function setRange() {
 }
 
 /**
+ * clearRange
  * Clears the range set by the user
  */
 function clearRange() {
@@ -1242,6 +1280,7 @@ function clearRange() {
 }
 
 /**
+ * download_aoi
  * downloads the user specified AOI
  */
 function download_aoi() {
@@ -1254,6 +1293,7 @@ function download_aoi() {
 }
 
 /**
+ * isComplete
  * Helper function for completeness of the request dates
  * @returns {boolean}
  */
@@ -1274,7 +1314,7 @@ function isComplete() {
             }
         }) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         if (isReady) {
-            // Also should confirm s < e;
+            // Also, should confirm s < e;
             $("#invalid-error").hide();
             if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
                 isReady = false;
@@ -1293,15 +1333,13 @@ function isComplete() {
     return isReady;
 }
 
-let load_complete = false;
-const query_list = [];
-let query_list_confirmed = 0;
-
 /**
+ * verify_ready
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
+    const btnRequest = $("#btnRequest");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
     if (requestTypeSelect.val() === "datasets") {
@@ -1310,23 +1348,20 @@ function verify_ready() {
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
     let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
-    /***********this is not right*********************/
-    /**** I need to have a list for multi queries which only has ones added to it
-     * by clicking add to multi-query
-     * this would not be editable on this tab, only the current is editable
-     * so the number would be the multilist length + the new one if it is enabled or
-     * take away 1 if needed for disabled. ****/
-    if (query_list.length === 0) {
-        $("#btnViewAPI").prop("disabled", true);
-    } else {
-        $("#btnViewAPI").prop("disabled", disabled);
-    }
-    if (query_list.length >= 5) {
-        disabled = true;
-    }
 
-    $("#btnAddToQuery").prop("disabled", disabled);
+    if (requestTypeSelect.val() === 'monthly_analysis'
+        && (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')) {
+        btnRequest.prop("disabled", false);
+    }
+    if (requestTypeSelect.val() !== 'monthly_analysis') {
+        const btnViewAPI = $("#btnViewAPI");
+        btnViewAPI.prop("disabled", query_list.length === 0);
+        if (query_list.length >= 5) {
+            disabled = true;
+        }
 
+        $("#btnAddToQuery").prop("disabled", disabled);
+    }
 
     if (geometry.text().trim().indexOf('{"type"') > -1
         || geometry.text().trim().indexOf('{\"type\"') > -1) {
@@ -1339,17 +1374,23 @@ function verify_ready() {
         api_host += ":" + window.location.port
     }
     try {
+        const api_panel = $("#api_panel");
         if (requestTypeSelect.val() === "datasets") {
-            $("#api_panel").empty();
+            api_panel.empty();
             query_list.forEach(buildAPIReference);
 
-            function buildAPIReference(value, index, array) {
-                $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+            function buildAPIReference(value) {
+                api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
             }
+        } else if (requestTypeSelect.val() === "download") {
+            api_panel.empty();
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+                + api_host + "/api/submitDataRequest/?fixthis</span>");
+            btnRequest.prop("disabled", disabled);
         } else {
-            $("#api_panel").empty();
-            $("#api_panel").append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
+            api_panel.empty();
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                 + api_host + get_API_url() + "</span>");
         }
     } catch (e) {
@@ -1358,6 +1399,7 @@ function verify_ready() {
 }
 
 /**
+ * get_API_url
  * Builds and returns the url needed to make an API call
  * @returns {string}
  */
@@ -1381,6 +1423,7 @@ function get_API_url() {
 }
 
 /**
+ * verify_range
  * Verifies range is within the data start and end range
  * This function is called from a dynamically created element
  * DO NOT REMOVE
@@ -1401,7 +1444,7 @@ function verify_range() {
                 }
             }) && $(end_range_date).valid({rules: {field: {required: true, dateISO: true}}});
             if (isReady) {
-                // Also should confirm s < e;
+                // Also, should confirm s < e;
                 if (moment(begin_range_date.value) > moment(end_range_date.value)) {
                     isReady = false;
                     $("#range-error").show();
@@ -1419,20 +1462,26 @@ function verify_range() {
 }
 
 /**
- * Collects all of the request data
+ * collect_review_data
+ * Collects all the request data
  */
 function collect_review_data() {
     const geometry = $("#geometry");
-    const operation_max = $("#operation_max");
-    const operation_min = $("#operation_min");
-    const operation_average = $("#operation_average");
     const netCDF = $("#netcdf");
     const tif = $("#tif");
     const csv = $("#csv");
 
     if (highlightedIDs.length > 0) {
         const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
-        geometry.text(adminHighlightLayer.options.layers.replace("_highlight", " - " + feature_label + ": ").replace("admin_2_af", "Admin #2").replace("admin_1_earth", "Admin #1").replace("country", "Country") + highlightedIDs.join());
+        geometry.text(
+            adminHighlightLayer
+                .options
+                .layers
+                .replace("_highlight", " - " + feature_label + ": ")
+                .replace("admin_2_af", "Admin #2")
+                .replace("admin_1_earth", "Admin #1")
+                .replace("country", "Country") + highlightedIDs.join()
+        );
     } else if (drawnItems.getLayers().length > 0) {
         geometry.text(JSON.stringify(drawnItems.toGeoJSON()));
     } else if (uploadLayer) {
@@ -1440,30 +1489,27 @@ function collect_review_data() {
     } else {
         geometry.text('{"type":"FeatureCollection","features":[]}');
     }
+    const selectedOption = $('#format-menu option:selected');
+    selectedOption.removeAttr('selected');
     if ($("#requestTypeSelect").val() === "download" && geometry.text().indexOf("Point") > -1) {
         tif.hide();
         netCDF.hide();
-        csv.show()
-        $('#format-menu option:selected').removeAttr('selected');
+        csv.show();
         $('#format-menu option[value=8]').attr('selected', 'selected');
     } else {
         tif.show();
         netCDF.show();
         csv.hide();
-        $('#format-menu option:selected').removeAttr('selected');
     }
 }
 
-// function getEnsDataType() {
-//     // will need to write this for the selected ensembles
-//     return
-// }
-
 /**
+ * handle_initial_request_data
  * Handles the initial return from the submitRequest by setting up progress bar and
  * starting the polling process
  * @param data
  * @param isClimate
+ * @param query_index
  */
 function handle_initial_request_data(data, isClimate, query_index) {
     close_dialog();
@@ -1495,7 +1541,9 @@ function handle_initial_request_data(data, isClimate, query_index) {
 }
 
 /**
- * Builds the form for the API request
+ * buildForm
+ * Builds the form that is sent with the API request.  The form is passed
+ * in as a reference variable, so it does not need to be returned.
  * @param formData
  */
 function buildForm(formData) {
@@ -1522,22 +1570,13 @@ function buildForm(formData) {
     formData.append("operationtype", current_calculation.value);
     formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
     formData.append("isZip_CurrentDataType", false);
-    // if (highlightedIDs.length > 0) {
-    //     formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-    //     formData.append("featureids", highlightedIDs.join(","));
-    // } else if (drawnItems.getLayers().length > 0) {
-    //     formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-    // } else if (uploadLayer) {
-    //     formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-    // }
-    /*
-    This will get data out of the form when we need to review/edit
-    for(var pair of formData.entries()) {
-       console.log(pair[0]+ ', '+ pair[1]);
-    }
-     */
 }
 
+/**
+ * update_number_queries
+ * Helper function to handle the UI display of the number of
+ * queries currently in the queue
+ */
 function update_number_queries() {
     const query_button_number_control = $("#query_button_number");
     query_button_number_control.text("(" + query_list.length + ")" + (query_list.length === 1 ? " Query" : " Queries"));
@@ -1553,6 +1592,10 @@ function update_number_queries() {
     }
 }
 
+/**
+ * add_multi_query
+ * Adds the currently configured query to the list of queries
+ */
 function add_multi_query() {
     const formData = new FormData();
     buildForm(formData);
@@ -1572,7 +1615,7 @@ function add_multi_query() {
     }
     $(".selectAOI").hide();
     $("[id^=btnAOI]").removeClass("active");
-    $("#btnAOIdraw").addClass("active");
+    $("#btnAOIDraw").addClass("active");
     $("#drawAOI").show();
     if (query_list.length >= 5) {
         $("#btnAddToQuery").prop("disabled", true);
@@ -1581,6 +1624,7 @@ function add_multi_query() {
 }
 
 /**
+ * sendRequest
  * Initiates the processing request to ClimateSERV
  */
 function sendRequest() {
@@ -1596,15 +1640,16 @@ function sendRequest() {
     polling_timeout.length = 0;
     $("#btnRequest").prop("disabled", true);
     $("#btnMultiQuerySubmit").prop("disabled", true);
-    //let formData = new FormData();
+
     const request_type_value = $("#requestTypeSelect").val();
     if (request_type_value === "datasets" || request_type_value === "download") {
-        //buildForm(formData);
-        mulitQueryData.length = 0;
-        // This is where i need to break out and send each query
-        // currently just sending the first query over and over
+        multiQueryData.length = 0;
 
-        // const formData = query_list[0];
+        if (request_type_value === "download") {
+            let formData = new FormData();
+            buildForm(formData);
+            query_list.push(formData);
+        }
         for (let i = 0; i < query_list.length; i++) {
             let formData = query_list[i];
 
@@ -1689,8 +1734,10 @@ function sendRequest() {
 }
 
 /**
+ * updateProgress
  * Updates progress bar with value sent in
  * @param val
+ * @param index
  */
 function updateProgress(val, index) {
     let final;
@@ -1715,9 +1762,11 @@ function updateProgress(val, index) {
 }
 
 /**
+ * pollForProgress
  * Get the progress of a submitted job and sends teh returned value to updateProgress
  * @param id
  * @param isClimate
+ * @param query_index
  */
 function pollForProgress(id, isClimate, query_index) {
     $.ajax({
@@ -1742,9 +1791,13 @@ function pollForProgress(id, isClimate, query_index) {
 
             } else if (val === 100) {
                 retries = 0;
-                const request_operation_format = ($("#requestTypeSelect").val() === "datasets"
-                    ? $("#operationmenu").val()
-                    : $("#format-menu").val());
+                const requestTypeValue = $("#requestTypeSelect").val();
+                const request_operation_format = (requestTypeValue === "datasets"
+                        ? $("#operationmenu").val()
+                        : requestTypeValue === "download"
+                            ? $("#format-menu").val()
+                            : "987654"
+                );
                 if (
                     request_operation_format === "6"
                     || request_operation_format === "7"
@@ -1804,12 +1857,27 @@ function pollForProgress(id, isClimate, query_index) {
     });
 }
 
-function filter_datasets_by(which) {
+/**
+ * filter_datasets_by
+ * This function filters the possible data sources by toggling
+ * layer-on and layer-off classes, setting the selected value to the
+ * first layer with the layer-on class, then handles any UI updates
+ * necessary based on the newly selected data source.
+ */
+function filter_datasets_by() {
     $(".layer-on, .layer-off").toggleClass("layer-on layer-off");
-    $("#sourcemenu")[0].selectedIndex = $('#sourcemenu option.layer-on:first').index()
-    handleSourceSelected($('#sourcemenu option.layer-on:first').val());
+    const firstLayerOn = $('#sourcemenu option.layer-on:first');
+    $("#sourcemenu")[0].selectedIndex = firstLayerOn.index();
+    handleSourceSelected(firstLayerOn.val());
 }
 
+/**
+ * configure_nmme
+ * Sets the variables needed to query the NMME dataset based on
+ * the return value from the getClimateScenarioInfo call
+ * which is passed in as the parameter
+ * @param sdata
+ */
 function configure_nmme(sdata) {
     if (sdata.errMsg) {
         console.info(sdata.errMsg);
@@ -1857,6 +1925,7 @@ function configure_nmme(sdata) {
 }
 
 /**
+ * handleSourceSelected
  * Sets the UI to the correct state when a different source is selected
  * @param which
  */
@@ -1874,7 +1943,6 @@ function handleSourceSelected(which) {
         $("#ensemble_builder").show();
         $("#non-multi-ensemble-dates").hide();
         //hide date range controls
-
         $('#model_run_menu').find('option').remove();
         $('#ensemblemenu').find('option').remove();
         $("#forecastfrommenu").find('option').remove();
@@ -1918,6 +1986,7 @@ function handleSourceSelected(which) {
 }
 
 /**
+ * syncDates
  * synchronizes the dates between start date and forecast date
  */
 function syncDates() {
@@ -1926,6 +1995,7 @@ function syncDates() {
 }
 
 /**
+ * inti_chart_dialog
  * Creates the chart dialog
  */
 function inti_chart_dialog() {
@@ -1965,13 +2035,14 @@ function inti_chart_dialog() {
 }
 
 /**
+ * open_previous_chart
  * Opens the last chart that was closed.
  */
 function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
         finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
-    } else if (mulitQueryData.length !== 0) {
+    } else if (multiQueryData.length !== 0) {
         inti_chart_dialog();
         multi_chart_builder();
     } else {
@@ -1980,6 +2051,7 @@ function open_previous_chart() {
 }
 
 /**
+ * getIndex
  * Helper function for monthly rainfall analysis graphing
  * @param which
  * @returns {number}
@@ -1998,10 +2070,12 @@ function getIndex(which) {
 }
 
 /**
+ * getDownLoadLink
  * Creates the download link for a request ID and displays it in the dialog
  * @param id
  */
 function getDownLoadLink(id) {
+    query_list.length = 0;
     close_dialog();
     let download = '<div style="width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
@@ -2028,10 +2102,12 @@ function getDownLoadLink(id) {
     });
 }
 
-const mulitQueryData = [];
-let simpleAxis = true;
-let debug_data = [];
-
+/**
+ * multi_chart_builder
+ * This will build the chart with the data that has been stored
+ * in the multiQueryData list.  This should only be called after
+ * data has been added to the list
+ */
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     multiChart = Highcharts.chart('chart_holder', {
@@ -2044,18 +2120,18 @@ function multi_chart_builder() {
         }, yAxis: {
             id: "simple",
             title: {
-                text: simpleAxis ? "values" : mulitQueryData[0].units
+                text: simpleAxis ? "values" : multiQueryData[0].units
             },
             // max: 350,
             // min: 0,
         }, series: [{
             color: "#758055",
             type: "line",
-            name: mulitQueryData[0].label,
-            data: mulitQueryData[0].data.sort((a, b) => a[0] - b[0]),
+            name: multiQueryData[0].label,
+            data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
             tooltip: {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + (mulitQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                    return Highcharts.numberFormat(this.y, 2) + " " + (multiQueryData[0].units) + "<br>"//"Value: " + this.value + units;
                 }
             }
         }],
@@ -2095,7 +2171,6 @@ function multi_chart_builder() {
             align: 'right',
             verticalAlign: 'middle'
         },
-
         responsive: {
             rules: [{
                 condition: {
@@ -2120,7 +2195,6 @@ function multi_chart_builder() {
             .add();
     });
 
-
     const colors = [
         "#bafc02",
         "#022cfc",
@@ -2128,14 +2202,14 @@ function multi_chart_builder() {
         "#283601"
     ]
 
-    if (mulitQueryData.length > 1) {
-        for (let i = 1; i < mulitQueryData.length; i++) {
+    if (multiQueryData.length > 1) {
+        for (let i = 1; i < multiQueryData.length; i++) {
             if (!simpleAxis) {
                 multiChart.addAxis({
                     id: "yaxis-" + i,
                     opposite: i % 2 !== 0,
                     title: {
-                        text: mulitQueryData[i].units
+                        text: multiQueryData[i].units
                     },
                     // max: 350,
                     // min: 0,
@@ -2145,25 +2219,25 @@ function multi_chart_builder() {
                 yAxis: simpleAxis ? "simple" : "yaxis-" + i,
                 color: colors[i - 1],
                 type: "line",
-                name: mulitQueryData[i].label,
-                data: mulitQueryData[i].data.sort((a, b) => a[0] - b[0]),
+                name: multiQueryData[i].label,
+                data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
                 tooltip: {
                     pointFormatter: function () {
-                        return Highcharts.numberFormat(this.y, 2) + " " + mulitQueryData[i].units + "<br>" //"Value: " + this.value + units;
+                        return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>" //"Value: " + this.value + units;
                     }
                 }
             });
         }
-
-
     }
 }
 
 /**
+ * getDataFromRequest
  * Function to retrieve the processed data from the server with the id
  * that was created by the submitDataRequest
  * @param id
  * @param isClimate
+ * @param query_index
  */
 function getDataFromRequest(id, isClimate, query_index) {
     //close_dialog();
@@ -2258,10 +2332,10 @@ function getDataFromRequest(id, isClimate, query_index) {
 
                     });
                     inti_chart_dialog();
-
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
                 } else {
+                    previous_chart = null;
                     const compiledData = [];
                     let min = 9999;
                     let max = -9999;
@@ -2287,127 +2361,62 @@ function getDataFromRequest(id, isClimate, query_index) {
                                 max = val;
                             }
                             darray.push(val);
-                            compiledData.push(darray); // i can likely store min and max here
+                            compiledData.push(darray); // I can likely store min and max here
                         } else {
                             const null_array = [];
                             null_array.push(parseInt(d.epochTime) * 1000);
                             null_array.push(null);
-                            compiledData.push(null_array); // i can likely store min and max here
+                            compiledData.push(null_array); // I can likely store min and max here
                         }
                     });
-                    from_compiled = compiledData; // if this is empty, i need to let the user know there was no data
+                    from_compiled = compiledData; // if this is empty, I need to let the user know there was no data
 
-                    // multiChart = Highcharts.chart('chart_holder', {xAxis:{
-                    //             type: "datetime"
-                    //         }});
-                    if (compiledData.length === 0) {
-                        //inti_chart_dialog
-                        $("#chart_holder").html("<h1>No data available</h1>");
-                    } else {
+                    let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
 
-                        let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
+                    let layer = client_layers.find(
+                        (item) => item.app_id === queried_data.datatype
+                    );
+                    const units = layer.units.includes("|units|")
+                        ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
+                        : layer.units
 
-                        let layer = client_layers.find(
-                            (item) => item.app_id === queried_data.datatype
-                        );
-                        const units = layer.units.includes("|units|")
-                            ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                            : layer.units
+                    multiQueryData.push({
+                        data: compiledData,
+                        units: units,
+                        yAxis_format: layer.yAxis_format || null,
+                        point_format: layer.point_format || null,
+                        label: layer.title + ": " + (queried_data.operationtype === "0"
+                            ? "max"
+                            : queried_data.operationtype === "1"
+                                ? "min"
+                                : queried_data.operationtype === "5"
+                                    ? "avg"
+                                    : "n/a")
+                    });
 
-                        mulitQueryData.push({
-                            data: compiledData,
-                            units: units,
-                            yAxis_format: layer.yAxis_format || null,
-                            point_format: layer.point_format || null,
-                            label: layer.title + ": " + (queried_data.operationtype === "0"
-                                ? "max"
-                                : queried_data.operationtype === "1"
-                                    ? "min"
-                                    : queried_data.operationtype === "5"
-                                        ? "avg"
-                                        : "n/a")
-                        });
-
-                        if (mulitQueryData.length == query_list.length) {
+                    if (multiQueryData.length === query_list.length) {
+                        let hasData = false;
+                        for (let i = 0; i < multiQueryData.length; i++) {
+                            if (multiQueryData[i].data.length > 0) {
+                                hasData = true;
+                                break;
+                            }
+                        }
+                        if (hasData) {
                             close_dialog();
                             inti_chart_dialog();
                             multi_chart_builder();
-
-
-                            query_list.length = 0;
-                            update_number_queries();
-                            $("#checkout_list").empty();
-                            $("#checkout_number").text("0 Queries");
-                            $("#chart-builder").show();
-                            $("#query_list_checkout").hide();
+                        } else {
+                            inti_chart_dialog();
+                            $("#chart_holder").html("<h1>No data available</h1>");
                         }
-
-                        /*
-                        Finalize chart will now turn into create chart that will happen on
-                        submit request, I will have to bare bone the chart, then add new axis
-                        if rainfall analysis this is not relative, only 1 of that type is allowed
-                        at a time.
-                         */
-
-                        // finalize_chart([{
-                        //         color: "#758055",
-                        //         type: "line",
-                        //         name: current_calculation.text,
-                        //         data: compiledData.sort((a, b) => a[0] - b[0])
-                        //     }], units, {
-                        //         type: "datetime"
-                        //     }, $("#sourcemenu option:selected").text(),
-                        //     false,
-                        //     yAxis_format,
-                        //     point_format);
-                        // multiChart.yaxis = {
-                        //         type: "datetime"
-                        //     };
-                        // multiChart.addAxis({
-                        //     title: {
-                        //         text: units
-                        //     }
-                        // }, false, false);
-                        // multiChart.addSeries({
-                        //     color: "#758055",
-                        //     connectNulls: false,
-                        //     marker: {
-                        //         radius: 3,
-                        //         fillColor: "#758055",
-                        //         states: {
-                        //             hover: {
-                        //                 fillColor: '#758055',
-                        //             },
-                        //             halo: {
-                        //                 fillColor: '#758055',
-                        //             }
-                        //         },
-                        //     },
-                        //     lineWidth: 2,
-                        //     states: {
-                        //         hover: {
-                        //             lineWidth: 2
-                        //         },
-                        //         halo: {
-                        //             fillColor: '#758055',
-                        //         }
-                        //     },
-                        //     threshold: null,
-                        //     allowPointSelect: true,
-                        //     point: {
-                        //         events: {
-                        //             select: function (e) {
-                        //                 const full = new Date(e.target.x);
-                        //                 const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-                        //                 // maybe set current time for layers to this date
-                        //                 console.log(date);
-                        //             }
-                        //         }
-                        //     },
-                        //     data: compiledData.sort((a, b) => a[0] - b[0])
-                        // })
+                        query_list.length = 0;
+                        update_number_queries();
+                        $("#checkout_list").empty();
+                        $("#checkout_number").text("0 Queries");
+                        $("#chart-builder").show();
+                        $("#query_list_checkout").hide();
                     }
-
                 }
             }
         }
@@ -2415,8 +2424,9 @@ function getDataFromRequest(id, isClimate, query_index) {
 }
 
 /**
+ * value_or_null
  * Fixes no data value issue by setting them to null
- * Updated from -9999 to > -9000 as i found some values
+ * Updated from -9999 to > -9000 as I found some values
  * were returned not exactly as -9999 for whatever reason
  * @param value
  * @returns {null|number}
@@ -2430,7 +2440,9 @@ function value_or_null(value) {
 }
 
 /**
- * Creates a graph with the supplied variables
+ * finalize_chart
+ * Creates a graph with the supplied variables.  Used for
+ * monthly rainfall analysis
  * @param compiled_series
  * @param units
  * @param xAxis_object
@@ -2457,15 +2469,15 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         text: 'Source: climateserv.servirglobal.net'
     };
     chart_obj.xAxis = xAxis_object;
-    // chart_obj.yAxis = {
-    //     title: {
-    //         text: units
-    //     }
-    // };
-    //
-    // if (yAxis_format) {
-    //     chart_obj.yAxis.labels = yAxis_format
-    // }
+    chart_obj.yAxis = {
+        title: {
+            text: units
+        }
+    };
+
+    if (yAxis_format) {
+        chart_obj.yAxis.labels = yAxis_format
+    }
 
     chart_obj.legend = {
         layout: 'vertical',
@@ -2473,44 +2485,44 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         verticalAlign: 'middle'
     };
 
-    // chart_obj.plotOptions = {
-    //     series: {
-    //         connectNulls: false,
-    //         marker: {
-    //             radius: 3,
-    //             fillColor: "#758055",
-    //             states: {
-    //                 hover: {
-    //                     fillColor: '#758055',
-    //                 },
-    //                 halo: {
-    //                     fillColor: '#758055',
-    //                 }
-    //             },
-    //         },
-    //         lineWidth: 2,
-    //         states: {
-    //             hover: {
-    //                 lineWidth: 2
-    //             },
-    //             halo: {
-    //                 fillColor: '#758055',
-    //             }
-    //         },
-    //         threshold: null,
-    //         allowPointSelect: true,
-    //         point: {
-    //             events: {
-    //                 select: function (e) {
-    //                     const full = new Date(e.target.x);
-    //                     const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
-    //                     // maybe set current time for layers to this date
-    //                     console.log(date);
-    //                 }
-    //             }
-    //         }
-    //     }
-    // };
+    chart_obj.plotOptions = {
+        series: {
+            connectNulls: false,
+            marker: {
+                radius: 3,
+                fillColor: "#758055",
+                states: {
+                    hover: {
+                        fillColor: '#758055',
+                    },
+                    halo: {
+                        fillColor: '#758055',
+                    }
+                },
+            },
+            lineWidth: 2,
+            states: {
+                hover: {
+                    lineWidth: 2
+                },
+                halo: {
+                    fillColor: '#758055',
+                }
+            },
+            threshold: null,
+            allowPointSelect: true,
+            point: {
+                events: {
+                    select: function (e) {
+                        const full = new Date(e.target.x);
+                        const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                        // maybe set current time for layers to this date
+                        console.log(date);
+                    }
+                }
+            }
+        }
+    };
     if (isClimate) {
         chart_obj.plotOptions.series.marker = {
             radius: 3
@@ -2545,7 +2557,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
             }
         }
     };
-    chart_obj.series = {}; // compiled_series;
+    chart_obj.series = compiled_series;
     if (point_format) {
         chart_obj.tooltip = point_format;
         chart_obj.tooltip.borderColor = "#758055";
@@ -2582,9 +2594,8 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     });
 }
 
-let multiChart;
-
 /**
+ * getDataLine
  * Helper function for graphing the monthly rainfall analysis
  * @param mmm_Y
  * @param type
@@ -2599,11 +2610,18 @@ function getDataLine(mmm_Y, type, data) {
     return data_line;
 }
 
+/**
+ * check_query_status
+ * Prompts user about changing the query type if they have
+ * already added one or more to the list.  The user may select to
+ * abandon the list or keep the list.
+ * @param control
+ */
 function check_query_status(control) {
     if (query_list.length > 0) {
         let text = "All multi-queries must be of type Time-series Analysis.\nClick ok to clear all added queries and " +
             "start over or Cancel to keep queries and continue.";
-        if (confirm(text) == true) {
+        if (confirm(text) === true) {
             query_list.length = 0;
             update_number_queries();
             clearAOISelections();
@@ -2615,6 +2633,7 @@ function check_query_status(control) {
 }
 
 /**
+ * openDataTypePanel
  * Opens the proper panel for the datatype selected
  * @param select_control
  */
@@ -2652,6 +2671,7 @@ function openDataTypePanel(select_control) {
 }
 
 /**
+ * getClimateScenarioInfo
  * Calls the api to get the current Climate scenario properties
  */
 function getClimateScenarioInfo() {
@@ -2686,13 +2706,15 @@ function getClimateScenarioInfo() {
 }
 
 /**
+ * toggleUpDownIcon
  * Toggles the About AOI section
  */
 function toggleUpDownIcon(which) {
-    const el = $('#' + which).toggleClass("fa-angle-up fa-angle-down");
+    $('#' + which).toggleClass("fa-angle-up fa-angle-down");
 }
 
 /**
+ * close_dialog
  * Closes the dialog if it is open
  */
 function close_dialog() {
@@ -2703,6 +2725,7 @@ function close_dialog() {
 }
 
 /**
+ * stats_info
  * Framework for the statistical query info box
  * @param which type of information requested
  */
@@ -2741,6 +2764,7 @@ function stats_info(which) {
 }
 
 /**
+ * get_stat_body
  * Gets the info body for specified type (which)
  * @param which the type of information requested
  * @returns {string}
@@ -2828,6 +2852,7 @@ const last_step_template = "<div class='popover tour'>" +
 let tour;
 
 /**
+ * init_tour
  * Initializes the tour steps and actions
  */
 function init_tour() {
@@ -2935,6 +2960,7 @@ function init_tour() {
 }
 
 /**
+ * open_tour
  * Opens tour and removes the localStorage key
  */
 function open_tour() {
@@ -3031,7 +3057,7 @@ $(function () {
     }
 
     load_queried_layers();
-    $("#dialog").dialog('close');
+    close_dialog();
     $("button.ui-button.ui-corner-all.ui-widget.ui-button-icon-only.ui-dialog-titlebar-close").bind("touchstart", function () {
         $("#dialog").dialog('close');
     });
@@ -3039,6 +3065,7 @@ $(function () {
 });
 
 /**
+ * load_queried_layers
  * Support for layers activated via query string
  */
 function load_queried_layers() {
@@ -3060,6 +3087,7 @@ function load_queried_layers() {
 }
 
 /**
+ * confirm_animation
  * Support for layers activated via query string
  */
 function confirm_animation() {
@@ -3077,6 +3105,7 @@ function confirm_animation() {
 }
 
 /**
+ * layer_filter
  * Helper function to filter layers by user input
  * in the text field layer_filter
  */
@@ -3097,6 +3126,10 @@ function layer_filter() {
     }
 }
 
+/**
+ * review_query
+ * Adds all selected queries to the UI for review by the user
+ */
 function review_query() {
     const checkout_list = $("#checkout_list");
     checkout_list.empty();
@@ -3144,16 +3177,6 @@ function review_query() {
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
-            //requestTypeSelect
-            //Type of Request
-            //operationmenu
-
-
-            // for (let pair of formData.entries()) {
-            //
-            //     console.log(pair[0] + ', ' + pair[1]);
-            // }
-
             checkout_list.append("<hr>");
         }
     }
@@ -3162,6 +3185,14 @@ function review_query() {
     toggle_query_tabs();
 }
 
+/**
+ * get_form_group
+ * Helper function to build form groups
+ * @param label
+ * @param element_id
+ * @param text
+ * @returns {string}
+ */
 function get_form_group(label, element_id, text) {
     let form_group = '<div class="form-group panel-buffer">';
     form_group += '<label for="' + element_id + '">' + label + '</label>';
@@ -3169,11 +3200,20 @@ function get_form_group(label, element_id, text) {
     return form_group;
 }
 
+/**
+ * toggle_query_tabs
+ * Toggles the tabs
+ */
 function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
 }
 
+/**
+ * Checks to see if the cookie is set
+ * @param name
+ * @returns {null}
+ */
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== '') {
@@ -3190,19 +3230,15 @@ function getCookie(name) {
     return cookieValue;
 }
 
-const csrftoken = getCookie('csrftoken');
-
 /**
- * touch support
+ * touch support, this adds missing events to help enable
+ * a mobile friendly UX
  */
 (function ($) {
-
     $.support.touch = typeof Touch === 'object';
-
     if (!$.support.touch) {
         return;
     }
-
     const proto = $.ui.mouse.prototype,
         _mouseInit = proto._mouseInit;
 
@@ -3242,5 +3278,4 @@ const csrftoken = getCookie('csrftoken');
             event.pageY = target.clientY;
         }
     });
-
 })(jQuery);

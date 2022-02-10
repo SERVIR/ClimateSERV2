@@ -60,6 +60,18 @@
                         dataset: "{{ layer.dataset_type }}",
                         app_id: "{{ enslayer.api_id }}",
                         units: "{{ enslayer.units }}"
+                    });
+                    client_layers.push({
+                        title: "{{ enslayer.title }}",
+                        url: "{{ enslayer.url }}",
+                        attribution: "{{ enslayer.attribution }}",
+                        layers: "{{ enslayer.layers }}",
+                        styles: "{{ enslayer.default_style }}",
+                        colorrange: "{{ enslayer.default_color_range }}",
+                        id: "{{ enslayer.ui_id }}",
+                        dataset: "{{ layer.dataset_type }}",
+                        app_id:  (parseInt("{{ enslayer.api_id }}") + 1).toString(),
+                        units: "{{ enslayer.units }}"
                     })
                 {% endfor %}
             {% else %}
@@ -159,7 +171,7 @@
                             </div>
                             <div class="btn-group d-flex">
                                 <button
-                                        id="btnAOIdraw"
+                                        id="btnAOIDraw"
                                         class="tablinks w-100"
                                         title="Draw AOI on map"
                                         onclick="selectAOI('draw')">
@@ -324,7 +336,7 @@
                                                 aria-hidden="true"
                                                 style="float: right;"></i>
                                         <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
-                                                onchange="filter_datasets_by(this.value)">
+                                                onchange="filter_datasets_by()">
                                             <option value="observation">Observation</option>
                                             <option value="model-forecast">Model Forecast</option>
 
@@ -797,13 +809,20 @@
             </label>
             <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
             </select><br>
-            {#            <label>#}
-            {#                Out of range values#}
-            {#            </label>#}
-            {#            <select class="style_table form-control" name="above_below" id="above_below" style="width: 100%">#}
-            {#                <option value="extend">Extend</option>#}
-            {#                <option value="transparent">Transparent</option>#}
-            {#            </select><br>#}
+                        <label for="above_max">
+                            Above Max Color
+                        </label>
+                        <select class="style_table form-control" name="above_max" id="above_max" style="width: 100%">
+                            <option value="extend">Extend</option>
+                            <option value="transparent">Transparent</option>
+                        </select><br>
+            <label for="below_min">
+                            Below Min Color
+                        </label>
+                        <select class="style_table form-control" name="below_min" id="below_min" style="width: 100%">
+                            <option value="extend">Extend</option>
+                            <option value="transparent">Transparent</option>
+                        </select><br>
             <button id="applyStylebtn" style="
               float: right;
           ">

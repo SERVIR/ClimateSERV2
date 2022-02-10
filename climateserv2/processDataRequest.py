@@ -202,6 +202,7 @@ def start_processing(request):
             print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
     # Terminating main process
+    jobs.clear()
     sys.exit(1)
 
 
