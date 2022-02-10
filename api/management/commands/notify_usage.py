@@ -32,6 +32,7 @@ class Command(BaseCommand):
             free_str = str(round(free, 2)) + funit
             used_str = str(round(size, 2)) + sunit
             try:
+                # if used size in bytes exceeds threshold size in bytes for a path, an email will be sent notifying the available space
                 if bsize > bthreshold:
                     SUBJECT = "ClimateSERV2.0 memory threshold reached!!"
                     TEXT = "This email informs you that the memory usage in the path "+l.directory+" has reached "+used_str+" and the free space available is "+free_str+"."
@@ -48,6 +49,7 @@ class Command(BaseCommand):
                         for us in user_arr:
                             if str(us)==str(user.username):
                                 storage_user_arr.append(user.email)
+                    #retrieving admin credentials that were given in the Django admin interface with username as "email_admin"
                     for user in User.objects.all():
                         if str(user.username) == "email_admin":
                             for p in Profile.objects.all():
@@ -56,6 +58,7 @@ class Command(BaseCommand):
                                     admin.append(p.gmail_password)
                                     break
                             break
+                    # Send storage alert emails for all subscribed users
                     for storage_user in storage_user_arr:
                         mail = smtplib.SMTP('smtp.gmail.com', 587)
                         mail.ehlo()

@@ -5,7 +5,6 @@ try:
 except:
     import parameters as params
 import time
-import os
 
 # To write to a log file based on log level
 class StreamToLogger(object):
