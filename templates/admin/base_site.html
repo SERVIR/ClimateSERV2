@@ -2,9 +2,9 @@
 
 {% block title %}ClimateSERV site admin{% endblock %}
 
-{% block branding %}
-    {% load static %}
-    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
+{% block extrahead %}
+       {% load static %}
+<link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'frontend/img/apple-touch-icon.png' %}">
@@ -64,6 +64,11 @@
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"
     ></script>
+{% endblock %}
+
+{% block branding %}
+    {% load static %}
+
 
 
     <header>
