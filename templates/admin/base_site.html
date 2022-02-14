@@ -3,8 +3,8 @@
 {% block title %}ClimateSERV site admin{% endblock %}
 
 {% block extrahead %}
-       {% load static %}
-<link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
+    {% load static %}
+    <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
     <link rel='icon' href="{% static 'frontend/img/favicon.ico' %}" type='image/x-icon'/>
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'frontend/img/apple-touch-icon.png' %}">
@@ -39,16 +39,20 @@
             background-color: unset;
             padding: unset;
         }
+
         strong {
             color: #758055;
         }
-        #user-tools{
+
+        #user-tools {
             margin-right: 10px;
         }
-        #user-tools a:focus, #user-tools a:hover{
+
+        #user-tools a:focus, #user-tools a:hover {
             color: #758055;
         }
-        .submit-row a.deletelink{
+
+        .submit-row a.deletelink {
             height: 35px;
         }
     </style>
@@ -108,37 +112,39 @@
     </header>
 
     <script type="application/javascript">
-    function open_aoi(which){
-        window.open(
-              window.location.origin + "/display-aoi/" + which, "_blank");
-    }
-    function run_etl(which) {
-        $.ajax({
-            type:"POST",
-            url: "/api/run_etl/",
-           data:{
-                "uuid":document.getElementById("id_etl").options[document.getElementById("id_etl").selectedIndex].value,
-                "start_year":document.getElementById("id_start_year").value,
-                "end_year":document.getElementById("id_end_year").value,
-                "start_month":document.getElementById("id_start_month").value,
-                "end_month":document.getElementById("id_end_month").value,
-                "start_day":document.getElementById("id_start_day").value,
-                "end_day":document.getElementById("id_end_day").value,
-                "from_last_processed":document.getElementById("id_from_last_processed").checked,
-                "merge":document.getElementById("id_merge_periodically").checked,
-                "etl":document.getElementById("id_etl").options[document.getElementById("id_etl").selectedIndex].text
+        function open_aoi(which) {
+            window.open(
+                window.location.origin + "/display-aoi/" + which, "_blank");
+        }
 
-            }
-        }).done(function (data) {
+        function run_etl(which) {
+            $.ajax({
+                type: "POST",
+                url: "/api/run_etl/",
+                data: {
+                    "uuid": document.getElementById("id_etl").options[document.getElementById("id_etl").selectedIndex].value,
+                    "start_year": document.getElementById("id_start_year").value,
+                    "end_year": document.getElementById("id_end_year").value,
+                    "start_month": document.getElementById("id_start_month").value,
+                    "end_month": document.getElementById("id_end_month").value,
+                    "start_day": document.getElementById("id_start_day").value,
+                    "end_day": document.getElementById("id_end_day").value,
+                    "from_last_processed": document.getElementById("id_from_last_processed").checked,
+                    "merge": document.getElementById("id_merge_periodically").checked,
+                    "etl": document.getElementById("id_etl").options[document.getElementById("id_etl").selectedIndex].text
+
+                }
+            }).done(function (data) {
+                alert(data);
+
+            })
+        }
+
+        function add_storage(which) {
+
             alert(data);
 
-        })
-    }
-    function add_storage(which) {
-
-            alert(data);
-
-    }
+        }
     </script>
 
 {% endblock %}
