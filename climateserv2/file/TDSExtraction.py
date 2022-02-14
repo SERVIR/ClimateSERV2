@@ -241,15 +241,20 @@ def get_nmme_data(total_bounds):
     return (nmme_values).tolist(), LTA
 
 
-def get_monthlyanalysis_dates_bounds(geom):
-    # Get start date and end date for NMME from netCDf file
-    nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
-                              chunks={'time': 16, 'longitude': 128, 'latitude': 128})
+def get_date_range_from_nc_file(nc_file):
     start_date = nc_file["time"].values.min()
     t = pd.to_datetime(str(start_date))
     start_date = t.strftime('%Y-%m-%d')
     ed = datetime.strptime(start_date, '%Y-%m-%d') + timedelta(days=180)
     end_date = ed.strftime('%Y-%m-%d')
+    return start_date, end_date
+
+
+def get_monthlyanalysis_dates_bounds(geom):
+    # Get start date and end date for NMME from netCDf file
+    nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
+                              chunks={'time': 16, 'longitude': 128, 'latitude': 128})
+    start_date, end_date = get_date_range_from_nc_file(nc_file)
 
     month_list = [i.strftime("%Y-%m-%d") for i in pd.date_range(start=start_date, end=end_date, freq='MS')]
     month_nums = [int(i.strftime("%m")) for i in pd.date_range(start=start_date, end=end_date, freq='MS')]

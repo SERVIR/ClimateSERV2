@@ -3,7 +3,7 @@ import logging
 import multiprocessing
 import os
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime
 import pandas as pd
 import xarray as xr
 from django.apps import apps
@@ -13,28 +13,19 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import climateserv2.requestLog as requestLog
-from api.models import Track_Usage, Run_ETL
+from api.models import Track_Usage
 from . import parameters as params
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .processtools import uutools as uutools
 from django.middleware.csrf import CsrfViewMiddleware
+from .file import TDSExtraction
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
-data = Run_ETL.objects.all()
-for i in range(len(data)):
-    if i > 0 and data[i].from_last_processed == True:
-        data[i].start_month = data[i - 1].start_month
-        data[i].end_month = data[i - 1].end_month
-        data[i].start_year = data[i - 1].start_year
-        data[i].end_year = data[i - 1].end_year
-        data[i].start_day = data[i - 1].start_day
-        data[i].end_day = data[i - 1].end_day
-        data[i].save()
 
 
 # To read a results file from the filesystem based on uuid
@@ -49,49 +40,33 @@ def read_results(uid):
 # To read progress from the database
 def read_progress(uid):
     try:
-        res = Request_Progress.objects.get(request_id=str(uid))
-        return res.progress
+        return (Request_Progress.objects.get(request_id=str(uid))).progress
     except Exception as e:
         print(e)
         return "-1"
 
 
+def get_id_from_output(output):
+    try:
+        output_json = json.loads(output)
+        if "unique_id" in output_json:
+            return output_json["unique_id"]
+        elif "uid" in output_json:
+            return output_json["uid"]
+        else:
+            return json.loads(output)[0]
+    except (json.decoder.JSONDecodeError, IndexError):
+        return uutools.getUUID()
+
+
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
-    http_response = None
-    request_id = None
-    if request.method == 'POST':
-        try:
-            if "id" in request.POST:
-                request_id = request.POST["id"]
-            else:
-                request_id = json.loads(output)[0]
-        except ValueError:
-            error_msg = "ERROR loading json to get request_id"
-            logger.error(error_msg)
-        try:
-            callback = request.POST["callback"]
-            http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
-        except KeyError:
-            http_response = HttpResponse(output)
-    if request.method == 'GET':
-        if "id" in request.GET:
-            request_id = request.GET["id"]
-        else:
-            try:
-                output_json = json.loads(output)
-                if "unique_id" in output_json:
-                    request_id = output_json["unique_id"]
-                else:
-                    request_id = json.loads(output)[0]
-            except:
-                request_id = uutools.getUUID()
-        try:
-            callback = request.GET["callback"]
-            http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
-        except KeyError:
-            http_response = HttpResponse(output)
-
+    request_id = request.POST.get("id", request.GET.get("id", get_id_from_output(output)))
+    callback = request.POST.get("callback", request.GET.get("callback"))
+    if callback:
+        http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
+    else:
+        http_response = HttpResponse(output)
     try:
         if http_response.status_code == 200:
             track_usage = Track_Usage.objects.get(unique_id=request_id)
@@ -101,7 +76,7 @@ def process_callback(request, output, content_type):
             track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.status = "Fail"
             track_usage.save()
-    except DatabaseError:
+    except (DatabaseError, Track_Usage.DoesNotExist):
         error_msg = "ERROR saving usage object to database"
         logger.error(error_msg)
     return http_response
@@ -115,37 +90,14 @@ def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_
     date_time_late = datetime.strptime(str(end_year) + "_" + str(end_month) + "_" + str(end_day),
                                        date_time_format)
 
-    ret_logs = requestLog.get_RequestData_ByRange(date_time_early, date_time_late)
+    ret_logs = requestLog.Request_Log.get_RequestData_ByRange(date_time_early, date_time_late)
     if len(ret_logs) > 0:
         error_msg = "ERROR get_LogRequests_ByRange: There was an error trying to get the logs."
         logger.error(error_msg)
     return ret_logs
 
 
-# To get a list of all request logs within a specified date range
-@csrf_exempt
-def get_request_logs(request):
-    the_logs = []
-    try:
-        request_token = request.GET["tn"]
-        if request_token == global_CONST_LogToken:
-            start_year = request.GET["sYear"]
-            start_month = request.GET["sMonth"]
-            start_day = request.GET["sDay"]
-            end_year = request.GET["eYear"]
-            end_month = request.GET["eMonth"]
-            end_day = request.GET["eDay"]
-            the_logs = get_log_requests_by_range(start_year, start_month, start_day, end_year, end_month, end_day)
-    except MultiValueDictKeyError:
-        ret_obj = {
-            "error": "Error Processing getRequestLogs (This error message has been simplified for security reasons.  "
-                     "Please contact the website owner for more information) "
-        }
-        the_logs.append(ret_obj)
-    return process_callback(request, json.dumps(the_logs), "application/json")
-
-
-# To get a list of all of the parameter types
+# To get a list of all the parameter types
 @csrf_exempt
 def get_parameter_types(request):
     print("Getting Parameter Types")
@@ -153,7 +105,7 @@ def get_parameter_types(request):
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
 
 
-# To get a list of shaoefile feature types supported by the system
+# To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
@@ -287,8 +239,8 @@ def get_file_for_job_id(request):
 # To get list of all climate change scenario info
 @csrf_exempt
 def get_climate_scenario_info(request):
+    unique_id = uutools.getUUID()
     try:
-        unique_id = uutools.getUUID()
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
@@ -304,11 +256,7 @@ def get_climate_scenario_info(request):
         chunks={'time': 16, 'longitude': 128,
                 'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
 
-    start_date = nc_file["time"].values.min()
-    t = pd.to_datetime(str(start_date))
-    start_date = t.strftime('%Y-%m-%d')
-    ed = datetime.strptime(start_date, '%Y-%m-%d') + timedelta(days=180)
-    end_date = ed.strftime('%Y-%m-%d')
+    start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
     is_error = False
     climate_model_datatype_capabilities_list = [
         {
@@ -358,62 +306,44 @@ def run_etl(request):
                 merge_option = "monthly"
             else:
                 merge_option = "yearly"
-        if merge_option == "monthly":
-            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
-                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
-                                   start_month,
-                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
-            p1.wait()
-            subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year, "--MONTH_MM",
-                             start_month])
-        elif merge_option == "yearly":
-            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                   "--etl_dataset_uuid", str(request.POST["uuid"]),
-                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
-                                   start_month,
-                                   "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
-            p1.wait()
-            subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", start_year])
-        elif from_last_processed == "true":
-            obj = Run_ETL.objects.last()
+        if from_last_processed == "true":
             if merge_option == "monthly":
-                p = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
-                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                                      obj.start_month,
-                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
-                                      obj.end_day])
+                print("chirp should be here!")
+                p = subprocess.Popen(
+                    [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
+                     "--etl_dataset_uuid", str(uuid), "--from_last_processed", "--merge_monthly"])
                 p.wait()
-                subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
-                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year,
-                                 "--MONTH_MM",
-                                 obj.start_month])
             elif merge_option == "yearly":
-                p = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                      "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY",
-                                      obj.start_year, "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                                      obj.start_month,
-                                      "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
-                                      obj.end_day])
+                print("processing yearly merge loop")
+                p = subprocess.Popen(
+                    [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
+                     "--etl_dataset_uuid", str(uuid), "--from_last_processed",  "--merge_yearly"])
                 p.wait()
-                subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "merge_etl_dataset",
-                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--YEAR_YYY", obj.start_year])
             else:
                 subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                 "--etl_dataset_uuid", str(request.POST["uuid"]), "--START_YEAR_YYY", obj.start_year,
-                                 "--END_YEAR_YYY", obj.end_year, "--START_MONTH_MM",
-                                 obj.start_month,
-                                 "--END_MONTH_MM", obj.end_month, "--START_DAY_DD", obj.start_day, "--END_DAY_DD",
-                                 obj.end_day])
+                                 "--etl_dataset_uuid", str(uuid), "--from_last_processed"])
+        elif merge_option == "monthly":
+            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
+                                   "--etl_dataset_uuid", str(uuid),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month, "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day,
+                                   "--END_DAY_DD", end_day, "--merge_monthly"])
+            p1.wait()
+        elif merge_option == "yearly":
+            p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
+                                   "--etl_dataset_uuid", str(uuid),
+                                   "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                                   start_month, "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day,
+                                   "--END_DAY_DD", end_day,  "--merge_yearly"])
+            p1.wait()
         else:
-            proc = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                             "--etl_dataset_uuid", str(request.POST["uuid"]),
-                             "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
-                             start_month,
-                             "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            proc = subprocess.Popen(
+                [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
+                 "--etl_dataset_uuid", str(uuid),
+                 "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
+                 start_month,
+                 "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
+            proc.wait()
 
     return "success"
 
@@ -437,87 +367,49 @@ def submit_data_request(request):
     calculation = None
     feature_ids_list = []
     feature_list = False
+    operation_type = None
 
-    if request.method == 'POST':
-        datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
-        # Get geometry from parameter or from shapefile
-        geometry = None
-        if request.POST.get("layerid") is not None:
-            feature_ids_list = []
-            try:
-                layer_id = str(request.POST["layerid"])
-                feature_ids_list = get_feature_ids_list(request)
-                feature_list = True
-                logger.debug("submitDataRequest: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
-            except KeyError:
-                logger.warning("issue with finding geometry")
-                error.append(
-                    "Error finding geometry: layerid:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
+    datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
+    calculation_string = request.POST.get("operationtype", request.GET.get("operationtype"))
+    calculation = params.parameters[int(calculation_string)][2]
+    # Get geometry from parameter or from shapefile
+    geometry = None
+    layer_id_request = request.POST.get("layerid", request.GET.get("layerid", None))
+    if layer_id_request is not None:
+        feature_ids_list = []
+        try:
+            layer_id = str(layer_id_request)
+            feature_ids_list = get_feature_ids_list(request)
+            feature_list = True
+            logger.debug("submitDataRequest: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
+        except KeyError:
+            logger.warning("issue with finding geometry")
+            error.append(
+                "Error finding geometry: layerid:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
+    else:
+        try:
+            polygon_string = request.POST.get("geometry", request.GET.get("geometry", None))
+            geometry = decodeGeoJSON(polygon_string)
+        except KeyError:
+            logger.warning("Problem with geometry")
+            error.append("problem decoding geometry " + polygon_string)
+
+        if geometry is None:
+            logger.warning("Problem in that the geometry is a problem")
         else:
-            try:
-                polygon_string = request.POST["geometry"]
-            # create geometry
-            except KeyError:
-                logger.warning("Problem with geometry")
-                error.append("problem decoding geometry " + polygon_string)
-
-            if geometry is None:
-                logger.warning("Problem in that the geometry is a problem")
-            else:
-                logger.warning(geometry)
-        try:
-            operation_type = int(request.POST["operationtype"])
-        except KeyError:
-            logger.warning("issue with operation_type" + str(request))
-            error.append("Error with operation_type")
-        calculation = params.parameters[int(request.POST["operationtype"])][2]
-
-    if request.method == 'GET':
-        datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
-        try:
-            calculation = operation_type = params.parameters[int(request.GET["operationtype"])][2]
-        except KeyError:
-            logger.warning("issue with operation_type" + str(request))
-
-        # Get geometry from parameter Or extract from shapefile
-        geometry = None
-        if "layerid" in request.GET:
-            try:
-                layer_id = str(request.GET["layerid"])
-                feature_ids_list = get_feature_ids_list(request)
-                feature_list = True
-                logger.debug("submitDataRequest: Loaded feature ids, featureids: " + str(feature_ids_list))
-
-            except KeyError:
-                logger.warning("issue with finding geometry")
-                error.append(
-                    "Error finding geometry: layerid:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
-
-        else:
-            try:
-                polygon_string = request.GET["geometry"]
-                geometry = decodeGeoJSON(polygon_string)
-            # create geometry
-            except KeyError:
-                logger.warning("Problem with geometry")
-                error.append("problem decoding geometry ")
-
-            if geometry is None:
-                logger.warning("Problem in that the geometry is a problem")
-            else:
-                logger.warning(geometry)
-        try:
-            operation_type = int(request.GET["operationtype"])
-        except KeyError:
-            logger.warning("issue with operation_type" + str(request))
-            error.append("Error with operation_type")
+            logger.warning(geometry)
+    try:
+        operation_type = int(request.POST.get("operationtype", request.GET.get("operationtype", None)))
+    except KeyError:
+        logger.warning("issue with operation_type" + str(request))
+        error.append("Error with operation_type")
 
     unique_id = uutools.getUUID()
     logger.info("Submitting " + unique_id)
     # Submit requests to the ipcluster service to get data
 
     if len(error) == 0:
-        json_obj = {}
+        # json_obj = {}
         dictionary = {'uniqueid': unique_id,
                       'datatype': datatype,
                       'begintime': begin_time,
@@ -532,7 +424,8 @@ def submit_data_request(request):
             dictionary['geometry'] = polygon_string
             try:
                 if dictionary['geometry'].index('FeatureCollection') > -1:
-                    json_obj = json.loads(dictionary['geometry'])
+                    print("all is well")
+                    # json_obj = json.loads(dictionary['geometry'])
             except ValueError:
                 dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
                                                      "features": [
@@ -545,7 +438,7 @@ def submit_data_request(request):
         # which in turn could split the work into yearly increments
         # then start a new process for each, or we could do the splitting here
         # and start all the processes, i think the first idea is better this
-        # way we can give the user some progress feedback.  Inside of the
+        # way we can give the user some progress feedback.  Inside the
         # processes each of them would be able to update progress and when they
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
@@ -608,97 +501,35 @@ def submit_monthly_rainfall_analysis_request(request):
     feature_ids_list = []
     polygon_string = None
     layer_id = ""
-    if request.method == 'POST':
-        seasonal_start_date, seasonal_end_date = validate_seasonal_dates(request, error)
-        if "layerid" in request.POST:
-            try:
-                layer_id = str(request.POST["layerid"])
-                feature_ids_list = get_feature_ids_list(request)
-                feature_list = True
-                logger.debug("getMonthlyRainfallAnalysis: Loaded feature ids, feature_ids: " + str(feature_ids_list))
 
-            except KeyError:
-                logger.warning("issue with finding geometry")
-                error.append(
-                    "Error with finding geometry: layer_id:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
+    seasonal_start_date, seasonal_end_date = validate_seasonal_dates(request, error)
+
+    # Get geometry from parameter Or extract from shapefile
+    geometry = None
+    layer_id_request = request.POST.get("layerid", request.GET.get("layerid", None))
+    if layer_id_request is not None:
+        feature_ids_list = []
+        try:
+            layer_id = str(layer_id_request)
+            feature_ids_list = get_feature_ids_list(request)
+            feature_list = True
+            logger.debug("submitDataRequest: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
+        except KeyError:
+            logger.warning("issue with finding geometry")
+            error.append(
+                "Error finding geometry: layerid:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
+    else:
+        try:
+            polygon_string = request.POST.get("geometry", request.GET.get("geometry", None))
+            geometry = decodeGeoJSON(polygon_string)
+        except KeyError:
+            logger.warning("Problem with geometry")
+            error.append("problem decoding geometry " + polygon_string)
+
+        if geometry is None:
+            logger.warning("Problem in that the geometry is a problem")
         else:
-            try:
-                polygon_string = request.POST["geometry"]
-                geometry = decodeGeoJSON(polygon_string)
-            # create geometry
-            except KeyError:
-                logger.warning("Problem with geometry")
-                error.append("problem decoding geometry " + polygon_string)
-                example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,' \
-                                         '19.642587534013032],[32.25585937500001,19.311143355064658],' \
-                                         '[32.25585937500001,14.944784875088374],[23.994140624999996,' \
-                                         '15.284185114076436],[24.521484374999996,19.642587534013032]]]} '
-                error.append(
-                    "problem decoding geometry.  "
-                    "Maybe missing param: 'geometry'.  Example of geometry param: " + example_geometry_param)
-
-            if geometry is None:
-                logger.warning("Problem in that the geometry is a problem")
-            else:
-                logger.warning(geometry)
-
-        unique_id = uutools.getUUID()
-        logger.info("Submitting (getMonthlyRainfallAnalysis) " + unique_id)
-
-        # Submit requests to the ipcluster service to get data
-        if len(error) == 0:
-            dictionary = {'uniqueid': unique_id,
-                          'custom_job_type': custom_job_type,
-                          'seasonal_start_date': seasonal_start_date,
-                          'seasonal_end_date': seasonal_end_date
-                          }
-            if feature_list:
-                dictionary['layerid'] = layer_id
-                dictionary['featureids'] = feature_ids_list
-            else:
-                dictionary['geometry'] = polygon_string
-            return process_callback(request, json.dumps([unique_id]), "application/json")
-        else:
-            return process_callback(request, json.dumps(error), "application/json")
-
-    if request.method == 'GET':
-        seasonal_start_date, seasonal_end_date = validate_seasonal_dates(request, error)
-
-        # Get geometry from parameter Or extract from shapefile
-        geometry = None
-        feature_list = False
-        if "layerid" in request.GET:
-            try:
-                layer_id = str(request.GET["layerid"])
-                feature_ids_list = get_feature_ids_list(request)
-                feature_list = True
-                logger.debug(
-                    "getMonthlyRainfallAnalysis: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
-            except KeyError:
-                logger.warning("issue with finding geometry")
-                error.append(
-                    "Error finding geometry: layer_id:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
-
-        else:
-            polygon_string = request.GET["geometry"]
-            try:
-                geometry = decodeGeoJSON(polygon_string)
-            # create geometry
-            except KeyError:
-                logger.warning("Problem with geometry")
-                error.append("problem decoding geometry " + polygon_string)
-                example_geometry_param = '{"type":"Polygon","coordinates":[[[24.521484374999996,' \
-                                         '19.642587534013032],[32.25585937500001,19.311143355064658],' \
-                                         '[32.25585937500001,14.944784875088374],[23.994140624999996,' \
-                                         '15.284185114076436],[24.521484374999996,19.642587534013032]]]} '
-                error.append(
-                    "problem decoding geometry. Maybe missing param: 'geometry'.  "
-                    "Example of geometry param: " + example_geometry_param)
-
-            if geometry is None:
-                logger.warning("Problem in that the geometry is a problem")
-            else:
-                logger.warning(geometry)
+            logger.warning(geometry)
 
     unique_id = uutools.getUUID()
     logger.info("Submitting (getMonthlyRainfallAnalysis) " + unique_id)
@@ -717,7 +548,7 @@ def submit_monthly_rainfall_analysis_request(request):
         else:
             dictionary['geometry'] = polygon_string
             try:
-                json_geom = json.loads(dictionary['geometry'])
+                json_geom = json.loads(str(dictionary['geometry']))
             except json.decoder.JSONDecodeError:
                 dictionary['geometry'] = {"type": "FeatureCollection",
                                           "features": [{"type": "Feature", "properties": {}, "geometry": json_geom}]}
@@ -779,8 +610,12 @@ def validate_seasonal_dates(request, error):
 
 
 def validate_vars(request, error):
+    var = ""
+    datatype = None
+    begin_time = None
+    end_time = None
+    interval_type = None
     try:
-        var = ""
         var = "datatype"
         datatype = int(request.GET["datatype"]) if request.method == 'GET' else int(request.POST["datatype"])
         var = "begintime"

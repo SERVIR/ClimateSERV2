@@ -6,7 +6,8 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.db.models.functions import Now
 
-from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, ETL_PipelineRunService
+from api.services import Config_SettingService, ETL_DatasetService, ETL_GranuleService, ETL_LogService, \
+    ETL_PipelineRunService
 
 from ..models import Config_Setting, ETL_Dataset, Storage_Review, Profile
 
@@ -26,24 +27,24 @@ from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
 
 from . import etl_exceptions
 
-class ETL_Pipeline():
 
+class ETL_Pipeline():
     # Pipeline Run - UUID - What is the Database UUID for this ETL Pipeline Run Instance
     ETL_PipelineRun__UUID = ""  # Set when a new Database object is created.
     start_time = None
     end_time = None
     # Pipeline Config Params - Set Externally (only the etl_dataset_uuid param is actually required.  The rest are optional)
-    etl_dataset_uuid            = ""
-    no_duplicates               = True
-    from_last_processed         = False
-    merge_yearly                = False
-    merge_monthly               = False
-    START_YEAR_YYYY             = ""
-    END_YEAR_YYYY               = ""
-    START_MONTH_MM              = ""
-    END_MONTH_MM                = ""
-    START_DAY_DD                = ""
-    END_DAY_DD                  = ""
+    etl_dataset_uuid = ""
+    no_duplicates = True
+    from_last_processed = False
+    merge_yearly = False
+    merge_monthly = False
+    START_YEAR_YYYY = ""
+    END_YEAR_YYYY = ""
+    START_MONTH_MM = ""
+    END_MONTH_MM = ""
+    START_DAY_DD = ""
+    END_DAY_DD = ""
     count = 0
     # Pipeline - Dataset Config Options - Set by Reading Dataset Item from the Database
     dataset_name = ""
@@ -86,30 +87,30 @@ class ETL_Pipeline():
         retObj = {}
 
         # Pipeline Run UUID
-        retObj["ETL_PipelineRun__UUID"]     = str(self.ETL_PipelineRun__UUID).strip()
+        retObj["ETL_PipelineRun__UUID"] = str(self.ETL_PipelineRun__UUID).strip()
 
         # Pipeline Config Options
-        retObj["etl_dataset_uuid"]          = str(self.etl_dataset_uuid).strip()
+        retObj["etl_dataset_uuid"] = str(self.etl_dataset_uuid).strip()
         # Year Range
-        retObj["START_YEAR_YYYY"]           = str(self.START_YEAR_YYYY).strip()
-        retObj["END_YEAR_YYYY"]             = str(self.END_YEAR_YYYY).strip()
+        retObj["START_YEAR_YYYY"] = str(self.START_YEAR_YYYY).strip()
+        retObj["END_YEAR_YYYY"] = str(self.END_YEAR_YYYY).strip()
         # Month Range
-        retObj["START_MONTH_MM"]    = str(self.START_MONTH_MM).strip()
-        retObj["END_MONTH_MM"]      = str(self.END_MONTH_MM).strip()
+        retObj["START_MONTH_MM"] = str(self.START_MONTH_MM).strip()
+        retObj["END_MONTH_MM"] = str(self.END_MONTH_MM).strip()
         # Day Range
-        retObj["START_DAY_DD"]      = str(self.START_DAY_DD).strip()
-        retObj["END_DAY_DD"]        = str(self.END_DAY_DD).strip()
+        retObj["START_DAY_DD"] = str(self.START_DAY_DD).strip()
+        retObj["END_DAY_DD"] = str(self.END_DAY_DD).strip()
 
         # Pipeline - Dataset Config Options - Set by Reading From the Database
-        retObj["dataset_name"]              = str(self.dataset_name).strip()
-        retObj["dataset_JSONable_Object"]   = str(self.dataset_JSONable_Object).strip()
+        retObj["dataset_name"] = str(self.dataset_name).strip()
+        retObj["dataset_JSONable_Object"] = str(self.dataset_JSONable_Object).strip()
 
-        retObj["new_etl_log_ids__EVENTS"]   = str(self.new_etl_log_ids__EVENTS).strip()
-        retObj["new_etl_log_ids__ERRORS"]   = str(self.new_etl_log_ids__ERRORS).strip()
+        retObj["new_etl_log_ids__EVENTS"] = str(self.new_etl_log_ids__EVENTS).strip()
+        retObj["new_etl_log_ids__ERRORS"] = str(self.new_etl_log_ids__ERRORS).strip()
 
-        retObj["new_etl_granule_ids"]               = str(self.new_etl_granule_ids).strip()
-        retObj["new_etl_granule_ids__ERRORS"]       = str(self.new_etl_granule_ids__ERRORS).strip()
-        retObj["affected_Available_Granule_ids"]    = str(self.affected_Available_Granule_ids).strip()
+        retObj["new_etl_granule_ids"] = str(self.new_etl_granule_ids).strip()
+        retObj["new_etl_granule_ids__ERRORS"] = str(self.new_etl_granule_ids__ERRORS).strip()
+        retObj["affected_Available_Granule_ids"] = str(self.affected_Available_Granule_ids).strip()
 
         return retObj
 
@@ -121,24 +122,31 @@ class ETL_Pipeline():
         if not os.path.exists(dir_path):
             try:
                 os.makedirs(dir_path)
-                activity_event_type     = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_DIRECTORY_CREATED", default_or_error_return_value="Directory Created")
-                activity_description    = "New Directory created at path: " + str(dir_path)
-                additional_json         = self.to_JSONable_Object()
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_DIRECTORY_CREATED",
+                    default_or_error_return_value="Directory Created"))
+                activity_description = "New Directory created at path: " + str(dir_path)
+                additional_json = self.to_JSONable_Object()
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
                 ret_IsError = False
             except:
                 # Log the Error (Unable to create a new directory)
                 sysErrorData = str(sys.exc_info())
-                activity_event_type = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description = "Unable to create new directory at: " + str(dir_path) + ".  Sys Error Message: " + str(sysErrorData)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "Unable to create new directory at: " + str(
+                    dir_path) + ".  Sys Error Message: " + str(sysErrorData)
                 additional_json = self.to_JSONable_Object()
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 ret_IsError = True
         # END OF        if not os.path.exists(dir_path):
         return ret_IsError
 
-    def sendNotification(self,activity_description):
+    def sendNotification(self, activity_description):
         user_arr = []
         etl_user_arr = []
         admin = []
@@ -173,12 +181,13 @@ class ETL_Pipeline():
     # ###########################################################################################
     # Standard Function to record Events to the database
     # Wrapper for creating a row in the ETL Log Table (Logging Events) - Defaults are set
-    def log_etl_event(self, activity_event_type="default_activity", activity_description="", etl_granule_uuid="", is_alert=False, additional_json={}):
+    def log_etl_event(self, activity_event_type="default_activity", activity_description="", etl_granule_uuid="",
+                      is_alert=False, additional_json={}):
         status = "In Progress"
         if " Completed for Dataset" in activity_description:
-            self.count=self.count+1
+            self.count = self.count + 1
             print(self.count)
-            if self.count ==2:
+            if self.count == 2:
                 status = "Complete"
         else:
             status = "In Progress"
@@ -191,7 +200,7 @@ class ETL_Pipeline():
             is_alert=is_alert,
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
-            status = status,
+            status=status,
             start_time=self.start_time,
             end_time=self.end_time
         )
@@ -199,7 +208,8 @@ class ETL_Pipeline():
 
     # Standard Function to record Errors to the database
     # Wrapper for creating a row in the ETL Log Table but with Error info set and storing the Error ID Row
-    def log_etl_error(self, activity_event_type="default_error", activity_description="an error occurred", etl_granule_uuid="", is_alert=True, additional_json={}):
+    def log_etl_error(self, activity_event_type="default_error", activity_description="an error occurred",
+                      etl_granule_uuid="", is_alert=True, additional_json={}):
         status = "Failed"
         self.sendNotification(activity_description)
         etl_log_row_uuid = ETL_LogService.create_etl_log_row(
@@ -211,8 +221,8 @@ class ETL_Pipeline():
             is_alert=is_alert,
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
-            status = status,
-            start_time =  self.start_time,
+            status=status,
+            start_time=self.start_time,
             end_time=self.end_time
         )
         self.new_etl_log_ids__EVENTS.append(etl_log_row_uuid)
@@ -224,10 +234,11 @@ class ETL_Pipeline():
 
     # Standard Function to record all Attempted Granules for this pipeline run to the Database.
     # Wrapper for creating
-    def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="", granule_pipeline_state="ATTEMPTING", additional_json={}):
-        self__etl_pipeline_run_uuid     = self.ETL_PipelineRun__UUID
-        self__etl_dataset_uuid          = self.etl_dataset_uuid
-        self__etl_dataset_name          = "ETL_PIPELINE__" + self.dataset_name
+    def log_etl_granule(self, granule_name="unknown_etl_granule_file_or_object_name", granule_contextual_information="",
+                        granule_pipeline_state="ATTEMPTING", additional_json={}):
+        self__etl_pipeline_run_uuid = self.ETL_PipelineRun__UUID
+        self__etl_dataset_uuid = self.etl_dataset_uuid
+        self__etl_dataset_name = "ETL_PIPELINE__" + self.dataset_name
         etl_Granule_Row_UUID = ETL_GranuleService.create_new_ETL_Granule_row(
             granule_name=granule_name,
             granule_contextual_information=granule_contextual_information,
@@ -242,37 +253,45 @@ class ETL_Pipeline():
 
     # Standard Function to update the State of an individual ETL Granule's granule_pipeline_state property - (When a granule has succeeded or failed)
     def etl_granule__Update__granule_pipeline_state(self, granule_uuid, new__granule_pipeline_state, is_error=False):
-        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__granule_pipeline_state(granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__granule_pipeline_state(
+            granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state)
         if is_error == True:
             self.new_etl_granule_ids__ERRORS.append(granule_uuid)
             # Placing this function call here means we don't have to ever call this from the type specific classes (Custom ETL Classes)
-            is_update_succeed_2 = self.etl_granule__Update__is_missing_bool_val(granule_uuid=granule_uuid, new__is_missing__Bool_Val=True)
+            is_update_succeed_2 = self.etl_granule__Update__is_missing_bool_val(granule_uuid=granule_uuid,
+                                                                                new__is_missing__Bool_Val=True)
         return is_update_succeed
 
     # Standard Function to update the State of an individual if it is missing from the database or not. Updates the ETL Granule's is_missing property (bool)
     def etl_granule__Update__is_missing_bool_val(self, granule_uuid, new__is_missing__Bool_Val):
-        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__is_missing_bool_val(granule_uuid=granule_uuid, new_is_missing_bool_val=new__is_missing__Bool_Val)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__is_missing_bool_val(
+            granule_uuid=granule_uuid, new_is_missing_bool_val=new__is_missing__Bool_Val)
         return is_update_succeed
 
     # Standard Function for adding new JSON data to an etl_granule (Expected Use Case: if we have an error, we can attach error info as a new JSON object to the existing record)
     def etl_granule__Append_JSON_To_Additional_JSON(self, granule_uuid, new_json_key_to_append, sub_jsonable_object):
-        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__Append_To_Additional_JSON(granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append, sub_json_type_object=sub_jsonable_object)
+        is_update_succeed = ETL_GranuleService.update_existing_ETL_Granule__Append_To_Additional_JSON(
+            granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append,
+            sub_json_type_object=sub_jsonable_object)
         return is_update_succeed
 
     # Convenient function to call just before using a return statement during 'execute_pipeline_control_function'
     def log__pipeline_run__exit(self):
         # Log Activity - Pipeline Ended
-        activity_event_type     = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_ENDED", default_or_error_return_value="ETL Pipeline Ended")
-        activity_description    = "Pipeline Completed for Dataset: " + str(self.dataset_name)
-        additional_json         = self.to_JSONable_Object()
+        activity_event_type = str(Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_ENDED",
+                                                       default_or_error_return_value="ETL Pipeline Ended"))
+        activity_description = "Pipeline Completed for Dataset: " + str(self.dataset_name)
+        additional_json = self.to_JSONable_Object()
         self.end_time = datetime.now(tz=timezone.utc)
-        self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+        self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                           etl_granule_uuid="", is_alert=False, additional_json=additional_json)
         #
         # Print some output for the console.
         if self.pipeline_had_error == True:
             print("")
             print("  AT LEAST ONE ERROR OCCURRED DURING THIS LAST PIPELINE RUN.")
-            print("    Open up the Admin tool to view the error alerts, or open the Django Admin in order to see them directly.")
+            print(
+                "    Open up the Admin tool to view the error alerts, or open the Django Admin in order to see them directly.")
             print("    For quick reference, below you can find the output of the pipeline state from the last run.")
             print("")
             print("================ START ---- TERMINAL DEBUG INFO ---- START ================")
@@ -291,11 +310,14 @@ class ETL_Pipeline():
                 new_pipeline_run_created, new_pipeline_run_uuid = ETL_PipelineRunService.create_etl_pipeline_run()
                 self.ETL_PipelineRun__UUID = str(new_pipeline_run_uuid).strip()
                 # Log Activity - Pipeline Started
-                self.start_time =datetime.now(tz=timezone.utc)
-                activity_event_type     = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STARTED", default_or_error_return_value="ETL Pipeline Started")
-                activity_description    = "Starting Pipeline for Dataset: " + str(self.dataset_name)
-                additional_json         = self.to_JSONable_Object()
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                self.start_time = datetime.now(tz=timezone.utc)
+                activity_event_type = str(Config_SettingService.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STARTED",
+                    default_or_error_return_value="ETL Pipeline Started"))
+                activity_description = "Starting Pipeline for Dataset: " + str(self.dataset_name)
+                additional_json = self.to_JSONable_Object()
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
             except:
                 raise etl_exceptions.UnableToCreatePipelineRunException()
 
@@ -335,7 +357,7 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_USDA_SMAP(self, dataset_subtype)
             elif dataset_subtype in ('esi_4week_servir', 'esi_12week_servir'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
-            elif dataset_subtype  in ('nsidc_smap_9km', 'nsidc_smap_36km'):
+            elif dataset_subtype in ('nsidc_smap_9km', 'nsidc_smap_36km'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
@@ -366,35 +388,68 @@ class ETL_Pipeline():
             })
 
         except etl_exceptions.UnableToReadDatasetException:
-            sysErrorData            = str(sys.exc_info())
-            activity_event_type     = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-            activity_description    = "Unable to start pipeline.  Error Reading dataset (etl_dataset_uuid) " + self.etl_dataset_uuid + " from the database: Sys Error Message: " + str(sysErrorData)
-            additional_json         = self.to_JSONable_Object()
+            sysErrorData = str(sys.exc_info())
+            activity_event_type = str(Config_Setting.get_value(
+                setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                default_or_error_return_value="ETL Error"))
+            activity_description = "Unable to start pipeline.  Error Reading dataset (etl_dataset_uuid) " \
+                                   + self.etl_dataset_uuid + " from the database: Sys Error Message: " \
+                                   + str(sysErrorData)
+            additional_json = self.to_JSONable_Object()
             self.end_time = datetime.now(tz=timezone.utc)
-            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                               etl_granule_uuid="", is_alert=True, additional_json=additional_json)
 
         except etl_exceptions.UnableToCreatePipelineRunException:
-            # Log the Error (Unable to Create New Database Object for this Pipeline Run - This means something may be wrong with the database or the connection to the database.  This must be fixed for all of the below steps to work proplery.)
-            sysErrorData            = str(sys.exc_info())
-            activity_event_type     = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-            activity_description    = "Unable to Create New Database Object for this Pipeline Run - This means something may be wrong with the database or the connection to the database.  This must be fixed for all of the below steps to work properly.   For Tracking Purposes: The Dataset UUID for this Error (etl_dataset_uuid) " + self.etl_dataset_uuid + "  System Error Message: " + str(sysErrorData)
-            additional_json         = self.to_JSONable_Object()
+            # Log the Error (Unable to Create New Database Object for this Pipeline Run - This means something may be
+            # wrong with the database or the connection to the database.  This must be fixed for all of the below
+            # steps to work proplery.)
+            sysErrorData = str(sys.exc_info())
+            activity_event_type = str(Config_SettingService.get_value(
+                setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                default_or_error_return_value="ETL Error"))
+            activity_description = "Unable to Create New Database Object for this Pipeline Run - This means " \
+                                   "something may be wrong with the database or the connection to the database." \
+                                   "  This must be fixed for all of the below steps to work properly.   " \
+                                   "For Tracking Purposes: The Dataset UUID for this Error (etl_dataset_uuid) " \
+                                   + self.etl_dataset_uuid + "  System Error Message: " \
+                                   + str(sysErrorData)
+            additional_json = self.to_JSONable_Object()
             self.end_time = datetime.now(tz=timezone.utc)
-            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                               etl_granule_uuid="", is_alert=True, additional_json=additional_json)
 
         except etl_exceptions.BlankDatasetSubtypeException:
-            activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-            activity_description = "Unable to start pipeline.  The dataset subtype was blank.  This value is required for etl pipeline operation.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
+            activity_event_type = str(Config_SettingService.get_value(
+                setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                default_or_error_return_value="ETL Error"))
+            activity_description = "Unable to start pipeline.  The dataset subtype was blank.  This value is " \
+                                   "required for etl pipeline operation.  This value comes from the " \
+                                   "Dataset object in the database.  To find the correct Dataset " \
+                                   "object to modify, look up the ETL_Dataset " \
+                                   "record with ID: " + str(self.etl_dataset_uuid) \
+                                   + " and set the dataset_subtype property to one of these values: " \
+                                   + str(list_of_valid__dataset_subtypes)
             additional_json = self.to_JSONable_Object()
             self.end_time = datetime.now(tz=timezone.utc)
-            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                               etl_granule_uuid="", is_alert=True, additional_json=additional_json)
 
         except etl_exceptions.InvalidDatasetSubtypeException:
-            activity_event_type = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-            activity_description = "Unable to start pipeline.  The dataset subtype was invalid.  The value tried was: '" + dataset_subtype + "'.  This value comes from the Dataset object in the database.  To find the correct Dataset object to modify, look up the ETL_Dataset record with ID: " + str(self.etl_dataset_uuid) + " and set the dataset_subtype property to one of these values: " + str(list_of_valid__dataset_subtypes)
+            activity_event_type = str(Config_SettingService.get_value(
+                setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                default_or_error_return_value="ETL Error"))
+            activity_description = "Unable to start pipeline.  The dataset subtype was invalid.  The value tried " \
+                                   "was: '" + dataset_subtype \
+                                   + "'.  This value comes from the Dataset object in the database.  " \
+                                     "To find the correct Dataset object to modify, look up the ETL_Dataset " \
+                                     "record with ID: " + str(self.etl_dataset_uuid) \
+                                   + " and set the dataset_subtype property to one of these values: " \
+                                   + str(list_of_valid__dataset_subtypes)
             additional_json = self.to_JSONable_Object()
             self.end_time = datetime.now(tz=timezone.utc)
-            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+            self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                               etl_granule_uuid="", is_alert=True, additional_json=additional_json)
 
         finally:
             self.log__pipeline_run__exit()
@@ -404,151 +459,207 @@ class ETL_Pipeline():
 
         # STEP: execute__Step__Pre_ETL_Custom
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__PRE_ETL_CUSTOM", default_or_error_return_value="Pre ETL Custom")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__PRE_ETL_CUSTOM",
+                                                 default_or_error_return_value="Pre ETL Custom")
             has_error, step_result = self.execute__Step__Pre_ETL_Custom()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             =  Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Download
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__DOWNLOAD", default_or_error_return_value="ETL Download")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__DOWNLOAD",
+                                                 default_or_error_return_value="ETL Download")
             has_error, step_result = self.execute__Step__Download()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Extract
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__EXTRACT", default_or_error_return_value="ETL Extract")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__EXTRACT",
+                                                 default_or_error_return_value="ETL Extract")
             has_error, step_result = self.execute__Step__Extract()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Transform
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__TRANSFORM", default_or_error_return_value="ETL Transform")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__TRANSFORM",
+                                                 default_or_error_return_value="ETL Transform")
             has_error, step_result = self.execute__Step__Transform()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Load
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__LOAD", default_or_error_return_value="ETL Load")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__LOAD",
+                                                 default_or_error_return_value="ETL Load")
             has_error, step_result = self.execute__Step__Load()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Post_ETL_Custom
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__POST_ETL_CUSTOM", default_or_error_return_value="Post ETL Custom")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__POST_ETL_CUSTOM",
+                                                 default_or_error_return_value="Post ETL Custom")
             has_error, step_result = self.execute__Step__Post_ETL_Custom()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(
+                    Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                                             default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # STEP: execute__Step__Clean_Up
         if has_error == False:
-            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__CLEAN_UP", default_or_error_return_value="ETL Cleanup")
+            step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__CLEAN_UP",
+                                                 default_or_error_return_value="ETL Cleanup")
             has_error, step_result = self.execute__Step__Clean_Up()
             if has_error == True:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR", default_or_error_return_value="ETL Error")
-                activity_description            = "An Error Occurred in the pipeline while attempting step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
+                    default_or_error_return_value="ETL Error"))
+                activity_description = "An Error Occurred in the pipeline while attempting step: {}".format(
+                    str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
                 self.end_time = datetime.now(tz=timezone.utc)
 
-                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=additional_json)
+                self.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=True, additional_json=additional_json)
                 self.log__pipeline_run__exit()
                 return
             else:
-                activity_event_type             = Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED", default_or_error_return_value="ETL Step Completed")
-                activity_event_type             = activity_event_type + ": " + str(step_name)
-                activity_description            = "The pipeline just completed step: {}".format(str(step_name))
-                additional_json                 = self.to_JSONable_Object()
-                additional_json['step_result']  = step_result
-                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+                activity_event_type = str(Config_Setting.get_value(
+                    setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_STEP_COMPLETED",
+                    default_or_error_return_value="ETL Step Completed"))
+                activity_event_type = activity_event_type + ": " + str(step_name)
+                activity_description = "The pipeline just completed step: {}".format(str(step_name))
+                additional_json = self.to_JSONable_Object()
+                additional_json['step_result'] = step_result
+                self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
+                                   etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
         # Exit the pipeline
         self.log__pipeline_run__exit()
@@ -562,7 +673,9 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Pre_ETL_Custom:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Pre_ETL_Custom:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -574,7 +687,9 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Download:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Download:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -586,7 +701,9 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Extract:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Extract:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -598,7 +715,9 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Transform:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Transform:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -610,7 +729,8 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Load:  System Error Message: " + str(sysErrorData)
+            step_result['sys_error'] = "System Error in function: execute__Step__Load:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -622,7 +742,9 @@ class ETL_Pipeline():
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Post_ETL_Custom:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Post_ETL_Custom:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result
 
@@ -635,6 +757,8 @@ class ETL_Pipeline():
             print('Completed running the ETL')
         except:
             sysErrorData = str(sys.exc_info())
-            step_result['sys_error'] = "System Error in function: execute__Step__Clean_Up:  System Error Message: " + str(sysErrorData)
+            step_result[
+                'sys_error'] = "System Error in function: execute__Step__Clean_Up:  System Error Message: " + str(
+                sysErrorData)
             has_error = True
         return has_error, step_result

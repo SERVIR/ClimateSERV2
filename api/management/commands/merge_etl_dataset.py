@@ -16,7 +16,7 @@ class Command(BaseCommand):
 
     # Function Handler
     def handle(self, *args, **options):
-
+        print("made it to the merge")
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
         YEAR_YYYY = str(options.get('YEAR_YYYY'))
@@ -41,7 +41,7 @@ class Command(BaseCommand):
         pattern_filename = ''
         aggregate_filename = ''
         ncrcat_options = ''
-        if MONTH_MM != 'None':
+        if MONTH_MM != 'None' and MONTH_MM is not None:
             if etl_dataset.dataset_subtype.lower()  == 'chirp':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirp')
                 pattern_filename = 'ucsb-chirp.{}{}*daily.nc4'
@@ -84,10 +84,12 @@ class Command(BaseCommand):
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(YEAR_YYYY, MONTH_MM))
         else:
             if etl_dataset.dataset_subtype.lower() == 'chirps':
+                print("setting options")
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_chirps')
                 pattern_filename = 'ucsb-chirps.{}*daily.nc4'
                 aggregate_filename = 'ucsb_chirps.global.0.05deg.daily.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
+                print("should have set options")
             elif etl_dataset.dataset_subtype.lower()  == 'esi_12week':
                 temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_esi_12wk')
                 pattern_filename = 'sport-esi.{}*.nc4'
@@ -127,12 +129,9 @@ class Command(BaseCommand):
         command_str = f'sudo ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
         if os.name == 'nt':
             command_str = f'ncra -Y {command_str}'
-        print(command_str)
 
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        print(stderr)
-
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
             if not os.path.exists(temp_fast_path):

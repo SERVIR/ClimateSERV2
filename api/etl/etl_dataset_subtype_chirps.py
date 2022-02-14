@@ -13,8 +13,9 @@ from api.services import Config_SettingService
 
 class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
-    # init (Passing a reference from the calling class, so we can callback the error handler)
+    # init (Passing a reference from the calling class, so we can call back the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
+        super().__init__()
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
@@ -139,7 +140,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 local_final_load_path = self.final_load_dir_path
                 current_obj['local_extract_path'] = local_extract_path  # Download path
                 current_obj[
-                    'local_final_load_path'] = local_final_load_path  # The path where the final output granule file goes.
+                    'local_final_load_path'] = local_final_load_path  # The path of the final output granule file.
                 current_obj['remote_directory_path'] = remote_directory_path
 
                 # Filename and Granule Name info
@@ -156,7 +157,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 current_obj['local_full_filepath_tif_gz'] = local_full_filepath_tif_gz
                 current_obj['local_full_filepath_final_nc4_file'] = local_full_filepath_final_nc4_file
 
-                # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
+                # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates 
+                # a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL 
+                # Granule Table) 
                 granule_pipeline_state = Config_SettingService.get_value(
                     setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
                 new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(granule_name=final_nc4_filename,
@@ -274,6 +277,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         # Loop through each expected granule
         for expected_granule in self._expected_granules:
             try:
+                current_url_to_download = None
                 if (loop_counter + 1) % modulus_size == 0:
                     event_message = "About to download file: " + str(loop_counter + 1) + " out of " + str(
                         num_of_objects_to_process)
@@ -309,20 +313,28 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     else:
                         r.raise_for_status()
                     download_counter = download_counter + 1
+                    print("Downloaded file #", str(download_counter))
                 except:
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
-                    # print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
+                   
                     warn_JSON = {}
                     warn_JSON[
-                        'warning'] = "Warning: There was an uncaught error when attempting to download file at URL: " + str(
-                        current_url_to_download) + ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(
-                        sysErrorData)
+                        'warning'] = "Warning: There was an uncaught error when attempting to download file at URL: " \
+                                     + str(current_url_to_download) \
+                                     + ".  If the System Error message says " \
+                                       "something like 'nodename nor servname provided, or not known', then one" \
+                                       " common cause of that error is an unstable or disconnected internet " \
+                                       "connection.  Double check that the internet connection is working a" \
+                                       "nd try again.  System Error Message: " \
+                                     + str(sysErrorData)
                     warn_JSON['is_error'] = True
                     warn_JSON['class_name'] = "chirps"
                     warn_JSON['function_name'] = "execute__Step__Download"
                     warn_JSON['current_object_info'] = expected_granule
-                    # Call Error handler right here to send a warning message to ETL log. - Note this warning will not make it back up to the overall pipeline, it is being sent here so admin can still be aware of it and handle it.
+                    # Call Error handler right here to send a warning message to ETL log. - Note this warning will 
+                    # not make it back up to the overall pipeline, it is being sent here so admin can still be aware 
+                    # of it and handle it. 
                     activity_event_type = Config_SettingService.get_value(
                         setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING",
                         default_or_error_return_value="ETL Warning")
@@ -335,8 +347,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             except:
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
-                error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(
-                    sysErrorData)
+                error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Download: Generic Uncaught Error.  At " \
+                                "least 1 download failed.  System Error Message: " \
+                                + str(sysErrorData)
                 detail_errors.append(error_message)
                 print(error_message)
 
@@ -350,16 +363,14 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['loop_counter'] = loop_counter
         ret__detail_state_info['detail_errors'] = detail_errors
-        # ret__detail_state_info['number_of_expected_remote_full_file_paths'] = str(len(self._expected_remote_full_file_paths)).strip()
-        # ret__detail_state_info['number_of_expected_granules'] = str(len(self._expected_granules)).strip()
         ret__event_description = "Success.  Completed Step execute__Step__Download by downloading " + str(
             download_counter).strip() + " files."
         #
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_obj
 
     def execute__Step__Extract(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -379,8 +390,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 local_extract_path = expected_granules_object['local_extract_path']
                 extracted_tif_filename = expected_granules_object['tif_filename']
                 local_extract_full_filepath = os.path.join(local_extract_path, extracted_tif_filename)
-                print(local_full_filepath_tif_gz)
-
                 try:
                     if os.path.isfile(local_full_filepath_tif_gz):
                         with gzip.open(local_full_filepath_tif_gz, 'rb') as f_in:
@@ -396,10 +405,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    error_message = "esi.execute__Step__Extract: An Error occurred during the Extract step with ETL_Granule UUID: " + str(
-                        Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
-
-                    # print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
+                    error_message = "esi.execute__Step__Extract: An Error occurred during the Extract" \
+                                    " step with ETL_Granule UUID: " \
+                                    + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
 
                     # Individual Transform Granule Error
                     error_counter = error_counter + 1
@@ -420,31 +428,26 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append,
                         sub_jsonable_object=error_JSON)
 
-                # print("")
-                # print("extract: (local_full_filepath_download): " + str(local_full_filepath_download))
-                # print("extract: (local_extract_path): " + str(local_extract_path))
-                # print("extract: (extracted_tif_filename): " + str(extracted_tif_filename))
-                # print("extract: (local_extract_full_filepath): " + str(local_extract_full_filepath))
-                # print("extract: (expected_granules_object): " + str(expected_granules_object))
-                # print("")
 
         except:
             sysErrorData = str(sys.exc_info())
             ret__is_error = True
-            ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when attempting to Extract the Granules.  System Error Message: " + str(
-                sysErrorData)
+            ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when " \
+                                     "attempting to Extract the Granules.  System Error Message: " \
+                                     + str(sysErrorData)
 
         ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_objbj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_objbj
 
     def execute__Step__Transform(self):
+        print("execute__Step__Transform")
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -458,9 +461,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
             for expected_granules_object in self._expected_granules:
                 try:
-
-                    # print("A")
-
                     # Getting info ready for the current granule.
                     local_extract_path = expected_granules_object['local_extract_path']
                     tif_filename = expected_granules_object['tif_filename']
@@ -469,43 +469,37 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     geotiffFile_FullPath = expected_full_path_to_local_extracted_tif_file
 
-                    print(final_nc4_filename)
-
-                    # print("B")
-
                     mode_var__precipAttr_comment = ''
                     mode_var__fileAttr_Description = ''
                     mode_var__fileAttr_Version = ''
                     if self.mode == 'chirp':
                         mode_var__precipAttr_comment = 'Climate Hazards group InfraRed Precipitation'
-                        mode_var__fileAttr_Description = 'Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution'
+                        mode_var__fileAttr_Description = 'Climate Hazards group InfraRed Precipitation at 0.05x0.05 ' \
+                                                         'degree resolution '
                         mode_var__fileAttr_Version = '1.0'
                     elif self.mode == 'chirps':
                         mode_var__precipAttr_comment = 'Climate Hazards group InfraRed Precipitation with Stations'
-                        mode_var__fileAttr_Description = 'Climate Hazards group InfraRed Precipitation with Stations at 0.05x0.05 degree resolution'
+                        mode_var__fileAttr_Description = 'Climate Hazards group InfraRed Precipitation with Stations ' \
+                                                         'at 0.05x0.05 degree resolution '
                         mode_var__fileAttr_Version = '2.0'
-
-                    # print("C")
 
                     ############################################################
                     # Start extracting data and creating output netcdf file.
                     ############################################################
 
-                    # !/usr/bin/env python
-                    # Program: Convert UCSB CHIRP daily rainfall geoTiff files into netCDF-4 for storage on the ClimateSERV 2.0 thredds data server.
-                    # Program: Convert UCSB CHIRPS (with station) daily rainfall geoTiff files into netCDF-4 for storage on the ClimateSERV 2.0 thredds data server.
-                    # Program: Convert UCSB CHIRPS-GEFS 10-day rainfall geoTiff files (mean and anomaly) into netCDF-4 for storage on the ClimateSERV 2.0 thredds data server.
-                    # Calling: chirp2netcdf.py geotiffFile
-                    # Calling: chirps2netcdf.py geotiffFile
-                    # Calling: chirpsgefs10day2netcdf.py meanGeotiffFile anomalyGeotiffFile
-                    # geotiffFile: The inputfile to be processed
+                    # !/usr/bin/env python Program: Convert UCSB CHIRP daily rainfall geoTiff files into netCDF-4 for
+                    # storage on the ClimateSERV 2.0 thredds data server. Program: Convert UCSB CHIRPS (with station)
+                    # daily rainfall geoTiff files into netCDF-4 for storage on the ClimateSERV 2.0 thredds data 
+                    # server. Program: Convert UCSB CHIRPS-GEFS 10-day rainfall geoTiff files (mean and anomaly) into
+                    # netCDF-4 for storage on the ClimateSERV 2.0 thredds data server. Calling: chirp2netcdf.py 
+                    # geotiffFile Calling: chirps2netcdf.py geotiffFile Calling: chirpsgefs10day2netcdf.py 
+                    # meanGeotiffFile anomalyGeotiffFile geotiffFile: The inputfile to be processed 
                     #
-                    # General Flow:
-                    # Determine the date associated with the geoTiff file
-                    # 1) Use xarray+rasterio to read the geotiff data from a file into a data array
-                    # 2) Convert to a dataset and add an appropriate time dimension
-                    # 3) Clean up the dataset: Rename and add dimensions, attributes, and scaling factors as appropriate
-                    # 4) Dump the precipitation dataset to a netCDF-4 file with a filename conforming to the ClimateSERV 2.0 TDS conventions
+                    # General Flow: Determine the date associated with the geoTiff file 1) Use xarray+rasterio to 
+                    # read the geotiff data from a file into a data array 2) Convert to a dataset and add an 
+                    # appropriate time dimension 3) Clean up the dataset: Rename and add dimensions, attributes, 
+                    # and scaling factors as appropriate 4) Dump the precipitation dataset to a netCDF-4 file with a 
+                    # filename conforming to the ClimateSERV 2.0 TDS conventions 
 
                     # Based on the geotiffFile name, determine the time string elements.
                     # Split elements by period
@@ -529,77 +523,76 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
                     end_time = pd.Timestamp('{}-{}-{}T23:59:59'.format(yearStr, monthStr, dayStr))
 
-                    # print("D")
-
                     ############################################################
                     # Beging extracting data and creating output netcdf file.
                     ############################################################
+                    try:
+                        # 1) Read the geotiff data into an xarray data array
+                        da = xr.open_rasterio(geotiffFile_FullPath)
+                        # 2) Convert to a dataset.  (need to assign a name to the data array)
+                        ds = da.rename('precipitation_amount').to_dataset()
+                        # Handle selecting/adding the dimesions
+                        # select the singleton band dimension and drop out the associated coordinate.
+                        ds = ds.isel(band=0).reset_coords('band',
+                                                          drop=True)  
+                        # Add the time dimension as a new coordinate.
+                        ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
+                        # Add an additional variable "time_bnds" for the time boundaries.
+                        ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)),
+                                                       dims=['time', 'nbnds'])
+                        # 3) Rename and add attributes to this dataset.
+                        ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
+                        # 4) Reorder latitude dimension into ascending order
+                        if ds.latitude.values[1] - ds.latitude.values[0] < 0:
+                            ds = ds.reindex(latitude=ds.latitude[::-1])
 
-                    # 1) Read the geotiff data into an xarray data array
-                    da = xr.open_rasterio(geotiffFile_FullPath)
-                    # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    ds = da.rename('precipitation_amount').to_dataset()
-                    # Handle selecting/adding the dimesions
-                    ds = ds.isel(band=0).reset_coords('band',
-                                                      drop=True)  # select the singleton band dimension and drop out the associated coordinate.
-                    # Add the time dimension as a new coordinate.
-                    ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
-                    # Add an additional variable "time_bnds" for the time boundaries.
-                    ds['time_bnds'] = xr.DataArray(np.array([start_time, end_time]).reshape((1, 2)),
-                                                   dims=['time', 'nbnds'])
-                    # 3) Rename and add attributes to this dataset.
-                    ds = ds.rename({'y': 'latitude', 'x': 'longitude'})
-                    # 4) Reorder latitude dimension into ascending order
-                    if ds.latitude.values[1] - ds.latitude.values[0] < 0:
-                        ds = ds.reindex(latitude=ds.latitude[::-1])
+                        # Set the Attributes
+                        ds.latitude.attrs = OrderedDict(
+                            [('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
+                        ds.longitude.attrs = OrderedDict(
+                            [('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
+                        ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
+                        ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
+                        ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'),
+                                                                     ('accumulation_interval', temporal_resolution),
+                                                                     ('comment', str(mode_var__precipAttr_comment))])
+                        ds.attrs = OrderedDict([
+                            ('Description', str(mode_var__fileAttr_Description)),
+                            ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
+                            ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
+                            ('Source',
+                             'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, '
+                             'pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'), 
+                            ('Version', str(mode_var__fileAttr_Version)),
+                            ('Reference',
+                             'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, '
+                             'J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, '
+                             'A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey '
+                             'Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'), 
+                            ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                            ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
+                            ('SouthernmostLatitude', np.min(ds.latitude.values)),
+                            ('NorthernmostLatitude', np.max(ds.latitude.values)),
+                            ('WesternmostLongitude', np.min(ds.longitude.values)),
+                            ('EasternmostLongitude', np.max(ds.longitude.values)),
+                            ('TemporalResolution', temporal_resolution),
+                            ('SpatialResolution', '0.05deg')
+                        ])
+                        # Set the Endcodings
+                        ds.precipitation_amount.encoding = {
+                            '_FillValue': np.float32(-9999.0),
+                            'missing_value': np.float32(-9999.0),
+                            'dtype': np.dtype('float32'),
+                            'chunksizes': (1, 256, 256)
+                        }
+                        ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                        ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
 
-                    # print("E")
-
-                    # Set the Attributes
-                    ds.latitude.attrs = OrderedDict(
-                        [('long_name', 'latitude'), ('units', 'degrees_north'), ('axis', 'Y')])
-                    ds.longitude.attrs = OrderedDict(
-                        [('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
-                    ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
-                    ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'),
-                                                                 ('accumulation_interval', temporal_resolution),
-                                                                 ('comment', str(mode_var__precipAttr_comment))])
-                    ds.attrs = OrderedDict([
-                        ('Description', str(mode_var__fileAttr_Description)),
-                        ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
-                        ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
-                        ('Source',
-                         'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'),
-                        ('Version', str(mode_var__fileAttr_Version)),
-                        ('Reference',
-                         'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'),
-                        ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
-                        ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
-                        ('SouthernmostLatitude', np.min(ds.latitude.values)),
-                        ('NorthernmostLatitude', np.max(ds.latitude.values)),
-                        ('WesternmostLongitude', np.min(ds.longitude.values)),
-                        ('EasternmostLongitude', np.max(ds.longitude.values)),
-                        ('TemporalResolution', temporal_resolution),
-                        ('SpatialResolution', '0.05deg')
-                    ])
-                    # Set the Endcodings
-                    ds.precipitation_amount.encoding = {
-                        '_FillValue': np.float32(-9999.0),
-                        'missing_value': np.float32(-9999.0),
-                        'dtype': np.dtype('float32'),
-                        'chunksizes': (1, 256, 256)
-                    }
-                    ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                    ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-
-                    # print("F")
-
-                    # 5) Output File
-                    outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
-                    ds.to_netcdf(outputFile_FullPath, unlimited_dims='time')
-
-                    # print("G")
+                        # 5) Output File
+                        outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
+                        ds.to_netcdf(outputFile_FullPath, unlimited_dims='time')
+                    except:
+                        pass
 
                 except Exception as e:
                     print(e)
@@ -609,8 +602,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
-                    error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Transform: An Error occurred during the Transform step with ETL_Granule UUID: " + str(
-                        Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
+                    error_message = "ETL_Dataset_Subtype_CHIRPS.execute__Step__Transform: An Error occurred" \
+                                    " during the Transform step with ETL_Granule UUID: " \
+                                    + str(Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
 
                     # Individual Transform Granule Error
                     error_counter = error_counter + 1
@@ -636,8 +630,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON[
-                'error'] = "Error: There was an uncaught error when processing the Transform step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(
-                sysErrorData)
+                'error'] = "Error: There was an uncaught error when processing the Transform step on all" \
+                           " of the expected Granules.  See the additional data and system error message for" \
+                           " details on what caused this error.  System Error Message: " \
+                           + str(sysErrorData)
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Transform"
@@ -645,22 +641,22 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+            ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                          is_error=ret__is_error,
                                                          event_description=ret__event_description,
                                                          error_description=ret__error_description,
                                                          detail_state_info=ret__detail_state_info)
-            return retObj
+            return ret_obj
 
         ret__detail_state_info['class_name'] = self.__class__.__name__
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_obj
 
     def execute__Step__Load(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -670,7 +666,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__detail_state_info = {}
 
         try:
-
             for expected_granules_object in self._expected_granules:
 
                 expected_full_path_to_local_working_nc4_file = "UNSET"
@@ -680,16 +675,21 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     local_extract_path = expected_granules_object['local_extract_path']
                     local_final_load_path = expected_granules_object['local_final_load_path']
                     final_nc4_filename = expected_granules_object['final_nc4_filename']
+                    # Where the NC4 file was generated during the Transform Step
                     expected_full_path_to_local_working_nc4_file = os.path.join(local_extract_path,
-                                                                                final_nc4_filename)  # Where the NC4 file was generated during the Transform Step
+                                                                                final_nc4_filename
+                                                                                )
+                    # Where the final NC4 file should be placed for THREDDS Server monitoring
                     expected_full_path_to_local_final_nc4_file = expected_granules_object[
-                        'local_full_filepath_final_nc4_file']  # Where the final NC4 file should be placed for THREDDS Server monitoring
-
-                    # Copy the file from the working directory over to the final location for it.  (Where THREDDS Monitors for it)
+                        'local_full_filepath_final_nc4_file']
+                    # Copy the file from the working directory over to the final location for it.  (Where THREDDS
+                    # Monitors for it)
                     super()._copy_nc4_file(expected_full_path_to_local_working_nc4_file,
                                            expected_full_path_to_local_final_nc4_file)
 
-                    # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in the ETL Granule Table)
+                    # Create a new Granule Entry - The first function 'log_etl_granule' is the one that actually
+                    # creates a new ETL Granule Attempt (There is one granule per dataset per pipeline attempt run in
+                    # the ETL Granule Table)
                     Granule_UUID = expected_granules_object['Granule_UUID']
 
                     new__granule_pipeline_state = Config_SettingService.get_value(
@@ -701,13 +701,18 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     additional_json = {}
                     additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
-                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(granule_name=final_nc4_filename, granule_contextual_information="", additional_json=additional_json)
+                    # self.etl_parent_pipeline_instance.create_or_update_Available_Granule(
+                    # granule_name=final_nc4_filename, granule_contextual_information="",
+                    # additional_json=additional_json)
 
                 except:
+                    print("There was an error")
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON[
-                        'error'] = "Error: There was an error when attempting to copy the current nc4 file to it's final directory location.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(
+                        'error'] = "Error: There was an error when attempting to copy the current nc4 file to it's " \
+                                   "final directory location.  See the additional data and system error message for " \
+                                   "details on what caused this error.  System Error Message: " + str(
                         sysErrorData)
                     error_JSON['is_error'] = True
                     error_JSON['class_name'] = self.__class__.__name__
@@ -736,7 +741,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON[
-                'error'] = "Error: There was an uncaught error when processing the Load step on all of the expected Granules.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(
+                'error'] = "Error: There was an uncaught error when processing the Load step on all of the expected " \
+                           "Granules.  See the additional data and system error message for details on what caused " \
+                           "this error.  System Error Message: " + str(
                 sysErrorData)
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
@@ -745,18 +752,18 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+            ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                          is_error=ret__is_error,
                                                          event_description=ret__event_description,
                                                          error_description=ret__error_description,
                                                          detail_state_info=ret__detail_state_info)
-            return retObj
+            return ret_obj
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_obj
 
     def execute__Step__Post_ETL_Custom(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -770,11 +777,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         except Exception as e:
             print(e)
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_obj
 
     def execute__Step__Clean_Up(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -790,7 +797,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 activity_event_type = Config_SettingService.get_value(
                     setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__TEMP_WORKING_DIR_BLANK",
                     default_or_error_return_value="Temp Working Dir Blank")  #
-                activity_description = "Could not remove the temporary working directory.  The value for self.temp_working_dir was blank. "
+                activity_description = "Could not remove the temporary working directory.  The value for " \
+                                       "self.temp_working_dir was blank. "
                 additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                 additional_json['subclass'] = self.__class__.__name__
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type,
@@ -816,8 +824,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
             error_JSON[
-                'error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is supposed to simply remove the working directory.  This means the working directory was not removed.  See the additional data and system error message for details on what caused this error.  System Error Message: " + str(
-                sysErrorData)
+                'error'] = "Error: There was an uncaught error when processing the Clean Up step.  This function is " \
+                           "supposed to simply remove the working directory.  This means the working directory was " \
+                           "not removed.  See the additional data and system error message for details on what " \
+                           "caused this error.  System Error Message: " \
+                           + str(sysErrorData)
             error_JSON['is_error'] = True
             error_JSON['class_name'] = self.__class__.__name__
             error_JSON['function_name'] = "execute__Step__Clean_Up"
@@ -829,15 +840,15 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+            ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                          is_error=ret__is_error,
                                                          event_description=ret__event_description,
                                                          error_description=ret__error_description,
                                                          detail_state_info=ret__detail_state_info)
-            return retObj
+            return ret_obj
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
+        return ret_obj
