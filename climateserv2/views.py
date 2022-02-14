@@ -61,7 +61,12 @@ def get_id_from_output(output):
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
-    request_id = request.POST.get("id", request.GET.get("id", get_id_from_output(output)))
+    request_id = request.POST.get("id", request.GET.get("id", None))
+    if request_id is None:
+        try:
+            request_id = get_id_from_output(output)
+        except:
+            request_id = None
     callback = request.POST.get("callback", request.GET.get("callback"))
     if callback:
         http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
