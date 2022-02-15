@@ -1,4 +1,4 @@
-/** Global Variables */
+/** Global Variables */ /*sprint 3 begins*/
 let active_basemap = "Gsatellite";
 let map;
 let passedLayer;
