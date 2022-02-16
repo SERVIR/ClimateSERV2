@@ -1,4 +1,4 @@
-/** Global Variables */ /*sprint 3 begins*/
+/** Global Variables */
 let active_basemap = "Gsatellite";
 let map;
 let passedLayer;
@@ -1380,8 +1380,18 @@ function verify_ready() {
             query_list.forEach(buildAPIReference);
 
             function buildAPIReference(value) {
+                let aoi_string = "";
+                if(geometry.text().trim().indexOf("- Feature:") > -1) {
+                    if (highlightedIDs.length > 0) {
+                        aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                        aoi_string += "&featureids=" + highlightedIDs.join(",");
+                    }
+                } else{
+                    aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+                }
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
+                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
+                    +  aoi_string + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
             api_panel.empty();
@@ -1623,6 +1633,17 @@ function add_multi_query() {
     verify_ready();
 }
 
+function append_AOI_to_form(formData) {
+    if (highlightedIDs.length > 0) {
+        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+        formData.append("featureids", highlightedIDs.join(","));
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    } else if (uploadLayer) {
+        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    }
+}
+
 /**
  * sendRequest
  * Initiates the processing request to ClimateSERV
@@ -1653,14 +1674,7 @@ function sendRequest() {
         for (let i = 0; i < query_list.length; i++) {
             let formData = query_list[i];
 
-            if (highlightedIDs.length > 0) {
-                formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-                formData.append("featureids", highlightedIDs.join(","));
-            } else if (drawnItems.getLayers().length > 0) {
-                formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-            } else if (uploadLayer) {
-                formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-            }
+            append_AOI_to_form(formData);
 
             let api_host = window.location.hostname;
             if (window.location.port) {
