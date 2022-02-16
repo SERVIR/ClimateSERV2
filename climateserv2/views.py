@@ -250,7 +250,7 @@ def get_climate_scenario_info(request):
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
-                                  AOI=json.dumps({})
+                                  AOI=json.dumps({}), metadata_request=True
                                   )
         track_usage.save()
     except MultiValueDictKeyError:
