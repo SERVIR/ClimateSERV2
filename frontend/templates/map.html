@@ -38,6 +38,10 @@
           href="{% static 'frontend/css/bootstrap-tour-standalone.min.css' %}"
     />
 
+    <link rel="stylesheet"
+          href="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.0.1/css/bootstrap3/bootstrap-switch.css"
+    />
+
 {% endblock %}
 
 {% block content %}
@@ -475,7 +479,7 @@
                                     </div>
                                 </div>
                                 <div class="query_cart">
-                                    <p style="position: absolute; left: 10px; text-align: left;" id="graph_options">
+                                    <p style="display:none" id="graph_options">
                                         <input type="radio" id="simple_axis" name="axis_type" value="simple" checked>
                                         <label for="simple_axis">Simple Axis</label><br>
                                         <input type="radio" id="multi_axis" name="axis_type" value="multi">
@@ -788,6 +792,7 @@
     <script src="{% static 'frontend/js/monthly_rainfall.js' %}"></script>
     <script src="{% static 'frontend/js/utils.js' %}"></script>
     <script src="{% static 'frontend/js/bootstrap-tour-standalone.min.js' %}"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.0.1/js/bootstrap-switch.js"></script>
     <script src="{% static 'frontend/js/map.js' %}"></script>
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     <script>

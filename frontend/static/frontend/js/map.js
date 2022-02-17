@@ -2008,6 +2008,15 @@ function syncDates() {
     $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
+function rebuildGraph(){
+   if($("#axis_toggle").prop("checked")){
+       $("#multi_axis").prop("checked", true);
+   } else{
+       $("#simple_axis").prop("checked", true);
+   }
+   open_previous_chart();
+}
+
 /**
  * inti_chart_dialog
  * Creates the chart dialog
@@ -2017,8 +2026,16 @@ function inti_chart_dialog() {
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
+    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
+    const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
+    dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
+    dialog_html += 'Simple Axis <label class="switch">'
+    dialog_html += '<input id="axis_toggle" type="checkbox" '+ checked_text +' onclick="rebuildGraph()">';
+    dialog_html += '<span class="slider round"></span>';
+    dialog_html += '</label> Multi-Axis';
+    dialog_html += '</div>';
     dialog.html(
-        '<div id="chart_holder"></p>'
+        dialog_html
     );
     dialog.dialog({
         title: "Statistical Query",
@@ -2203,7 +2220,7 @@ function multi_chart_builder() {
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
@@ -2242,6 +2259,7 @@ function multi_chart_builder() {
                 }
             });
         }
+        $('#multi-switch-panel').css('visibility','visible');
     }
 }
 
@@ -2601,7 +2619,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
