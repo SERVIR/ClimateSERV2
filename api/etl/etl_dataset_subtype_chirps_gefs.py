@@ -7,15 +7,17 @@ from copy import deepcopy
 
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
+from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
 
 from bs4 import BeautifulSoup
 
-class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype_Interface):
+class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can callback the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
+        super().__init__()
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
