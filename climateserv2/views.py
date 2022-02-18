@@ -20,13 +20,13 @@ from .processDataRequest import start_processing
 from .processtools import uutools as uutools
 from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
-
+from django.contrib.gis.geoip2 import GeoIP2
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
-
+g = GeoIP2()
 
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
@@ -114,7 +114,7 @@ def get_parameter_types(request):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
+    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
@@ -246,7 +246,7 @@ def get_file_for_job_id(request):
 def get_climate_scenario_info(request):
     unique_id = uutools.getUUID()
     try:
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
@@ -461,7 +461,7 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -481,7 +481,7 @@ def submit_data_request(request):
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -586,7 +586,7 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
         aoi = request.POST['geometry']
     else:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
-    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
+    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
                               start_date=pd.Timestamp(seasonal_start_date, tz='UTC'),
