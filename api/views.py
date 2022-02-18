@@ -1,6 +1,7 @@
 from django.contrib.gis.geoip2 import GeoIP2
 from django.shortcuts import render
 from django.http import JsonResponse
+from geoip2.errors import AddressNotFoundError
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -42,6 +43,7 @@ class ETL_SubtypesView(APIView):
         subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
         return JsonResponse({'subtypes': subtypes})
 
+
 class Update_Records(APIView):
 
     def get(self, request, format=None):
@@ -49,10 +51,11 @@ class Update_Records(APIView):
         usages = Track_Usage.objects.all()
         try:
             for usage in usages:
-                if usage.originating_IP == '127.0.0.1':
-                    usage.country_ISO = 'ZZ'
-                else:
-                    usage.country_ISO = g.country_code(usage.originating_IP)
+                try:
+                    country_code = g.country_code(usage.originating_IP)
+                except AddressNotFoundError:
+                    country_code = "ZZ"
+                usage.country_ISO = country_code
                 usage.save()
             return JsonResponse({'status': 'Updated records successfully'})
         except:

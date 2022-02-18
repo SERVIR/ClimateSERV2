@@ -12,6 +12,8 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from geoip2.errors import AddressNotFoundError
+
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
 from . import parameters as params
@@ -110,11 +112,18 @@ def get_parameter_types(request):
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
 
 
+def get_country_code(r):
+    try:
+        return g.country_code(get_client_ip(r))
+    except AddressNotFoundError:
+        return "ZZ"
+
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
+    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
+                              country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
@@ -246,7 +255,8 @@ def get_file_for_job_id(request):
 def get_climate_scenario_info(request):
     unique_id = uutools.getUUID()
     try:
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request)
+                                  ,country_ISO=get_country_code(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
@@ -461,7 +471,9 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
+
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -481,7 +493,8 @@ def submit_data_request(request):
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -586,7 +599,8 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
         aoi = request.POST['geometry']
     else:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
-    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),country_ISO=g.country_code(get_client_ip(request)),
+    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
+                              country_ISO=get_country_code(request),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
                               start_date=pd.Timestamp(seasonal_start_date, tz='UTC'),
