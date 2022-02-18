@@ -664,7 +664,7 @@ footer a:hover,
 
 .highcharts-container,
 div[data-highcharts-chart] {
-    height: 100% !important;
+    height: 100%;
 }
 
 .timeline-quickrange {

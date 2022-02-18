@@ -1,4 +1,4 @@
-/** Global Variables */ /*sprint 3 begins*/
+/** Global Variables */
 let active_basemap = "Gsatellite";
 let map;
 let passedLayer;
@@ -1380,8 +1380,18 @@ function verify_ready() {
             query_list.forEach(buildAPIReference);
 
             function buildAPIReference(value) {
+                let aoi_string = "";
+                if(geometry.text().trim().indexOf("- Feature:") > -1) {
+                    if (highlightedIDs.length > 0) {
+                        aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                        aoi_string += "&featureids=" + highlightedIDs.join(",");
+                    }
+                } else{
+                    aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+                }
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
+                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
+                    +  aoi_string + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
             api_panel.empty();
@@ -1623,6 +1633,17 @@ function add_multi_query() {
     verify_ready();
 }
 
+function append_AOI_to_form(formData) {
+    if (highlightedIDs.length > 0) {
+        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+        formData.append("featureids", highlightedIDs.join(","));
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    } else if (uploadLayer) {
+        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    }
+}
+
 /**
  * sendRequest
  * Initiates the processing request to ClimateSERV
@@ -1653,14 +1674,7 @@ function sendRequest() {
         for (let i = 0; i < query_list.length; i++) {
             let formData = query_list[i];
 
-            if (highlightedIDs.length > 0) {
-                formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-                formData.append("featureids", highlightedIDs.join(","));
-            } else if (drawnItems.getLayers().length > 0) {
-                formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-            } else if (uploadLayer) {
-                formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-            }
+            append_AOI_to_form(formData);
 
             let api_host = window.location.hostname;
             if (window.location.port) {
@@ -1994,6 +2008,15 @@ function syncDates() {
     $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
+function rebuildGraph(){
+   if($("#axis_toggle").prop("checked")){
+       $("#multi_axis").prop("checked", true);
+   } else{
+       $("#simple_axis").prop("checked", true);
+   }
+   open_previous_chart();
+}
+
 /**
  * inti_chart_dialog
  * Creates the chart dialog
@@ -2003,8 +2026,16 @@ function inti_chart_dialog() {
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
+    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
+    const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
+    dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
+    dialog_html += 'Simple Axis <label class="switch">'
+    dialog_html += '<input id="axis_toggle" type="checkbox" '+ checked_text +' onclick="rebuildGraph()">';
+    dialog_html += '<span class="slider round"></span>';
+    dialog_html += '</label> Multi-Axis';
+    dialog_html += '</div>';
     dialog.html(
-        '<div id="chart_holder"></p>'
+        dialog_html
     );
     dialog.dialog({
         title: "Statistical Query",
@@ -2189,7 +2220,7 @@ function multi_chart_builder() {
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
@@ -2228,6 +2259,7 @@ function multi_chart_builder() {
                 }
             });
         }
+        $('#multi-switch-panel').css('visibility','visible');
     }
 }
 
@@ -2587,7 +2619,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
