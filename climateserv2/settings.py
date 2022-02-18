@@ -152,6 +152,8 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+GEOIP_PATH = "/cserv2/django_app/ClimateSERV2/climateserv2/geolite"
+
 MEDIA_URL = '/media/'
 
 LOGGING = {
