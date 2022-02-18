@@ -1,10 +1,11 @@
+from django.contrib.gis.geoip2 import GeoIP2
 from django.shortcuts import render
 from django.http import JsonResponse
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
 
-from .models import Config_Setting, ETL_Dataset, ETL_Granule, ETL_Log, ETL_PipelineRun
+from .models import Config_Setting, ETL_Dataset, ETL_Granule, ETL_Log, ETL_PipelineRun, Track_Usage
 from .serializers import Config_SettingSerializer, ETL_DatasetSerializer, ETL_GranuleSerializer, ETL_LogSerializer, \
     ETL_PipelineRunSerializer
 from .services import ETL_DatasetService
@@ -40,3 +41,19 @@ class ETL_SubtypesView(APIView):
     def get(self, request, format=None):
         subtypes = ETL_DatasetService.get_all_subtypes_as_string_array()
         return JsonResponse({'subtypes': subtypes})
+
+class Update_Records(APIView):
+
+    def get(self, request, format=None):
+        g = GeoIP2()
+        usages = Track_Usage.objects.all()
+        try:
+            for usage in usages:
+                if usage.originating_IP == '127.0.0.1':
+                    usage.country_ISO = 'ZZ'
+                else:
+                    usage.country_ISO = g.country_code(usage.originating_IP)
+                usage.save()
+            return JsonResponse({'status': 'Updated records successfully'})
+        except:
+            return JsonResponse({'status': 'There is an error'})

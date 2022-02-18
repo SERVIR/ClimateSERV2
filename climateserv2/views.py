@@ -27,13 +27,7 @@ Request_Progress = apps.get_model('api', 'Request_Progress')
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 g = GeoIP2()
-usages = Track_Usage.objects.all()
-try:
-    for usage in usages:
-        usage.country_ISO =  g.country_code(usage.originating_IP)
-        usage.save()
-except:
-    pass
+
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
     filename = params.getResultsFilename(uid)
