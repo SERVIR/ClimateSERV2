@@ -635,8 +635,8 @@ function toggleLayer(which) {
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
-        $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
-            " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
+        $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
     } else {
         map.timeDimension.setAvailableTimes([null], "replace");
         $(".timecontrol-date").html("Time not available")
@@ -1275,8 +1275,16 @@ function setRange() {
  * Clears the range set by the user
  */
 function clearRange() {
-    map.timeDimension.setLowerLimit(false);
-    map.timeDimension.setUpperLimit(false);
+    map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
+    map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
+    const current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
+    document.getElementById("begin_range_date").value = current_min
+
+    const current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
+    document.getElementById("end_range_date").value = current_max
+
+     $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
 }
 
 /**
@@ -1355,7 +1363,7 @@ function verify_ready() {
     }
     if (requestTypeSelect.val() !== 'monthly_analysis') {
         const btnViewAPI = $("#btnViewAPI");
-        btnViewAPI.prop("disabled", query_list.length === 0);
+        btnViewAPI.prop("disabled", false);
         if (query_list.length >= 5) {
             disabled = true;
         }
