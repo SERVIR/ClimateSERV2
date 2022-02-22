@@ -477,6 +477,15 @@ a.leaflet-bar-part.leaflet-bar-part-single{
     white-space: nowrap;
 }
 
+.step-marker.ten {
+    margin-bottom: 10px;
+}
+
+.checkout_list_elements{
+    margin-left: -10px;
+    padding: 10px 0 10px 10px;
+}
+
 /* The switch - the box around the slider */
 .switch {
   position: relative;

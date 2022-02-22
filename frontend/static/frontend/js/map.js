@@ -1602,7 +1602,7 @@ function update_number_queries() {
     if (query_list.length === 0) {
         $("#btnRequest").prop("disabled", true);
         $("#btnMultiQuerySubmit").prop("disabled", true);
-        $("#btnViewAPI").prop("disabled", true);
+        $("#btnViewAPI").prop("disabled", false);
     } else {
         $("#btnRequest").prop("disabled", false);
         $("#btnMultiQuerySubmit").prop("disabled", false);
@@ -2149,6 +2149,7 @@ function getDownLoadLink(id) {
  */
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
+    const first_unit = multiQueryData[0].units;
     multiChart = Highcharts.chart('chart_holder', {
         title: {text: "ClimateSERV Statistical Query"},
         tooltip: {
@@ -2170,7 +2171,7 @@ function multi_chart_builder() {
             data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
             tooltip: {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + (multiQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>"//"Value: " + this.value + units;
                 }
             }
         }],
@@ -3170,59 +3171,89 @@ function layer_filter() {
  * review_query
  * Adds all selected queries to the UI for review by the user
  */
-function review_query() {
+function review_query(no_toggle) {
     const checkout_list = $("#checkout_list");
     checkout_list.empty();
     $("#checkout_number").text(query_list.length + (query_list.length === 1 ? " Query" : " Queries"));
     let init = true;
     if (query_list.length > 0) {
-        for (let formData of query_list) {
+        for (let [i, formData] of query_list.entries()) {
+            console.log("index: " + i);
             const structured_data = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
             if (init) {
 
-                checkout_list.append('<br><h1 class="step-marker">Common Geometry</h1>');
+                checkout_list.append('<br><h1 class="step-marker ten">Common Geometry</h1>');
                 let geometry_element = '<span class="form-control panel-buffer" id="geometry_review" ';
                 geometry_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
                 geometry_element += $("#geometry").text();
                 geometry_element += '</span>';
                 checkout_list.append(geometry_element);
-                checkout_list.append('<br><h1 class="step-marker">Queries</h1>');
+
+                checkout_list.append('<br><h1 class="step-marker ten">Query Type</h1>');
+                let request_type_element = '<span class="form-control panel-buffer" id="query_type_review" ';
+                request_type_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
+                request_type_element += $("#requestTypeSelect option:selected").text();;
+                request_type_element += '</span>';
+                checkout_list.append(request_type_element);
+
+                checkout_list.append('<br><h1 class="step-marker ten">Queries</h1>');
                 init = false;
             }
-            checkout_list.append(
+            const back_color = i % 2 === 0 ? "#909d6b94" : "transparent";
+            const text_color = i % 2 === 0 ? "#000" : "#666666";
+            let element_html = '<div class="checkout_list_elements" style="background-color: ' + back_color;
+            element_html +=  '; color: ' + text_color +'">';
+            let element_holder = $(element_html);
+            let delete_element = '<p style="text-align: right;" class="form-group panel-buffer">';
+            delete_element += '<a id="tour_link" onclick="delete_query(' + i +')" title="Delete">';
+            delete_element += '<i class="fa fa-trash" style="color:#758055" aria-hidden="true"></i></a></p>';
+            element_holder.append(delete_element)
+            element_holder.append(
                 get_form_group(
                     'Datatype',
                     'datatype_review',
-                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text().length > 0
+                        ? $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                        : $('#ensemblemenu option[value=' + structured_data["datatype"] + ']').text()
                 )
             );
-            checkout_list.append(
+            element_holder.append(
                 get_form_group(
                     'Begin time',
                     'begin_time_review',
                     structured_data["begintime"]
                 )
             );
-            checkout_list.append(
+            element_holder.append(
                 get_form_group(
                     'End time',
                     'end_time_review',
                     structured_data["endtime"]
                 )
             );
-            checkout_list.append(
+            element_holder.append(
                 get_form_group(
                     'Calculation',
                     'calculation_review',
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
-            checkout_list.append("<hr>");
+
+            checkout_list.append(element_holder)
         }
     }
+    if(! no_toggle) {
+        toggle_query_tabs();
+    }
+}
 
+function delete_query(delete_index) {
+    if (delete_index > -1) {
+        query_list.splice(delete_index, 1); // 2nd parameter means remove one item only
+    }
 
-    toggle_query_tabs();
+// refresh the UI
+    review_query(true)
 }
 
 /**
@@ -3247,6 +3278,7 @@ function get_form_group(label, element_id, text) {
 function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
+    $("#sidebar-content").scrollTop(0);
 }
 
 /**
