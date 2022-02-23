@@ -25,7 +25,17 @@
     />
     <link href="{% static 'frontend/css/App.css' %}" rel="stylesheet"/>
     <link href="{% static 'frontend/css/card.css' %}" rel="stylesheet"/>
+    {{ block.super }}
     <style>
+    a:hover{
+        color:#bdd12f;
+    }
+    :root {
+        --primary: #007db0;
+        --link-fg: #5980af;
+        --link-hover-color: #bdd12f;
+        --link-selected-fg: #6f94c6;
+    }
         #header {
             padding: 0;
             background: #000000;
@@ -33,6 +43,11 @@
 
         ul > li {
             list-style-type: none;
+        }
+
+        caption {
+            caption-side: top;
+            background-color: #758055!important;
         }
 
         caption > a.section {

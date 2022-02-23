@@ -1283,8 +1283,8 @@ function clearRange() {
     const current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
     document.getElementById("end_range_date").value = current_max
 
-     $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
-            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
+    $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+        " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
 }
 
 /**
@@ -1389,17 +1389,17 @@ function verify_ready() {
 
             function buildAPIReference(value) {
                 let aoi_string = "";
-                if(geometry.text().trim().indexOf("- Feature:") > -1) {
+                if (geometry.text().trim().indexOf("- Feature:") > -1) {
                     if (highlightedIDs.length > 0) {
                         aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
                         aoi_string += "&featureids=" + highlightedIDs.join(",");
                     }
-                } else{
+                } else {
                     aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
                 }
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
-                    +  aoi_string + "</span>");
+                    + aoi_string + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
             api_panel.empty();
@@ -2016,13 +2016,13 @@ function syncDates() {
     $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
-function rebuildGraph(){
-   if($("#axis_toggle").prop("checked")){
-       $("#multi_axis").prop("checked", true);
-   } else{
-       $("#simple_axis").prop("checked", true);
-   }
-   open_previous_chart();
+function rebuildGraph() {
+    if ($("#axis_toggle").prop("checked")) {
+        $("#multi_axis").prop("checked", true);
+    } else {
+        $("#simple_axis").prop("checked", true);
+    }
+    open_previous_chart();
 }
 
 /**
@@ -2038,7 +2038,7 @@ function inti_chart_dialog() {
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
     dialog_html += 'Simple Axis <label class="switch">'
-    dialog_html += '<input id="axis_toggle" type="checkbox" '+ checked_text +' onclick="rebuildGraph()">';
+    dialog_html += '<input id="axis_toggle" type="checkbox" ' + checked_text + ' onclick="rebuildGraph()">';
     dialog_html += '<span class="slider round"></span>';
     dialog_html += '</label> Multi-Axis';
     dialog_html += '</div>';
@@ -2268,7 +2268,7 @@ function multi_chart_builder() {
                 }
             });
         }
-        $('#multi-switch-panel').css('visibility','visible');
+        $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
 
@@ -3192,7 +3192,8 @@ function review_query(no_toggle) {
                 checkout_list.append('<br><h1 class="step-marker ten">Query Type</h1>');
                 let request_type_element = '<span class="form-control panel-buffer" id="query_type_review" ';
                 request_type_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
-                request_type_element += $("#requestTypeSelect option:selected").text();;
+                request_type_element += $("#requestTypeSelect option:selected").text();
+                ;
                 request_type_element += '</span>';
                 checkout_list.append(request_type_element);
 
@@ -3202,13 +3203,38 @@ function review_query(no_toggle) {
             const back_color = i % 2 === 0 ? "#909d6b94" : "transparent";
             const text_color = i % 2 === 0 ? "#000" : "#666666";
             let element_html = '<div class="checkout_list_elements" style="background-color: ' + back_color;
-            element_html +=  '; color: ' + text_color +'">';
+            element_html += '; color: ' + text_color + '">';
             let element_holder = $(element_html);
-            let delete_element = '<p style="text-align: right;" class="form-group panel-buffer">';
-            delete_element += '<a id="tour_link" onclick="delete_query(' + i +')" title="Delete">';
-            delete_element += '<i class="fa fa-trash" style="color:#758055" aria-hidden="true"></i></a></p>';
-            element_holder.append(delete_element)
-            element_holder.append(
+            let edit_element = '<p style="text-align: right;" class="form-group panel-buffer">';
+            edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            edit_element += 'Query ' + (i + 1) + '</span>'
+            edit_element += '<a class="z5px" onclick="edit_query(' + i + ')" title="Edit">';
+            edit_element += '<i class="fas fa-edit" style="color:#758055" aria-hidden="true"></i></a>';
+            edit_element += '<a class="z5px" onclick="delete_query(' + i + ')" title="Delete">';
+            edit_element += '<i class="fas fa-trash" style="color:#758055" aria-hidden="true"></i></a>';
+
+            edit_element += '<a type="button" class="bread-crumb collapsed" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            let toggle_arrow = "fa fa-angle-";
+            let toggle_class = "collapse";
+            if (i === 0) {
+                toggle_class += " show";
+                toggle_arrow += "up";
+            } else {
+                toggle_arrow += "down";
+            }
+
+            edit_element += '<i id="review-' + i + '-toggle" class="' + toggle_arrow + '"></i></a>';
+            edit_element += '</p>';
+            element_holder.append(edit_element)
+
+            let element_panel = $('<div id="review-' + i + '" class="' + toggle_class + '">');
+            element_panel.append(
                 get_form_group(
                     'Datatype',
                     'datatype_review',
@@ -3217,34 +3243,62 @@ function review_query(no_toggle) {
                         : $('#ensemblemenu option[value=' + structured_data["datatype"] + ']').text()
                 )
             );
-            element_holder.append(
+            element_panel.append(
                 get_form_group(
                     'Begin time',
                     'begin_time_review',
                     structured_data["begintime"]
                 )
             );
-            element_holder.append(
+            element_panel.append(
                 get_form_group(
                     'End time',
                     'end_time_review',
                     structured_data["endtime"]
                 )
             );
-            element_holder.append(
+            element_panel.append(
                 get_form_group(
                     'Calculation',
                     'calculation_review',
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
+            element_holder.append(element_panel);
 
             checkout_list.append(element_holder)
         }
     }
-    if(! no_toggle) {
+    if (!no_toggle) {
         toggle_query_tabs();
     }
+}
+
+function edit_query(edit_index) {
+    /* I will open an edit form to enable editing pre-filled with query_list[edit_index]
+    Upon user clicking save on the edit form I will
+
+    structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+
+   // update all values like:
+    structured_data.begintime = '01/22/2022'
+    // create new form from the updated structure
+    const form_data = new FormData();
+
+    for ( var key in structured_data ) {
+        form_data.append(key, item[key]);
+    }
+
+    // replace the existing form with the new
+    query_list[update_index] = form_data
+
+    // refresh the UI
+    review_query(true)
+
+
+     */
+
+    alert("edit: " + edit_index);
 }
 
 function delete_query(delete_index) {
@@ -3253,7 +3307,8 @@ function delete_query(delete_index) {
     }
 
 // refresh the UI
-    review_query(true)
+    review_query(true);
+    update_number_queries();
 }
 
 /**

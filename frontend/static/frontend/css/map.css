@@ -481,6 +481,10 @@ a.leaflet-bar-part.leaflet-bar-part-single{
     margin-bottom: 10px;
 }
 
+.z5px{
+    margin: 0 5px;
+}
+
 .checkout_list_elements{
     margin-left: -10px;
     padding: 10px 0 10px 10px;
