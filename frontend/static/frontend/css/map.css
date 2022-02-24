@@ -518,17 +518,17 @@ a.leaflet-bar-part.leaflet-bar-part-single{
   transition: .4s;
 }
 
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 16px;
-  width: 16px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  -webkit-transition: .4s;
-  transition: .4s;
-}
+/*.slider:before {*/
+/*  position: absolute;*/
+/*  content: "";*/
+/*  height: 16px;*/
+/*  width: 16px;*/
+/*  left: 4px;*/
+/*  bottom: 4px;*/
+/*  background-color: transparent;*/
+/*  -webkit-transition: .4s;*/
+/*  transition: .4s;*/
+/*}*/
 
 input:checked + .slider {
   background-color: #92b03d;

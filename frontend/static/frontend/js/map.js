@@ -1893,6 +1893,13 @@ function filter_datasets_by() {
     handleSourceSelected(firstLayerOn.val());
 }
 
+function filter_edit_datasets_by() {
+    $(".layer-on-edit, .layer-off-edit").toggleClass("layer-on-edit layer-off-edit");
+    const firstLayerOn = $('#sourcemenu-edit option.layer-on-edit:first');
+    $("#sourcemenu-edit")[0].selectedIndex = firstLayerOn.index();
+    handleSourceSelected(firstLayerOn.val(), true);
+}
+
 /**
  * configure_nmme
  * Sets the variables needed to query the NMME dataset based on
@@ -1951,16 +1958,23 @@ function configure_nmme(sdata) {
  * Sets the UI to the correct state when a different source is selected
  * @param which
  */
-function handleSourceSelected(which) {
+function handleSourceSelected(which, edit) {
     which = which.toString();
     let layer = client_layers.find(
         (item) => item.app_id === which
     )
     if (layer) {
-        $("#ensemble_builder").hide();
-        $("#non-multi-ensemble-dates").show();
+        if(edit){
+            $("#ensemble_builder_edit").hide();
+            $("#non-multi-ensemble-dates_edit").show();
+        } else {
+            $("#ensemble_builder").hide();
+            $("#non-multi-ensemble-dates").show();
+        }
+
         //show date range controls
     } else {
+        alert("need to finish the nmme edit");
         // open and set ensemble section
         $("#ensemble_builder").show();
         $("#non-multi-ensemble-dates").hide();
@@ -3178,7 +3192,6 @@ function review_query(no_toggle) {
     let init = true;
     if (query_list.length > 0) {
         for (let [i, formData] of query_list.entries()) {
-            console.log("index: " + i);
             const structured_data = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
             if (init) {
 
@@ -3193,7 +3206,6 @@ function review_query(no_toggle) {
                 let request_type_element = '<span class="form-control panel-buffer" id="query_type_review" ';
                 request_type_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
                 request_type_element += $("#requestTypeSelect option:selected").text();
-                ;
                 request_type_element += '</span>';
                 checkout_list.append(request_type_element);
 
@@ -3275,30 +3287,80 @@ function review_query(no_toggle) {
 }
 
 function edit_query(edit_index) {
-    /* I will open an edit form to enable editing pre-filled with query_list[edit_index]
-    Upon user clicking save on the edit form I will
 
-    structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    close_dialog();
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    let edit_query_form = $('<div>');
 
-   // update all values like:
-    structured_data.begintime = '01/22/2022'
-    // create new form from the updated structure
-    const form_data = new FormData();
+    let operation_group = '<div class="form-group panel-buffer" id="panel_timeseries">';
+    operation_group += '<label for="operationmenu-edit">Calculation</label></div>';
 
-    for ( var key in structured_data ) {
-        form_data.append(key, item[key]);
+    let operation_edit = $("#operationmenu").clone().prop('id', 'operationmenu-edit' );
+    const opts = $("#operationmenu option");
+    for(let i = 0; i < opts.length; i++) {
+        if (opts[i].value == structured_data.operationtype) {
+            operation_edit.prop('selectedIndex', i);
+            break;
+        }
     }
+    // $(operation_group).append(operation_edit);
 
-    // replace the existing form with the new
-    query_list[update_index] = form_data
-
-    // refresh the UI
-    review_query(true)
+    edit_query_form.append($(operation_group).append(operation_edit));
 
 
-     */
+    let date_range = '<p class="picker-text">Date Range</p>';
+    date_range += '<form id="range_picker_edit" style="width:100%; height:100%; display: flex; align-items: center;" class="picker-text">';
 
-    alert("edit: " + edit_index);
+    date_range += '<div class="form-group panel-buffer">';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="begin_date_edit" value="' + moment(structured_data.begintime, "MM/DD/YYYY").format("YYYY-MM-DD") +'"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '<div class="input-group-addon">to</div>';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="end_date_edit" value="' + moment(structured_data.endtime, "MM/DD/YYYY").format("YYYY-MM-DD") + '"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '</div></form>';
+    date_range += '<div class="just-buttons">';
+    date_range += '<button style="width:45%" onclick="close_dialog()">Cancel</button>';
+    date_range += '<button style="width:45%" onclick="apply_edits('+edit_index+')">Apply</button>';
+    date_range += '</div>';
+
+
+    edit_query_form.append(date_range);
+    let dialog = $("#dialog");
+    dialog.html(edit_query_form);
+    dialog.dialog({
+        title: "Edit Query",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: "auto",
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
+}
+
+function apply_edits(edit_index){
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    const formData = new FormData();
+
+    // temporarily use same datatype, will have to get this from edit form after it is added
+    formData.append("datatype", structured_data.datatype);
+
+
+
+    formData.append("operationtype", $("#operationmenu-edit").val());
+    formData.append("begintime", moment(document.getElementById("begin_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("endtime", moment(document.getElementById("end_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("intervaltype", structured_data.intervaltype);
+    formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
+    formData.append("isZip_CurrentDataType", false);
+
+    query_list[edit_index] = formData;
+    review_query(true);
+    close_dialog();
 }
 
 function delete_query(delete_index) {
