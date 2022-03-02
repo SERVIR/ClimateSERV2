@@ -1,10 +1,12 @@
 import datetime, gzip, os, requests, shutil, sys, urllib
+import glob
+
 import xarray as xr
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
 from copy import deepcopy
-
+from .utils import sendNotification, listFD
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
@@ -57,16 +59,36 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
 
             filenames = []
             dates = []
+            new_dates = []
+            dates_arr = []
+            while start_date <= end_date:
+                new_dates.append(start_date)
+                start_date += datetime.timedelta(days=1)
+
             response = requests.get(current_root_http_path)
             soup = BeautifulSoup(response.text, 'html.parser')
             for _, link in enumerate(soup.findAll('a')):
                 if link.get('href').endswith('.tif'):
-                    _, date_string, _ = link.get('href').split('/')[-1].split('_')
-                    date = datetime.datetime.strptime(date_string,'%Y%m%d')
+                    date_string= link.get('href').split('/')[-1].split('_')
+                    l_date_string = link.get('href').split('/')[-1].split('_')[2].split('.')[0]
+                    date = datetime.datetime.strptime(l_date_string,'%Y%m%d')
                     if start_date <= date <= end_date:
                         filenames.append(link.get_text())
                         dates.append(date)
 
+            # for ETL alerts
+            list_of_files = glob.glob(final_load_dir_path + '/*')
+            latest_file = max(list_of_files, key=os.path.getctime)
+            date = latest_file.split('.')[2]
+            date_part = date.split('T')[0]
+            datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+            for nd in new_dates:
+                delta =  datetime_object - nd
+                file_Date = nd.strftime('%Y%m%d')
+                if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                    dates_arr.append(file_Date)
+            if len(dates_arr) > 0:
+                sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
             for filename, date in zip(filenames, dates):
 
                 current_year__YYYY_str  = "{:0>4d}".format(date.year)
@@ -92,6 +114,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                 # All 3 of these mode products use a year appended to the end of their path.
                 # Add the Year to the directory path.
                 remote_directory_path = current_root_http_path
+                print(remote_directory_path)
 
                 # Getting full paths
                 remote_full_filepath_tif            = urllib.parse.urljoin(remote_directory_path, base_filename)
@@ -205,7 +228,8 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
         if modulus_size < 1:
             modulus_size = 1
-
+        dates_arr = []
+        print(num_of_objects_to_process)
         # Loop through each expected granule
         for expected_granule in self._expected_granules:
             try:
@@ -216,12 +240,12 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                     activity_description = event_message
                     additional_json = self.etl_parent_pipeline_instance.to_JSONable_Object()
                     self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
-
                 # Current Granule to download
                 remote_directory_path       = expected_granule['remote_directory_path']
                 tif_filename                = expected_granule['tif_filename']
                 local_full_filepath_tif     = expected_granule['local_full_filepath_tif']
                 local_full_filepath_tif1    = local_full_filepath_tif.replace('data-mean', 'anomaly-mean')
+                print(remote_directory_path)
 
                 # Download the file - Actually do the download now
                 try:

@@ -26,7 +26,8 @@ def get_filelist(dataset, datatype, start_date, end_date):
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset.split('_')
-
+    if not os.path.exists(params.dataTypes[datatype]['inputDataLocation']):
+        os.makedirs(params.dataTypes[datatype]['inputDataLocation'])
     if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
             name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dataset_name[

@@ -52,7 +52,8 @@ def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
             try:
                 current_PropValue = currentDataType[propertyName]
                 if str(current_PropValue).lower() == str(propertySearchValue).lower():
-                    resultList.append(currentDataType['number'])
+                    if currentDataType['number']:
+                        resultList.append(currentDataType['number'])
             except:
                 pass
     except:
