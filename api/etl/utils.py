@@ -1,3 +1,10 @@
+import smtplib
+
+import requests
+
+from ..models import Profile
+from django.contrib.auth.models import User
+from bs4 import BeautifulSoup
 from django.conf import settings
 #from django.utils import timezone
 
@@ -135,3 +142,43 @@ def get_UTC_NOW__ReadyFor_Postgresql_Input():
     except:
         pass
     return ret_DateTimeObj
+
+ext = 'tif'
+
+def listFD(url, ext=''):
+    page = requests.get(url).text
+    soup = BeautifulSoup(page, 'html.parser')
+    return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
+
+def sendNotification(uuid, dates_arr):
+    user_arr = []
+    etl_user_arr = []
+    admin = []
+    SUBJECT = "ClimateSERV2.0 ETL run failed!!"
+    try:
+        TEXT = "This email informs you that the ETL run with ETL_PipelineRun__UUID " + uuid + " has failed for following dates(YYYYMMDD).\n\n " +(', ').join(dates_arr)
+        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+        for profile in Profile.objects.all():
+            if profile.storage_alerts:
+                user_arr.append(profile.user)
+        for user in User.objects.all():
+            for us in user_arr:
+                if str(us) == str(user.username):
+                    etl_user_arr.append(user.email)
+        for user in User.objects.all():
+            if str(user.username) == "email_admin":
+                for p in Profile.objects.all():
+                    if str(p.user) == "email_admin":
+                        admin.append(user.email)
+                        admin.append(p.gmail_password)
+                        break
+                break
+        for storage_user in etl_user_arr:
+            mail = smtplib.SMTP('smtp.gmail.com', 587)
+            mail.ehlo()
+            mail.starttls()
+            mail.login(admin[0], admin[1])
+            mail.sendmail(admin[0], storage_user, message)
+            mail.close()
+    except Exception as e:
+        print(e)

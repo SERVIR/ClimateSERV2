@@ -1,9 +1,11 @@
 import datetime, gzip, os, requests, shutil, sys, urllib
+import glob
+
+from .utils import sendNotification,listFD
 import xarray as xr
 import pandas as pd
 import numpy as np
 from collections import OrderedDict
-
 from .common import common
 from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
@@ -96,6 +98,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 # Create the base filename
                 base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename(subtype_filter=self.mode,
                                                                               datetime_obj=current_date)
+
                 tif_filename = '{}.tif'.format(base_filename)
                 tif_gz_filename = '{}.tif.gz'.format(base_filename)
 
@@ -273,7 +276,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         modulus_size = int(num_of_objects_to_process / num_of_download_activity_events)
         if modulus_size < 1:
             modulus_size = 1
-
+        dates_arr = []
         # Loop through each expected granule
         for expected_granule in self._expected_granules:
             try:
@@ -298,9 +301,22 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 local_full_filepath_tif = expected_granule['local_full_filepath_tif']
                 local_full_filepath_tif_gz = expected_granule['local_full_filepath_tif_gz']
 
+                # for ETL alerts
+                list_of_files = glob.glob(self.final_load_dir_path+'/*')
+                if len(list_of_files)>0:
+                    latest_file = max(list_of_files, key=os.path.getctime)
+                    if self.mode == 'chirps':
+                        date = latest_file.split('.')[2]
+                    if self.mode == 'chirp':
+                        date = latest_file.split('.')[2]
+                    date_part = date.split('T')[0]
+                    status_msg = False
+                    datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+
                 # Download the file - Actually do the download now
                 try:
                     current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_gz_filename)
+                    print(current_url_to_download)
                     r = requests.get(current_url_to_download)
                     if r.ok:
                         with open(local_full_filepath_tif_gz, 'wb') as outfile:
@@ -308,16 +324,40 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     elif r.status_code == 404:
                         current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
                         r = requests.get(current_url_to_download)
-                        with open(local_full_filepath_tif, 'wb') as outfile:
-                            outfile.write(r.content)
+                        if r.status_code== 404:
+                            if self.mode == 'chirps':
+                                file_Date = tif_gz_filename.split('.')[2] + tif_gz_filename.split('.')[3] + \
+                                            tif_gz_filename.split('.')[4]
+                            if self.mode == "chirp":
+                                file_Date = tif_gz_filename.split('.')[1] + tif_gz_filename.split('.')[2] + \
+                                            tif_gz_filename.split('.')[3]
+                                # for ETL alerts
+                                list_of_files = glob.glob(self.final_load_dir_path + '/*')
+                                if len(list_of_files) > 0:
+                                    latest_file = max(list_of_files, key=os.path.getctime)
+                                    if self.mode == 'chirps':
+                                        date = latest_file.split('.')[2]
+                                    if self.mode == 'chirp':
+                                        date = latest_file.split('.')[2]
+                                    date_part = date.split('T')[0]
+                                    status_msg = False
+                                    datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+                                    tmp_date = datetime.datetime.strptime(file_Date, '%Y%m%d')
+                                    delta = tmp_date - datetime_object
+                                    if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                                        dates_arr.append(file_Date)
+                        else:
+                            with open(local_full_filepath_tif, 'wb') as outfile:
+                                outfile.write(r.content)
                     else:
                         r.raise_for_status()
                     download_counter = download_counter + 1
                     print("Downloaded file #", str(download_counter))
                 except:
+
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
-                   
+
                     warn_JSON = {}
                     warn_JSON[
                         'warning'] = "Warning: There was an uncaught error when attempting to download file at URL: " \
@@ -355,7 +395,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
             # Increment the loop counter
             loop_counter = loop_counter + 1
-
+        if len(dates_arr)>0:
+            sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
         # Ended, now for reporting
         #
         ret__detail_state_info['class_name'] = self.__class__.__name__
@@ -706,7 +747,6 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     # additional_json=additional_json)
 
                 except:
-                    print("There was an error")
                     sysErrorData = str(sys.exc_info())
                     error_JSON = {}
                     error_JSON[

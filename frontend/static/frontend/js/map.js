@@ -1861,7 +1861,7 @@ function pollForProgress(id, isClimate, query_index) {
                         '}">';
                     error_message += '<div style="width:100%; text-align: center;">';
                     error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-                    error_message += '<p style="line-height: 2em;">There was am error processing Job ID: ' + id;
+                    error_message += '<p style="line-height: 2em;">There was an error processing Job ID: ' + id;
                     error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
                     error_message += '</div>';

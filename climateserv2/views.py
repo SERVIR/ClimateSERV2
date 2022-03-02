@@ -25,7 +25,7 @@ from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
-
+exempt = -1
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 g = GeoIP2()
@@ -64,6 +64,7 @@ def get_id_from_output(output):
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
     request_id = request.POST.get("id", request.GET.get("id", None))
+
     if request_id is None:
         try:
             request_id = get_id_from_output(output)
@@ -174,7 +175,6 @@ def get_data_request_progress(request):
     try:
         request_id = request.GET["id"]
         progress = read_progress(request_id)
-
         logger.debug("Progress =" + str(progress))
         if progress == -1.0:
             logger.warning("Problem with getDataRequestProgress: " + str(request))
@@ -423,7 +423,22 @@ def submit_data_request(request):
     logger.info("Submitting " + unique_id)
     # Submit requests to the ipcluster service to get data
 
-    if len(error) == 0:
+    if datatype == 35 or datatype == 36:
+        aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
+                                  time_requested=timezone.now(), AOI=aoi,
+                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                  end_date=pd.Timestamp(end_time, tz='UTC'),
+                                  calculation=calculation, request_type=request.method,
+                                  status="Complete", progress=-1, API_call="submitDataRequest",
+                                  data_retrieved=False, ui_request=from_ui)
+
+        track_usage.save()
+        return process_callback(request, json.dumps([unique_id]), "application/json")
+
+    elif len(error) == 0:
         # json_obj = {}
         dictionary = {'uniqueid': unique_id,
                       'datatype': datatype,
@@ -471,7 +486,6 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
@@ -484,7 +498,6 @@ def submit_data_request(request):
 
         track_usage.save()
         p.start()
-
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"

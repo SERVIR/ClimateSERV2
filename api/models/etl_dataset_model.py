@@ -98,6 +98,7 @@ class ETL_Dataset(models.Model):
                                          help_text="Is this Instance meant to be used ONLY for internal platform "
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
+    late_after = models.IntegerField(default=0, help_text="Duration in days")
 
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)

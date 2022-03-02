@@ -1,4 +1,6 @@
 import datetime, os, re, requests, shutil, sys, zipfile
+import glob
+
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -9,6 +11,8 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
+from .utils import sendNotification
+
 
 class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
@@ -352,7 +356,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         loop_counter = 0
         error_counter = 0
         detail_errors = []
-
+        dates_arr =[]
         # Setting up for the periodic reporting on the terminal
         num_of_objects_to_process = len(self._expected_remote_full_file_paths)
         num_of_download_activity_events = 4
@@ -387,6 +391,18 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     else:
                         r.raise_for_status()
                 except:
+                    list_of_files = glob.glob(self.final_load_dir_path + '/*')
+                    latest_file = max(list_of_files, key=os.path.getctime)
+                    date = latest_file.split('.')[1]
+                    date_part = date.split('T')[0]
+                    print(date_part)
+                    datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+                    file_Date = expected_remote_file_path_object['final_nc4_filename'].split('.')[1]
+                    delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
+                    print(delta)
+                    if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                        dates_arr.append(file_Date.split('T')[0])
+
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
                     #print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -403,6 +419,18 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
             except:
+                list_of_files = glob.glob(self.final_load_dir_path + '/*')
+                latest_file = max(list_of_files, key=os.path.getctime)
+                date = latest_file.split('.')[1]
+
+                date_part = date.split('T')[0]
+                print(date_part)
+                datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+                file_Date = expected_remote_file_path_object['final_nc4_filename'].split('.')[1]
+                delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
+                print(delta)
+                if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                    dates_arr.append(file_Date.split('T')[0])
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
                 error_message = "emodis.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
@@ -412,7 +440,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                 # Maybe in here is an error with sending the warning in an earlier step?
             loop_counter = loop_counter + 1
-
+        if len(dates_arr) > 0:
+            sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
         # Ended, now for reporting
         #
         ret__detail_state_info['class_name'] = self.__class__.__name__

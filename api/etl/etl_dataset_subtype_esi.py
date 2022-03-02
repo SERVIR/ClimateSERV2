@@ -1,4 +1,6 @@
 import datetime, gzip, os, requests, shutil, sys, urllib
+import glob
+
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -11,6 +13,9 @@ from .etl_dataset_subtype import ETL_Dataset_Subtype
 from api.services import Config_SettingService
 
 from bs4 import BeautifulSoup
+
+from .utils import sendNotification
+
 
 class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
@@ -53,10 +58,13 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
         try:
 
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
+            sd =start_date
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
-
             filenames = []
             dates = []
+            new_dates = []
+            dates_arr = []
+
             response = requests.get(current_root_http_path)
             soup = BeautifulSoup(response.text, 'html.parser')
             expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
@@ -65,10 +73,28 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     _, wk, rest = link.get('href').split('_')
                     if wk == expected_file_name_wk_number_string:
                         date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif.gz', ''), rest[:4]),'%j %Y')
-                        if date >= start_date and date <= end_date:
+                        if  start_date <= date <= end_date:
                             filenames.append(link.get_text())
                             dates.append(date)
+            while sd <= end_date:
+                new_dates.append(sd)
+                sd += datetime.timedelta(days=1)
+            # for ETL alerts
+            list_of_files = glob.glob(self.final_load_dir_path + '/*')
+            if len(list_of_files) > 0:
+                latest_file = max(list_of_files, key=os.path.getctime)
+                date = latest_file.split('.')[2]
+                date_part = date.split('T')[0]
+                datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+                for nd in new_dates:
+                    delta =   nd - datetime_object
+                    file_Date = nd.strftime('%Y%m%d')
+                    print(delta)
+                    if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                        dates_arr.append(file_Date)
 
+            if len(dates_arr) > 0:
+                sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
             for filename, date in zip(filenames, dates):
 
                 nc4_date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
