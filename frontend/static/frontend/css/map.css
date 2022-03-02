@@ -205,11 +205,29 @@ body {
     color: #bdd12f; /*#7eaddb;*/
 }
 
-.layer-on {
+.ensemble-edit {
+    display: block;
+}
+.ensemble-edit-hide{
+    display: none;
+}
+.observation-edit {
+    display: block;
+}
+.observation-edit-hide{
+    display: none;
+}
+
+.dialog-max-height{
+    max-height: 80vh!important;
+    overflow: auto;
+}
+
+.layer-on, layer-on-edit {
     display: block;
 }
 
-.layer-off {
+.layer-off, .layer-off-edit {
     display: none;
 }
 
