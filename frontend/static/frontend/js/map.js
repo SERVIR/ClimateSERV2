@@ -1283,8 +1283,8 @@ function clearRange() {
     const current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
     document.getElementById("end_range_date").value = current_max
 
-     $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
-            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
+    $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+        " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
 }
 
 /**
@@ -1389,17 +1389,17 @@ function verify_ready() {
 
             function buildAPIReference(value) {
                 let aoi_string = "";
-                if(geometry.text().trim().indexOf("- Feature:") > -1) {
+                if (geometry.text().trim().indexOf("- Feature:") > -1) {
                     if (highlightedIDs.length > 0) {
                         aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
                         aoi_string += "&featureids=" + highlightedIDs.join(",");
                     }
-                } else{
+                } else {
                     aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
                 }
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
-                    +  aoi_string + "</span>");
+                    + aoi_string + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
             api_panel.empty();
@@ -1602,7 +1602,7 @@ function update_number_queries() {
     if (query_list.length === 0) {
         $("#btnRequest").prop("disabled", true);
         $("#btnMultiQuerySubmit").prop("disabled", true);
-        $("#btnViewAPI").prop("disabled", true);
+        $("#btnViewAPI").prop("disabled", false);
     } else {
         $("#btnRequest").prop("disabled", false);
         $("#btnMultiQuerySubmit").prop("disabled", false);
@@ -1893,6 +1893,13 @@ function filter_datasets_by() {
     handleSourceSelected(firstLayerOn.val());
 }
 
+function filter_edit_datasets_by() {
+    $(".layer-on-edit, .layer-off-edit").toggleClass("layer-on-edit layer-off-edit");
+    const firstLayerOn = $('#sourcemenu-edit option.layer-on-edit:first');
+    $("#sourcemenu-edit")[0].selectedIndex = firstLayerOn.index();
+    handleSourceSelected(firstLayerOn.val(), true);
+}
+
 /**
  * configure_nmme
  * Sets the variables needed to query the NMME dataset based on
@@ -1951,16 +1958,23 @@ function configure_nmme(sdata) {
  * Sets the UI to the correct state when a different source is selected
  * @param which
  */
-function handleSourceSelected(which) {
+function handleSourceSelected(which, edit) {
     which = which.toString();
     let layer = client_layers.find(
         (item) => item.app_id === which
     )
     if (layer) {
-        $("#ensemble_builder").hide();
-        $("#non-multi-ensemble-dates").show();
+        if(edit){
+            $("#ensemble_builder_edit").hide();
+            $("#non-multi-ensemble-dates_edit").show();
+        } else {
+            $("#ensemble_builder").hide();
+            $("#non-multi-ensemble-dates").show();
+        }
+
         //show date range controls
     } else {
+        alert("need to finish the nmme edit");
         // open and set ensemble section
         $("#ensemble_builder").show();
         $("#non-multi-ensemble-dates").hide();
@@ -2016,13 +2030,13 @@ function syncDates() {
     $("#eDate_new_cooked").val($("#forecasttomenu").val());
 }
 
-function rebuildGraph(){
-   if($("#axis_toggle").prop("checked")){
-       $("#multi_axis").prop("checked", true);
-   } else{
-       $("#simple_axis").prop("checked", true);
-   }
-   open_previous_chart();
+function rebuildGraph() {
+    if ($("#axis_toggle").prop("checked")) {
+        $("#multi_axis").prop("checked", true);
+    } else {
+        $("#simple_axis").prop("checked", true);
+    }
+    open_previous_chart();
 }
 
 /**
@@ -2038,7 +2052,7 @@ function inti_chart_dialog() {
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
     dialog_html += 'Simple Axis <label class="switch">'
-    dialog_html += '<input id="axis_toggle" type="checkbox" '+ checked_text +' onclick="rebuildGraph()">';
+    dialog_html += '<input id="axis_toggle" type="checkbox" ' + checked_text + ' onclick="rebuildGraph()">';
     dialog_html += '<span class="slider round"></span>';
     dialog_html += '</label> Multi-Axis';
     dialog_html += '</div>';
@@ -2149,6 +2163,7 @@ function getDownLoadLink(id) {
  */
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
+    const first_unit = multiQueryData[0].units;
     multiChart = Highcharts.chart('chart_holder', {
         title: {text: "ClimateSERV Statistical Query"},
         tooltip: {
@@ -2170,7 +2185,7 @@ function multi_chart_builder() {
             data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
             tooltip: {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + (multiQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>"//"Value: " + this.value + units;
                 }
             }
         }],
@@ -2267,7 +2282,7 @@ function multi_chart_builder() {
                 }
             });
         }
-        $('#multi-switch-panel').css('visibility','visible');
+        $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
 
@@ -3170,59 +3185,192 @@ function layer_filter() {
  * review_query
  * Adds all selected queries to the UI for review by the user
  */
-function review_query() {
+function review_query(no_toggle) {
     const checkout_list = $("#checkout_list");
     checkout_list.empty();
     $("#checkout_number").text(query_list.length + (query_list.length === 1 ? " Query" : " Queries"));
     let init = true;
     if (query_list.length > 0) {
-        for (let formData of query_list) {
+        for (let [i, formData] of query_list.entries()) {
             const structured_data = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
             if (init) {
 
-                checkout_list.append('<br><h1 class="step-marker">Common Geometry</h1>');
+                checkout_list.append('<br><h1 class="step-marker ten">Common Geometry</h1>');
                 let geometry_element = '<span class="form-control panel-buffer" id="geometry_review" ';
                 geometry_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
                 geometry_element += $("#geometry").text();
                 geometry_element += '</span>';
                 checkout_list.append(geometry_element);
-                checkout_list.append('<br><h1 class="step-marker">Queries</h1>');
+
+                checkout_list.append('<br><h1 class="step-marker ten">Query Type</h1>');
+                let request_type_element = '<span class="form-control panel-buffer" id="query_type_review" ';
+                request_type_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
+                request_type_element += $("#requestTypeSelect option:selected").text();
+                request_type_element += '</span>';
+                checkout_list.append(request_type_element);
+
+                checkout_list.append('<br><h1 class="step-marker ten">Queries</h1>');
                 init = false;
             }
-            checkout_list.append(
+            const back_color = i % 2 === 0 ? "#909d6b94" : "transparent";
+            const text_color = i % 2 === 0 ? "#000" : "#666666";
+            let element_html = '<div class="checkout_list_elements" style="background-color: ' + back_color;
+            element_html += '; color: ' + text_color + '">';
+            let element_holder = $(element_html);
+            let edit_element = '<p style="text-align: right;" class="form-group panel-buffer">';
+            edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            edit_element += 'Query ' + (i + 1) + '</span>'
+            edit_element += '<a class="z5px" onclick="edit_query(' + i + ')" title="Edit">';
+            edit_element += '<i class="fas fa-edit" style="color:#758055" aria-hidden="true"></i></a>';
+            edit_element += '<a class="z5px" onclick="delete_query(' + i + ')" title="Delete">';
+            edit_element += '<i class="fas fa-trash" style="color:#758055" aria-hidden="true"></i></a>';
+
+            edit_element += '<a type="button" class="bread-crumb collapsed" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            let toggle_arrow = "fa fa-angle-";
+            let toggle_class = "collapse";
+            if (i === 0) {
+                toggle_class += " show";
+                toggle_arrow += "up";
+            } else {
+                toggle_arrow += "down";
+            }
+
+            edit_element += '<i id="review-' + i + '-toggle" class="' + toggle_arrow + '"></i></a>';
+            edit_element += '</p>';
+            element_holder.append(edit_element)
+
+            let element_panel = $('<div id="review-' + i + '" class="' + toggle_class + '">');
+            element_panel.append(
                 get_form_group(
                     'Datatype',
                     'datatype_review',
-                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text().length > 0
+                        ? $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                        : $('#ensemblemenu option[value=' + structured_data["datatype"] + ']').text()
                 )
             );
-            checkout_list.append(
+            element_panel.append(
                 get_form_group(
                     'Begin time',
                     'begin_time_review',
                     structured_data["begintime"]
                 )
             );
-            checkout_list.append(
+            element_panel.append(
                 get_form_group(
                     'End time',
                     'end_time_review',
                     structured_data["endtime"]
                 )
             );
-            checkout_list.append(
+            element_panel.append(
                 get_form_group(
                     'Calculation',
                     'calculation_review',
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
-            checkout_list.append("<hr>");
+            element_holder.append(element_panel);
+
+            checkout_list.append(element_holder)
         }
     }
+    if (!no_toggle) {
+        toggle_query_tabs();
+    }
+}
+
+function edit_query(edit_index) {
+
+    close_dialog();
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    let edit_query_form = $('<div>');
+
+    let operation_group = '<div class="form-group panel-buffer" id="panel_timeseries">';
+    operation_group += '<label for="operationmenu-edit">Calculation</label></div>';
+
+    let operation_edit = $("#operationmenu").clone().prop('id', 'operationmenu-edit' );
+    const opts = $("#operationmenu option");
+    for(let i = 0; i < opts.length; i++) {
+        if (opts[i].value == structured_data.operationtype) {
+            operation_edit.prop('selectedIndex', i);
+            break;
+        }
+    }
+    // $(operation_group).append(operation_edit);
+
+    edit_query_form.append($(operation_group).append(operation_edit));
 
 
-    toggle_query_tabs();
+    let date_range = '<p class="picker-text">Date Range</p>';
+    date_range += '<form id="range_picker_edit" style="width:100%; height:100%; display: flex; align-items: center;" class="picker-text">';
+
+    date_range += '<div class="form-group panel-buffer">';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="begin_date_edit" value="' + moment(structured_data.begintime, "MM/DD/YYYY").format("YYYY-MM-DD") +'"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '<div class="input-group-addon">to</div>';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="end_date_edit" value="' + moment(structured_data.endtime, "MM/DD/YYYY").format("YYYY-MM-DD") + '"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '</div></form>';
+    date_range += '<div class="just-buttons">';
+    date_range += '<button style="width:45%" onclick="close_dialog()">Cancel</button>';
+    date_range += '<button style="width:45%" onclick="apply_edits('+edit_index+')">Apply</button>';
+    date_range += '</div>';
+
+
+    edit_query_form.append(date_range);
+    let dialog = $("#dialog");
+    dialog.html(edit_query_form);
+    dialog.dialog({
+        title: "Edit Query",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: "auto",
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
+}
+
+function apply_edits(edit_index){
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    const formData = new FormData();
+
+    // temporarily use same datatype, will have to get this from edit form after it is added
+    formData.append("datatype", structured_data.datatype);
+
+
+
+    formData.append("operationtype", $("#operationmenu-edit").val());
+    formData.append("begintime", moment(document.getElementById("begin_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("endtime", moment(document.getElementById("end_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("intervaltype", structured_data.intervaltype);
+    formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
+    formData.append("isZip_CurrentDataType", false);
+
+    query_list[edit_index] = formData;
+    review_query(true);
+    close_dialog();
+}
+
+function delete_query(delete_index) {
+    if (delete_index > -1) {
+        query_list.splice(delete_index, 1); // 2nd parameter means remove one item only
+    }
+
+// refresh the UI
+    review_query(true);
+    update_number_queries();
 }
 
 /**
@@ -3247,6 +3395,7 @@ function get_form_group(label, element_id, text) {
 function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
+    $("#sidebar-content").scrollTop(0);
 }
 
 /**

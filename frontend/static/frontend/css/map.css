@@ -477,6 +477,19 @@ a.leaflet-bar-part.leaflet-bar-part-single{
     white-space: nowrap;
 }
 
+.step-marker.ten {
+    margin-bottom: 10px;
+}
+
+.z5px{
+    margin: 0 5px;
+}
+
+.checkout_list_elements{
+    margin-left: -10px;
+    padding: 10px 0 10px 10px;
+}
+
 /* The switch - the box around the slider */
 .switch {
   position: relative;
@@ -505,14 +518,14 @@ a.leaflet-bar-part.leaflet-bar-part-single{
   transition: .4s;
 }
 
-.slider:before {
+.slider.round:before {
   position: absolute;
   content: "";
   height: 16px;
   width: 16px;
   left: 4px;
   bottom: 4px;
-  background-color: white;
+  background-color: #fff;
   -webkit-transition: .4s;
   transition: .4s;
 }
