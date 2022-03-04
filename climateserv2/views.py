@@ -266,29 +266,33 @@ def get_climate_scenario_info(request):
     except MultiValueDictKeyError:
         error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
         logger.error(error_msg)
-    nc_file = xr.open_dataset(
-        '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
-        chunks={'time': 16, 'longitude': 128,
-                'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+    try:
+        nc_file = xr.open_dataset(
+            '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
+            chunks={'time': 16, 'longitude': 128,
+                    'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
 
-    start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
-    is_error = False
-    climate_model_datatype_capabilities_list = [
-        {
-            "current_Capabilities": {
-                "startDateTime": start_date,
-                "endDateTime": end_date
+        start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
+        is_error = False
+        climate_model_datatype_capabilities_list = [
+            {
+                "current_Capabilities": {
+                    "startDateTime": start_date,
+                    "endDateTime": end_date
+                }
             }
+        ]
+        climate_datatype_map = params.get_Climate_DatatypeMap()
+        api_return_object = {
+            "unique_id": unique_id,
+            "RequestName": "getClimateScenarioInfo",
+            "climate_DatatypeMap": climate_datatype_map,
+            "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
+            "isError": is_error
         }
-    ]
-    climate_datatype_map = params.get_Climate_DatatypeMap()
-    api_return_object = {
-        "unique_id": unique_id,
-        "RequestName": "getClimateScenarioInfo",
-        "climate_DatatypeMap": climate_datatype_map,
-        "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
-        "isError": is_error
-    }
+    except:
+        with open('/cserv2/django_app/ClimateSERV2/climateserv2/sample_climate_scenario.json', 'r') as climate_scenario:
+            api_return_object = json.loads(climate_scenario.read())
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 

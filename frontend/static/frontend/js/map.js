@@ -2085,8 +2085,7 @@ function handleSourceSelected(which, edit, edit_init_id) {
             });
         }
         $.ajax({
-            url: "api/getClimateScenarioInfo/" +
-                id,
+            url: "api/getClimateScenarioInfo/",
             type: "GET",
             async: true,
             crossDomain: true
@@ -3350,18 +3349,34 @@ function review_query(no_toggle) {
             edit_element += '</p>';
             element_holder.append(edit_element)
 
+
+            let layer = client_layers.find(
+                (item) => item.app_id === structured_data.datatype
+            )
             let element_panel = $('<div id="review-' + i + '" class="' + toggle_class + '">');
             element_panel.append(
                 get_form_group(
                     'Datatype',
                     'datatype_review',
-                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text().length > 0
-                        ? $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
-                        : $('#ensemblemenu option[value=' + structured_data["datatype"] + ']').text().length > 0
-                            ? $('#ensemblemenu option[value=' + structured_data["datatype"] + ']').text()
-                            : $('#ensemblemenu option[value=' + (parseInt(structured_data["datatype"]) - 1) + ']').text()
+                    layer.title
                 )
             );
+
+            // see if it is ensemble, if so see which variable it is and display in a new form group
+
+            if (structured_data["ensemble"] === "true") {
+                element_panel.append(
+                    get_form_group(
+                        'Ensemble variable',
+                        'ensemble_variable_review',
+                        (parseInt(structured_data["datatype"]) % 2 === 0)
+                        ? "Temperature"
+                            : "Precipitation"
+                    )
+                );
+            }
+
+
             element_panel.append(
                 get_form_group(
                     'Begin time',
@@ -3547,8 +3562,8 @@ function apply_edits(edit_index) {
     if ($("#dataset-type-menu-edit").val() === 'model-forecast') {
         let edit_value = parseInt($("#ensemblemenu_edit").val());
         if ($("#ensemblevarmenu_edit").val() == "precipitation") {
-                edit_value = edit_value + 1;
-            }
+            edit_value = edit_value + 1;
+        }
 
         datatype = edit_value;
         formData.append("ensemble", true);

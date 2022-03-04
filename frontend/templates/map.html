@@ -69,7 +69,7 @@
                         title: "{{ enslayer.title }}",
                         url: "{{ enslayer.url }}",
                         attribution: "{{ enslayer.attribution }}",
-                        layers: "{{ enslayer.layers }}",
+                        layers: "{% if "precipitation" in enslayer.layers|stringformat:'s' %}air_temperature{% else %}precipitation{% endif %}",
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
                         id: "{{ enslayer.ui_id }}",
