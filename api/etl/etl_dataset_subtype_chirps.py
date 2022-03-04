@@ -321,6 +321,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     if r.ok:
                         with open(local_full_filepath_tif_gz, 'wb') as outfile:
                             outfile.write(r.content)
+                        download_counter = download_counter + 1
+                        print("Downloaded file #", str(download_counter))
                     elif r.status_code == 404:
                         current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
                         r = requests.get(current_url_to_download)
@@ -332,27 +334,27 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                 file_Date = tif_gz_filename.split('.')[1] + tif_gz_filename.split('.')[2] + \
                                             tif_gz_filename.split('.')[3]
                                 # for ETL alerts
-                                list_of_files = glob.glob(self.final_load_dir_path + '/*')
-                                if len(list_of_files) > 0:
-                                    latest_file = max(list_of_files, key=os.path.getctime)
-                                    if self.mode == 'chirps':
-                                        date = latest_file.split('.')[2]
-                                    if self.mode == 'chirp':
-                                        date = latest_file.split('.')[2]
-                                    date_part = date.split('T')[0]
-                                    status_msg = False
-                                    datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
-                                    tmp_date = datetime.datetime.strptime(file_Date, '%Y%m%d')
-                                    delta = tmp_date - datetime_object
-                                    if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                                        dates_arr.append(file_Date)
+                            list_of_files = glob.glob(self.final_load_dir_path + '/*')
+                            if len(list_of_files) > 0:
+                                latest_file = max(list_of_files, key=os.path.getctime)
+                                if self.mode == 'chirps':
+                                    date = latest_file.split('.')[2]
+                                if self.mode == 'chirp':
+                                    date = latest_file.split('.')[2]
+                                date_part = date.split('T')[0]
+                                status_msg = False
+                                datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+                                tmp_date = datetime.datetime.strptime(file_Date, '%Y%m%d')
+                                delta = tmp_date - datetime_object
+                                if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                                    dates_arr.append(file_Date)
                         else:
                             with open(local_full_filepath_tif, 'wb') as outfile:
                                 outfile.write(r.content)
+                            download_counter = download_counter + 1
+                            print("Downloaded file #", str(download_counter))
                     else:
                         r.raise_for_status()
-                    download_counter = download_counter + 1
-                    print("Downloaded file #", str(download_counter))
                 except:
 
                     error_counter = error_counter + 1
