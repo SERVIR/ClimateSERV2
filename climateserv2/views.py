@@ -12,6 +12,7 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+import geoip2
 from geoip2.errors import AddressNotFoundError
 
 import climateserv2.requestLog as requestLog
