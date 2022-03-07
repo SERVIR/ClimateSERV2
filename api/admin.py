@@ -7,6 +7,7 @@ from .models import ETL_Log
 from .models import ETL_PipelineRun
 from .models import Request_Progress, Request_Log, Track_Usage
 
+
 admin.site.register(Config_Setting)
 admin.site.register(ETL_Dataset)
 
@@ -55,7 +56,7 @@ class Track_UsageAdmin(admin.ModelAdmin):
         'end_date',
         'file_size',
         'ui_request')
-    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation')
+    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation','country_ISO')
     search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
 
@@ -74,7 +75,6 @@ class Track_UsageAdmin(admin.ModelAdmin):
             return format_html(
                 "<a href='javascript:open_aoi({})'>Display AOI</a>",
                 obj.id)
-
 
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):

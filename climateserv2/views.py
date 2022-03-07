@@ -12,6 +12,8 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
+from geoip2.errors import AddressNotFoundError
+
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage
 from . import parameters as params
@@ -20,13 +22,13 @@ from .processDataRequest import start_processing
 from .processtools import uutools as uutools
 from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
-
+from django.contrib.gis.geoip2 import GeoIP2
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
-
+exempt = -1
 global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
-
+g = GeoIP2()
 
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
@@ -62,6 +64,7 @@ def get_id_from_output(output):
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
     request_id = request.POST.get("id", request.GET.get("id", None))
+
     if request_id is None:
         try:
             request_id = get_id_from_output(output)
@@ -110,11 +113,18 @@ def get_parameter_types(request):
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
 
 
+def get_country_code(r):
+    try:
+        return g.country_code(get_client_ip(r))
+    except AddressNotFoundError:
+        return "ZZ"
+
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
     track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
+                              country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
                               )
@@ -165,7 +175,6 @@ def get_data_request_progress(request):
     try:
         request_id = request.GET["id"]
         progress = read_progress(request_id)
-
         logger.debug("Progress =" + str(progress))
         if progress == -1.0:
             logger.warning("Problem with getDataRequestProgress: " + str(request))
@@ -246,39 +255,44 @@ def get_file_for_job_id(request):
 def get_climate_scenario_info(request):
     unique_id = uutools.getUUID()
     try:
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request)
+                                  ,country_ISO=get_country_code(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
-                                  AOI=json.dumps({})
+                                  AOI=json.dumps({}), metadata_request=True
                                   )
         track_usage.save()
     except MultiValueDictKeyError:
         error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
         logger.error(error_msg)
-    nc_file = xr.open_dataset(
-        '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
-        chunks={'time': 16, 'longitude': 128,
-                'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
+    try:
+        nc_file = xr.open_dataset(
+            '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
+            chunks={'time': 16, 'longitude': 128,
+                    'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
 
-    start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
-    is_error = False
-    climate_model_datatype_capabilities_list = [
-        {
-            "current_Capabilities": {
-                "startDateTime": start_date,
-                "endDateTime": end_date
+        start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
+        is_error = False
+        climate_model_datatype_capabilities_list = [
+            {
+                "current_Capabilities": {
+                    "startDateTime": start_date,
+                    "endDateTime": end_date
+                }
             }
+        ]
+        climate_datatype_map = params.get_Climate_DatatypeMap()
+        api_return_object = {
+            "unique_id": unique_id,
+            "RequestName": "getClimateScenarioInfo",
+            "climate_DatatypeMap": climate_datatype_map,
+            "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
+            "isError": is_error
         }
-    ]
-    climate_datatype_map = params.get_Climate_DatatypeMap()
-    api_return_object = {
-        "unique_id": unique_id,
-        "RequestName": "getClimateScenarioInfo",
-        "climate_DatatypeMap": climate_datatype_map,
-        "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
-        "isError": is_error
-    }
+    except:
+        with open('/cserv2/django_app/ClimateSERV2/climateserv2/sample_climate_scenario.json', 'r') as climate_scenario:
+            api_return_object = json.loads(climate_scenario.read())
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
@@ -413,7 +427,22 @@ def submit_data_request(request):
     logger.info("Submitting " + unique_id)
     # Submit requests to the ipcluster service to get data
 
-    if len(error) == 0:
+    if datatype == 35 or datatype == 36:
+        aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
+                                  time_requested=timezone.now(), AOI=aoi,
+                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                  end_date=pd.Timestamp(end_time, tz='UTC'),
+                                  calculation=calculation, request_type=request.method,
+                                  status="Complete", progress=-1, API_call="submitDataRequest",
+                                  data_retrieved=False, ui_request=from_ui)
+
+        track_usage.save()
+        return process_callback(request, json.dumps([unique_id]), "application/json")
+
+    elif len(error) == 0:
         # json_obj = {}
         dictionary = {'uniqueid': unique_id,
                       'datatype': datatype,
@@ -462,6 +491,7 @@ def submit_data_request(request):
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -472,7 +502,6 @@ def submit_data_request(request):
 
         track_usage.save()
         p.start()
-
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
@@ -482,6 +511,7 @@ def submit_data_request(request):
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=params.dataTypes[int(datatype)]['name'],
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
@@ -587,6 +617,7 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
     else:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
     track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
+                              country_ISO=get_country_code(request),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
                               start_date=pd.Timestamp(seasonal_start_date, tz='UTC'),

@@ -60,9 +60,6 @@ def start_processing(request):
         first_date_string = datetime.strftime(first_date, '%Y-%m-%d')
         last_date = datetime.strptime(end_time, '%m/%d/%Y')
         last_date_string = datetime.strftime(last_date, '%Y-%m-%d')
-        # print(first_date_string)
-        # print(last_date_string)
-        # print("dates")
         if first_date.year == last_date.year:
             date_range_list.append([first_date_string, last_date_string])
         else:
@@ -96,7 +93,6 @@ def start_processing(request):
                              "operation": params.parameters[request["operationtype"]][1], "file_list": file_list,
                              "derivedtype": False, "subtype": None})
     pool = multiprocessing.Pool(os.cpu_count())
-    # print(jobs)
     for job in jobs:
         pool.apply_async(start_worker_process, args=[job], callback=log_result)
     pool.close()

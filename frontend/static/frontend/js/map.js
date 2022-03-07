@@ -635,8 +635,8 @@ function toggleLayer(which) {
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
-        $("#slider-range-txt").text(moment(layer_limits.min).format('MM/DD/YYYY') +
-            " to " + moment(layer_limits.max).format('MM/DD/YYYY'));
+        $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
     } else {
         map.timeDimension.setAvailableTimes([null], "replace");
         $(".timecontrol-date").html("Time not available")
@@ -1275,8 +1275,16 @@ function setRange() {
  * Clears the range set by the user
  */
 function clearRange() {
-    map.timeDimension.setLowerLimit(false);
-    map.timeDimension.setUpperLimit(false);
+    map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
+    map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
+    const current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
+    document.getElementById("begin_range_date").value = current_min
+
+    const current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
+    document.getElementById("end_range_date").value = current_max
+
+    $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+        " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
 }
 
 /**
@@ -1355,7 +1363,7 @@ function verify_ready() {
     }
     if (requestTypeSelect.val() !== 'monthly_analysis') {
         const btnViewAPI = $("#btnViewAPI");
-        btnViewAPI.prop("disabled", query_list.length === 0);
+        btnViewAPI.prop("disabled", false);
         if (query_list.length >= 5) {
             disabled = true;
         }
@@ -1380,8 +1388,18 @@ function verify_ready() {
             query_list.forEach(buildAPIReference);
 
             function buildAPIReference(value) {
+                let aoi_string = "";
+                if (geometry.text().trim().indexOf("- Feature:") > -1) {
+                    if (highlightedIDs.length > 0) {
+                        aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                        aoi_string += "&featureids=" + highlightedIDs.join(",");
+                    }
+                } else {
+                    aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+                }
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() + "</span>");
+                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
+                    + aoi_string + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
             api_panel.empty();
@@ -1558,9 +1576,18 @@ function buildForm(formData) {
         formData.append(
             "datatype", parseInt($("#ensemblemenu").val()) + $("#ensemblevarmenu")[0].selectedIndex
         );
+        formData.append(
+            "ensemble", true
+        );
+        formData.append(
+            "ensemble_data_source", $("#sourcemenu").val()
+        );
     } else {
         formData.append(
             "datatype", $("#sourcemenu").val()
+        );
+        formData.append(
+            "ensemble", false
         );
     }
 
@@ -1584,7 +1611,7 @@ function update_number_queries() {
     if (query_list.length === 0) {
         $("#btnRequest").prop("disabled", true);
         $("#btnMultiQuerySubmit").prop("disabled", true);
-        $("#btnViewAPI").prop("disabled", true);
+        $("#btnViewAPI").prop("disabled", false);
     } else {
         $("#btnRequest").prop("disabled", false);
         $("#btnMultiQuerySubmit").prop("disabled", false);
@@ -1623,6 +1650,17 @@ function add_multi_query() {
     verify_ready();
 }
 
+function append_AOI_to_form(formData) {
+    if (highlightedIDs.length > 0) {
+        formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
+        formData.append("featureids", highlightedIDs.join(","));
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
+    } else if (uploadLayer) {
+        formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
+    }
+}
+
 /**
  * sendRequest
  * Initiates the processing request to ClimateSERV
@@ -1653,14 +1691,7 @@ function sendRequest() {
         for (let i = 0; i < query_list.length; i++) {
             let formData = query_list[i];
 
-            if (highlightedIDs.length > 0) {
-                formData.append("layerid", adminHighlightLayer.options.layers.replace("_highlight", ""));
-                formData.append("featureids", highlightedIDs.join(","));
-            } else if (drawnItems.getLayers().length > 0) {
-                formData.append("geometry", JSON.stringify(drawnItems.toGeoJSON()));
-            } else if (uploadLayer) {
-                formData.append("geometry", JSON.stringify(uploadLayer.toGeoJSON()));
-            }
+            append_AOI_to_form(formData);
 
             let api_host = window.location.hostname;
             if (window.location.port) {
@@ -1830,7 +1861,7 @@ function pollForProgress(id, isClimate, query_index) {
                         '}">';
                     error_message += '<div style="width:100%; text-align: center;">';
                     error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-                    error_message += '<p style="line-height: 2em;">There was am error processing Job ID: ' + id;
+                    error_message += '<p style="line-height: 2em;">There was an error processing Job ID: ' + id;
                     error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
 
                     error_message += '</div>';
@@ -1871,6 +1902,16 @@ function filter_datasets_by() {
     handleSourceSelected(firstLayerOn.val());
 }
 
+function filter_edit_datasets_by() {
+    console.log("doing it");
+    $(".layer-on-edit, .layer-off-edit").toggleClass("layer-on-edit layer-off-edit");
+
+    const firstLayerOn = $('#dataset-source-menu-edit option.layer-on-edit:first');
+    console.log(firstLayerOn.val());
+    $("#dataset-source-menu-edit")[0].selectedIndex = firstLayerOn.index();
+    handleSourceSelected(firstLayerOn.val(), true);
+}
+
 /**
  * configure_nmme
  * Sets the variables needed to query the NMME dataset based on
@@ -1878,34 +1919,74 @@ function filter_datasets_by() {
  * which is passed in as the parameter
  * @param sdata
  */
-function configure_nmme(sdata) {
+function configure_nmme(sdata, edit, edit_init_id) {
     if (sdata.errMsg) {
         console.info(sdata.errMsg);
     } else {
+
+        let init_id = '';
+        let edit_string = '';
+        let sent_variable = 'precipitation';
+        let start_date = '';
+        let end_date = '';
+        if (edit) {
+            edit_string = '_edit';
+
+            let start_date_array = $("#begin_time_review").text().split("/");
+            start_date = start_date_array[2] + '-' + start_date_array[0] + '-' + start_date_array[1];
+            let end_date_array = $("#end_time_review").text().split("/");
+            end_date = end_date_array[2] + '-' + end_date_array[0] + '-' + end_date_array[1];
+        }
+        if (edit_init_id) {
+            if (parseInt(edit_init_id) % 2 === 0) {
+                sent_variable = 'air_temperature'
+                init_id = edit_init_id;
+            } else {
+                init_id = parseInt(edit_init_id) - 1;
+            }
+
+        }
         const data = JSON.parse(sdata);
         const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
         cc.startDateTime;
 
-        $('#model_run_menu').append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
+        $('#model_run_menu' + edit_string).append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
 
         // create date dropdowns
         const mformat = "YYYY-MM-DD"
         let sdate = moment(cc.startDateTime, mformat);
         let edate = moment(cc.endDateTime, mformat);
         let count = 1;
-
-        $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
-        $("#eDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+        if (edit) {
+            $("#begin_date_edit").val(sdate.format('YYYY-MM-DD'));
+            $("#eDate_new_cooked").val(edate.format('YYYY-MM-DD'));
+        } else {
+            $("#sDate_new_cooked").val(sdate.format('YYYY-MM-DD'));
+            $("#end_date_edit").val(sdate.format('YYYY-MM-DD'));
+        }
 
         do {
-            $("#forecastfrommenu")
+            let selected_start = '';
+            let selected_end = '';
+            //
+            if (start_date === sdate.format('YYYY-MM-DD')) {
+                selected_start = "selected";
+            }
+            if (end_date === sdate.format('YYYY-MM-DD')) {
+                selected_end = "selected";
+            }
+            $("#forecastfrommenu" + edit_string)
                 .append
                 (
-                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
-            $("#forecasttomenu")
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_start + '>'
+                    + "f" + count.toString().padStart(3, "0")
+                    + " " + sdate.format('YYYY-MM-DD') + '</option>');
+            $("#forecasttomenu" + edit_string)
                 .append
                 (
-                    '<option value="' + sdate.format('YYYY-MM-DD') + '">' + "f" + count.toString().padStart(3, "0") + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_end + '>'
+                    + "f" + count.toString().padStart(3, "0")
+                    + " " + sdate.format('YYYY-MM-DD') + '</option>');
             count++;
             sdate.add(1, "days");
         } while (sdate < edate)
@@ -1913,13 +1994,16 @@ function configure_nmme(sdata) {
         cc.endDateTime;
         cc.date_FormatString_For_ForecastRange;
         cc.number_Of_ForecastDays;
-        $("#ensemblevarmenu").empty();
+        $("#ensemblevarmenu" + edit_string).empty();
         data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
             // add variable with label to select
-
-            $("#ensemblevarmenu")
+            let selected = '';
+            if (variable.climate_Variable == sent_variable) {
+                selected = 'selected';
+            }
+            $("#ensemblevarmenu" + edit_string)
                 .append(
-                    '<option value="' + variable.climate_Variable + '">' + variable.climate_Variable_Label + '</option>');
+                    '<option value="' + variable.climate_Variable + '" ' + selected + '>' + variable.climate_Variable_Label + '</option>');
         });
     }
 }
@@ -1929,36 +2013,79 @@ function configure_nmme(sdata) {
  * Sets the UI to the correct state when a different source is selected
  * @param which
  */
-function handleSourceSelected(which) {
+function handleSourceSelected(which, edit, edit_init_id) {
+    console.log(edit_init_id);
+    console.log(which);
+    console.log("edit: " + edit);
     which = which.toString();
     let layer = client_layers.find(
         (item) => item.app_id === which
     )
     if (layer) {
-        $("#ensemble_builder").hide();
-        $("#non-multi-ensemble-dates").show();
+        if (edit) {
+            $("#ensemble_builder_edit").hide();
+            $("#non-multi-ensemble-dates_edit").show();
+            $("#panel_operation_edit").show();
+            $(".observation-edit-hide").toggleClass("observation-edit observation-edit-hide");
+        } else {
+            $("#ensemble_builder").hide();
+            $("#non-multi-ensemble-dates").show();
+            $("#panel_operation_edit").hide();
+        }
+
         //show date range controls
     } else {
-        // open and set ensemble section
-        $("#ensemble_builder").show();
-        $("#non-multi-ensemble-dates").hide();
-        //hide date range controls
-        $('#model_run_menu').find('option').remove();
-        $('#ensemblemenu').find('option').remove();
-        $("#forecastfrommenu").find('option').remove();
-        $("#forecasttomenu").find('option').remove();
-        // load the ensemble selection tools
-
         let id = which + "ens";
+        if (edit) {
+            console.log("need to finish the nmme edit");
+            $("#ensemble_builder_edit").show();
+            $("#non-multi-ensemble-dates_edit").hide();
+            $("#panel_operation_edit").show();
+            $(".observation-edit").toggleClass("observation-edit observation-edit-hide");
 
-        $("[id^=" + id + "]").each(function (index, item) {
-            const temp = getLayer(item.id);
-            $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
-        });
+            $('#model_run_menu_edit').find('option').remove();
+            $('#ensemblemenu_edit').find('option').remove();
+            $("#forecastfrommenu_edit").find('option').remove();
+            $("#forecasttomenu_edit").find('option').remove();
+            let init_id = '';
+            if (edit_init_id) {
+                if (parseInt(edit_init_id) % 2 === 0) {
+                    init_id = edit_init_id;
+                } else {
+                    init_id = parseInt(edit_init_id) - 1;
+                }
 
+            }
+            $("[id^=" + id + "]").each(function (index, item) {
+                const temp = getLayer(item.id);
+                let selected = '';
+                if (temp.app_id == init_id) {
+                    selected = 'selected'
+                }
+                $("#ensemblemenu_edit").append('<option value="' + temp.app_id + '" ' + selected + '>' + temp.title + '</option>');
+            });
+
+        } else {
+            // open and set ensemble section
+
+            $("#ensemble_builder").show();
+            $("#non-multi-ensemble-dates").hide();
+            $("#panel_operation_edit").hide();
+            //hide date range controls
+            $('#model_run_menu').find('option').remove();
+            $('#ensemblemenu').find('option').remove();
+            $("#forecastfrommenu").find('option').remove();
+            $("#forecasttomenu").find('option').remove();
+            // load the ensemble selection tools
+
+
+            $("[id^=" + id + "]").each(function (index, item) {
+                const temp = getLayer(item.id);
+                $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
+            });
+        }
         $.ajax({
-            url: "api/getClimateScenarioInfo/" +
-                id,
+            url: "api/getClimateScenarioInfo/",
             type: "GET",
             async: true,
             crossDomain: true
@@ -1974,12 +2101,20 @@ function handleSourceSelected(which) {
                 if (data.errMsg) {
                     console.info(data.errMsg);
                 } else {
-                    configure_nmme(data);
+                    if (edit) {
+                        configure_nmme(data, true, edit_init_id);
+                    } else {
+                        configure_nmme(data);
+                    }
                 }
             });
             console.warn("NMME queries may not work if you are doing local development");
         }).done(function (sdata, _textStatus, _jqXHR) {
-            configure_nmme(sdata);
+            if (edit) {
+                configure_nmme(sdata, true, edit_init_id);
+            } else {
+                configure_nmme(sdata);
+            }
         });
     }
     $("#btnAddToQuery").prop("disabled", false);
@@ -1989,9 +2124,23 @@ function handleSourceSelected(which) {
  * syncDates
  * synchronizes the dates between start date and forecast date
  */
-function syncDates() {
-    $("#sDate_new_cooked").val($("#forecastfrommenu").val());
-    $("#eDate_new_cooked").val($("#forecasttomenu").val());
+function syncDates(edit) {
+    if (edit) {
+        $("#begin_date_edit").val($("#forecastfrommenu_edit").val());
+        $("#end_date_edit").val($("#forecasttomenu_edit").val());
+    } else {
+        $("#sDate_new_cooked").val($("#forecastfrommenu").val());
+        $("#eDate_new_cooked").val($("#forecasttomenu").val());
+    }
+}
+
+function rebuildGraph() {
+    if ($("#axis_toggle").prop("checked")) {
+        $("#multi_axis").prop("checked", true);
+    } else {
+        $("#simple_axis").prop("checked", true);
+    }
+    open_previous_chart();
 }
 
 /**
@@ -2003,8 +2152,16 @@ function inti_chart_dialog() {
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
+    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
+    const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
+    dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
+    dialog_html += 'Simple Axis <label class="switch">'
+    dialog_html += '<input id="axis_toggle" type="checkbox" ' + checked_text + ' onclick="rebuildGraph()">';
+    dialog_html += '<span class="slider round"></span>';
+    dialog_html += '</label> Multi-Axis';
+    dialog_html += '</div>';
     dialog.html(
-        '<div id="chart_holder"></p>'
+        dialog_html
     );
     dialog.dialog({
         title: "Statistical Query",
@@ -2110,6 +2267,7 @@ function getDownLoadLink(id) {
  */
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
+    const first_unit = multiQueryData[0].units;
     multiChart = Highcharts.chart('chart_holder', {
         title: {text: "ClimateSERV Statistical Query"},
         tooltip: {
@@ -2131,7 +2289,7 @@ function multi_chart_builder() {
             data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
             tooltip: {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + (multiQueryData[0].units) + "<br>"//"Value: " + this.value + units;
+                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>"//"Value: " + this.value + units;
                 }
             }
         }],
@@ -2189,7 +2347,7 @@ function multi_chart_builder() {
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
@@ -2228,6 +2386,7 @@ function multi_chart_builder() {
                 }
             });
         }
+        $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
 
@@ -2587,7 +2746,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
-        const height = chart.chartHeight - 130;
+        const height = chart.chartHeight - 160;
         img = chart.renderer
             .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
             .add();
@@ -3130,59 +3289,311 @@ function layer_filter() {
  * review_query
  * Adds all selected queries to the UI for review by the user
  */
-function review_query() {
+function review_query(no_toggle) {
     const checkout_list = $("#checkout_list");
     checkout_list.empty();
     $("#checkout_number").text(query_list.length + (query_list.length === 1 ? " Query" : " Queries"));
     let init = true;
     if (query_list.length > 0) {
-        for (let formData of query_list) {
+        for (let [i, formData] of query_list.entries()) {
             const structured_data = JSON.parse(JSON.stringify(Object.fromEntries(formData)));
             if (init) {
 
-                checkout_list.append('<br><h1 class="step-marker">Common Geometry</h1>');
+                checkout_list.append('<br><h1 class="step-marker ten">Common Geometry</h1>');
                 let geometry_element = '<span class="form-control panel-buffer" id="geometry_review" ';
                 geometry_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
                 geometry_element += $("#geometry").text();
                 geometry_element += '</span>';
                 checkout_list.append(geometry_element);
-                checkout_list.append('<br><h1 class="step-marker">Queries</h1>');
+
+                checkout_list.append('<br><h1 class="step-marker ten">Query Type</h1>');
+                let request_type_element = '<span class="form-control panel-buffer" id="query_type_review" ';
+                request_type_element += 'style="height: unset; word-break: break-all; max-height: 200px; overflow: auto;">';
+                request_type_element += $("#requestTypeSelect option:selected").text();
+                request_type_element += '</span>';
+                checkout_list.append(request_type_element);
+
+                checkout_list.append('<br><h1 class="step-marker ten">Queries</h1>');
                 init = false;
             }
-            checkout_list.append(
+            const back_color = i % 2 === 0 ? "#909d6b94" : "transparent";
+            const text_color = i % 2 === 0 ? "#000" : "#666666";
+            let element_html = '<div class="checkout_list_elements" style="background-color: ' + back_color;
+            element_html += '; color: ' + text_color + '">';
+            let element_holder = $(element_html);
+            let edit_element = '<p style="text-align: right;" class="form-group panel-buffer">';
+            edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            edit_element += 'Query ' + (i + 1) + '</span>'
+            edit_element += '<a class="z5px" onclick="edit_query(' + i + ')" title="Edit">';
+            edit_element += '<i class="fas fa-edit" style="color:#758055" aria-hidden="true"></i></a>';
+            edit_element += '<a class="z5px" onclick="delete_query(' + i + ')" title="Delete">';
+            edit_element += '<i class="fas fa-trash" style="color:#758055" aria-hidden="true"></i></a>';
+
+            edit_element += '<a type="button" class="bread-crumb collapsed" data-toggle="collapse"';
+            edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
+            edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
+            edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
+            let toggle_arrow = "fa fa-angle-";
+            let toggle_class = "collapse";
+            if (i === 0) {
+                toggle_class += " show";
+                toggle_arrow += "up";
+            } else {
+                toggle_arrow += "down";
+            }
+
+            edit_element += '<i id="review-' + i + '-toggle" class="' + toggle_arrow + '"></i></a>';
+            edit_element += '</p>';
+            element_holder.append(edit_element)
+
+
+            let layer = client_layers.find(
+                (item) => item.app_id === structured_data.datatype
+            )
+            let element_panel = $('<div id="review-' + i + '" class="' + toggle_class + '">');
+            element_panel.append(
                 get_form_group(
                     'Datatype',
                     'datatype_review',
-                    $('#sourcemenu option[value=' + structured_data["datatype"] + ']').text()
+                    layer.title
                 )
             );
-            checkout_list.append(
+
+            // see if it is ensemble, if so see which variable it is and display in a new form group
+
+            if (structured_data["ensemble"] === "true") {
+                element_panel.append(
+                    get_form_group(
+                        'Ensemble variable',
+                        'ensemble_variable_review',
+                        (parseInt(structured_data["datatype"]) % 2 === 0)
+                        ? "Temperature"
+                            : "Precipitation"
+                    )
+                );
+            }
+
+
+            element_panel.append(
                 get_form_group(
                     'Begin time',
                     'begin_time_review',
                     structured_data["begintime"]
                 )
             );
-            checkout_list.append(
+            element_panel.append(
                 get_form_group(
                     'End time',
                     'end_time_review',
                     structured_data["endtime"]
                 )
             );
-            checkout_list.append(
+            element_panel.append(
                 get_form_group(
                     'Calculation',
                     'calculation_review',
                     $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
                 )
             );
-            checkout_list.append("<hr>");
+            element_holder.append(element_panel);
+
+            checkout_list.append(element_holder)
+        }
+    }
+    if (!no_toggle) {
+        toggle_query_tabs();
+    }
+}
+
+let debug_this;
+
+function edit_query(edit_index) {
+
+    close_dialog();
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+
+    let layer = client_layers.find(
+        (item) => item.app_id === structured_data.datatype
+    )
+
+
+    let edit_query_form = $('<div>');
+
+
+    let data_type_group = '<div class="form-group panel-buffer" id="panel_timeseries_edit">';
+    data_type_group += '<label for="data-type-menu-edit">Dataset Type</label></div>';
+
+    let dataset_type_menu = $("#dataset-type-menu").clone().prop('id', 'dataset-type-menu-edit').off('change');
+
+    dataset_type_menu.removeAttr("onchange");
+    ;
+    dataset_type_menu.on('change', function (event) {
+        filter_edit_datasets_by();
+    });
+    if (structured_data.ensemble === 'true') {
+        dataset_type_menu.val('model-forecast');
+    } else {
+        dataset_type_menu.val('observation');
+    }
+    // calculate how to set to selected data
+
+    edit_query_form.append($(data_type_group).append(dataset_type_menu));
+
+    let data_source_group = '<div class="form-group panel-buffer" id="panel_source_edit">';
+    data_source_group += '<label for="data-source-menu-edit">Data Source</label></div>';
+
+    let dataset_source_menu = $("#sourcemenu").clone().prop('id', 'dataset-source-menu-edit').off('change');
+
+
+    if (structured_data.ensemble === 'true') {
+        dataset_source_menu.val(structured_data.ensemble_data_source);
+    } else {
+        dataset_source_menu.val(structured_data.datatype);
+    }
+
+    dataset_source_menu.removeAttr("onchange");
+    ;
+    dataset_source_menu.on('change', function (event) {
+        handleSourceSelected(this.value, true);
+    });
+
+    dataset_source_menu.find("option").each(function (i, obj) {
+        let layer_class = 'layer-on-edit';
+        if (isNaN(parseInt(obj.value))) { // turn off observation and on ens
+            if (structured_data.ensemble !== 'true') { // turn off observation
+                layer_class = 'layer-off-edit';
+            }
+        } else { // observation
+            if (structured_data.ensemble === 'true') { // turn off observation
+                layer_class = 'layer-off-edit';
+            }
+        }
+        dataset_source_menu.find('option[value="' + obj.value + '"]').removeClass().addClass(layer_class);
+    });
+
+    edit_query_form.append($(data_source_group).append(dataset_source_menu));
+
+    let operation_group = '<div class="form-group panel-buffer" id="panel_operation_edit"';
+    // if (structured_data.ensemble === 'true') {
+    //     operation_group += ' style="display:none;">';
+    // } else {
+    operation_group += ' style="display:block;">';
+    // }
+    operation_group += '<label for="operationmenu-edit">Calculation</label></div>';
+
+    let operation_edit = $("#operationmenu").clone().prop('id', 'operationmenu-edit');
+    const opts = operation_edit.find("option");
+    for (let i = 0; i < opts.length; i++) {
+        if (opts[i].value == structured_data.operationtype) {
+            console.log("setting it to " + i);
+            operation_edit.prop('selectedIndex', i);
+            break;
+        } else {
+            console.log("opts[i].value: " + opts[i].value);
         }
     }
 
+    edit_query_form.append($(operation_group).append(operation_edit));
 
-    toggle_query_tabs();
+    const ensemble_builder = ($("#edit_ens_template:first").clone()).html();
+    let replace_class = "ensemble-edit-hide";
+    let observation_class = "observation-edit";
+    if (structured_data.ensemble === 'true') {
+        replace_class = "ensemble-edit";
+        observation_class = "observation-edit-hide";
+    }
+    edit_query_form.append($(ensemble_builder.replace("replace_class", replace_class)));
+
+
+    // will have to wrap the date pickers because ens uses calculated
+    // dropdowns from the capabilities which should sync to the date pickers
+    // onchange with the template calling syncDates(true) this will
+    // making grabbing the date seamless between types
+    // also at the end and on show of ens I will have to get
+    // capabilities and set them
+
+    // rethinking, should prolly control ensemble edit with a class to toggle
+    // ensemble-edit and ensemble-edit-hide
+    // same with observation-edit and observation-edit-hide
+
+    let date_range = '<div class="' + observation_class + '"><p class="picker-text">Date Range</p>';
+    date_range += '<form id="range_picker_edit" style="width:100%; height:100%; display: flex; align-items: center;" class="picker-text">';
+
+    date_range += '<div class="form-group panel-buffer">';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="begin_date_edit" value="' + moment(structured_data.begintime, "MM/DD/YYYY").format("YYYY-MM-DD") + '"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '<div class="input-group-addon">to</div>';
+    date_range += '<input type="date" class="form-control" placeholder="YYYY-MM-DD"';
+    date_range += 'id="end_date_edit" value="' + moment(structured_data.endtime, "MM/DD/YYYY").format("YYYY-MM-DD") + '"';
+    date_range += 'onchange="verify_range()">';
+    date_range += '</div></div></form>';
+    date_range += '<div class="just-buttons">';
+    date_range += '<button style="width:45%" onclick="close_dialog()">Cancel</button>';
+    date_range += '<button style="width:45%" onclick="apply_edits(' + edit_index + ')">Apply</button>';
+    date_range += '</div><br>';
+
+
+    edit_query_form.append(date_range);
+    let dialog = $("#dialog");
+    dialog.html(edit_query_form);
+    dialog.dialog({
+        title: "Edit Query",
+        resizable: false,
+        width: $(window).width() / 2,
+        height: "auto",
+        position: {
+            my: "center",
+            at: "center",
+            of: window
+        }
+    });
+    handleSourceSelected($("#dataset-source-menu-edit").val(), true, structured_data.datatype);
+}
+
+function apply_edits(edit_index) {
+    let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
+    const formData = new FormData();
+
+    let datatype = '';
+    if ($("#dataset-type-menu-edit").val() === 'model-forecast') {
+        let edit_value = parseInt($("#ensemblemenu_edit").val());
+        if ($("#ensemblevarmenu_edit").val() == "precipitation") {
+            edit_value = edit_value + 1;
+        }
+
+        datatype = edit_value;
+        formData.append("ensemble", true);
+        formData.append("ensemble_data_source", $("#dataset-source-menu-edit").val());
+    } else {
+        datatype = $("#dataset-source-menu-edit").val();
+    }
+    formData.append("datatype", datatype);
+
+
+    formData.append("operationtype", $("#operationmenu-edit").val());
+    formData.append("begintime", moment(document.getElementById("begin_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("endtime", moment(document.getElementById("end_date_edit").value).format('MM/DD/YYYY'));
+    formData.append("intervaltype", structured_data.intervaltype);
+    formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
+    formData.append("isZip_CurrentDataType", false);
+
+    query_list[edit_index] = formData;
+    review_query(true);
+    close_dialog();
+}
+
+function delete_query(delete_index) {
+    if (delete_index > -1) {
+        query_list.splice(delete_index, 1); // 2nd parameter means remove one item only
+    }
+
+// refresh the UI
+    review_query(true);
+    update_number_queries();
 }
 
 /**
@@ -3207,6 +3618,7 @@ function get_form_group(label, element_id, text) {
 function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
+    $("#sidebar-content").scrollTop(0);
 }
 
 /**

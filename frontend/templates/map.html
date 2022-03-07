@@ -38,6 +38,10 @@
           href="{% static 'frontend/css/bootstrap-tour-standalone.min.css' %}"
     />
 
+    <link rel="stylesheet"
+          href="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.0.1/css/bootstrap3/bootstrap-switch.css"
+    />
+
 {% endblock %}
 
 {% block content %}
@@ -65,12 +69,12 @@
                         title: "{{ enslayer.title }}",
                         url: "{{ enslayer.url }}",
                         attribution: "{{ enslayer.attribution }}",
-                        layers: "{{ enslayer.layers }}",
+                        layers: "{% if "precipitation" in enslayer.layers|stringformat:'s' %}air_temperature{% else %}precipitation{% endif %}",
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
                         id: "{{ enslayer.ui_id }}",
                         dataset: "{{ layer.dataset_type }}",
-                        app_id:  (parseInt("{{ enslayer.api_id }}") + 1).toString(),
+                        app_id: (parseInt("{{ enslayer.api_id }}") + 1).toString(),
                         units: "{{ enslayer.units }}"
                     })
                 {% endfor %}
@@ -422,9 +426,9 @@
                                                 id="operationmenu"
                                                 onchange="verify_ready()"
                                                 class="form-control">
+                                            <option value="5" id="operation_average">Average</option>
                                             <option value="1" id="operation_min">Minimum</option>
                                             <option value="0" id="operation_max">Maximum</option>
-                                            <option value="5" id="operation_average">Average</option>
                                         </select>
                                     </div>
                                     <div class="form-group panel-buffer" id="panel_download" style="display: none;">
@@ -475,7 +479,7 @@
                                     </div>
                                 </div>
                                 <div class="query_cart">
-                                    <p style="position: absolute; left: 10px; text-align: left;" id="graph_options">
+                                    <p style="display:none" id="graph_options">
                                         <input type="radio" id="simple_axis" name="axis_type" value="simple" checked>
                                         <label for="simple_axis">Simple Axis</label><br>
                                         <input type="radio" id="multi_axis" name="axis_type" value="multi">
@@ -545,7 +549,8 @@
                         </div>
                         <div id="query_list_checkout" style="display:none;">
 
-                            <h1 style="text-align: center;">You currently have <span id="checkout_number">0 Queries</span> </h1>
+                            <h1 style="text-align: center;">You currently have <span
+                                    id="checkout_number">0 Queries</span></h1>
                             <div id="checkout_list">
 
                             </div>
@@ -723,7 +728,7 @@
             <div id="servirmap" class="sidebar-map"></div>
         </div>
 
-        <div id="dialog" style="display: none" class="ui-widget-content">
+        <div id="dialog" style="display: none" class="ui-widget-content dialog-max-height">
             <p>
                 This is the default dialog which is useful for displaying information.
                 The dialog window can be moved, resized and closed with the
@@ -765,7 +770,7 @@
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
     <script src="https://code.highcharts.com/highcharts.js"></script>
-{#    <script src="https://code.highcharts.com/modules/series-label.js"></script>#}
+    {#    <script src="https://code.highcharts.com/modules/series-label.js"></script>#}
     <script src="https://code.highcharts.com/modules/exporting.js"></script>
     <script src="https://code.highcharts.com/modules/export-data.js"></script>
     <script src="https://code.highcharts.com/modules/accessibility.js"></script>
@@ -788,6 +793,7 @@
     <script src="{% static 'frontend/js/monthly_rainfall.js' %}"></script>
     <script src="{% static 'frontend/js/utils.js' %}"></script>
     <script src="{% static 'frontend/js/bootstrap-tour-standalone.min.js' %}"></script>
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.0.1/js/bootstrap-switch.js"></script>
     <script src="{% static 'frontend/js/map.js' %}"></script>
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     <script>
@@ -809,20 +815,20 @@
             </label>
             <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
             </select><br>
-                        <label for="above_max">
-                            Above Max Color
-                        </label>
-                        <select class="style_table form-control" name="above_max" id="above_max" style="width: 100%">
-                            <option value="extend">Extend</option>
-                            <option value="transparent">Transparent</option>
-                        </select><br>
+            <label for="above_max">
+                Above Max Color
+            </label>
+            <select class="style_table form-control" name="above_max" id="above_max" style="width: 100%">
+                <option value="extend">Extend</option>
+                <option value="transparent">Transparent</option>
+            </select><br>
             <label for="below_min">
-                            Below Min Color
-                        </label>
-                        <select class="style_table form-control" name="below_min" id="below_min" style="width: 100%">
-                            <option value="extend">Extend</option>
-                            <option value="transparent">Transparent</option>
-                        </select><br>
+                Below Min Color
+            </label>
+            <select class="style_table form-control" name="below_min" id="below_min" style="width: 100%">
+                <option value="extend">Extend</option>
+                <option value="transparent">Transparent</option>
+            </select><br>
             <button id="applyStylebtn" style="
               float: right;
           ">
@@ -839,6 +845,53 @@
                     step=".01"
                     value="1"
                     style="width:100%">
+        </div>
+    </script>
+
+    <script id="edit_ens_template" style="display: none" type="text/template">
+        <div id="ensemble_builder_edit" class="replace_class">
+            <div class="form-group panel-buffer">
+                <label for="model_run_menu_edit">Select a model run</label>
+                <select name="model_run_menu_edit" class="form-control" id="model_run_menu_edit"
+                        disabled>
+                </select>
+            </div>
+            <div class="form-group panel-buffer">
+                <label for="ensemblemenu_edit">Select a model ensemble</label>
+                <select name="ensemblemenu_edit"
+                        class="form-control" id="ensemblemenu_edit"
+                        onchange="verify_ready()">
+                </select>
+            </div>
+            <div class="form-group panel-buffer">
+                <label for="ensemblevarmenu_edit">Select a variable</label>
+                <select name="ensemblevarmenu_edit"
+                        class="form-control"
+                        id="ensemblevarmenu_edit"
+                        onchange="verify_ready()">
+                </select>
+            </div>
+            <h2 class="text-center">Select Forecast Range</h2>
+            <div class="form-group panel-buffer">
+
+                <label for="forecastfrommenu_edit">From date</label>
+                <select name="forecastfrommenu_edit"
+                        id="forecastfrommenu_edit"
+                        class="form-control"
+                        onchange="syncDates(true); verify_ready()"
+                >
+                </select>
+            </div>
+            <div class="form-group panel-buffer">
+
+                <label for="forecasttomenu_edit">To date</label>
+                <select name="forecasttomenu_edit"
+                        id="forecasttomenu_edit"
+                        class="form-control"
+                        onchange="syncDates(true); verify_ready()"
+                >
+                </select>
+            </div>
         </div>
     </script>
 

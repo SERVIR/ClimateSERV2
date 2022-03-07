@@ -200,7 +200,6 @@ class ETL_Pipeline():
             is_alert=is_alert,
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
-            status=status,
             start_time=self.start_time,
             end_time=self.end_time
         )
@@ -210,8 +209,7 @@ class ETL_Pipeline():
     # Wrapper for creating a row in the ETL Log Table but with Error info set and storing the Error ID Row
     def log_etl_error(self, activity_event_type="default_error", activity_description="an error occurred",
                       etl_granule_uuid="", is_alert=True, additional_json={}):
-        status = "Failed"
-        self.sendNotification(activity_description)
+        #self.sendNotification(activity_description)
         etl_log_row_uuid = ETL_LogService.create_etl_log_row(
             activity_event_type=activity_event_type,
             activity_description=activity_description,
@@ -221,7 +219,6 @@ class ETL_Pipeline():
             is_alert=is_alert,
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
-            status=status,
             start_time=self.start_time,
             end_time=self.end_time
         )
