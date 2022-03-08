@@ -1408,9 +1408,11 @@ function verify_ready() {
             // get from panel
             let formData = new FormData();
             buildForm(formData);
+            console.log(new URLSearchParams(formData).toString());
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                + api_host + "/api/submitDataRequest/?" + get_AOI_String() + "</span>");
+                + api_host + "/api/submitDataRequest/?"
+                + new URLSearchParams(formData).toString() + get_AOI_String() + "</span>");
             btnRequest.prop("disabled", disabled);
         } else {
             api_panel.empty();
