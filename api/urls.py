@@ -15,5 +15,5 @@ urlpatterns = [
     path('', include(router.urls)),
     path('get_etl_subtypes/', views.ETL_SubtypesView.as_view(), name='get_etl_subtypes'),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('backfill/', views.Update_Records.as_view(), name='backfill'),
+    # path('backfill/', views.Update_Records.as_view(), name='backfill'),
 ]
