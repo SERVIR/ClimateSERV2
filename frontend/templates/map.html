@@ -63,19 +63,22 @@
                         id: "{{ enslayer.ui_id }}",
                         dataset: "{{ layer.dataset_type }}",
                         app_id: "{{ enslayer.api_id }}",
-                        units: "{{ enslayer.units }}"
+                        units: "{{ enslayer.units }}",
+                        is_ensemble: true
                     });
                     client_layers.push({
                         title: "{{ enslayer.title }}",
                         url: "{{ enslayer.url }}",
                         attribution: "{{ enslayer.attribution }}",
-                        layers: "{% if "precipitation" in enslayer.layers|stringformat:'s' %}air_temperature{% else %}precipitation{% endif %}",
+                        layers: "{% if "precipitation" in enslayer.layers|stringformat:'s' %}air_temperature{% else %}
+                            precipitation{% endif %}",
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
                         id: "{{ enslayer.ui_id }}",
                         dataset: "{{ layer.dataset_type }}",
                         app_id: (parseInt("{{ enslayer.api_id }}") + 1).toString(),
-                        units: "{{ enslayer.units }}"
+                        units: "{{ enslayer.units }}",
+                        is_ensemble: true
                     })
                 {% endfor %}
             {% else %}
@@ -93,7 +96,8 @@
                     yAxis_format: {% if layer.yAxis_Special_Formatting %}
                         {{ layer.yAxis_Special_Formatting | safe }}{% else %} null {% endif %},
                     point_format: {% if layer.graph_point_Special_Formatting %}
-                        {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %}
+                        {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %},
+                    is_ensemble: false
                 })
             {% endif %}
         {% endfor %}

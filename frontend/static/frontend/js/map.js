@@ -2493,6 +2493,8 @@ function getDataFromRequest(id, isClimate, query_index) {
                     inti_chart_dialog();
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
+                    reset_query_panel();
+
                 } else {
                     previous_chart = null;
                     const compiledData = [];
@@ -2575,6 +2577,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         $("#checkout_number").text("0 Queries");
                         $("#chart-builder").show();
                         $("#query_list_checkout").hide();
+                        reset_query_panel();
                     }
                 }
             }
@@ -3370,7 +3373,7 @@ function review_query(no_toggle) {
                         'Ensemble variable',
                         'ensemble_variable_review',
                         (parseInt(structured_data["datatype"]) % 2 === 0)
-                        ? "Temperature"
+                            ? "Temperature"
                             : "Precipitation"
                     )
                 );
@@ -3619,6 +3622,43 @@ function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
     $("#sidebar-content").scrollTop(0);
+}
+
+function reset_query_panel() {
+    const requestTypeSelect = $("#requestTypeSelect");
+    if (requestTypeSelect[0].selectedIndex !== 0) {
+        requestTypeSelect[0].selectedIndex = 0;
+        requestTypeSelect.change();
+    }
+
+
+    const dataset_type_menu = $("#dataset-type-menu");
+    if (dataset_type_menu[0].selectedIndex !== 0) {
+        dataset_type_menu[0].selectedIndex = 0;
+        dataset_type_menu.change();
+    }
+
+
+    const sourcemenu = $('#sourcemenu');
+    if (sourcemenu.val() !== '0') {
+        sourcemenu.val(0);
+        sourcemenu.change();
+    }
+
+
+    const operationmenu = $('#operationmenu');
+    if (operationmenu[0].selectedIndex !== 0) {
+        operationmenu[0].selectedIndex = 0;
+        operationmenu.change();
+    }
+
+
+    const date = new Date();
+    const firstDay = new Date(date.getFullYear(), date.getMonth() - 1, 1);
+    const lastDay = new Date(date.getFullYear(), date.getMonth(), 0);
+    $("#sDate_new_cooked").val(firstDay.toISOString().split('T')[0]);
+    $("#eDate_new_cooked").val(lastDay.toISOString().split('T')[0]);
+
 }
 
 /**
