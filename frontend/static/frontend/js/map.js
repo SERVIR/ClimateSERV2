@@ -1277,11 +1277,13 @@ function setRange() {
 function clearRange() {
     map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
     map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
-    const current_min = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
-    document.getElementById("begin_range_date").value = current_min
+    document
+        .getElementById("begin_range_date")
+        .value = moment(map.timeDimension.getLowerLimit()).utc().format('YYYY-MM-DD');
 
-    const current_max = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
-    document.getElementById("end_range_date").value = current_max
+    document
+        .getElementById("end_range_date")
+        .value = moment(map.timeDimension.getUpperLimit()).utc().format('YYYY-MM-DD');
 
     $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
         " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
@@ -1925,13 +1927,13 @@ function filter_edit_datasets_by() {
  * the return value from the getClimateScenarioInfo call
  * which is passed in as the parameter
  * @param sdata
+ * @param edit
+ * @param edit_init_id
  */
 function configure_nmme(sdata, edit, edit_init_id) {
     if (sdata.errMsg) {
         console.info(sdata.errMsg);
     } else {
-
-        let init_id = '';
         let edit_string = '';
         let sent_variable = 'precipitation';
         let start_date = '';
@@ -1947,17 +1949,16 @@ function configure_nmme(sdata, edit, edit_init_id) {
         if (edit_init_id) {
             if (parseInt(edit_init_id) % 2 === 0) {
                 sent_variable = 'air_temperature'
-                init_id = edit_init_id;
-            } else {
-                init_id = parseInt(edit_init_id) - 1;
             }
-
         }
         const data = JSON.parse(sdata);
         const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
         cc.startDateTime;
 
-        $('#model_run_menu' + edit_string).append('<option value="' + cc.startDateTime + '">' + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) + '</option>');
+        $('#model_run_menu' + edit_string)
+            .append('<option value="' + cc.startDateTime + '">'
+                + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-"))
+                + '</option>');
 
         // create date dropdowns
         const mformat = "YYYY-MM-DD"
@@ -2005,12 +2006,13 @@ function configure_nmme(sdata, edit, edit_init_id) {
         data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
             // add variable with label to select
             let selected = '';
-            if (variable.climate_Variable == sent_variable) {
+            if (variable.climate_Variable === sent_variable) {
                 selected = 'selected';
             }
             $("#ensemblevarmenu" + edit_string)
                 .append(
-                    '<option value="' + variable.climate_Variable + '" ' + selected + '>' + variable.climate_Variable_Label + '</option>');
+                    '<option value="' + variable.climate_Variable
+                    + '" ' + selected + '>' + variable.climate_Variable_Label + '</option>');
         });
     }
 }
@@ -2019,6 +2021,8 @@ function configure_nmme(sdata, edit, edit_init_id) {
  * handleSourceSelected
  * Sets the UI to the correct state when a different source is selected
  * @param which
+ * @param edit
+ * @param edit_init_id
  */
 function handleSourceSelected(which, edit, edit_init_id) {
     which = which.toString();
@@ -2041,7 +2045,6 @@ function handleSourceSelected(which, edit, edit_init_id) {
     } else {
         let id = which + "ens";
         if (edit) {
-            console.log("need to finish the nmme edit");
             $("#ensemble_builder_edit").show();
             $("#non-multi-ensemble-dates_edit").hide();
             $("#panel_operation_edit").show();
@@ -2543,9 +2546,9 @@ function getDataFromRequest(id, isClimate, query_index) {
                     );
                     const units = layer.units.includes("|units|")
                         ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                        : layer.units
+                        : layer.units;
 
-                    multiQueryData.push({
+                    multiQueryData[query_index] = {
                         data: compiledData,
                         units: units,
                         yAxis_format: layer.yAxis_format || null,
@@ -2557,15 +2560,17 @@ function getDataFromRequest(id, isClimate, query_index) {
                                 : queried_data.operationtype === "5"
                                     ? "avg"
                                     : "n/a")
-                    });
+                    };
 
-                    if (multiQueryData.length === query_list.length) {
+                    if (multiQueryData.filter(Boolean).length === query_list.length) {
                         let hasData = false;
                         for (let i = 0; i < multiQueryData.length; i++) {
-                            if (multiQueryData[i].data.length > 0) {
-                                hasData = true;
-                                break;
-                            }
+                            try {
+                                if (multiQueryData[i].data.length > 0) {
+                                    hasData = true;
+                                    break;
+                                }
+                            } catch(e){}
                         }
                         if (hasData) {
                             close_dialog();
