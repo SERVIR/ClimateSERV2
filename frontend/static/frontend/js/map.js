@@ -1408,7 +1408,6 @@ function verify_ready() {
             // get from panel
             let formData = new FormData();
             buildForm(formData);
-            console.log(new URLSearchParams(formData).toString());
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                 + api_host + "/api/submitDataRequest/?"
@@ -2022,9 +2021,6 @@ function configure_nmme(sdata, edit, edit_init_id) {
  * @param which
  */
 function handleSourceSelected(which, edit, edit_init_id) {
-    console.log(edit_init_id);
-    console.log(which);
-    console.log("edit: " + edit);
     which = which.toString();
     let layer = client_layers.find(
         (item) => item.app_id === which
@@ -3163,9 +3159,6 @@ $(function () {
                 url: '/static/frontend/data/shape.zip',
                 encoding: "UTF-8",
                 EPSG: 4326,
-            },
-            function () {
-                console.log("")
             });
     } catch (e2) {
         console.log(e2);
@@ -3499,11 +3492,8 @@ function edit_query(edit_index) {
     const opts = operation_edit.find("option");
     for (let i = 0; i < opts.length; i++) {
         if (opts[i].value == structured_data.operationtype) {
-            console.log("setting it to " + i);
             operation_edit.prop('selectedIndex', i);
             break;
-        } else {
-            console.log("opts[i].value: " + opts[i].value);
         }
     }
 
@@ -3517,18 +3507,6 @@ function edit_query(edit_index) {
         observation_class = "observation-edit-hide";
     }
     edit_query_form.append($(ensemble_builder.replace("replace_class", replace_class)));
-
-
-    // will have to wrap the date pickers because ens uses calculated
-    // dropdowns from the capabilities which should sync to the date pickers
-    // onchange with the template calling syncDates(true) this will
-    // making grabbing the date seamless between types
-    // also at the end and on show of ens I will have to get
-    // capabilities and set them
-
-    // rethinking, should prolly control ensemble edit with a class to toggle
-    // ensemble-edit and ensemble-edit-hide
-    // same with observation-edit and observation-edit-hide
 
     let date_range = '<div class="' + observation_class + '"><p class="picker-text">Date Range</p>';
     date_range += '<form id="range_picker_edit" style="width:100%; height:100%; display: flex; align-items: center;" class="picker-text">';
