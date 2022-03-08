@@ -1382,13 +1382,8 @@ function verify_ready() {
         api_host += ":" + window.location.port
     }
     try {
-        const api_panel = $("#api_panel");
-        if (requestTypeSelect.val() === "datasets") {
-            api_panel.empty();
-            query_list.forEach(buildAPIReference);
-
-            function buildAPIReference(value) {
-                let aoi_string = "";
+        function get_AOI_String(){
+            let aoi_string = "";
                 if (geometry.text().trim().indexOf("- Feature:") > -1) {
                     if (highlightedIDs.length > 0) {
                         aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
@@ -1397,14 +1392,25 @@ function verify_ready() {
                 } else {
                     aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
                 }
+                return aoi_string;
+        }
+        const api_panel = $("#api_panel");
+        if (requestTypeSelect.val() === "datasets") {
+            api_panel.empty();
+            query_list.forEach(buildAPIReference);
+
+            function buildAPIReference(value) {
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
                     + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
-                    + aoi_string + "</span>");
+                    + get_AOI_String() + "</span>");
             }
         } else if (requestTypeSelect.val() === "download") {
+            // get from panel
+            let formData = new FormData();
+            buildForm(formData);
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                + api_host + "/api/submitDataRequest/?fixthis</span>");
+                + api_host + "/api/submitDataRequest/?" + get_AOI_String() + "</span>");
             btnRequest.prop("disabled", disabled);
         } else {
             api_panel.empty();
