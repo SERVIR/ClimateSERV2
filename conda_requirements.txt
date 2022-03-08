@@ -1,12 +1,14 @@
 cdo=1.9.10
 click=8.0.1
 gdal=3.3.1
+geoip2=4.0.2
 geos=3.9.1
 geotiff=1.6.0
 hdf4=4.2.15
 hdf5=1.10.6
 libgdal=3.3.1
 libnetcdf=4.8.0
+maxminddb=2.0.2
 netcdf4=1.5.7
 numpy=1.21.1
 pillow=8.3.1
