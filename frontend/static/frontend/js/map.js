@@ -2288,6 +2288,7 @@ function format_data(i){
  * data has been added to the list
  */
 function multi_chart_builder() {
+    console.log("building chart");
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     const first_unit = multiQueryData[0].units;
 
@@ -2377,8 +2378,9 @@ function multi_chart_builder() {
             }
         }]
     }
-
-
+    console.log("init chart dialog");
+    inti_chart_dialog();
+    console.log("first data");
     multiChart = Highcharts.chart('chart_holder', chart_object, function (chart) { // on complete
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
@@ -2623,7 +2625,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         }
                         if (hasData) {
                             close_dialog();
-                            inti_chart_dialog();
+
                             multi_chart_builder();
                         } else {
                             inti_chart_dialog();
