@@ -1384,18 +1384,19 @@ function verify_ready() {
         api_host += ":" + window.location.port
     }
     try {
-        function get_AOI_String(){
+        function get_AOI_String() {
             let aoi_string = "";
-                if (geometry.text().trim().indexOf("- Feature:") > -1) {
-                    if (highlightedIDs.length > 0) {
-                        aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
-                        aoi_string += "&featureids=" + highlightedIDs.join(",");
-                    }
-                } else {
-                    aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+            if (geometry.text().trim().indexOf("- Feature:") > -1) {
+                if (highlightedIDs.length > 0) {
+                    aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                    aoi_string += "&featureids=" + highlightedIDs.join(",");
                 }
-                return aoi_string;
+            } else {
+                aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+            }
+            return aoi_string;
         }
+
         const api_panel = $("#api_panel");
         if (requestTypeSelect.val() === "datasets") {
             api_panel.empty();
@@ -2266,6 +2267,20 @@ function getDownLoadLink(id) {
     });
 }
 
+function format_data(i){
+    const temp_data = multiQueryData[i].data;
+
+                let breaks_gone = multiQueryData[i].yAxis_format.formatter.toString().replace(/(\r\n|\n|\r)/gm, "")
+                let parsed_formula = breaks_gone.substring(breaks_gone.indexOf("return") + 6).replace("}", "").trim();
+
+                temp_data.map(x =>{
+
+                                    x[1] = eval(parsed_formula.replace("this.value", x[1]));
+                                    return x;
+                                });
+                multiQueryData[i].point_format = null;
+}
+
 /**
  * multi_chart_builder
  * This will build the chart with the data that has been stored
@@ -2275,82 +2290,96 @@ function getDownLoadLink(id) {
 function multi_chart_builder() {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     const first_unit = multiQueryData[0].units;
-    multiChart = Highcharts.chart('chart_holder', {
-        title: {text: "ClimateSERV Statistical Query"},
-        tooltip: {
-            shared: true,
+
+    const chart_object = {};
+    chart_object.title = {text: "ClimateSERV Statistical Query"};
+    chart_object.subtitle = {
+        text: 'Source: climateserv.servirglobal.net'
+    };
+    chart_object.tooltip = {shared: true,};
+    chart_object.xAxis = {type: "datetime"};
+    chart_object.yAxis = {
+        id: "simple",
+        title: {
+            text: simpleAxis ? "values" : multiQueryData[0].units
         },
-        xAxis: {
-            type: "datetime"
-        }, yAxis: {
-            id: "simple",
-            title: {
-                text: simpleAxis ? "values" : multiQueryData[0].units
-            },
-            // max: 350,
-            // min: 0,
-        }, series: [{
-            color: "#758055",
-            type: "line",
-            name: multiQueryData[0].label,
-            data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
-            tooltip: {
-                pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>"//"Value: " + this.value + units;
-                }
+    };
+    if (multiQueryData[0].yAxis_format) {
+        //chart_object.yAxis.labels = multiQueryData[0].yAxis_format;
+        format_data(0);
+        multiQueryData[0].yAxis_format = null;
+    }
+
+
+    chart_object.legend = {
+        layout: 'vertical',
+        align: 'right',
+        verticalAlign: 'middle'
+    };
+    let point_format = ''
+    if (multiQueryData[0].point_format) {
+        point_format = multiQueryData[0].point_format;
+    } else {
+        point_format = {
+            pointFormatter: function () {
+                return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
             }
-        }],
-        chart: {
-            zoomType: 'xy',
-            events: {
-                redraw: function () {
-                    try {
-                        img.translate(
-                            this.chartWidth - originalWidth,
-                            this.chartHeight - originalHeight
-                        );
-                    } catch (e) {
-                    }
-                }
-            }
-        },
-        exporting: {
-            chartOptions: {
-                chart: {
-                    events: {
-                        load: function () {
-                            const width = this.chartWidth - 105;
-                            const height = this.chartHeight - 130;
-                            this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
-                            ).add();
-                        }
-                    }
-                }
-            }
-        },
-        subtitle: {
-            text: 'Source: climateserv.servirglobal.net'
-        },
-        legend: {
-            layout: 'vertical',
-            align: 'right',
-            verticalAlign: 'middle'
-        },
-        responsive: {
-            rules: [{
-                condition: {
-                    maxWidth: 500
-                },
-                chartOptions: {
-                    legend: {
-                        layout: 'horizontal',
-                        align: 'center',
-                        verticalAlign: 'bottom'
-                    }
-                }
-            }]
         }
-    }, function (chart) { // on complete
+    }
+    chart_object.series = [{
+        color: "#758055",
+        type: "line",
+        name: multiQueryData[0].label,
+        data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
+        tooltip: point_format
+
+    }];
+
+    chart_object.chart = {
+        zoomType: 'xy',
+        events: {
+            redraw: function () {
+                try {
+                    img.translate(
+                        this.chartWidth - originalWidth,
+                        this.chartHeight - originalHeight
+                    );
+                } catch (e) {
+                }
+            }
+        }
+    };
+    chart_object.exporting = {
+        chartOptions: {
+            chart: {
+                events: {
+                    load: function () {
+                        const width = this.chartWidth - 105;
+                        const height = this.chartHeight - 130;
+                        this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                        ).add();
+                    }
+                }
+            }
+        }
+    };
+    chart_object.responsive = {
+        rules: [{
+            condition: {
+                maxWidth: 500
+            },
+            chartOptions: {
+                legend: {
+                    layout: 'horizontal',
+                    align: 'center',
+                    verticalAlign: 'bottom'
+                }
+            }
+        }]
+    }
+
+
+    multiChart = Highcharts.chart('chart_holder', chart_object, function (chart) { // on complete
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
         const width = chart.chartWidth - 105;
@@ -2376,21 +2405,33 @@ function multi_chart_builder() {
                     title: {
                         text: multiQueryData[i].units
                     },
-                    // max: 350,
-                    // min: 0,
                 }, false, false);
             }
-            multiChart.addSeries({
-                yAxis: simpleAxis ? "simple" : "yaxis-" + i,
-                color: colors[i - 1],
-                type: "line",
-                name: multiQueryData[i].label,
-                data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
-                tooltip: {
+            if (multiQueryData[i].yAxis_format) {
+                format_data(i);
+            }
+            let build_yAxis =  simpleAxis ? "simple" : "yaxis-" + i;
+
+
+
+            let point_format = ''
+            if (multiQueryData[i].point_format) {
+                point_format = multiQueryData[i].point_format;
+            } else {
+                point_format = {
                     pointFormatter: function () {
-                        return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>" //"Value: " + this.value + units;
+                        return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
                     }
                 }
+            }
+            multiQueryData[i].yAxis_format = null;
+            multiChart.addSeries({
+                yAxis: build_yAxis,
+                color: colors[i - 1],
+                type: "line",
+                tooltip: point_format,
+                name: multiQueryData[i].label,
+                data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
             });
         }
         $('#multi-switch-panel').css('visibility', 'visible');
@@ -2570,7 +2611,8 @@ function getDataFromRequest(id, isClimate, query_index) {
                                     hasData = true;
                                     break;
                                 }
-                            } catch(e){}
+                            } catch (e) {
+                            }
                         }
                         if (hasData) {
                             close_dialog();
