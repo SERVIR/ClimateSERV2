@@ -2453,6 +2453,8 @@ function getDataFromRequest(id, isClimate, query_index) {
         '}">';
     complete += '<div style="width:100%">';
     complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
+    complete += '<p>If this window is stuck for a long period of time there may be an error.  To reset ';
+    complete += 'the query status please click <button class="bread-crumb" onclick"reset_query()">Reset</button> ';
     complete += '</div>';
     const dialog = $("#dialog");
     dialog.html(complete);
@@ -3627,7 +3629,6 @@ function delete_query(delete_index) {
         query_list.splice(delete_index, 1); // 2nd parameter means remove one item only
     }
 
-// refresh the UI
     review_query(true);
     update_number_queries();
 }
@@ -3655,6 +3656,12 @@ function toggle_query_tabs() {
     $("#query_list_checkout").toggle();
     $("#chart-builder").toggle();
     $("#sidebar-content").scrollTop(0);
+}
+
+function reset_query(){
+    query_list.length = 0;
+    update_number_queries();
+    reset_query_panel();
 }
 
 function reset_query_panel() {
