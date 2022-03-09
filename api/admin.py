@@ -28,14 +28,15 @@ class ETLGranuleAdmin(admin.ModelAdmin):
 class ETLLogAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'etl_pipeline_run',
                     'etl_dataset', 'etl_granule', 'start_time', 'end_time', 'status')
-    autocomplete_fields = ['etl_granule']
-    search_fields = ('etl_granule',)
+    autocomplete_fields = ['etl_pipeline_run']
+    search_fields = ('etl_pipeline_run__uuid',)
     date_hierarchy = "created_at"
 
 
 @admin.register(ETL_PipelineRun)
 class ETLPipelineRunAdmin(admin.ModelAdmin):
     list_display = ('uuid', 'created_at')
+    search_fields = ('uuid',)
     date_hierarchy = "created_at"
 
 
