@@ -2447,28 +2447,35 @@ function multi_chart_builder() {
  * @param query_index
  */
 function getDataFromRequest(id, isClimate, query_index) {
-    //close_dialog();
-    let complete = '<div style="width:100%; height:100%; display: flex;' +
-        '    align-items: center;' +
-        '}">';
-    complete += '<div style="width:100%">';
-    complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
-    complete += '<p>If this window is stuck for a long period of time there may be an error.  To reset ';
-    complete += 'the query status please click <button class="bread-crumb" onclick"reset_query()">Reset</button> ';
-    complete += '</div>';
-    const dialog = $("#dialog");
-    dialog.html(complete);
-    dialog.dialog({
-        title: "Query Complete, Downloading Results",
-        resizable: false,
-        width: $(window).width() / 2,
-        height: 200,
-        position: {
-            my: "center",
-            at: "center",
-            of: window
-        }
-    });
+    // only do this for the final dataset that goes thru, othewise continue the progress bar
+
+    if (multiQueryData.filter(Boolean).length === query_list.length - 1) {
+        console.log("will show");
+        let complete = '<div style="width:100%; height:100%; display: flex;' +
+            '    align-items: center;' +
+            '}">';
+        complete += '<div style="width:100%">';
+        complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
+        complete += '<p>If this window is stuck for a long period of time there may be an error.  To reset ';
+        complete += 'the query status please click <button class="bread-crumb" onclick"reset_query()">Reset</button> ';
+        complete += '</div>';
+        const dialog = $("#dialog");
+        dialog.html(complete);
+        dialog.dialog({
+            title: "Query Complete, Downloading Results",
+            resizable: false,
+            width: $(window).width() / 2,
+            height: 200,
+            position: {
+                my: "center",
+                at: "center",
+                of: window
+            }
+        });
+    } else{
+        console.log("multiQueryData: " + multiQueryData.filter(Boolean).length);
+        console.log("query_list: " + (query_list.length - 1));
+    }
 
     $.ajax({
         url: "/api/getDataFromRequest/?id=" +
