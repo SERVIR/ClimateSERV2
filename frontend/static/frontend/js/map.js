@@ -2437,7 +2437,7 @@ function multi_chart_builder() {
         $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
-
+let passes = 0;
 /**
  * getDataFromRequest
  * Function to retrieve the processed data from the server with the id
@@ -2448,8 +2448,8 @@ function multi_chart_builder() {
  */
 function getDataFromRequest(id, isClimate, query_index) {
     // only do this for the final dataset that goes thru, othewise continue the progress bar
-
-    if (multiQueryData.filter(Boolean).length === query_list.length - 1) {
+    passes ++;
+    if (passes === query_list.length) {
         console.log("will show");
         let complete = '<div style="width:100%; height:100%; display: flex;' +
             '    align-items: center;' +
@@ -2472,6 +2472,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                 of: window
             }
         });
+        passes = 0;
     } else{
         console.log("multiQueryData: " + multiQueryData.filter(Boolean).length);
         console.log("query_list: " + (query_list.length - 1));
