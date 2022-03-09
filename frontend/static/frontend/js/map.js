@@ -2160,7 +2160,7 @@ function inti_chart_dialog() {
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
-    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
+    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder">Compiling data</div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
     dialog_html += 'Simple Axis <label class="switch">'
@@ -2473,9 +2473,6 @@ function getDataFromRequest(id, isClimate, query_index) {
             }
         });
         passes = 0;
-    } else{
-        console.log("multiQueryData: " + multiQueryData.filter(Boolean).length);
-        console.log("query_list: " + (query_list.length - 1));
     }
 
     $.ajax({
