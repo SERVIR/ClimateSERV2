@@ -2160,7 +2160,7 @@ function inti_chart_dialog() {
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
-    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder">Compiling data</div></div>';
+    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
     dialog_html += 'Simple Axis <label class="switch">'
@@ -2176,10 +2176,10 @@ function inti_chart_dialog() {
         resizable: isMobile.css("display") === "block" ? false : {handles: "se"},
         width: isMobile.css("display") === "block" ? $(window).width() : $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
-        resize: function () {
-            Highcharts.charts[0].reflow();
-            window.dispatchEvent(new Event('resize'));
-        },
+        // resize: function () {
+        //     Highcharts.charts[0].reflow();
+        //     window.dispatchEvent(new Event('resize'));
+        // },
         open: function () {
             window.dispatchEvent(new Event('resize'));
         },
@@ -2380,6 +2380,13 @@ function multi_chart_builder() {
     }
     console.log("init chart dialog");
     inti_chart_dialog();
+
+    let dialog = $("#dialog");
+    dialog.dialog({resize: function () {
+            Highcharts.charts[0].reflow();
+            window.dispatchEvent(new Event('resize'));
+        }});
+
     console.log("first data");
     multiChart = Highcharts.chart('chart_holder', chart_object, function (chart) { // on complete
         originalWidth = chart.chartWidth;
