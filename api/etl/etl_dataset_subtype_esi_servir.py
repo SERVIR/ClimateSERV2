@@ -34,7 +34,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
 
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -167,7 +167,7 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
-    def execute__Step__Download(self):
+    def execute__Step__Download(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""

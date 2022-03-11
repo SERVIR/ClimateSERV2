@@ -11,6 +11,7 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from .etl_dataset_subtype import ETL_Dataset_Subtype
 
 from api.services import Config_SettingService
+from ..models import ETL_Log
 
 
 class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
@@ -71,7 +72,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             base_filename = ETL_Dataset_Subtype_CHIRPS.get__base_filename__for_mode__chirps(datetime_obj=datetime_obj)
         return base_filename
 
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -258,7 +259,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
 
-    def execute__Step__Download(self):
+    def execute__Step__Download(self,uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -398,7 +399,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             # Increment the loop counter
             loop_counter = loop_counter + 1
         if len(dates_arr)>0:
-            sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
+            print()
+            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+            ret__is_error=True
+
         # Ended, now for reporting
         #
         ret__detail_state_info['class_name'] = self.__class__.__name__

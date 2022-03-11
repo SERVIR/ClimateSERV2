@@ -8,7 +8,7 @@ class ETL_LogService():
 
     @staticmethod
     def create_etl_log_row(activity_event_type, activity_description, etl_pipeline_run_uuid, etl_dataset_uuid,
-                           etl_granule_uuid, is_alert, created_by, additional_json, start_time, end_time):
+                           etl_granule_uuid, is_alert, created_by, additional_json, start_time, end_time, status="In Progress"):
         ret_uuid = ''
         etl_pipeline_run_uuid = etl_pipeline_run_uuid if etl_pipeline_run_uuid != '' else None
         etl_dataset_uuid = etl_dataset_uuid if etl_dataset_uuid != '' else None
@@ -34,6 +34,7 @@ class ETL_LogService():
                 etl_log.additional_json = additional_json_str
                 etl_log.start_time = start_time
                 etl_log.end_time = end_time
+                etl_log.status=status
                 etl_log.save()
                 ret_uuid = str(etl_log.uuid).strip()
             except Exception as e:

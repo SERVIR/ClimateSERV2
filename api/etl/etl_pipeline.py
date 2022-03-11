@@ -146,36 +146,6 @@ class ETL_Pipeline():
         # END OF        if not os.path.exists(dir_path):
         return ret_IsError
 
-    def sendNotification(self, activity_description):
-        user_arr = []
-        etl_user_arr = []
-        admin = []
-        SUBJECT = "ClimateSERV2.0 ETL run failed!!"
-        TEXT = "This email informs you that the ETL run with ETL_PipelineRun__UUID " + self.ETL_PipelineRun__UUID + " has failed with the following error.\n\n " + activity_description
-        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
-        for profile in Profile.objects.all():
-            if profile.storage_alerts:
-                user_arr.append(profile.user)
-        for user in User.objects.all():
-            for us in user_arr:
-                if str(us) == str(user.username):
-                    etl_user_arr.append(user.email)
-        for user in User.objects.all():
-            if str(user.username) == "email_admin":
-                for p in Profile.objects.all():
-                    if str(p.user) == "email_admin":
-                        admin.append(user.email)
-                        admin.append(p.gmail_password)
-                        break
-                break
-        for storage_user in etl_user_arr:
-            mail = smtplib.SMTP('smtp.gmail.com', 587)
-            mail.ehlo()
-            mail.starttls()
-            mail.login(admin[0], admin[1])
-            mail.sendmail(admin[0], storage_user, message)
-            mail.close()
-
     # ###########################################################################################
     # # STANDARD WRAPPER FUNCTIONS - Used by this class and many of the ETL Script Sub Classes
     # ###########################################################################################
@@ -201,7 +171,8 @@ class ETL_Pipeline():
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
             start_time=self.start_time,
-            end_time=self.end_time
+            end_time=self.end_time,
+            status=status
         )
         self.new_etl_log_ids__EVENTS.append(etl_log_row_uuid)
 
@@ -220,7 +191,8 @@ class ETL_Pipeline():
             created_by="ETL_PIPELINE__" + self.dataset_name,
             additional_json=additional_json,
             start_time=self.start_time,
-            end_time=self.end_time
+            end_time=self.end_time,
+            status="Failed"
         )
         self.new_etl_log_ids__EVENTS.append(etl_log_row_uuid)
         self.new_etl_log_ids__ERRORS.append(etl_log_row_uuid)
@@ -337,7 +309,7 @@ class ETL_Pipeline():
             dataset_subtype = (dataset_subtype).lower()
             # Create dataset instance
             if dataset_subtype in ('chirp', 'chirps'):
-                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, dataset_subtype)
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS(self, dataset_subtype,)
             elif dataset_subtype == 'chirps_gefs':
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_CHIRPS_GEFS(self, dataset_subtype)
             elif dataset_subtype == 'emodis':
@@ -458,7 +430,7 @@ class ETL_Pipeline():
         if has_error == False:
             step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__PRE_ETL_CUSTOM",
                                                  default_or_error_return_value="Pre ETL Custom")
-            has_error, step_result = self.execute__Step__Pre_ETL_Custom()
+            has_error, step_result = self.execute__Step__Pre_ETL_Custom(self.ETL_PipelineRun__UUID)
             if has_error == True:
                 activity_event_type = str(Config_Setting.get_value(
                     setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
@@ -487,7 +459,7 @@ class ETL_Pipeline():
         if has_error == False:
             step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__DOWNLOAD",
                                                  default_or_error_return_value="ETL Download")
-            has_error, step_result = self.execute__Step__Download()
+            has_error, step_result = self.execute__Step__Download(self.ETL_PipelineRun__UUID)
             if has_error == True:
                 activity_event_type = str(Config_Setting.get_value(
                     setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_ERROR",
@@ -662,11 +634,11 @@ class ETL_Pipeline():
         self.log__pipeline_run__exit()
         return
 
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         has_error = False
         step_result = {}
         try:
-            step_result = self.Subtype_ETL_Instance.execute__Step__Pre_ETL_Custom()
+            step_result = self.Subtype_ETL_Instance.execute__Step__Pre_ETL_Custom(uuid)
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())
@@ -676,11 +648,11 @@ class ETL_Pipeline():
             has_error = True
         return has_error, step_result
 
-    def execute__Step__Download(self):
+    def execute__Step__Download(self,uuid):
         has_error = False
         step_result = {}
         try:
-            step_result = self.Subtype_ETL_Instance.execute__Step__Download()
+            step_result = self.Subtype_ETL_Instance.execute__Step__Download(uuid)
             has_error = step_result['is_error']
         except:
             sysErrorData = str(sys.exc_info())

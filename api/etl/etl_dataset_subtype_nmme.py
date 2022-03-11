@@ -40,7 +40,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
         self.MM__Month__Start = params.get('MM__Month__Start') or datetime.date.today().month
         self.MM__Month__End = params.get('MM__Month__End') or datetime.date.today().month
 
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         ret__function_name = "execute__Step__Pre_ETL_Custom"
         ret__is_error = False
         ret__event_description = ""
@@ -83,7 +83,7 @@ class ETL_Dataset_Subtype_NMME(ETL_Dataset_Subtype_Interface):
 
 
 
-    def execute__Step__Download(self):
+    def execute__Step__Download(self, uuid):
         ret__detail_state_info = {}
         download_counter = 0
         loop_counter = 0

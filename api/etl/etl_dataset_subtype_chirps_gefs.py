@@ -40,7 +40,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
         self.DD__Day__Start = params.get('DD__Day__Start') or 1
         self.DD__Day__End = params.get('DD__Day__End') or today.day
 
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -88,7 +88,8 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                     dates_arr.append(file_Date)
             if len(dates_arr) > 0:
-                sendNotification(self.etl_parent_pipeline_instance.dataset.uuid, dates_arr)
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+                ret__is_error = True
             for filename, date in zip(filenames, dates):
 
                 current_year__YYYY_str  = "{:0>4d}".format(date.year)
@@ -210,7 +211,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
-    def execute__Step__Download(self):
+    def execute__Step__Download(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""

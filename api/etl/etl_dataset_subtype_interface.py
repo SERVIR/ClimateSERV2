@@ -7,11 +7,11 @@ class ETL_Dataset_Subtype_Interface(ABC):
         pass
 
     @abstractmethod
-    def execute__Step__Pre_ETL_Custom(self):
+    def execute__Step__Pre_ETL_Custom(self, uuid):
         pass
 
     @abstractmethod
-    def execute__Step__Download(self):
+    def execute__Step__Download(self, uuid):
         pass
 
     @abstractmethod

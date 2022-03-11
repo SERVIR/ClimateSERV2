@@ -150,13 +150,13 @@ def listFD(url, ext=''):
     soup = BeautifulSoup(page, 'html.parser')
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
 
-def sendNotification(uuid, dates_arr):
+def sendNotification(uuid, dataset_name, dates_arr):
     user_arr = []
     etl_user_arr = []
     admin = []
-    SUBJECT = "ClimateSERV2.0 ETL run failed!!"
+    SUBJECT = "ClimateSERV2.0 ETL run failed for the dataset "+dataset_name+"!!"
     try:
-        TEXT = "This email informs you that the ETL run with ETL_PipelineRun__UUID " + uuid + " has failed for following dates(YYYYMMDD).\n\n " +(', ').join(dates_arr)
+        TEXT = "This email informs you that the ETL run for the dataset " +dataset_name+ " with ETL_PipelineRun__UUID " + uuid + " has failed for following dates(YYYYMMDD).\n\n " +(', ').join(dates_arr)
         message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
         for profile in Profile.objects.all():
             if profile.storage_alerts:
