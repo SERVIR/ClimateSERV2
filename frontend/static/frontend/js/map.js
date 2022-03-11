@@ -1846,10 +1846,6 @@ function pollForProgress(id, isClimate, query_index) {
                 ) {
                     getDownLoadLink(id);
                 } else {
-                    // if (!isClimate) {
-                    //     inti_chart_dialog();
-                    //     multiChart = Highcharts.chart('chart_holder', {});
-                    // }
                     getDataFromRequest(id, isClimate, query_index);
 
                 }
