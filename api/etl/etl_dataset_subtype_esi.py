@@ -87,7 +87,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                 date_part = date.split('T')[0]
                 datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                 for nd in new_dates:
-                    delta =   nd - datetime_object
+                    #delta =   nd - datetime_object
+                    delta = datetime.datetime.now() - nd
                     file_Date = nd.strftime('%Y%m%d')
                     print(delta)
                     if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):

@@ -346,7 +346,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                 status_msg = False
                                 datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                                 tmp_date = datetime.datetime.strptime(file_Date, '%Y%m%d')
-                                delta = tmp_date - datetime_object
+                                #delta = tmp_date - datetime_object
+                                delta = datetime.datetime.now() - tmp_date
                                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                                     dates_arr.append(file_Date)
                         else:

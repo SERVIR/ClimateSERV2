@@ -83,7 +83,8 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
             date_part = date.split('T')[0]
             datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
             for nd in new_dates:
-                delta =  datetime_object - nd
+                # delta =  datetime_object - nd
+                delta = datetime.datetime.now() - nd
                 file_Date = nd.strftime('%Y%m%d')
                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                     dates_arr.append(file_Date)
