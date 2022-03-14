@@ -400,8 +400,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             # Increment the loop counter
             loop_counter = loop_counter + 1
         if len(dates_arr)>0:
-            print()
-            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
             ret__is_error=True
 
         # Ended, now for reporting

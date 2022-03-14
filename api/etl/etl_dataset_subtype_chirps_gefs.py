@@ -89,7 +89,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                     dates_arr.append(file_Date)
             if len(dates_arr) > 0:
-                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
                 ret__is_error = True
             for filename, date in zip(filenames, dates):
 
