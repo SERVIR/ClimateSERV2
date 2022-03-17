@@ -74,7 +74,7 @@
                             precipitation{% endif %}",
                         styles: "{{ enslayer.default_style }}",
                         colorrange: "{{ enslayer.default_color_range }}",
-                        id: "{{ enslayer.ui_id }}",
+                        id: "{{ enslayer.ui_id }}" + "air",
                         dataset: "{{ layer.dataset_type }}",
                         app_id: (parseInt("{{ enslayer.api_id }}") + 1).toString(),
                         units: "{{ enslayer.units }}",

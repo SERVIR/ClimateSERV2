@@ -2425,7 +2425,11 @@ function multi_chart_builder() {
             } else {
                 point_format = {
                     pointFormatter: function () {
-                        return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
+                        if(multiQueryData[i] && multiQueryData[i].units) {
+                            return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
+                        } else{
+                            return Highcharts.numberFormat(this.y, 2) +  "<br>";
+                        }
                     }
                 }
             }
