@@ -87,14 +87,15 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                 date_part = date.split('T')[0]
                 datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                 for nd in new_dates:
-                    delta =   nd - datetime_object
+                    #delta =   nd - datetime_object
+                    delta = datetime.datetime.now() - nd
                     file_Date = nd.strftime('%Y%m%d')
                     print(delta)
                     if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                         dates_arr.append(file_Date)
 
             if len(dates_arr) > 0:
-                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
                 ret__is_error = True
             for filename, date in zip(filenames, dates):
 

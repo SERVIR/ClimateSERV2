@@ -424,11 +424,10 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 date = latest_file.split('.')[1]
 
                 date_part = date.split('T')[0]
-                print(date_part)
                 datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                 file_Date = expected_remote_file_path_object['final_nc4_filename'].split('.')[1]
-                delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
-                print(delta)
+                #delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
+                delta = datetime.datetime.now() - datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d')
                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                     dates_arr.append(file_Date.split('T')[0])
                 error_counter = error_counter + 1
@@ -441,7 +440,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 # Maybe in here is an error with sending the warning in an earlier step?
             loop_counter = loop_counter + 1
         if len(dates_arr) > 0:
-            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name, dates_arr)
+            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
             ret__is_error = True
         # Ended, now for reporting
         #
