@@ -19,6 +19,7 @@ def testing(request):
     return render(request, 'testing.html')
 
 
+@staff_member_required
 def hits(request):
     record_count = 10
     if request.method == "POST":
