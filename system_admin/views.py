@@ -38,7 +38,7 @@ def hits(request):
     hits_per_day = Track_Usage.objects \
         .values(day=Trunc('time_requested', 'day')) \
         .annotate(NumberOfHits=Count('day')) \
-        .order_by('-NumberOfHits')[:record_count]
+        .order_by('-day')
 
     context = {
         'hits_per_country': hits_per_country,
