@@ -28,22 +28,23 @@ def hits(request):
     hits_per_country = Track_Usage.objects \
         .values('country_ISO') \
         .annotate(NumberOfHits=Count('country_ISO')) \
-        .order_by('-NumberOfHits')[:10]
+        .order_by('-NumberOfHits')[:record_count]
 
     hits_per_dataset = Track_Usage.objects \
         .values('dataset') \
         .annotate(NumberOfHits=Count('dataset')) \
-        .order_by('-NumberOfHits')[:10]
+        .order_by('-NumberOfHits')[:record_count]
 
     hits_per_day = Track_Usage.objects \
         .values(day=Trunc('time_requested', 'day')) \
         .annotate(NumberOfHits=Count('day')) \
-        .order_by('-NumberOfHits')[:10]
+        .order_by('-NumberOfHits')[:record_count]
 
     context = {
         'hits_per_country': hits_per_country,
         'hits_per_dataset': hits_per_dataset,
         'hits_per_day': hits_per_day,
+        'number_of_items': record_count,
     }
     return render(request, 'hits.html', context)
 
