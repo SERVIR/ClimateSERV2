@@ -26,7 +26,13 @@
     <script>
         Highcharts.chart('hits_per_country_container', {
             chart: {
-                type: 'column'
+                type: 'column',
+                zoomType: 'xy',
+            },
+            yAxis: {
+                title: {
+                    text: "Hits by Country"
+                },
             },
             title: {
                 text: 'Hits per Country'
@@ -52,10 +58,16 @@
     <script>
         Highcharts.chart('hits_per_dataset_container', {
             chart: {
-                type: 'column'
+                type: 'column',
+                zoomType: 'xy',
             },
             title: {
                 text: 'Hits per Dataset'
+            },
+            yAxis: {
+                title: {
+                    text: "Hits by Dataset"
+                },
             },
             xAxis: {
                 categories: [
@@ -78,10 +90,16 @@
     <script>
         Highcharts.chart('hits_per_day_container', {
             chart: {
-                type: 'line'
+                type: 'line',
+                zoomType: 'xy',
             },
             title: {
                 text: 'Hits per Day'
+            },
+            yAxis: {
+                title: {
+                    text: "Hits by Day"
+                },
             },
             xAxis: {
                 categories: [
