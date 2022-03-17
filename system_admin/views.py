@@ -5,6 +5,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.template.defaultfilters import register
 from django.forms.models import model_to_dict
+from django.db.models import Count
+from django.db.models.functions import Trunc
 from api.models import Track_Usage
 import ast
 
@@ -15,6 +17,35 @@ import ast
 def testing(request):
     print("REQUEST", request)
     return render(request, 'testing.html')
+
+
+@staff_member_required
+def hits(request):
+    record_count = 10
+    if request.method == "POST":
+        if "record_count" in request.POST:
+            record_count = int(request.POST["record_count"])
+    hits_per_country = Track_Usage.objects \
+        .values('country_ISO') \
+        .annotate(NumberOfHits=Count('country_ISO')) \
+        .order_by('-NumberOfHits')
+
+    hits_per_dataset = Track_Usage.objects \
+        .values('dataset') \
+        .annotate(NumberOfHits=Count('dataset')) \
+        .order_by('-NumberOfHits')
+
+    hits_per_day = Track_Usage.objects \
+        .values(day=Trunc('time_requested', 'day')) \
+        .annotate(NumberOfHits=Count('day')) \
+        .order_by('-NumberOfHits')[:10]
+
+    context = {
+        'hits_per_country': hits_per_country,
+        'hits_per_dataset': hits_per_dataset,
+        'hits_per_day': hits_per_day,
+    }
+    return render(request, 'hits.html', context)
 
 
 @staff_member_required
