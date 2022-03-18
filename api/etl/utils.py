@@ -150,13 +150,19 @@ def listFD(url, ext=''):
     soup = BeautifulSoup(page, 'html.parser')
     return [url + '/' + node.get('href') for node in soup.find_all('a') if node.get('href').endswith(ext)]
 
-def sendNotification(uuid, dataset_name, dates_arr):
+def sendNotification(uuid, dataset_name, dates_arr, threshold):
     user_arr = []
     etl_user_arr = []
     admin = []
     SUBJECT = "ClimateSERV2.0 ETL run failed for the dataset "+dataset_name+"!!"
     try:
-        TEXT = "This email informs you that the ETL run for the dataset " +dataset_name+ " with ETL_PipelineRun__UUID " + uuid + " has failed for following dates(YYYYMMDD).\n\n " +(', ').join(dates_arr)
+        val = threshold
+        TEXT = "This email informs you that the ETL run for a dataset has failed to load data (or failed execution) for the specified date(s)."\
+         "\n\n Further, the date(s) listed below only represent dates that cause the dataset to be considered 'Late'. NOTE! - There may be prior dates also missing." \
+        "Dataset: "+dataset_name+"\n\n" \
+         "ETL_PipelineRun: "+uuid+"\n\n"\
+        "LateAfter: "+"% s" % threshold+" days\n\n"\
+        "Failed processing dates(YYYYMMDD):"+"\n\n"+(', ').join(dates_arr)+"\n\n"
         message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
         for profile in Profile.objects.all():
             if profile.storage_alerts:

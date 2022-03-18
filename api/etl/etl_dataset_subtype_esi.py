@@ -25,6 +25,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
+        self.misc_error = ""
+        self.dates_arr=[]
         if dataset_subtype == 'esi_4week':
             self.mode = '4week'
         elif dataset_subtype == 'esi_12week':
@@ -92,11 +94,11 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     file_Date = nd.strftime('%Y%m%d')
                     print(delta)
                     if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                        dates_arr.append(file_Date)
-
-            if len(dates_arr) > 0:
-                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
-                ret__is_error = True
+                        self.dates_arr.append(file_Date)
+                        self.misc_error = "There was an issue downloading one or more files."
+            if len(self.dates_arr) > 0:
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, self.dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
+                #ret__is_error = True
             for filename, date in zip(filenames, dates):
 
                 nc4_date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
@@ -648,6 +650,12 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+            if self.misc_error != "" or len(self.dates_arr) > 0:
+                self.etl_parent_pipeline_instance.log_etl_error(activity_event_type="Error in ETL run",
+                                                                activity_description=self.misc_error,
+                                                                etl_granule_uuid="", is_alert=False,
+                                                                additional_json=additional_json)
+                ret__is_error = True
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
