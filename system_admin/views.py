@@ -45,6 +45,7 @@ def hits(request):
         'hits_per_dataset': hits_per_dataset,
         'hits_per_day': hits_per_day,
         'number_of_items': record_count,
+        'total_hits': Track_Usage.objects.count(),
     }
     return render(request, 'hits.html', context)
 
