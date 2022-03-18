@@ -5,6 +5,8 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.template.defaultfilters import register
 from django.forms.models import model_to_dict
+from django.db.models import Count
+from django.db.models.functions import Trunc
 from api.models import Track_Usage
 import ast
 
@@ -15,6 +17,46 @@ import ast
 def testing(request):
     print("REQUEST", request)
     return render(request, 'testing.html')
+
+
+@staff_member_required
+def hits(request):
+    record_count = 10
+    if request.method == "POST":
+        if "record_count" in request.POST:
+            record_count = int(request.POST["record_count"])
+    hits_per_country = Track_Usage.objects.values(
+        'country_ISO').annotate(
+        NumberOfHits=Count('country_ISO')).order_by(
+        '-NumberOfHits')[:record_count]
+
+    hits_per_dataset_all = Track_Usage.objects.exclude(
+        dataset__contains="Climate Change Scenario:").values(
+        'dataset').annotate(
+        NumberOfHits=Count('dataset')).order_by(
+        '-NumberOfHits')[:record_count]
+    hits_per_dataset_nmme = Track_Usage.objects.filter(
+        dataset__contains="Climate Change Scenario:").values(
+        'dataset').aggregate(
+        NumberOfHits=Count('dataset'))
+    hits_per_dataset_list = list(hits_per_dataset_all)
+    hits_per_dataset_list.append(
+        {'dataset': 'Climate Change Scenario', 'NumberOfHits': hits_per_dataset_nmme['NumberOfHits']})
+
+    hits_per_dataset = sorted(hits_per_dataset_list, key=lambda x: x['NumberOfHits'], reverse=True)
+
+    hits_per_day = Track_Usage.objects.values(
+        day=Trunc('time_requested', 'day')).annotate(
+        NumberOfHits=Count('day')).order_by('-day')
+
+    context = {
+        'hits_per_country': hits_per_country,
+        'hits_per_dataset': hits_per_dataset,
+        'hits_per_day': hits_per_day,
+        'number_of_items': record_count,
+        'total_hits': Track_Usage.objects.count(),
+    }
+    return render(request, 'hits.html', context)
 
 
 @staff_member_required

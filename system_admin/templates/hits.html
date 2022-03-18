@@ -1,0 +1,126 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - API Usage{% endblock %}
+{% block script %}
+    <link rel="stylesheet"
+          href="{% static 'system_admin/css/system_admin.css' %}"
+    />
+    <script src="https://code.highcharts.com/highcharts.src.js"></script>
+{% endblock %}
+{% block content %}
+<div class="container">
+    <header class="pt-3 pb-3">
+    <p class="h2 pt-3">API Usage </p>
+    <p class="h3 pb-3">{{ total_hits }} requests logged until {% now "l, j F Y" %}</p>
+    <form action="{% url 'ClimateSERV_SystemAdmin:hits' %}"
+          method="POST" id="filter_form" name="filter_form">
+        {% csrf_token %}
+        <label for="number_of_items">Select number of items to display in the charts</label>
+        <select onchange="this.form.submit()" name="record_count" id="record_count" class="input">
+            <option value="10" {% if number_of_items == 10 %}selected{% endif %}>Top 10</option>
+            <option value="20" {% if number_of_items == 20 %}selected{% endif %}>Top 20</option>
+            <option value="30" {% if number_of_items == 30 %}selected{% endif %}>Top 30</option>
+        </select>
+    </form>
+    </header>
+    <div id="hits_per_country_container" class="container border-bottom pt-3 pb-3"></div>
+
+    <script>
+        Highcharts.chart('hits_per_country_container', {
+            chart: {
+                type: 'column',
+                zoomType: 'xy',
+            },
+            yAxis: {
+                title: {
+                    text: "# of Requests"
+                },
+            },
+            title: {
+                text: 'Hits per Country'
+            },
+            xAxis: {
+                categories: [
+                    {% for hpc in hits_per_country %}'{{ hpc.country_ISO }} '{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                title: { text: 'Country ISO Code' },
+            },
+            series: [{
+                name: 'Hits',
+                data: [
+                    {% for hpc in hits_per_country %}{{ hpc.NumberOfHits }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                color: 'green'
+            }]
+        });
+
+    </script>
+
+    <div id="hits_per_dataset_container" class="container border-bottom pt-3 pb-3"></div>
+
+    <script>
+        Highcharts.chart('hits_per_dataset_container', {
+            chart: {
+                type: 'column',
+                zoomType: 'xy',
+            },
+            title: {
+                text: 'Hits per Dataset'
+            },
+            yAxis: {
+                title: {
+                    text: "# of Requests"
+                },
+            },
+            xAxis: {
+                categories: [
+                    {% for hpd in hits_per_dataset %}'{{ hpd.dataset }} '{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                title: { text: 'Dataset Name' },
+            },
+            series: [{
+                name: 'Hits',
+                data: [
+                    {% for hpd in hits_per_dataset %}{{ hpd.NumberOfHits }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                color: 'blue'
+            }]
+        });
+
+    </script>
+
+    <div id="hits_per_day_container" class="container border-bottom pt-3 pb-3"></div>
+
+    <script>
+        Highcharts.chart('hits_per_day_container', {
+            chart: {
+                type: 'line',
+                zoomType: 'xy',
+            },
+            title: {
+                text: 'Hits per Day'
+            },
+            yAxis: {
+                title: {
+                    text: "# of Requests"
+                },
+            },
+            xAxis: {
+                categories: [
+                    {% for hpdy in hits_per_day %}'{{ hpdy.day|date:"SHORT_DATE_FORMAT" }} '{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                title: { text: 'Date'},
+            },
+            series: [{
+                name: 'Hits',
+                data: [
+                    {% for hpdy in hits_per_day %}{{ hpdy.NumberOfHits }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                color: 'red'
+            }]
+        });
+
+    </script>
+
+</div>
+{% endblock %}
