@@ -1,4 +1,6 @@
 import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 import requests
 
@@ -154,16 +156,40 @@ def sendNotification(uuid, dataset_name, dates_arr, threshold):
     user_arr = []
     etl_user_arr = []
     admin = []
-    SUBJECT = "ClimateSERV2.0 ETL run failed for the dataset "+dataset_name+"!!"
+    # SUBJECT = "ClimateSERV2.0 ETL run failed for the dataset "+dataset_name+"!!"
     try:
-        val = threshold
-        TEXT = "This email informs you that the ETL run for a dataset has failed to load data (or failed execution) for the specified date(s)."\
-         "\n\n Further, the date(s) listed below only represent dates that cause the dataset to be considered 'Late'. NOTE! - There may be prior dates also missing." \
-        "Dataset: "+dataset_name+"\n\n" \
-         "ETL_PipelineRun: "+uuid+"\n\n"\
-        "LateAfter: "+"% s" % threshold+" days\n\n"\
-        "Failed processing dates(YYYYMMDD):"+"\n\n"+(', ').join(dates_arr)+"\n\n"
-        message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+    #     val = threshold
+    #     TEXT = "This email informs you that the ETL run for a dataset has failed to load data (or failed execution) for the specified date(s)."\
+    #      "\n\n Further, the date(s) listed below only represent dates that cause the dataset to be considered 'Late'. NOTE! - There may be prior dates also missing." \
+    #     "\n\n" \
+    #      "Dataset:               "+dataset_name+"\n\n" \
+    #      "ETL_PipelineRun:       "+uuid+"\n\n"\
+    #      "LateAfter:             "+"% s" % threshold+" days\n\n"\
+    #      "Failed processing dates(YYYYMMDD):"+"\n\n"+(', ').join(dates_arr)+"\n\n"
+    #     message = 'Subject: {}\n\n{}'.format(SUBJECT, TEXT)
+        message = MIMEMultipart()
+        message['Subject'] = "ClimateSERV2.0 ETL run failed for the dataset "+dataset_name+"!!"
+
+
+
+        message.attach(MIMEText("<p>This email informs you that the ETL run for a dataset has failed to load data (or failed execution) for the specified date(s).</p>"
+                                "<p>Further, the date(s) listed below only represent dates that cause the dataset to be considered 'Late'. <i>NOTE! - There may be prior dates also missing.</i></p>"
+                                ""
+                                "<table>"
+                                "<tr>"
+   " <td>Dataset:</td>"
+    "<td style='padding-left:15px'>"+dataset_name+"</td>"
+  "</tr> "
+                                                          "<tr>"
+   " <td>ETL_PipelineRun:</td>"
+    "<td style='padding-left:15px'>"+uuid+"</td>"
+  "</tr> "
+                                " <tr>"
+    "<td>LateAfter:</td>"
+    "<td style='padding-left:15px'>% s" % threshold+" days</td>"
+"  </tr></table>"
+                                "<p>Failed processing dates(YYYYMMDD):</p><p>"+(', ').join(dates_arr)+"</p>", "html"))
+        msg_body = message.as_string()
         for profile in Profile.objects.all():
             if profile.storage_alerts:
                 user_arr.append(profile.user)
@@ -184,7 +210,7 @@ def sendNotification(uuid, dataset_name, dates_arr, threshold):
             mail.ehlo()
             mail.starttls()
             mail.login(admin[0], admin[1])
-            mail.sendmail(admin[0], storage_user, message)
+            mail.sendmail(admin[0], storage_user, message.as_string())
             mail.close()
     except Exception as e:
         print(e)
