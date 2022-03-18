@@ -30,10 +30,20 @@ def hits(request):
         .annotate(NumberOfHits=Count('country_ISO')) \
         .order_by('-NumberOfHits')[:record_count]
 
-    hits_per_dataset = Track_Usage.objects \
+    hits_per_dataset_all = list(Track_Usage.objects \
+                                .exclude(dataset__contains="Climate Change Scenario:") \
+                                .values('dataset') \
+                                .annotate(NumberOfHits=Count('dataset')) \
+                                .order_by('-NumberOfHits')[:record_count])
+    hits_per_dataset_nmme = Track_Usage.objects \
+        .filter(dataset__contains="Climate Change Scenario:") \
         .values('dataset') \
-        .annotate(NumberOfHits=Count('dataset')) \
-        .order_by('-NumberOfHits')[:record_count]
+        .aggregate(NumberOfHits=Count('dataset'))
+
+    hits_per_dataset_all.append(
+        {'dataset': 'Climate Change Scenario', 'NumberOfHits': hits_per_dataset_nmme['NumberOfHits']})
+
+    hits_per_dataset = sorted(hits_per_dataset_all, key=lambda x: x['NumberOfHits'], reverse=True)
 
     hits_per_day = Track_Usage.objects \
         .values(day=Trunc('time_requested', 'day')) \
