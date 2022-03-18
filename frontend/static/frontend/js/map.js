@@ -526,6 +526,7 @@ function mapSetup() {
             timeSlider: true,
             limitSliders: true,
             limitMinimumRange: 5,
+            timeZones: ['UTC'],
             playerOptions: {
                 buffer: 10,
                 loop: true,
