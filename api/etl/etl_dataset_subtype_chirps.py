@@ -579,7 +579,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         # 1) Read the geotiff data into an xarray data array
                         da = xr.open_rasterio(geotiffFile_FullPath)
                         # 2) Convert to a dataset.  (need to assign a name to the data array)
-                        ds = da.rename('precipitation_amount').to_dataset()
+                        ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                         # Handle selecting/adding the dimesions
                         # select the singleton band dimension and drop out the associated coordinate.
                         ds = ds.isel(band=0).reset_coords('band',
@@ -602,7 +602,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             [('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                         ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                         ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                        ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'),
+                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'),
                                                                      ('accumulation_interval', temporal_resolution),
                                                                      ('comment', str(mode_var__precipAttr_comment))])
                         ds.attrs = OrderedDict([
@@ -628,7 +628,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             ('SpatialResolution', '0.05deg')
                         ])
                         # Set the Endcodings
-                        ds.precipitation_amount.encoding = {
+                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                             '_FillValue': np.float32(-9999.0),
                             'missing_value': np.float32(-9999.0),
                             'dtype': np.dtype('float32'),

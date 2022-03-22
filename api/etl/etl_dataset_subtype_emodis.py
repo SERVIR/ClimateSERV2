@@ -615,7 +615,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     # 2) Convert to NDVI. (data array)
                     da = (da - 100.0) / 100.0
                     # 3) Convert to a dataset.  (need to assign a name to the ndvi data array)
-                    ds = da.rename('ndvi').to_dataset()
+                    ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
@@ -640,8 +640,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.ndvi.attrs = OrderedDict([
-                        ('long_name', 'ndvi'),
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([
+                        ('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name),
                         ('units', 'unitless'),
                         ('comment', 'Maximum value composite over dekad defined by time_bnds')
                     ])
@@ -660,7 +660,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         ('SpatialResolution', '250m')
                     ])
                     # Set the Endcodings
-                    ds.ndvi.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.int8(127),
                         'missing_value': np.int8(127),
                         'dtype': np.dtype('int8'),

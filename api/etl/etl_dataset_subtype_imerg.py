@@ -372,7 +372,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                     # Rescale to accumulated precipitation amount
                     da = da / 10.0
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    ds = da.rename('precipitation_amount').to_dataset()
+                    ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)
                     # select the singleton band dimension and drop out the associated coordinate.
@@ -393,7 +393,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', accumulation_interval), ('comment', comment)])
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'), ('accumulation_interval', accumulation_interval), ('comment', comment)])
                     ds.attrs = OrderedDict([
                         ('Description', description),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
@@ -410,7 +410,7 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                         ('TemporalResolution', temporal_resolution), ('SpatialResolution', '0.1deg')
                     ])
                     # Set the Endcodings
-                    ds.precipitation_amount.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.uint16(29999),
                         'missing_value': np.uint16(29999),
                         'dtype': np.dtype('uint16'),

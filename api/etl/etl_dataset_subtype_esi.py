@@ -428,7 +428,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     # 1) Read the geotiff data into an xarray data array
                     da = xr.open_rasterio(geotiffFile_FullPath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    ds = da.rename('esi').to_dataset()
+                    ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate
@@ -448,7 +448,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.esi.attrs = OrderedDict([
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([
                         ('long_name', 'evaporative_stress_index'),
                         ('units', 'unitless'),
                         ('composite_interval', str(mode_var__attr_composite_interval)),
@@ -471,7 +471,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.esi.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.float32(-9999.0),
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32'),

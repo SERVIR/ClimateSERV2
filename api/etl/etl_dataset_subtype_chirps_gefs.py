@@ -63,9 +63,10 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
             dates = []
             new_dates = []
             dates_arr = []
-            while start_date <= end_date:
-                new_dates.append(start_date)
-                start_date += datetime.timedelta(days=1)
+            sd=start_date
+            while sd <= end_date:
+                new_dates.append(sd)
+                sd += datetime.timedelta(days=1)
 
             response = requests.get(current_root_http_path)
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -80,10 +81,11 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
 
             # for ETL alerts
             list_of_files = glob.glob(final_load_dir_path + '/*')
-            latest_file = max(list_of_files, key=os.path.getctime)
-            date = latest_file.split('.')[2]
-            date_part = date.split('T')[0]
-            datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+            if len(list_of_files) > 0:
+                latest_file = max(list_of_files, key=os.path.getctime)
+                date = latest_file.split('.')[2]
+                date_part = date.split('T')[0]
+                datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
             for nd in new_dates:
                 # delta =  datetime_object - nd
                 delta = datetime.datetime.now() - nd
@@ -416,7 +418,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
                     # ds = da.rename('precipitation_amount').to_dataset()
                     # 2) Merge both into a dataset
-                    ds = xr.merge([da.rename('precipitation_amount'), da1.rename('precipitation_anomaly')])
+                    ds = xr.merge([da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), da1.rename('precipitation_anomaly')])
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
@@ -436,7 +438,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
                     if self.mode == "chirps_gefs":
                         ds.precipitation_anomaly.attrs = OrderedDict([('long_name', 'precipitation_anomaly'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', 'Ensemble mean GEFS forecast bias corrected and converted into anomaly versus CHIRPS 2.0 climatology')])
                     ds.attrs = OrderedDict([
@@ -456,7 +458,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.precipitation_amount.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.float32(-9999.0),
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32'),
