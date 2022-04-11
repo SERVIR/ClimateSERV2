@@ -159,8 +159,6 @@ class ETL_Pipeline():
             print(self.count)
             if self.count == 2:
                 status = "Complete"
-        else:
-            status = "In Progress"
         etl_log_row_uuid = ETL_LogService.create_etl_log_row(
             activity_event_type=activity_event_type,
             activity_description=activity_description,

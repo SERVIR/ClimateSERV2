@@ -25,20 +25,29 @@ def hits(request):
     if request.method == "POST":
         if "record_count" in request.POST:
             record_count = int(request.POST["record_count"])
-    hits_per_country = Track_Usage.objects \
-        .values('country_ISO') \
-        .annotate(NumberOfHits=Count('country_ISO')) \
-        .order_by('-NumberOfHits')[:record_count]
+    hits_per_country = Track_Usage.objects.values(
+        'country_ISO').annotate(
+        NumberOfHits=Count('country_ISO')).order_by(
+        '-NumberOfHits')[:record_count]
 
-    hits_per_dataset = Track_Usage.objects \
-        .values('dataset') \
-        .annotate(NumberOfHits=Count('dataset')) \
-        .order_by('-NumberOfHits')[:record_count]
+    hits_per_dataset_all = Track_Usage.objects.exclude(
+        dataset__contains="Climate Change Scenario:").values(
+        'dataset').annotate(
+        NumberOfHits=Count('dataset')).order_by(
+        '-NumberOfHits')[:record_count]
+    hits_per_dataset_nmme = Track_Usage.objects.filter(
+        dataset__contains="Climate Change Scenario:").values(
+        'dataset').aggregate(
+        NumberOfHits=Count('dataset'))
+    hits_per_dataset_list = list(hits_per_dataset_all)
+    hits_per_dataset_list.append(
+        {'dataset': 'Climate Change Scenario', 'NumberOfHits': hits_per_dataset_nmme['NumberOfHits']})
 
-    hits_per_day = Track_Usage.objects \
-        .values(day=Trunc('time_requested', 'day')) \
-        .annotate(NumberOfHits=Count('day')) \
-        .order_by('-day')
+    hits_per_dataset = sorted(hits_per_dataset_list, key=lambda x: x['NumberOfHits'], reverse=True)
+
+    hits_per_day = Track_Usage.objects.values(
+        day=Trunc('time_requested', 'day')).annotate(
+        NumberOfHits=Count('day')).order_by('-day')
 
     bytes_per_day = Track_Usage.objects \
         .values(day=Trunc('time_requested', 'day')) \

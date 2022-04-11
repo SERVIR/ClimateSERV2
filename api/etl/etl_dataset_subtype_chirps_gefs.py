@@ -24,6 +24,8 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
+        self.dates_arr=[]
+        self.misc_error = ""
         if dataset_subtype == 'chirps_gefs':
             self.mode = 'chirps_gefs'
         else:
@@ -61,9 +63,10 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
             dates = []
             new_dates = []
             dates_arr = []
-            while start_date <= end_date:
-                new_dates.append(start_date)
-                start_date += datetime.timedelta(days=1)
+            sd=start_date
+            while sd <= end_date:
+                new_dates.append(sd)
+                sd += datetime.timedelta(days=1)
 
             response = requests.get(current_root_http_path)
             soup = BeautifulSoup(response.text, 'html.parser')
@@ -78,19 +81,22 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
 
             # for ETL alerts
             list_of_files = glob.glob(final_load_dir_path + '/*')
-            latest_file = max(list_of_files, key=os.path.getctime)
-            date = latest_file.split('.')[2]
-            date_part = date.split('T')[0]
-            datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
+            if len(list_of_files) > 0:
+                latest_file = max(list_of_files, key=os.path.getctime)
+                date = latest_file.split('.')[2]
+                date_part = date.split('T')[0]
+                datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
             for nd in new_dates:
                 # delta =  datetime_object - nd
                 delta = datetime.datetime.now() - nd
                 file_Date = nd.strftime('%Y%m%d')
-                if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                    dates_arr.append(file_Date)
-            if len(dates_arr) > 0:
-                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
-                ret__is_error = True
+                print(delta)
+                if (int(delta.days) < int(self.etl_parent_pipeline_instance.dataset.late_after)):
+                    self.dates_arr.append(file_Date)
+                    self.misc_error =  "There was an issue downloading one or more files."
+            if len(self.dates_arr) > 0:
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, self.dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
+                #ret__is_error = True
             for filename, date in zip(filenames, dates):
 
                 current_year__YYYY_str  = "{:0>4d}".format(date.year)
@@ -269,6 +275,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                         print('anomaly-mean file not found!')
                     download_counter = download_counter + 1
                 except:
+                    self.misc_error = "There was an issue downloading one or more files."
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
                     #print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
@@ -411,7 +418,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
                     # ds = da.rename('precipitation_amount').to_dataset()
                     # 2) Merge both into a dataset
-                    ds = xr.merge([da.rename('precipitation_amount'), da1.rename('precipitation_anomaly')])
+                    ds = xr.merge([da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), da1.rename('precipitation_anomaly')])
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
@@ -431,7 +438,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', str(mode_var__precipAttr_comment))])
                     if self.mode == "chirps_gefs":
                         ds.precipitation_anomaly.attrs = OrderedDict([('long_name', 'precipitation_anomaly'), ('units', 'mm'), ('accumulation_interval', temporal_resolution), ('comment', 'Ensemble mean GEFS forecast bias corrected and converted into anomaly versus CHIRPS 2.0 climatology')])
                     ds.attrs = OrderedDict([
@@ -451,7 +458,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.precipitation_amount.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.float32(-9999.0),
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32'),
@@ -632,6 +639,12 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+            if self.misc_error != "" or len(self.dates_arr)>0:
+                self.etl_parent_pipeline_instance.log_etl_error(activity_event_type="Error in ETL run",
+                                                                activity_description=self.misc_error,
+                                                                etl_granule_uuid="", is_alert=False,
+                                                                additional_json=additional_json)
+                ret__is_error=True
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}

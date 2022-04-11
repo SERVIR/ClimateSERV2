@@ -345,17 +345,17 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         raise Exception('Missing longitude values present')
 
                     # 2) Merge both into a dataset and add daily average
-                    smap=smap_am['soil_moisture'].rename({'phony_dim_0':'latitude','phony_dim_1':'longitude'}).to_dataset()
+                    smap=smap_am[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].rename({'phony_dim_0':'latitude','phony_dim_1':'longitude'}).to_dataset()
                     rename_criteria = {'phony_dim_3':'latitude','phony_dim_4':'longitude'} if self.mode == '36km' else {'phony_dim_2':'latitude','phony_dim_3':'longitude'}
                     smap['soil_moisture_pm'] = smap_pm['soil_moisture_pm'].rename(rename_criteria)
-                    smap=smap.rename({'soil_moisture':'soil_moisture_am'}) # rename "soil_moisture" to "soil_moisture_am"
+                    smap=smap.rename({self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name:'soil_moisture_am'}) # rename "soil_moisture" to "soil_moisture_am"
 
                     # Add in daily average soil moisture
                     daily_sm=np.stack([smap.soil_moisture_am.values,smap.soil_moisture_pm.values],axis=0)
                     daily_sm=np.nanmean(daily_sm,axis=0)
                     # Make a data array and add to dataset.
                     daily_sm = xr.DataArray(daily_sm,coords=[lat,lon],dims=['latitude','longitude'])
-                    smap['soil_moisture']=daily_sm
+                    smap[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name]=daily_sm
 
                     # 3) Clean up dimensions including adding a time dimension.
                     # Add the time dimension as a new coordinate.
@@ -373,7 +373,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     timeBoundsAttr =  OrderedDict([('long_name','time_bounds')])
                     smAttr, fileAttr = OrderedDict(), OrderedDict()
                     if self.mode == '36km':
-                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 36km product')])
+                        smAttr =  OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name) ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 36km product')])
                         fileAttr = OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 36km (SPL3SMP) soil moisture product.'), \
                                     ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                     ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
@@ -388,7 +388,7 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                     ('TemporalResolution','daily'), \
                                     ('SpatialResolution','36km')])
                     else:
-                        smAttr =  OrderedDict([('long_name','soil_moisture') ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 9km product')])
+                        smAttr =  OrderedDict([('long_name',self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name) ,('units','cm^3/cm^3'), ('average_interval','1 day'), ('comment','Average of soil moisture from SMAP AM and PM daily passes of SMAP L3 Enhanced 9km product')])
                         fileAttr =  OrderedDict([('Description','Daily average soil moisture from all available AM and PM passes of the SMAP L3 Enhanced 9km (SPL3SMP_E) soil moisture product.'), \
                                     ('DateCreated',pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')), \
                                     ('Contact','Lance Gilliland, lance.gilliland@nasa.gov'), \
@@ -412,17 +412,17 @@ class ETL_Dataset_Subtype_NSIDC_SMAP(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     smap.longitude.attrs=lonAttr
                     smap.time.attrs=timeAttr
                     smap.time_bnds.attrs=timeBoundsAttr
-                    smap.soil_moisture.attrs=smAttr
+                    smap[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs=smAttr
                     smap.attrs=fileAttr
                     # Set the Endcodings
-                    smap.soil_moisture.encoding=smEncoding
+                    smap[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding=smEncoding
                     smap.time.encoding=timeEncoding
                     smap.time_bnds.encoding=timeBoundsEncoding
 
                     # 5) Output File
                     # outputFileTemplate = 'NSIDC-SMAP.{}.{}.nc4' if self.mode == '36km' else 'NSIDC-SMAP_ENH.{}.{}.nc4'
                     # outputFile = outputFileTemplate.format(startTime.strftime('%Y%m%dT%H%M%SZ'), regionID)
-                    smap = smap[['soil_moisture','time_bnds']]   # throwing out am/pm passes here, we can always add later but then we probably will want to add the time of the samples as well.
+                    smap = smap[[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name,'time_bnds']]   # throwing out am/pm passes here, we can always add later but then we probably will want to add the time of the samples as well.
 
                     # 5) Output File
                     outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)

@@ -20,6 +20,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         super().__init__()
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
+        self.misc_error=""
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
@@ -358,7 +359,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     else:
                         r.raise_for_status()
                 except:
-
+                    self.misc_error = "There was an issue downloading one or more files."
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
 
@@ -400,8 +401,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             # Increment the loop counter
             loop_counter = loop_counter + 1
         if len(dates_arr)>0:
-            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
-            ret__is_error=True
+            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
+            #ret__is_error=True
 
         # Ended, now for reporting
         #
@@ -477,6 +478,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
 
         except:
+
             sysErrorData = str(sys.exc_info())
             ret__is_error = True
             ret__error_description = "esi.execute__Step__Extract: There was a generic, uncaught error when " \
@@ -577,7 +579,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         # 1) Read the geotiff data into an xarray data array
                         da = xr.open_rasterio(geotiffFile_FullPath)
                         # 2) Convert to a dataset.  (need to assign a name to the data array)
-                        ds = da.rename('precipitation_amount').to_dataset()
+                        ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                         # Handle selecting/adding the dimesions
                         # select the singleton band dimension and drop out the associated coordinate.
                         ds = ds.isel(band=0).reset_coords('band',
@@ -600,7 +602,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             [('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                         ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                         ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                        ds.precipitation_amount.attrs = OrderedDict([('long_name', 'precipitation_amount'), ('units', 'mm'),
+                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'),
                                                                      ('accumulation_interval', temporal_resolution),
                                                                      ('comment', str(mode_var__precipAttr_comment))])
                         ds.attrs = OrderedDict([
@@ -626,7 +628,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             ('SpatialResolution', '0.05deg')
                         ])
                         # Set the Endcodings
-                        ds.precipitation_amount.encoding = {
+                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                             '_FillValue': np.float32(-9999.0),
                             'missing_value': np.float32(-9999.0),
                             'dtype': np.dtype('float32'),
@@ -864,6 +866,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type,
                                                                 activity_description=activity_description,
+                                                                etl_granule_uuid="", is_alert=False,
+                                                                additional_json=additional_json)
+            if self.misc_error != "":
+                self.etl_parent_pipeline_instance.log_etl_error(activity_event_type="Error in ETL run",
+                                                                activity_description=self.misc_error,
                                                                 etl_granule_uuid="", is_alert=False,
                                                                 additional_json=additional_json)
         except:

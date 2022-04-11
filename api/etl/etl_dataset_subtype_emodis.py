@@ -22,6 +22,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
+        self.dates_arr = []
+        self.misc_error=""
 
     # Set default parameters or using default
     def set_optional_parameters(self, params):
@@ -356,7 +358,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         loop_counter = 0
         error_counter = 0
         detail_errors = []
-        dates_arr =[]
+
         # Setting up for the periodic reporting on the terminal
         num_of_objects_to_process = len(self._expected_remote_full_file_paths)
         num_of_download_activity_events = 4
@@ -391,6 +393,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     else:
                         r.raise_for_status()
                 except:
+                    self.misc_error = "There was an issue downloading one or more files."
                     list_of_files = glob.glob(self.final_load_dir_path + '/*')
                     latest_file = max(list_of_files, key=os.path.getctime)
                     date = latest_file.split('.')[1]
@@ -398,17 +401,18 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     print(date_part)
                     datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                     file_Date = expected_remote_file_path_object['final_nc4_filename'].split('.')[1]
-                    delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
+                    delta =  datetime.datetime.now() - datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d')
                     print(delta)
+
                     if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                        dates_arr.append(file_Date.split('T')[0])
+                        self.dates_arr.append(file_Date.split('T')[0])
 
                     error_counter = error_counter + 1
                     sysErrorData = str(sys.exc_info())
                     #print("DEBUG Warn: (WARN LEVEL) (File can not be downloaded).  System Error Message: " + str(sysErrorData))
                     warn_JSON = {}
                     warn_JSON['warning']                = "Warning: There was an uncaught error when attempting to download file at URL: " +str(current_url_to_download)+ ".  If the System Error message says something like 'nodename nor servname provided, or not known', then one common cause of that error is an unstable or disconnected internet connection.  Double check that the internet connection is working and try again.  System Error Message: " + str(sysErrorData)
-                    warn_JSON['is_error']               = True
+                    warn_JSON['is_error']               = False
                     warn_JSON['class_name']             = "emodis"
                     warn_JSON['function_name']          = "execute__Step__Download"
                     warn_JSON['current_object_info']    = expected_remote_file_path_object
@@ -416,9 +420,10 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     #activity_event_type         = settings.ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING
                     activity_event_type         = Config_SettingService.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__ERROR_LEVEL_WARNING", default_or_error_return_value="ETL Warning")
                     activity_description        = warn_JSON['warning']
-                    self.etl_parent_pipeline_instance.log_etl_error(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
+                    self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=True, additional_json=warn_JSON)
 
             except:
+                self.misc_error = "There was an issue downloading one or more files."
                 list_of_files = glob.glob(self.final_load_dir_path + '/*')
                 latest_file = max(list_of_files, key=os.path.getctime)
                 date = latest_file.split('.')[1]
@@ -428,8 +433,9 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 file_Date = expected_remote_file_path_object['final_nc4_filename'].split('.')[1]
                 #delta = datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d') - datetime_object
                 delta = datetime.datetime.now() - datetime.datetime.strptime(file_Date.split('T')[0], '%Y%m%d')
+                print(delta)
                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                    dates_arr.append(file_Date.split('T')[0])
+                    self.dates_arr.append(file_Date.split('T')[0])
                 error_counter = error_counter + 1
                 sysErrorData = str(sys.exc_info())
                 error_message = "emodis.execute__Step__Download: Generic Uncaught Error.  At least 1 download failed.  System Error Message: " + str(sysErrorData)
@@ -439,9 +445,9 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                 # Maybe in here is an error with sending the warning in an earlier step?
             loop_counter = loop_counter + 1
-        if len(dates_arr) > 0:
-            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
-            ret__is_error = True
+        if len(self.dates_arr) > 0:
+            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, self.dates_arr,int(self.etl_parent_pipeline_instance.dataset.late_after))
+            #ret__is_error = True
         # Ended, now for reporting
         #
         ret__detail_state_info['class_name'] = self.__class__.__name__
@@ -601,11 +607,15 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     ############################################################
 
                     # 1) Read the geotiff data into an xarray data array
-                    da = xr.open_rasterio(geotiffFile_FullPath)
+                    try:
+                        da = xr.open_rasterio(geotiffFile_FullPath)
+                    except:
+                        new_tif_path = geotiffFile_FullPath.split('.')[0]+'m.tif'
+                        da = xr.open_rasterio(new_tif_path)
                     # 2) Convert to NDVI. (data array)
                     da = (da - 100.0) / 100.0
                     # 3) Convert to a dataset.  (need to assign a name to the ndvi data array)
-                    ds = da.rename('ndvi').to_dataset()
+                    ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate.
@@ -630,8 +640,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.ndvi.attrs = OrderedDict([
-                        ('long_name', 'ndvi'),
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([
+                        ('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name),
                         ('units', 'unitless'),
                         ('comment', 'Maximum value composite over dekad defined by time_bnds')
                     ])
@@ -650,7 +660,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         ('SpatialResolution', '250m')
                     ])
                     # Set the Endcodings
-                    ds.ndvi.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.int8(127),
                         'missing_value': np.int8(127),
                         'dtype': np.dtype('int8'),
@@ -668,7 +678,7 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                 except Exception as e:
                     print(e)
-                    ret__is_error = True
+                    #ret__is_error = True
                     sysErrorData = str(sys.exc_info())
 
                     Granule_UUID = expected_granules_object['Granule_UUID']
@@ -795,7 +805,8 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             super().execute__Step__Post_ETL_Custom()
         except Exception as e:
             print(e)
-
+        # if len(self.dates_arr) > 0:
+        #     ret__is_error = True
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj
 
@@ -805,7 +816,6 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__event_description = ""
         ret__error_description = ""
         ret__detail_state_info = {}
-
         try:
             temp_working_dir = str(self.temp_working_dir).strip()
             if temp_working_dir == '':
@@ -824,6 +834,11 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+            if self.misc_error != "":
+                self.etl_parent_pipeline_instance.log_etl_error(activity_event_type="Error in ETL run",
+                                                                activity_description=self.misc_error,
+                                                                etl_granule_uuid="", is_alert=False,
+                                                                additional_json=additional_json)
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}
@@ -841,6 +856,5 @@ class ETL_Dataset_Subtype_EMODIS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__detail_state_info = error_JSON
             retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
             return retObj
-
         retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name, is_error=ret__is_error, event_description=ret__event_description, error_description=ret__error_description, detail_state_info=ret__detail_state_info)
         return retObj

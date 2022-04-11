@@ -9,7 +9,11 @@ from .models import Request_Progress, Request_Log, Track_Usage
 
 
 admin.site.register(Config_Setting)
-admin.site.register(ETL_Dataset)
+#admin.site.register(ETL_Dataset)
+
+@admin.register(ETL_Dataset)
+class ETLDatasetAdmin(admin.ModelAdmin):
+    list_display = ('dataset_name','final_load_dir','dataset_nc4_variable_name','late_after', 'contact_info', 'source_url')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

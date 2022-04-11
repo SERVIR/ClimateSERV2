@@ -25,6 +25,8 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
+        self.misc_error = ""
+        self.dates_arr=[]
         if dataset_subtype == 'esi_4week':
             self.mode = '4week'
         elif dataset_subtype == 'esi_12week':
@@ -92,11 +94,11 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     file_Date = nd.strftime('%Y%m%d')
                     print(delta)
                     if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
-                        dates_arr.append(file_Date)
-
-            if len(dates_arr) > 0:
-                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr)
-                ret__is_error = True
+                        self.dates_arr.append(file_Date)
+                        self.misc_error = "There was an issue downloading one or more files."
+            if len(self.dates_arr) > 0:
+                sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, self.dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
+                #ret__is_error = True
             for filename, date in zip(filenames, dates):
 
                 nc4_date = date - pd.Timedelta('28d') if self.mode == '4week' else date - pd.Timedelta('84d')
@@ -426,7 +428,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     # 1) Read the geotiff data into an xarray data array
                     da = xr.open_rasterio(geotiffFile_FullPath)
                     # 2) Convert to a dataset.  (need to assign a name to the data array)
-                    ds = da.rename('esi').to_dataset()
+                    ds = da.rename(self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name).to_dataset()
                     # Handle selecting/adding the dimesions
                     ds = ds.isel(band=0).reset_coords('band', drop=True)  # select the singleton band dimension and drop out the associated coordinate.
                     # Add the time dimension as a new coordinate
@@ -446,7 +448,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                     ds.longitude.attrs = OrderedDict([('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                     ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                     ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                    ds.esi.attrs = OrderedDict([
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([
                         ('long_name', 'evaporative_stress_index'),
                         ('units', 'unitless'),
                         ('composite_interval', str(mode_var__attr_composite_interval)),
@@ -469,7 +471,7 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                         ('SpatialResolution', '0.05deg')
                     ])
                     # Set the Endcodings
-                    ds.esi.encoding = {
+                    ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].encoding = {
                         '_FillValue': np.float32(-9999.0),
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32'),
@@ -648,6 +650,12 @@ class ETL_Dataset_Subtype_ESI(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface
                 additional_json['subclass'] = self.__class__.__name__
                 additional_json['temp_working_dir'] = str(temp_working_dir).strip()
                 self.etl_parent_pipeline_instance.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description, etl_granule_uuid="", is_alert=False, additional_json=additional_json)
+            if self.misc_error != "" or len(self.dates_arr) > 0:
+                self.etl_parent_pipeline_instance.log_etl_error(activity_event_type="Error in ETL run",
+                                                                activity_description=self.misc_error,
+                                                                etl_granule_uuid="", is_alert=False,
+                                                                additional_json=additional_json)
+                ret__is_error = True
         except:
             sysErrorData = str(sys.exc_info())
             error_JSON = {}

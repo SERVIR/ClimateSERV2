@@ -99,6 +99,7 @@ class ETL_Dataset(models.Model):
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
     late_after = models.IntegerField(default=0, help_text="Duration in days")
+    contact_info = models.CharField(blank=True,help_text="Data Source Contact Info", max_length=90)
 
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
