@@ -19,14 +19,13 @@ from django.apps import apps
 import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
-
 from api.models import Track_Usage
+from api.models import Parameters as real_params
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
-from api.models import Parameters as real_params
 
 
 def start_processing(request):
@@ -93,12 +92,13 @@ def start_processing(request):
                 date_range_list.append([first_date_string, last_date_string])
         for dates in date_range_list:
             id = uu.getUUID()
-            dataset=""
-            file_list,variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
+            dataset = ""
+            file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
                              "variable": variable, "geom": polygon_string,
-                             "operation": literal_eval(params.parameters)[request["operationtype"]][1], "file_list": file_list,
+                             "operation": literal_eval(params.parameters)[request["operationtype"]][1],
+                             "file_list": file_list,
                              "derivedtype": False, "subtype": None})
     pool = multiprocessing.Pool(os.cpu_count())
     for job in jobs:
@@ -164,7 +164,8 @@ def start_processing(request):
             workdict["year"] = int(dates[dateIndex][0:4])
             workdict["month"] = int(dates[dateIndex][5:7])
             workdict["day"] = int(dates[dateIndex][8:10])
-            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(dates[dateIndex][0:4])
+            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
+                dates[dateIndex][0:4])
             workdict["epochTime"] = gmt_midnight
             workdict["value"] = {opn: np.float64(values[dateIndex])}
             if intervaltype == 0:
@@ -257,6 +258,7 @@ def start_worker_process(job_item):
         'zipfilepath': ""
     }
 
+
 def log_result(retval):
     results.append(retval)
     try:
@@ -268,6 +270,7 @@ def log_result(retval):
         log.save()
     except Exception as e:
         logger.info(str(e))
+
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
     avg_percentiles_data_lines = []
