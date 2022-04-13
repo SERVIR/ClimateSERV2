@@ -17,17 +17,18 @@ improve understanding of, and make improved decisions for, issues related to agr
 - [THREDDS (version 4.6.14)](https://www.unidata.ucar.edu/software/tds/)
 
 ### Environment
-We recommend following the structure we have in place for the application, which is:
+These instructions are written for a linux environment.  If you are installing on a different
+OS you will have to alter pathing and pathing variables.
+
+We highly recommend following the structure we have in place for the application, which is:
 
 ```/cserv2/django_app/ClimateSERV2```
 
-To accomplish this effectively run the following:
+Following these directions should help to accomplish this effectively and ensure your application runs successfully.
 
 ``` 
-mkdir /cserv2
-mkdir /cserv2/django_app
-mkdir /cserv2/tmp
-mkdir /cserv2/tmp/logs
+mkdir -p /cserv2/django_app
+mkdir -p /cserv2/tmp/logs
 cd /cserv2/django_app
 git clone git@github.com:SERVIR/ClimateSERV2.git
 ```
@@ -42,6 +43,8 @@ We use two environments, one for the database, and the other for the application
 - Create the env
 
 ```
+mkdir -p /cserv2/python_environments/conda/anaconda3/envs/
+conda create --prefix=/cserv2/python_environments/conda/anaconda3/envs/psqlenv python=3.9.5
 conda create --name psqlenv python=3.9.5
 ```
 
@@ -105,7 +108,7 @@ With conda installed you should be able to run the following command to create t
 environment, then activate it.
 
 ```
-conda create -n ClimateSERV2 python=3.9.5
+conda create --prefix=/cserv2/python_environments/conda/anaconda3/envs/climateserv2 python=3.9.5
 conda activate ClimateSERV2
 ```
 
