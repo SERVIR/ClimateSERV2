@@ -26,13 +26,14 @@ Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
-from api.models import Parameters
+from api.models import Parameters as real_params
 
 
 def start_processing(request):
+    db.connections.close_all()
     try:
         print('###################')
-        params = Parameters.objects.first()
+        params = real_params.objects.first()
         print(params.DEBUG_LIVE)
         print(params.logToConsole)
         print("$$$$$$$$$$$$$4")
@@ -97,11 +98,12 @@ def start_processing(request):
         for dates in date_range_list:
             id = uu.getUUID()
             dataset=""
-            file_list,variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1])
+            file_list,variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
+            print(len(file_list), "length")
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
                              "variable": variable, "geom": polygon_string,
-                             "operation": params.parameters[request["operationtype"]][1], "file_list": file_list,
+                             "operation": literal_eval(params.parameters)[request["operationtype"]][1], "file_list": file_list,
                              "derivedtype": False, "subtype": None})
     pool = multiprocessing.Pool(os.cpu_count())
     for job in jobs:

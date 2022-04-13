@@ -25,6 +25,7 @@ from .processtools import uutools as uutools
 from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
+from django.forms.models import model_to_dict
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 exempt = -1
@@ -550,6 +551,7 @@ def submit_data_request(request):
         # processes each of them would be able to update progress and when they
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
+        dictionary["params"] = model_to_dict(params);
 
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=unique_id, progress=0)
@@ -567,7 +569,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
+                                  dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,
@@ -576,6 +578,7 @@ def submit_data_request(request):
 
         track_usage.save()
         p.start()
+        print("view closing db")
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"
