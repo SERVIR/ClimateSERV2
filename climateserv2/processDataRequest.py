@@ -32,11 +32,7 @@ from api.models import Parameters as real_params
 def start_processing(request):
     db.connections.close_all()
     try:
-        print('###################')
         params = real_params.objects.first()
-        print(params.DEBUG_LIVE)
-        print(params.logToConsole)
-        print("$$$$$$$$$$$$$4")
     except Exception as e:
         print(e)
     date_range_list = []
@@ -99,7 +95,6 @@ def start_processing(request):
             id = uu.getUUID()
             dataset=""
             file_list,variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
-            print(len(file_list), "length")
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
                              "variable": variable, "geom": polygon_string,
@@ -156,9 +151,11 @@ def start_processing(request):
         polygon_Str_ToPass = polygon_string
         intervaltype = request['intervaltype']
         operationtype = request['operationtype']
-        print(params)
-        print(params.parameters)
-        print(literal_eval(params.parameters))
+        intervals = [
+            {'name': 'day', 'pattern': '%m/%d/%Y'},
+            {'name': 'month', 'pattern': '%m/%Y'},
+            {'name': 'year', 'pattern': '%Y'}
+        ]
         opn = literal_eval(params.parameters)[operationtype][1]
         resultlist = []
         for dateIndex in range(len(dates)):
@@ -176,16 +173,12 @@ def start_processing(request):
                 dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
             elif intervaltype == 2:
                 dateObject = dateutils.createDateFromYear(workdict["year"])
-            workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
+            workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
             resultlist.append(workdict)
         merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
                       "datatype": datatype, "operationtype": operationtype,
                       "intervaltype": intervaltype,
                       "derived_product": False}
-    try:
-        print(params.resultsdir)
-    except Exception as e:
-        print(e)
     filename = params.resultsdir + request["uniqueid"] + ".txt"
     f = open(filename, 'w+')
     json.dump(merged_obj, f)

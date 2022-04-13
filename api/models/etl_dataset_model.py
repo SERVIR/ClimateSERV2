@@ -103,6 +103,7 @@ class ETL_Dataset(models.Model):
     ensemble = models.CharField(blank=True, help_text="Ensemble", max_length=90)
     number = models.IntegerField(blank=False, help_text="Datatype number")
     dataset_name_format =  models.CharField(blank=True, help_text="Dataset file name", max_length=255)
+    fast_directory_path = models.TextField('Fast directory Path', default='/mnt/climateserv/process_tmp/fast_chirps/', )
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
 

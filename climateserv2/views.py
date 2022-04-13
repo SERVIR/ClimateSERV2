@@ -578,7 +578,6 @@ def submit_data_request(request):
 
         track_usage.save()
         p.start()
-        print("view closing db")
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"

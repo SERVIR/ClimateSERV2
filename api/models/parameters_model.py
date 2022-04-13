@@ -26,7 +26,6 @@ class Parameters(models.Model):
                                   default="[[0, 'max', 'Max'], [1, 'min', 'Min'], [2, 'median', 'Median'], [3, 'range', 'Range'], [4, 'sum', 'Sum'], [5, 'avg', 'Average'], [6, 'download', 'Download'], [7, 'netcdf', 'NetCDF'], [8, 'csv', 'CSV']]", )
     resultsdir = models.CharField('results dir', max_length=255, blank=False, default="/mnt/cs-temp/request_out/")
     shapefileName = models.TextField('shapefile JSON Data', default="{}", )
-
     class Meta:
         verbose_name = 'Parameters'
         verbose_name_plural = 'Parameters'

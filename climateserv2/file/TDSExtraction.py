@@ -25,12 +25,9 @@ logger = llog.getNamedLogger("request_processor")
 
 
 def get_filelist(dataTypes, datatype, start_date, end_date, params):
-    print("datatype")
-    print(datatype)
     db.connections.close_all()
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
-        print(working_dataset)
     except Exception as e:
         print(e)
 
@@ -38,23 +35,19 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
         dataset_name_format = working_dataset.dataset_name_format
     except Exception as e:
         print(e)
-    print(dataset_name_format)
     final_load_dir = working_dataset.final_load_dir
     dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
     # params = Parameters.objects.first()
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
-    final_load_dir = '/mnt/climateserv/process_tmp/fast_chirps/'
-    print(final_load_dir)
+    final_load_dir = working_dataset.fast_directory_path
     if not os.path.exists(final_load_dir):
         os.makedirs(final_load_dir)
     if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
-            print(year)
             name = final_load_dir + "ucsb_chirps" + ".global." + dataset_name[
                 2] + ".daily." + str(year) + ".nc4"
-            print(name)
             if os.path.exists(name):
                 filelist.append(name)
 
