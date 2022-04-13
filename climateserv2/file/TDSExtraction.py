@@ -12,91 +12,103 @@ from datetime import datetime, timedelta
 import os
 import shutil
 
+from api.models import ETL_Dataset
+from api.models import Parameters
+
 try:
     import climateserv2.locallog.locallogging as llog
-    import climateserv2.parameters as params
+
 except:
     import locallog.locallogging as llog
-    import parameters as params
 
 logger = llog.getNamedLogger("request_processor")
 
-
-def get_filelist(dataset, datatype, start_date, end_date):
+def get_filelist(dataTypes, datatype, start_date, end_date):
+    print(ETL_Dataset.objects.filter(number=int(datatype)))
+    try:
+        dataset_name_format=ETL_Dataset.objects.filter(number=int(datatype)).values_list('dataset_name_format', flat=True).first()
+    except Exception as e:
+        print(e)
+    final_load_dir=ETL_Dataset.objects.filter(number=int(datatype)).values_list('final_load_dir', flat=True).first()
+    dataset_nc4_variable_name = ETL_Dataset.objects.filter(number=int(datatype)).values_list('dataset_nc4_variable_name', flat=True).first()
+    params = Parameters.objects.first()
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
-    dataset_name = dataset.split('_')
-    if not os.path.exists(params.dataTypes[datatype]['inputDataLocation']):
-        os.makedirs(params.dataTypes[datatype]['inputDataLocation'])
+    dataset_name = dataset_name_format.split('_')
+    print(final_load_dir)
+    if not os.path.exists(final_load_dir):
+        os.makedirs(final_load_dir)
     if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirps" + ".global." + dataset_name[
+            name = final_load_dir + "ucsb_chirps" + ".global." + dataset_name[
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
+
     elif "ucsb-chirp" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
-                name = params.dataTypes[datatype]['inputDataLocation'] + "ucsb_chirp" + ".global." + dataset_name[
+                name = final_load_dir + "ucsb_chirp" + ".global." + dataset_name[
                     2] + ".daily." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                 if os.path.exists(name):
                     filelist.append(name)
     elif "ucsb-chirps-gefs" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
-                name = params.dataTypes[datatype]['inputDataLocation'] \
+                name = final_load_dir \
                        + "ucsb-chirps-gefs" + ".global." + dataset_name[2] \
                        + ".10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                 if os.path.exists(name):
                     filelist.append(name)
     elif "usda-smap" == dataset_name[0]:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] \
+            name = final_load_dir \
                    + dataset_name[0] + ".global." + dataset_name[2] \
                    + ".3dy." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     elif "nmme-ccsm4" == dataset_name[0]:
-        name = params.nmme_ccsm4_path + dataset
+        name = params.nmme_ccsm4_path + dataset_name +".nc4"
         if os.path.exists(name):
             filelist.append(name)
     elif "nmme-cfsv2" == dataset_name[0]:
-        name = params.nmme_cfsv2_path + dataset
+        name = params.nmme_cfsv2_path + dataset_name +".nc4"
         if os.path.exists(name):
             filelist.append(name)
-    elif "imerg" in dataset:
+    elif "imerg" in dataset_name:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] \
+            name = final_load_dir + dataset_name[0] \
                    + ".global." + dataset_name[2] \
                    + ".1dy." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "sport-esi" in dataset and "12wk" in dataset:
+    elif "sport-esi" in dataset_name and "12wk" in dataset_name:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] + ".global." + dataset_name[
+            name = final_load_dir + dataset_name[0] + ".global." + dataset_name[
                 2] + ".12wk." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "sport-esi" in dataset and "4wk" in dataset:
+    elif "sport-esi" in dataset_name and "4wk" in dataset_name:
         for year in year_nums:
-            name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] \
+            name = final_load_dir  + dataset_name[0] \
                    + ".global." + dataset_name[2] + ".4wk." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
     else:
-        if "ndvi" in dataset:
+        if "ndvi" in dataset_name:
             for year in year_nums:
                 for month in range(12):
-                    name = params.dataTypes[datatype]['inputDataLocation'] + dataset_name[0] + "." + dataset_name[
+                    name = final_load_dir  + dataset_name[0] + "." + dataset_name[
                         1] + ".250m.10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                     if os.path.exists(name):
                         filelist.append(name)
-    return filelist
+    return filelist, dataset_nc4_variable_name
 
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
+    params = Parameters.objects.first()
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
@@ -252,6 +264,7 @@ def get_date_range_from_nc_file(nc_file):
 
 
 def get_monthlyanalysis_dates_bounds(geom):
+    params = Parameters.objects.first()
     # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
                               chunks={'time': 16, 'longitude': 128, 'latitude': 128})
@@ -272,6 +285,7 @@ def get_monthlyanalysis_dates_bounds(geom):
 
 
 def write_to_tiff(data_object, uniqueid):
+    params = Parameters.objects.first()
     os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid, exist_ok=True)
     os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid, 0o777)
     os.chdir(params.zipFile_ScratchWorkspace_Path + uniqueid)

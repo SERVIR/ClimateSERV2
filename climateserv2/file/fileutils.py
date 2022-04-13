@@ -2,17 +2,14 @@ import fileinput
 import os
 import sys
 
+from api.models import Parameters
+
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
 PACKAGE_PARENT = '..'
 SCRIPT_DIR = os.path.dirname(os.path.realpath(os.path.join(os.getcwd(), os.path.expanduser(__file__))))
 sys.path.append(os.path.normpath(os.path.join(SCRIPT_DIR, PACKAGE_PARENT)))
-
-try:
-    import climateserv2.parameters as params
-except:
-    import parameters as params
 
 # To read a file and return contents
 def readFile(filename):
@@ -23,6 +20,7 @@ def readFile(filename):
 
 # To create directories if those do not exist
 def makeParamsFilePaths():
+    params = Parameters.objects.first()
     if not os.path.exists(params.workpath):
         makePath(params.workpath)
     if not os.path.exists(params.netCDFpath):

@@ -1,23 +1,24 @@
 import os
 import sys
 import json
+from ast import literal_eval
+
 from osgeo import ogr
+
+from api.models import Parameters
+
 
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
-try:
-    import climateserv2.parameters as param
-except:
-    from ... import parameters as param
 
 
 # To get path to shape file based on the name
 def getShapefilePath(name):
-    for item in param.shapefileName:
+    params = Parameters.objects.first()
+    for item in literal_eval(params.shapefileName):
         if item['id'] == name:
-            return param.shapefilepath + item['shapefilename']
-
+            return params.shapefilepath + item['shapefilename']
 
 # To get the geometry of a shape file based on layer and feature
 def getPolygon(shapefilePath, layer_id, fid):

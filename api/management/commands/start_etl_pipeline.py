@@ -11,9 +11,6 @@ class Command(BaseCommand):
 
     # Parsing params
     def add_arguments(self, parser):
-
-        logger.debug("I made it every where") 
-
         parser.add_argument('--etl_dataset_uuid', required=True, type=str, default='')
         parser.add_argument('--no_duplicates', action='store_true', default=False)
         parser.add_argument('--from_last_processed', action='store_true', default=False)
@@ -28,7 +25,6 @@ class Command(BaseCommand):
 
     # Function Handler
     def handle(self, *args, **options):
-        logger.debug("I made it here") 
         # Get the dataset uuid input params
         etl_dataset_uuid = options.get('etl_dataset_uuid').strip()
         
