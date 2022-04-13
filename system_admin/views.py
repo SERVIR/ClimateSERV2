@@ -5,7 +5,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from django.template.defaultfilters import register
 from django.forms.models import model_to_dict
-from django.db.models import Count
+from django.db.models import Count, Sum
 from django.db.models.functions import Trunc
 from api.models import Track_Usage
 import ast
@@ -49,10 +49,16 @@ def hits(request):
         day=Trunc('time_requested', 'day')).annotate(
         NumberOfHits=Count('day')).order_by('-day')
 
+    bytes_per_day = Track_Usage.objects \
+        .values(day=Trunc('time_requested', 'day')) \
+        .annotate(BytesDownloaded=Sum('file_size')) \
+        .order_by('-day')
+
     context = {
         'hits_per_country': hits_per_country,
         'hits_per_dataset': hits_per_dataset,
         'hits_per_day': hits_per_day,
+        'bytes_per_day': bytes_per_day,
         'number_of_items': record_count,
         'total_hits': Track_Usage.objects.count(),
     }

@@ -105,6 +105,7 @@
                 title: {
                     text: "# of Requests"
                 },
+				max: 1500,
             },
             xAxis: {
                 categories: [
@@ -122,6 +123,40 @@
         });
 
     </script>
+
+    <div id="bytes_per_day_container" class="container border-bottom pt-3 pb-3"></div>
+
+    <script>
+        Highcharts.chart('bytes_per_day_container', {
+            chart: {
+                type: 'line',
+                zoomType: 'xy',
+            },
+            title: {
+                text: 'Bytes per Day'
+            },
+            yAxis: {
+                title: {
+                    text: "Bytes"
+                },
+            },
+            xAxis: {
+                categories: [
+                    {% for bpdy in bytes_per_day %}'{{ bpdy.day|date:"SHORT_DATE_FORMAT" }} '{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                title: { text: 'Date'},
+            },
+            series: [{
+                name: 'Hits',
+                data: [
+                    {% for bpdy in bytes_per_day %}{{ bpdy.BytesDownloaded }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                ],
+                color: 'purple'
+            }]
+        });
+
+    </script>
+
 
 </div>
 {% endblock %}
