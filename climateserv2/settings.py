@@ -32,7 +32,8 @@ SECRET_KEY = '09t&&#7n=u2hdh@uaxu#!u(9h&b7h^k9fhw*%#ibkkdfe!n4)x'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['climateserv2.servirglobal.net', 'climateserv.servirglobal.net', "localhost", "127.0.0.1", "192.168.1.132"]
+ALLOWED_HOSTS = ['climateserv2.servirglobal.net', 'climateserv.servirglobal.net', "localhost", "127.0.0.1",
+                 "192.168.1.132"]
 
 CORS_ALLOWED_ORIGIN_REGEXES = [
     r".*",
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.humanize',
     'django.contrib.staticfiles',
     #
     'django_extensions',
@@ -87,7 +89,7 @@ TEMPLATES = [
 ]
 
 STATICFILES_DIRS = [
-   os.path.join(BASE_DIR, 'etl_monitor/app/dist/'),
+    os.path.join(BASE_DIR, 'etl_monitor/app/dist/'),
 ]
 
 WSGI_APPLICATION = 'climateserv2.wsgi.application'
@@ -185,7 +187,7 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.handlers.RotatingFileHandler',
             'filename': '/var/log/cserv2/climateserv2.log',
-            'maxBytes': 1024*1024*5, # 5 MB
+            'maxBytes': 1024 * 1024 * 5,  # 5 MB
             'backupCount': 5,
             'formatter': 'verbose'
         }

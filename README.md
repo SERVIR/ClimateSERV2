@@ -14,10 +14,93 @@ improve understanding of, and make improved decisions for, issues related to agr
 
 - [Python 3.9.5 or greater](https://www.python.org/downloads/) (We suggest 3.9.5)
 - [Postgresql (version 13)](https://www.postgresql.org/download)
+- [THREDDS (version 4.6.14)](https://www.unidata.ucar.edu/software/tds/)
 
 ### Environment
+We recommend following the structure we have in place for the application, which is:
+
+```/cserv2/django_app/ClimateSERV2```
+
+To accomplish this effectively run the following:
+
+``` 
+mkdir /cserv2
+mkdir /cserv2/django_app
+mkdir /cserv2/tmp
+mkdir /cserv2/tmp/logs
+cd /cserv2/django_app
+git clone git@github.com:SERVIR/ClimateSERV2.git
+```
+
+
+
 Due to python package requirements we found it best to use a conda environment for ClimateSERV.
 
+We use two environments, one for the database, and the other for the application.
+
+#### To setup the database in a conda environment:
+- Create the env
+
+```
+conda create --name psqlenv python=3.9.5
+```
+
+- enter the environment
+
+```
+conda activate psqlenv
+```
+
+- install postgresql via conda
+
+```
+conda install -y -c conda-forge postgresql
+```
+
+- create the base database
+
+``` 
+cd /cserv2
+mkdir db
+cd db
+
+initdb -D local_climateserv
+```
+
+- start the server modus/instance of postgres
+
+``` 
+pg_ctl -D local_climateserv -l logfile start
+```
+
+- create a non-superuser (more safety!)
+
+``` 
+createuser --encrypted --pwprompt csadmin
+```
+
+- using this user, create inner database inside the base database
+
+``` 
+createdb --owner=csadmin cs2_db
+
+conda deactivate
+```
+
+- Create database connection file
+Create /cserv2/django_app/ClimateSERV2/climateserv2/data.json
+Paste the following connection properties inside it.
+
+``` 
+{
+  "NAME": "cs2_db",
+  "USER": "csadmin",
+  "PASSWORD": "PASSWORD_YOU_SET_FOR_THIS_USER",
+  "HOST": "127.0.0.1"
+}
+```
+
+#### To setup the application in a conda environment
 With conda installed you should be able to run the following command to create the correct python 
 environment, then activate it.
 
@@ -56,10 +139,6 @@ You will need to add some paths and dataset information as follows:
 At this point you should be able to start the application.  From the root directory you can run the following two commands
 
 ```
-sudo sh climateserv2/runWorkers.sh restart >> {REPLACE WITH PATH TO temp processing directory}/logs/request_processor_`date +\%Y\%m\%d\%H\%M\%S`.log 2>&1
-```
-
-```
 python manage.py runserver
 ```
 
@@ -68,7 +147,8 @@ this application on a server and serving it through nginx using gunicorn.  To do
 have both installed on your server.  There are enough resources explaining in depth how to install them,
 so we will avoid duplicating this information.  We recommend adding a service to start the application
 by creating a .service file located at /etc/systemd/system.  We named ours climateserv2.service
-The service file will contain the following, please substitute the correct paths as mentioned below.
+The service file will contain the following.  If you chose to follow a different structure you will
+have to update the paths.
 
 ```
 [Unit]
@@ -79,9 +159,10 @@ After=network.target
 User=nginx
 Group=nginx
 SocketUser=nginx
-WorkingDirectory={REPLACE WITH PATH TO APPLICATION ROOT}/climateserv2
-ExecStart={REPLACE WITH FULL PATH TO gunicorn IN YOUR CONDA ENV}/bin/gunicorn --workers 5 --pythonpath '{REPLACE WITH PATH TO APPLICATION ROOT},{REPLACE WITH FULL PATH TO YOUR CONDA ENV}/lib/python3.9/site-packages' --bind unix:{REPLACE WITH LOCATION YOU WANT THE SOCK}
-climateserv.sock wsgi:application 
+WorkingDirectory=/cserv2/django_app/ClimateSERV2/climateserv2
+accesslog = "/var/log/cserv2/gunicorn.log"
+errorlog = "/var/log/cserv2/gunicornerror.log"
+ExecStart=/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/gunicorn --timeout 60 --workers 5 --pythonpath '/cserv2/django_app/ClimateSERV2,/cserv2/python_environments/conda/anaconda3/envs/climateserv2/lib/python3.9/site-packages' --bind unix:/cserv2/socks/climateserv.sock wsgi:application  
 
 [Install]
 WantedBy=multi-user.target
@@ -89,9 +170,10 @@ WantedBy=multi-user.target
 
 NOTE: Directory for the sock must be created and owned by nginx user.
 
-You should now be able to start the application using the service, however we will setup some alias commands to 
+You should now be able to start the application using the service, however we will set up some alias commands to 
 make things a bit easier, as permissions sometimes get in the way.  To create these you can create a new file
-located at /etc/profile.d/ and name it climateserv_alias.sh.  Add the alias commands you would like from below
+located at /etc/profile.d/ and name it climateserv_alias.sh.  Add the alias commands you would like from below.
+If you chose to use a different structure for the application, you will have to update the paths below.
 
 ### Suggested server aliases
 ```
@@ -99,15 +181,15 @@ alias cs2='conda activate ClimateSERV2'
 
 alias d='conda deactivate'
 
-alias so='sudo chown nginx {REPLACE WITH PATH TO APPLICATION ROOT} -R; sudo chown -R nginx  {REPLACE WITH PATH TO temp processing directory}; sudo chmod 777 {REPLACE WITH PATH TO temp processing directory} -R'
+alias so='sudo chown nginx /cserv2/django_app/ClimateSERV2 -R; sudo chown -R nginx /cserv2/tmp; sudo chmod 777 /cserv2/tmp -R; sudo chmod 777 /var/log/cserv2/climateserv2.log; sudo chown -R nginx /var/log/cserv2'
 
-alias uo='sudo chown -R ${USER} {REPLACE WITH PATH TO APPLICATION ROOT}; sudo chown -R ${USER} {REPLACE WITH PATH TO temp processing directory}'
+alias uo='sudo chown -R ${USER} /cserv2/django_app/ClimateSERV2; sudo chown -R ${USER} /cserv2/tmp; sudo chmod 777 /cserv2/tmp -R; sudo chmod 777 /var/log/cserv2/climateserv2.log; sudo chown -R ${USER} /var/log/cserv2'
 
-alias cstart='so; sudo service climateserv2 restart; sudo service nginx restart'
+alias cstart='sudo service climateserv2 restart; sudo service nginx restart; so'
 
 alias cstop='sudo pkill -f gunicorn; sudo service nginx stop'
 
-alias chome='cd {REPLACE WITH PATH TO APPLICATION ROOT} '
+alias chome='cd /cserv2/django_app/ClimateSERV2'
 
 alias crestart='cstop; cstart;'
 ```

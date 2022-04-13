@@ -4,6 +4,7 @@ gdal=3.3.1
 geoip2=4.0.2
 geos=3.9.1
 geotiff=1.6.0
+gunicorn=20.1.0
 hdf4=4.2.15
 hdf5=1.10.6
 libgdal=3.3.1
