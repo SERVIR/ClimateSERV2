@@ -2,6 +2,7 @@ from django.contrib.gis.geoip2 import GeoIP2
 from django.shortcuts import render
 from django.http import JsonResponse
 from geoip2.errors import AddressNotFoundError
+from django.contrib.admin.views.decorators import staff_member_required
 
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.views import APIView
@@ -61,9 +62,14 @@ class Update_Records(APIView):
         except:
             return JsonResponse({'status': 'There is an error'})
 
-class Update_Datasets(APIView):
 
-    def get(self, request, format=None):
+def Update_nothing(request):
+        return JsonResponse({'status': 'Nothing Updated successfully'})
+
+
+@staff_member_required
+def Update_Datasets(request):
+
         i = 6
         for x in range(1, 10):
             ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS00' + str(x) + ' Air', dataset_subtype='nmme',
