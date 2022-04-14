@@ -2,10 +2,7 @@ from datetime import date
 import time
 import logging
 
-try:
-    import climateserv2.parameters as params
-except:
-    import parameters as params
+from api.models import Parameters
 
 
 logger = logging.getLogger()
@@ -86,6 +83,7 @@ def getListOfDays(begindaymonthyear,enddaymonthyear):
 
 # To get date based on a date string and interval type
 def breakApartDate(datestring,intervaltype):
+    params = Parameters.objects.first()
     interval = params.intervals[0]
     timedecoded = time.strptime(datestring, interval['pattern'])
     if (intervaltype == 0):

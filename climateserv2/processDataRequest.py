@@ -1,10 +1,10 @@
 import multiprocessing
 import shutil
 import time
+from ast import literal_eval
 from socket import socket
 
 import climateserv2.file.TDSExtraction as GetTDSData
-import climateserv2.parameters as params
 import sys
 from datetime import datetime
 import climateserv2.processtools.uutools as uu
@@ -19,21 +19,28 @@ from django.apps import apps
 import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
-
 from api.models import Track_Usage
+from api.models import Parameters as real_params
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
+dataTypes = None
 
 
 def start_processing(request):
+    db.connections.close_all()
+    try:
+        params = real_params.objects.first()
+    except Exception as e:
+        print(e)
     date_range_list = []
     global jobs
     jobs = []
     global results
     results = []
-
+    dataset = ""
+    operationtype = ""
     if 'geometry' in request:
         polygon_string = request["geometry"]
     elif 'layerid' in request:
@@ -55,7 +62,6 @@ def start_processing(request):
         datatype = request['datatype']
         begin_time = request['begintime']
         end_time = request['endtime']
-        dataset = params.dataTypes[int(datatype)]['dataset_name'] + ".nc4"
         first_date = datetime.strptime(begin_time, '%m/%d/%Y')
         first_date_string = datetime.strftime(first_date, '%Y-%m-%d')
         last_date = datetime.strptime(end_time, '%m/%d/%Y')
@@ -86,11 +92,13 @@ def start_processing(request):
                 date_range_list.append([first_date_string, last_date_string])
         for dates in date_range_list:
             id = uu.getUUID()
-            file_list = GetTDSData.get_filelist(dataset, datatype, dates[0], dates[1])
+            dataset = ""
+            file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
-                             "variable": params.dataTypes[int(datatype)]['variable'], "geom": polygon_string,
-                             "operation": params.parameters[request["operationtype"]][1], "file_list": file_list,
+                             "variable": variable, "geom": polygon_string,
+                             "operation": literal_eval(params.parameters)[request["operationtype"]][1],
+                             "file_list": file_list,
                              "derivedtype": False, "subtype": None})
     pool = multiprocessing.Pool(os.cpu_count())
     for job in jobs:
@@ -143,7 +151,12 @@ def start_processing(request):
         polygon_Str_ToPass = polygon_string
         intervaltype = request['intervaltype']
         operationtype = request['operationtype']
-        opn = params.parameters[operationtype][1]
+        intervals = [
+            {'name': 'day', 'pattern': '%m/%d/%Y'},
+            {'name': 'month', 'pattern': '%m/%Y'},
+            {'name': 'year', 'pattern': '%Y'}
+        ]
+        opn = literal_eval(params.parameters)[operationtype][1]
         resultlist = []
         for dateIndex in range(len(dates)):
             gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
@@ -151,7 +164,8 @@ def start_processing(request):
             workdict["year"] = int(dates[dateIndex][0:4])
             workdict["month"] = int(dates[dateIndex][5:7])
             workdict["day"] = int(dates[dateIndex][8:10])
-            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(dates[dateIndex][0:4])
+            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
+                dates[dateIndex][0:4])
             workdict["epochTime"] = gmt_midnight
             workdict["value"] = {opn: np.float64(values[dateIndex])}
             if intervaltype == 0:
@@ -160,14 +174,13 @@ def start_processing(request):
                 dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
             elif intervaltype == 2:
                 dateObject = dateutils.createDateFromYear(workdict["year"])
-            workdict["isodate"] = dateObject.strftime(params.intervals[0]["pattern"])
+            workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
             resultlist.append(workdict)
         merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
                       "datatype": datatype, "operationtype": operationtype,
                       "intervaltype": intervaltype,
                       "derived_product": False}
-
-    filename = params.getResultsFilename(request["uniqueid"])
+    filename = params.resultsdir + request["uniqueid"] + ".txt"
     f = open(filename, 'w+')
     json.dump(merged_obj, f)
     f.close()
@@ -245,6 +258,7 @@ def start_worker_process(job_item):
         'zipfilepath': ""
     }
 
+
 def log_result(retval):
     results.append(retval)
     try:
@@ -256,6 +270,7 @@ def log_result(retval):
         log.save()
     except Exception as e:
         logger.info(str(e))
+
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
     avg_percentiles_data_lines = []

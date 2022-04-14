@@ -1,9 +1,11 @@
 import time
-import climateserv2.parameters as params
 import datetime
 import climateserv2.processtools.dateIndexTools as dit
 
 # To split the ESI filename
+from api.models import Parameters
+
+
 def breakApartEsiName(filename):
     parts = filename.split(".")
     if "12WK" in filename:
@@ -73,6 +75,7 @@ def breakApartemodisNameAdjust(filename, adjust):
 
 # To get epoch value of time
 def convertTimeToEpoch(timein, interval):
+    params = Parameters.objects.first()
     pattern = params.intervals[interval]['pattern']
     return int(time.mktime(time.strptime(timein, pattern)))
 
@@ -90,4 +93,5 @@ def createDateFromYearMonthDay(year, month, day):
 
 # To create date string from datetime object
 def formatDateBasedOnInterval(date, interval):
+    params = Parameters.objects.first()
     return date.strftime(params.intervals['pattern'])

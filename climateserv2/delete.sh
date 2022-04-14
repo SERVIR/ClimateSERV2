@@ -1,0 +1,1 @@
+find /cserv2/tmp/logs -name "*.log" -type f -mtime +30 -delete

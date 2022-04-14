@@ -1,10 +1,8 @@
 import logging
-
-try:
-    import climateserv2.parameters as params
-except:
-    import parameters as params
 import time
+
+from api.models import Parameters
+
 
 # To write to a log file based on log level
 class StreamToLogger(object):
@@ -19,6 +17,7 @@ class StreamToLogger(object):
 
 # Set up log file with permissions and logging level
 def getNamedLogger(nameofLogger):
+    params = Parameters.objects.first()
     logfilepath = params.logfilepath + nameofLogger + time.strftime("%Y%m%d") + ".log"
     # os.chmod(params.logfilepath, 0o777)
     logging.basicConfig(level=logging.DEBUG,

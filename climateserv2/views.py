@@ -3,6 +3,7 @@ import logging
 import multiprocessing
 import os
 import subprocess
+from ast import literal_eval
 from datetime import datetime
 import pandas as pd
 import xarray as xr
@@ -13,17 +14,18 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 import geoip2
+import re
 from geoip2.errors import AddressNotFoundError
-
 import climateserv2.requestLog as requestLog
-from api.models import Track_Usage
-from . import parameters as params
+from api.models import Track_Usage, ETL_Dataset
+from api.models import Parameters
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .processtools import uutools as uutools
 from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
+from django.forms.models import model_to_dict
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 exempt = -1
@@ -31,9 +33,11 @@ global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 g = GeoIP2()
 
+
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
-    filename = params.getResultsFilename(uid)
+    params = Parameters.objects.first()
+    filename = params.resultsdir + uid + ".txt"
     f = open(filename, "r")
     x = json.load(f)
     f.close()
@@ -109,6 +113,7 @@ def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_
 # To get a list of all the parameter types
 @csrf_exempt
 def get_parameter_types(request):
+    params = Parameters.objects.first()
     print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
@@ -123,6 +128,7 @@ def get_country_code(r):
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
+    params = Parameters.objects.first()
     logger.info("Getting Feature Layers")
     track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
@@ -191,7 +197,7 @@ def get_data_request_progress(request):
 @csrf_exempt
 def get_file_for_job_id(request):
     logger.debug("Getting File to download.")
-
+    params = Parameters.objects.first()
     try:
         request_id = request.GET["id"]
         progress = read_progress(request_id)
@@ -249,7 +255,72 @@ def get_file_for_job_id(request):
             return process_callback(request, json.dumps(ret_obj), "application/json")
     except Exception as e:
         return process_callback(request, json.dumps(str(e)), "application/json")
+# To get a list of all datatypes numbers by a custom property
+def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
+    dataTypes = ETL_Dataset.objects.all()
+    resultList = []
+    try:
+        for currentDataType in dataTypes:
+            try:
+                current_PropValue = currentDataType.ensemble
+                if str(current_PropValue).lower() == str(propertySearchValue).lower():
+                    if currentDataType.number:
+                        resultList.append(currentDataType.number)
+            except:
+                pass
+    except:
+        pass
+    return resultList
 
+# To get a list of unique ensembles
+def get_ClimateEnsemble_List():
+    dataTypes = ETL_Dataset.objects.all()
+    resultList = []
+    try:
+        for currentDataType in dataTypes:
+            try:
+                current_Ensemble = currentDataType.ensemble
+                resultList.append(current_Ensemble)
+            except:
+                pass
+    except:
+        pass
+    # Now remove duplicates from the list
+    tempSet = set(resultList)
+    resultList = list(tempSet)
+    return resultList
+
+# To get Climate Datatype Map (A list of objects that contains a unique ensemble name and a list of variables for that ensemble)
+def get_Climate_DatatypeMap():
+    resultList = []
+    # Get the list of ensembles
+    ensembleList = get_ClimateEnsemble_List()
+    # Iterate through each ensemble
+    for currentEnsemble in ensembleList:
+        currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
+        currentEnsembleObject_List = []
+        for currentEnsemble_DataTypeNumber in currentEnsemble_DataTypeNumbers:
+            currentVariable = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).variable
+            currentEnsembleLabel = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).ensemble_Label
+            currentVariableLabel = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).variable_Label
+            # Create an object that maps the variable, ensemble with datatype number
+            ensembleVariableObject = {
+                "dataType_Number": currentEnsemble_DataTypeNumber,
+                "climate_Variable": currentVariable,
+                "climate_Ensemble": currentEnsemble,
+                "climate_Ensemble_Label": currentEnsembleLabel,
+                "climate_Variable_Label": currentVariableLabel
+            }
+            currentEnsembleObject_List.append(ensembleVariableObject)
+
+        # An object that connects the current ensemble to the list of objects that map the variable with datatype number
+        currentEnsembleObject = {
+            "climate_Ensemble": currentEnsemble,
+            "climate_DataTypes": currentEnsembleObject_List
+        }
+        resultList.append(currentEnsembleObject)
+
+    return resultList
 
 # To get list of all climate change scenario info
 @csrf_exempt
@@ -283,7 +354,7 @@ def get_climate_scenario_info(request):
                 }
             }
         ]
-        climate_datatype_map = params.get_Climate_DatatypeMap()
+        climate_datatype_map = get_Climate_DatatypeMap()
         api_return_object = {
             "unique_id": unique_id,
             "RequestName": "getClimateScenarioInfo",
@@ -308,6 +379,7 @@ def get_client_ip(request):
 
 @csrf_exempt
 def run_etl(request):
+    params = Parameters.objects.first()
     if request.method == 'POST':
         uuid = request.POST["uuid"]
         start_year = request.POST["start_year"]
@@ -371,6 +443,7 @@ def run_etl(request):
 # Submit a data request for processing
 @csrf_exempt
 def submit_data_request(request):
+    params = Parameters.objects.first()
     logger.debug("Submitting Data Request")
     from_ui = False
     reason = CsrfViewMiddleware().process_view(request, None, (), {})
@@ -391,7 +464,8 @@ def submit_data_request(request):
 
     datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
     calculation_string = request.POST.get("operationtype", request.GET.get("operationtype"))
-    calculation = params.parameters[int(calculation_string)][2]
+    ps = literal_eval(params.parameters)
+    calculation = ps[int(calculation_string)][2]
     # Get geometry from parameter or from shapefile
     geometry = None
     layer_id_request = request.POST.get("layerid", request.GET.get("layerid", None))
@@ -433,7 +507,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,
@@ -477,6 +551,7 @@ def submit_data_request(request):
         # processes each of them would be able to update progress and when they
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
+        dictionary["params"] = model_to_dict(params);
 
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=unique_id, progress=0)
@@ -494,7 +569,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,
@@ -503,7 +578,7 @@ def submit_data_request(request):
 
         track_usage.save()
         p.start()
-        return process_callback(request, json.dumps([unique_id]), "application/json")
+        return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"
         if "geometry" in request.POST:
@@ -514,7 +589,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=params.dataTypes[int(datatype)]['name'],
+                                  dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   request_type=request.method, status=status, progress=log_obj.progress,
