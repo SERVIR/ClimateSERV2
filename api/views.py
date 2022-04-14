@@ -72,7 +72,7 @@ def Update_Datasets(request):
 
         i = 6
         for x in range(1, 10):
-            ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS00' + str(x) + ' Air', dataset_subtype='nmme',
+            ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS00' + str(x) + ' Air', dataset_subtype='nmme',ensemble='ccsm4_ens0'+str(x),
                              dataset_nc4_variable_name='air_temperature',
                              number=i, dataset_name_format='nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(x),
                              temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
@@ -82,7 +82,7 @@ def Update_Datasets(request):
                                  x) + '.nc4')
             ds.save()
             i = i + 1
-            ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS00' + str(x) + ' Prec', dataset_subtype='nmme',
+            ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS00' + str(x) + ' Prec', dataset_subtype='nmme',ensemble='ccsm4_ens0'+str(x),
                              dataset_nc4_variable_name='precipitation',
                              number=i, dataset_name_format='nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens00' + str(x),
                              temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
@@ -94,7 +94,7 @@ def Update_Datasets(request):
             i = i + 1
             print('NMME CCSM4 ENS00' + str(x))
         x = 10
-        ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS0' + str(x) + ' Air', dataset_subtype='nmme',
+        ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS0' + str(x) + ' Air', dataset_subtype='nmme',ensemble='ccsm4_ens'+str(x),
                          dataset_nc4_variable_name='air_temperature',
                          number=i, dataset_name_format='nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens0' + str(x),
                          temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
@@ -104,7 +104,7 @@ def Update_Datasets(request):
                              x) + '.nc4')
         ds.save()
         i = i + 1
-        ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS0' + str(x) + ' Prec', dataset_subtype='nmme',
+        ds = ETL_Dataset(dataset_name='NMME CCSM4 ENS0' + str(x) + ' Prec', dataset_subtype='nmme',ensemble='ccsm4_ens'+str(x),
                          dataset_nc4_variable_name='precipitation',
                          number=i, dataset_name_format='nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens0' + str(x),
                          temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
@@ -117,7 +117,7 @@ def Update_Datasets(request):
 
         i = 42
         for x in range(1, 10):
-            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS00' + str(x) + ' Air', dataset_subtype='nmme_cfsv2',
+            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS00' + str(x) + ' Air', dataset_subtype='nmme_cfsv2',ensemble='cfsv2_ens0'+str(x),
                              dataset_nc4_variable_name='air_temperature',
                              number=i,
                              dataset_name_format='nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(x),
@@ -128,7 +128,7 @@ def Update_Datasets(request):
                                  x) + '.nc4')
             ds.save()
             i = i + 1
-            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS00' + str(x) + ' Prec', dataset_subtype='nmme_cfsv2',
+            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS00' + str(x) + ' Prec', dataset_subtype='nmme_cfsv2',ensemble='cfsv2_ens0'+str(x),
                              dataset_nc4_variable_name='precipitation',
                              number=i,
                              dataset_name_format='nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens00' + str(x),
@@ -142,7 +142,7 @@ def Update_Datasets(request):
         print('NMME CFSV2 ENS00' + str(x)+ " :number  " + str(i))
         i=60
         for x in range(10, 25):
-            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS0' + str(x) + ' Air', dataset_subtype='nmme_cfsv2',
+            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS0' + str(x) + ' Air', dataset_subtype='nmme_cfsv2',ensemble='cfsv2_ens'+str(x),
                              dataset_nc4_variable_name='air_temperature',
                              number=i, dataset_name_format='nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens0' + str(x),
                              temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
@@ -152,7 +152,7 @@ def Update_Datasets(request):
                                  x) + '.nc4')
             ds.save()
             i = i + 1
-            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS0' + str(x) + ' Prec', dataset_subtype='nmme_cfsv2',
+            ds = ETL_Dataset(dataset_name='NMME CFSV2 ENS0' + str(x) + ' Prec', dataset_subtype='nmme_cfsv2',ensemble='cfsv2_ens'+str(x),
                              dataset_nc4_variable_name='precipitation',
                              number=i, dataset_name_format='nmme-cfsv2_bcsd.latest.global.0.5deg.daily.ens0' + str(x),
                              temp_working_dir='/mnt/climateserv/process_tmp/nmme/',
