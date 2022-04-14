@@ -13,8 +13,7 @@ from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
-import geoip2
-import re
+from django import db
 from geoip2.errors import AddressNotFoundError
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage, ETL_Dataset
@@ -300,9 +299,10 @@ def get_Climate_DatatypeMap():
         currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
         currentEnsembleObject_List = []
         for currentEnsemble_DataTypeNumber in currentEnsemble_DataTypeNumbers:
-            currentVariable = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).variable
-            currentEnsembleLabel = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).ensemble_Label
-            currentVariableLabel = ETL_Dataset.objects.get(number=currentEnsemble_DataTypeNumber).variable_Label
+            ds= ETL_Dataset.objects.filter(number=int(currentEnsemble_DataTypeNumber))[0]
+            currentVariable = ds.dataset_nc4_variable_name
+            currentEnsembleLabel = ""# ds.ensemble_Label
+            currentVariableLabel = ""#ds.variable_Label
             # Create an object that maps the variable, ensemble with datatype number
             ensembleVariableObject = {
                 "dataType_Number": currentEnsemble_DataTypeNumber,
