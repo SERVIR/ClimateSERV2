@@ -261,10 +261,11 @@ def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
     try:
         for currentDataType in dataTypes:
             try:
-                current_PropValue = currentDataType.ensemble
-                if str(current_PropValue).lower() == str(propertySearchValue).lower():
-                    if currentDataType.number:
-                        resultList.append(currentDataType.number)
+                if currentDataType.ensemble != '':
+                    current_PropValue = currentDataType.ensemble
+                    if str(current_PropValue).lower() == str(propertySearchValue).lower():
+                        if currentDataType.number:
+                            resultList.append(currentDataType.number)
             except:
                 pass
     except:
@@ -297,6 +298,7 @@ def get_Climate_DatatypeMap():
     # Iterate through each ensemble
     for currentEnsemble in ensembleList:
         currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
+        print(currentEnsemble_DataTypeNumbers)
         currentEnsembleObject_List = []
         for currentEnsemble_DataTypeNumber in currentEnsemble_DataTypeNumbers:
             ds= ETL_Dataset.objects.filter(number=int(currentEnsemble_DataTypeNumber))[0]
