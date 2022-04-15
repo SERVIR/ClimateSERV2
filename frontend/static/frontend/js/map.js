@@ -2007,10 +2007,11 @@ function configure_nmme(sdata, edit, edit_init_id) {
             if (variable.climate_Variable === sent_variable) {
                 selected = 'selected';
             }
+            const variable_text = variable.climate_Variable == "air_temperature" ? "Temperature" : "Precipitation";
             $("#ensemblevarmenu" + edit_string)
                 .append(
                     '<option value="' + variable.climate_Variable
-                    + '" ' + selected + '>' + variable.climate_Variable == "air_temperature" ? "Temperature" : "Precipitation" + '</option>');
+                    + '" ' + selected + '>' + variable_text + '</option>');
         });
     }
 }
