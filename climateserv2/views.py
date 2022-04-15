@@ -279,8 +279,9 @@ def get_ClimateEnsemble_List():
     try:
         for currentDataType in dataTypes:
             try:
-                current_Ensemble = currentDataType.ensemble
-                resultList.append(current_Ensemble)
+                if currentDataType.ensemble != '':
+                    current_Ensemble = currentDataType.ensemble
+                    resultList.append(current_Ensemble)
             except:
                 pass
     except:
