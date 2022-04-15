@@ -81,7 +81,7 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
         name = params.nmme_cfsv2_path + dataset_name + ".nc4"
         if os.path.exists(name):
             filelist.append(name)
-    elif "imerg" in dataset_name:
+    elif "imerg" in dataset_name[0]:
         for year in year_nums:
             name = final_load_dir + dataset_name[0] \
                    + ".global." + dataset_name[2] \
@@ -101,7 +101,7 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
             if os.path.exists(name):
                 filelist.append(name)
     else:
-        if "ndvi" in dataset_name:
+        if "ndvi" in dataset_name[0]:
             for year in year_nums:
                 for month in range(12):
                     name = final_load_dir + dataset_name[0] + "." + dataset_name[
@@ -147,7 +147,10 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     lon_bounds = nc_file.sel(longitude=[lon1, lon2], method='nearest').longitude.values
     latSlice = slice(lat_bounds[0], lat_bounds[1])
     lonSlice = slice(lon_bounds[0], lon_bounds[1])
+
+
     data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
+
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     if operation == "min":
         ds_vals = data.min(dim=['latitude', 'longitude']).values
