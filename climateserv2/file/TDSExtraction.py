@@ -101,7 +101,7 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
             if os.path.exists(name):
                 filelist.append(name)
     else:
-        if "ndvi" in dataset_name:
+        if "ndvi" in dataset_name[0]:
             for year in year_nums:
                 for month in range(12):
                     name = final_load_dir + dataset_name[0] + "." + dataset_name[
