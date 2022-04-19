@@ -398,8 +398,14 @@ def run_etl(request):
         if merge == "true":
             if (str(etl.lower()) in ['chirp', 'chirps_gefs']) or ("emodis" in etl.lower()):
                 merge_option = "monthly"
+                etl_dataset = ETL_Dataset.objects.get(pk=uuid)
+                if not os.path.exists(etl_dataset.temp_working_dir+'/by_month/'):
+                    os.makedirs(etl_dataset.temp_working_dir+'/by_month/')
             else:
                 merge_option = "yearly"
+                etl_dataset = ETL_Dataset.objects.get(pk=uuid)
+                if not os.path.exists(etl_dataset.temp_working_dir+'/by_month/'):
+                    os.makedirs(etl_dataset.temp_working_dir+'/by_year/')
         if from_last_processed == "true":
             if merge_option == "monthly":
                 print("chirp should be here!")

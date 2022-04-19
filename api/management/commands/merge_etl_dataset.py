@@ -135,12 +135,13 @@ class Command(BaseCommand):
 
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
+        print(temp_aggregate_filepath)
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
             if not os.path.exists(temp_fast_path):
                 os.makedirs(temp_fast_path)
-            shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
-            shutil.rmtree(temp_aggregate_path)
+            #shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
+            #shutil.rmtree(temp_aggregate_path)
 
         else:
             print(f'File not found: {temp_aggregate_filepath}')
