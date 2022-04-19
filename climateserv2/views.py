@@ -393,11 +393,10 @@ def run_etl(request):
         end_day = request.POST["end_day"]
         from_last_processed = request.POST["from_last_processed"]
         merge = request.POST["merge"]
-        etl_dataset = request.POST["etl"]
+        etl= request.POST["etl"]
         merge_option = "nomerge"
         if merge == "true":
-            if str(etl_dataset.lower()) in ['chirp', 'chirps_gefs', 'emodis']:
-
+            if (str(etl.lower()) in ['chirp', 'chirps_gefs']) or ("emodis" in etl.lower()):
                 merge_option = "monthly"
             else:
                 merge_option = "yearly"
