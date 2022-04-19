@@ -64,7 +64,7 @@ class Command(BaseCommand):
                                      'longitude=.5 --ppc latitude=.5 '
                 elif etl_dataset.tds_region == 'westafrica':
                     temp_fast_path = os.path.join(temp_fast_path, 'fast_emodis_westafrica')
-                    pattern_filename = 'emodis-ndvi.{}{}*.westafrica.250m.10dy.nc'
+                    pattern_filename = 'emodis-ndvi.{}{}*.westafrica.250m.10dy.nc4'
                     aggregate_filename = 'emodis-ndvi.westafrica.250m.10dy.{}{}.nc4'
                     ncrcat_options = '-4 -h --cnk_dmn time,3 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
                 elif etl_dataset.tds_region == 'southernafrica':
@@ -81,6 +81,9 @@ class Command(BaseCommand):
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(year_yyyy, month_mm))
+
+            if not os.path.exists(etl_dataset.temp_working_dir + '/by_month/'):
+                os.makedirs(etl_dataset.temp_working_dir + '/by_month/')
             temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_month/')
             if not os.path.exists(temp_aggregate_path):
                 os.makedirs(temp_aggregate_path)
@@ -125,23 +128,21 @@ class Command(BaseCommand):
             if not os.path.exists(temp_aggregate_path):
                 os.makedirs(temp_aggregate_path)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(year_yyyy))
-            print(temp_aggregate_filepath)
+
         if ncrcat_options == '':
             raise Exception()
-
         command_str = f'sudo ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
         if os.name == 'nt':
             command_str = f'ncra -Y {command_str}'
 
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
-        print(temp_aggregate_filepath)
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
             if not os.path.exists(temp_fast_path):
                 os.makedirs(temp_fast_path)
-            #shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
-            #shutil.rmtree(temp_aggregate_path)
+            shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
+            shutil.rmtree(temp_aggregate_path)
 
         else:
             print(f'File not found: {temp_aggregate_filepath}')
