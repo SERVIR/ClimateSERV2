@@ -74,11 +74,11 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
             if os.path.exists(name):
                 filelist.append(name)
     elif "nmme-ccsm4" == dataset_name[0]:
-        name = params.nmme_ccsm4_path + dataset_name + ".nc4"
+        name = final_load_dir
         if os.path.exists(name):
             filelist.append(name)
     elif "nmme-cfsv2" == dataset_name[0]:
-        name = params.nmme_cfsv2_path + dataset_name + ".nc4"
+        name = final_load_dir
         if os.path.exists(name):
             filelist.append(name)
     elif "imerg" in dataset_name[0]:

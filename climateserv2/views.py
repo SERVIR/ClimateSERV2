@@ -261,10 +261,11 @@ def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
     try:
         for currentDataType in dataTypes:
             try:
-                current_PropValue = currentDataType.ensemble
-                if str(current_PropValue).lower() == str(propertySearchValue).lower():
-                    if currentDataType.number:
-                        resultList.append(currentDataType.number)
+                if currentDataType.ensemble != '':
+                    current_PropValue = currentDataType.ensemble
+                    if str(current_PropValue).lower() == str(propertySearchValue).lower():
+                        if currentDataType.number:
+                            resultList.append(currentDataType.number)
             except:
                 pass
     except:
@@ -278,8 +279,9 @@ def get_ClimateEnsemble_List():
     try:
         for currentDataType in dataTypes:
             try:
-                current_Ensemble = currentDataType.ensemble
-                resultList.append(current_Ensemble)
+                if currentDataType.ensemble != '':
+                    current_Ensemble = currentDataType.ensemble
+                    resultList.append(current_Ensemble)
             except:
                 pass
     except:
@@ -297,6 +299,7 @@ def get_Climate_DatatypeMap():
     # Iterate through each ensemble
     for currentEnsemble in ensembleList:
         currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
+        print(currentEnsemble_DataTypeNumbers)
         currentEnsembleObject_List = []
         for currentEnsemble_DataTypeNumber in currentEnsemble_DataTypeNumbers:
             ds= ETL_Dataset.objects.filter(number=int(currentEnsemble_DataTypeNumber))[0]
@@ -390,11 +393,10 @@ def run_etl(request):
         end_day = request.POST["end_day"]
         from_last_processed = request.POST["from_last_processed"]
         merge = request.POST["merge"]
-        etl_dataset = request.POST["etl"]
+        etl= request.POST["etl"]
         merge_option = "nomerge"
         if merge == "true":
-            if str(etl_dataset.lower()) in ['chirp', 'chirps_gefs', 'emodis']:
-
+            if (str(etl.lower()) in ['chirp', 'chirps_gefs']) or ("emodis" in etl.lower()):
                 merge_option = "monthly"
             else:
                 merge_option = "yearly"
