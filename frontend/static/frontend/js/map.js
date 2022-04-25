@@ -2559,7 +2559,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                     inti_chart_dialog();
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
-                    reset_query_panel();
+                    //reset_query_panel();
 
                 } else {
                     previous_chart = null;
@@ -2646,7 +2646,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         $("#checkout_number").text("0 Queries");
                         $("#chart-builder").show();
                         $("#query_list_checkout").hide();
-                        reset_query_panel();
+                       // reset_query_panel();
                     }
                 }
             }
