@@ -94,6 +94,7 @@ def start_processing(request):
             id = uu.getUUID()
             dataset = ""
             file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
+            logger.error("*************file_list: ", str(file_list))
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
                              "variable": variable, "geom": polygon_string,
@@ -101,14 +102,16 @@ def start_processing(request):
                              "file_list": file_list,
                              "derivedtype": False, "subtype": None})
     pool = multiprocessing.Pool(os.cpu_count())
+
     for job in jobs:
-        pool.apply_async(start_worker_process, args=[job], callback=log_result)
+        results.append(pool.apply_async(start_worker_process, args=[job], callback=log_result))
     pool.close()
     pool.join()
 
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
+
     split_obj = results
     dates = []
     values = []
@@ -125,7 +128,8 @@ def start_processing(request):
             if d not in temp:
                 temp.append(d)
         dates = temp
-        for obj in split_obj:
+        for obj1 in split_obj:
+            obj = obj1.get()
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -143,7 +147,8 @@ def start_processing(request):
     else:
         dates = []
         values = []
-        for obj in split_obj:
+        for obj1 in split_obj:
+            obj = obj1.get()
             dates.extend(obj["dates"])
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
@@ -260,7 +265,11 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    results.append(retval)
+    try:
+        logger.error(retval["uid"] + ': len(jobs): ' + str(len(jobs)))
+    except Exception as e:
+        logger.error('len(jobs) error: ' + str(e))
+        pass
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
