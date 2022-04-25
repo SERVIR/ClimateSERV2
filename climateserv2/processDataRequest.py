@@ -107,9 +107,8 @@ def start_processing(request):
                              "derivedtype": False, "subtype": None})
         logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
-    actual_results = []
     for job in jobs:
-        actual_results.append(pool.apply_async(start_worker_process, args=[job], callback=log_result))
+        pool.apply_async(start_worker_process, args=[job], callback=log_result)
     pool.close()
     pool.join()
 
