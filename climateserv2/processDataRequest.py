@@ -116,7 +116,7 @@ def start_processing(request):
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
-    split_obj = actual_results
+    split_obj = results
     dates = []
     values = []
     LTA = []
@@ -132,8 +132,7 @@ def start_processing(request):
             if d not in temp:
                 temp.append(d)
         dates = temp
-        for obj1 in split_obj:
-            obj = obj1.get()
+        for obj in split_obj:
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -151,8 +150,7 @@ def start_processing(request):
     else:
         dates = []
         values = []
-        for obj1 in split_obj:
-            obj = obj1.get()
+        for obj in split_obj:
             dates.extend(obj["dates"])
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
