@@ -112,8 +112,8 @@ def start_processing(request):
     pool.close()
     pool.join()
 
-    while len(results) / len(jobs) < 1:
-        time.sleep(1)
+    # while len(results) / len(jobs) < 1:
+    #     time.sleep(1)
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
