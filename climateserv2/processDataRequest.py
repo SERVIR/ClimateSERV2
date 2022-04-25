@@ -106,12 +106,11 @@ def start_processing(request):
                              "file_list": file_list,
                              "derivedtype": False, "subtype": None})
         logger.error("jobs length is: " + str(len(jobs)))
-    # pool = multiprocessing.Pool(os.cpu_count() * 2)
-    with multiprocessing.Pool(processes=os.cpu_count() * 2) as pool:
-        for job in jobs:
-            pool.apply_async(start_worker_process, args=[job], callback=log_result)
-        pool.close()
-        pool.join()
+    pool = multiprocessing.Pool(os.cpu_count() * 2)
+    for job in jobs:
+        pool.apply_async(start_worker_process, args=[job], callback=log_result)
+    pool.close()
+    pool.join()
 
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
