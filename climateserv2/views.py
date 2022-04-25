@@ -59,6 +59,8 @@ def get_id_from_output(output):
             return output_json["unique_id"]
         elif "uid" in output_json:
             return output_json["uid"]
+        elif "id" in output_json:
+            return output_json["id"]
         else:
             return json.loads(output)[0]
     except (json.decoder.JSONDecodeError, IndexError):
@@ -67,6 +69,7 @@ def get_id_from_output(output):
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
+    db.connections.close_all()
     request_id = request.POST.get("id", request.GET.get("id", None))
 
     if request_id is None:
@@ -88,9 +91,10 @@ def process_callback(request, output, content_type):
             track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.status = "Fail"
             track_usage.save()
-    except (DatabaseError, Track_Usage.DoesNotExist):
+    except (DatabaseError, Track_Usage.DoesNotExist) as e:
         error_msg = "ERROR saving usage object to database"
         logger.error(error_msg)
+        logger.error(e)
     return http_response
 
 
@@ -174,10 +178,13 @@ def int_try_parse(value):
 @csrf_exempt
 def get_data_request_progress(request):
     logger.debug("Getting Data Request Progress")
-    track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-    track_usage.progress = read_progress(request.GET["id"])
-    track_usage.data_retrieved = True
-    track_usage.save()
+    try:
+        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage.progress = read_progress(request.GET["id"])
+        track_usage.data_retrieved = True
+        track_usage.save()
+    except (Exception, OSError) as e:
+        logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
     try:
         request_id = request.GET["id"]
         progress = read_progress(request_id)
@@ -568,17 +575,20 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
-                                  country_ISO=get_country_code(request),
-                                  time_requested=timezone.now(), AOI=aoi,
-                                  dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
-                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
-                                  end_date=pd.Timestamp(end_time, tz='UTC'),
-                                  calculation=calculation, request_type=request.method,
-                                  status=status, progress=log_obj.progress, API_call="submitDataRequest",
-                                  data_retrieved=False, ui_request=from_ui)
+        try:
+            track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                      country_ISO=get_country_code(request),
+                                      time_requested=timezone.now(), AOI=aoi,
+                                      dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
+                                      start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                      end_date=pd.Timestamp(end_time, tz='UTC'),
+                                      calculation=calculation, request_type=request.method,
+                                      status=status, progress=log_obj.progress, API_call="submitDataRequest",
+                                      data_retrieved=False, ui_request=from_ui)
 
-        track_usage.save()
+            track_usage.save()
+        except Exception as e:
+            logger.error(str(e))
         p.start()
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
