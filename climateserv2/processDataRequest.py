@@ -107,15 +107,16 @@ def start_processing(request):
                              "derivedtype": False, "subtype": None})
         logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
+    actual_results = []
     for job in jobs:
-        pool.apply_async(start_worker_process, args=[job], callback=log_result)
+        actual_results.append(pool.apply_async(start_worker_process, args=[job], callback=log_result))
     pool.close()
     pool.join()
 
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
-    split_obj = results
+    split_obj = actual_results
     dates = []
     values = []
     LTA = []
@@ -131,7 +132,8 @@ def start_processing(request):
             if d not in temp:
                 temp.append(d)
         dates = temp
-        for obj in split_obj:
+        for obj1 in split_obj:
+            obj = obj1.get()
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -149,7 +151,8 @@ def start_processing(request):
     else:
         dates = []
         values = []
-        for obj in split_obj:
+        for obj1 in split_obj:
+            obj = obj1.get()
             dates.extend(obj["dates"])
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
@@ -222,6 +225,12 @@ def start_processing(request):
 
 
 def start_worker_process(job_item):
+    logger.error("Starting worker for: "
+                 + job_item['start_date']
+                 + " to "
+                 + job_item['end_date']
+                 + " File: "
+                 + str(",".join(job_item['file_list'])))
     # here is where you would open each netcdf
     # and do the processing and create the data
     # to return to the parent for said year.
@@ -253,6 +262,7 @@ def start_worker_process(job_item):
             dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
                                                           job_item['end_date'], job_item['variable'], job_item['geom'],
                                                           job_item['operation'], job_item['file_list'])
+            logger.error("got back for job: " + job_item["uniqueid"])
     db.connections.close_all()
     return {
         "uid": job_item["uniqueid"],
