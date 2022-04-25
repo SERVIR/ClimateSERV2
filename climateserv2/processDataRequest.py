@@ -106,11 +106,12 @@ def start_processing(request):
                              "file_list": file_list,
                              "derivedtype": False, "subtype": None})
         logger.error("jobs length is: " + str(len(jobs)))
-    pool = multiprocessing.Pool(os.cpu_count() * 2)
-    for job in jobs:
-        pool.apply_async(start_worker_process, args=[job], callback=log_result)
-    pool.close()
-    pool.join()
+    # pool = multiprocessing.Pool(os.cpu_count() * 2)
+    with multiprocessing.Pool(processes=os.cpu_count() * 2) as pool:
+        for job in jobs:
+            pool.apply_async(start_worker_process, args=[job], callback=log_result)
+        pool.close()
+        pool.join()
 
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
@@ -227,7 +228,9 @@ def start_worker_process(job_item):
                  + " to "
                  + job_item['end_date']
                  + " File: "
-                 + str(",".join(job_item['file_list'])))
+                 + str(",".join(job_item['file_list']))
+                 + "job: "
+                 + job_item["uniqueid"])
     # here is where you would open each netcdf
     # and do the processing and create the data
     # to return to the parent for said year.
