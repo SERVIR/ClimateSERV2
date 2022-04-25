@@ -90,28 +90,31 @@ def start_processing(request):
                     first_date_string = str(year) + "-01-01"
                     last_date_string = str(year) + "-12-31"
                 date_range_list.append([first_date_string, last_date_string])
+        counter = 0
+
         for dates in date_range_list:
+            logger.error(str(",".join(dates)))
             id = uu.getUUID()
             dataset = ""
             file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
-            logger.error("*************file_list: ", str(file_list))
+            logger.error(str(counter) + "*************file_list: " + str(",".join(file_list)))
+            counter += 1
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
                              "variable": variable, "geom": polygon_string,
                              "operation": literal_eval(params.parameters)[request["operationtype"]][1],
                              "file_list": file_list,
                              "derivedtype": False, "subtype": None})
-    pool = multiprocessing.Pool(os.cpu_count())
-
+        logger.error("jobs length is: " + str(len(jobs)))
+    pool = multiprocessing.Pool(os.cpu_count() * 2)
     for job in jobs:
-        results.append(pool.apply_async(start_worker_process, args=[job], callback=log_result))
+        pool.apply_async(start_worker_process, args=[job], callback=log_result)
     pool.close()
     pool.join()
 
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
-
     split_obj = results
     dates = []
     values = []
@@ -128,8 +131,7 @@ def start_processing(request):
             if d not in temp:
                 temp.append(d)
         dates = temp
-        for obj1 in split_obj:
-            obj = obj1.get()
+        for obj in split_obj:
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -147,8 +149,7 @@ def start_processing(request):
     else:
         dates = []
         values = []
-        for obj1 in split_obj:
-            obj = obj1.get()
+        for obj in split_obj:
             dates.extend(obj["dates"])
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
@@ -270,6 +271,7 @@ def log_result(retval):
     except Exception as e:
         logger.error('len(jobs) error: ' + str(e))
         pass
+    results.append(retval)
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))

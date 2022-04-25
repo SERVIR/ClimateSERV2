@@ -598,6 +598,7 @@ def submit_data_request(request):
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
+        logger.error("****FAIL********* ")
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
