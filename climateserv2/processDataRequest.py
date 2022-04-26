@@ -110,16 +110,15 @@ def start_processing(request):
     pool = multiprocessing.Pool(os.cpu_count() * 2)
     for job in jobs:
         pool.apply_async(start_worker_process, args=[job], callback=log_result)
-
+    pool.close()
+    pool.join()
 
     logger.error("len(results): " + str(len(results)))
     logger.error("len(jobs): " + str(len(jobs)))
 
-    while len(results) / len(jobs) < 1:
-        logger.error("wrongwrongwrongwrongwrongwrong")
-        time.sleep(1)
-    pool.close()
-    pool.join()
+    # while len(results) / len(jobs) < 1:
+    #     logger.error("wrongwrongwrongwrongwrongwrong")
+    #     time.sleep(1)
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
