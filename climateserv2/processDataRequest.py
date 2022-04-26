@@ -134,7 +134,7 @@ def start_processing(request):
         for res in my_results:
             split_obj.append(res.get())
     except Exception as e:
-        logger.error(str(e))
+        logger.error("the split error is: " + str(e))
         split_obj = my_results
     logger.error("after split_obj")
     dates = []
