@@ -281,7 +281,7 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    # results.append(retval)
+    results.append("")
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
