@@ -160,6 +160,7 @@ def start_processing(request):
 
     else:
         try:
+            db.connections.close_all()
             dates = []
             values = []
             for obj1 in split_obj:
