@@ -160,11 +160,14 @@ def start_processing(request):
 
     else:
         try:
+            logger.error("Made it to 1.0")
             db.connections.close_all()
+            logger.error("Made it to 1.1")
             dates = []
             values = []
             for obj1 in split_obj:
                 obj = obj1.get()
+                logger.error("Made it to 1.1.1")
                 dates.extend(obj["dates"])
                 values.extend(obj["values"])
             logger.error("Made it to 1")
