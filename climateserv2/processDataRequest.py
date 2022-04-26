@@ -159,46 +159,49 @@ def start_processing(request):
         merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(resultlist)}
 
     else:
-        dates = []
-        values = []
-        for obj1 in split_obj:
-            obj = obj1.get()
-            dates.extend(obj["dates"])
-            values.extend(obj["values"])
-        uniqueid = request['uniqueid']
-        datatype = request['datatype']
-        polygon_Str_ToPass = polygon_string
-        intervaltype = request['intervaltype']
-        operationtype = request['operationtype']
-        intervals = [
-            {'name': 'day', 'pattern': '%m/%d/%Y'},
-            {'name': 'month', 'pattern': '%m/%Y'},
-            {'name': 'year', 'pattern': '%Y'}
-        ]
-        opn = literal_eval(params.parameters)[operationtype][1]
-        resultlist = []
-        for dateIndex in range(len(dates)):
-            gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-            workdict = {}
-            workdict["year"] = int(dates[dateIndex][0:4])
-            workdict["month"] = int(dates[dateIndex][5:7])
-            workdict["day"] = int(dates[dateIndex][8:10])
-            workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
-                dates[dateIndex][0:4])
-            workdict["epochTime"] = gmt_midnight
-            workdict["value"] = {opn: np.float64(values[dateIndex])}
-            if intervaltype == 0:
-                dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
-            elif intervaltype == 1:
-                dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
-            elif intervaltype == 2:
-                dateObject = dateutils.createDateFromYear(workdict["year"])
-            workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
-            resultlist.append(workdict)
-        merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
-                      "datatype": datatype, "operationtype": operationtype,
-                      "intervaltype": intervaltype,
-                      "derived_product": False}
+        try:
+            dates = []
+            values = []
+            for obj1 in split_obj:
+                obj = obj1.get()
+                dates.extend(obj["dates"])
+                values.extend(obj["values"])
+            uniqueid = request['uniqueid']
+            datatype = request['datatype']
+            polygon_Str_ToPass = polygon_string
+            intervaltype = request['intervaltype']
+            operationtype = request['operationtype']
+            intervals = [
+                {'name': 'day', 'pattern': '%m/%d/%Y'},
+                {'name': 'month', 'pattern': '%m/%Y'},
+                {'name': 'year', 'pattern': '%Y'}
+            ]
+            opn = literal_eval(params.parameters)[operationtype][1]
+            resultlist = []
+            for dateIndex in range(len(dates)):
+                gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
+                workdict = {}
+                workdict["year"] = int(dates[dateIndex][0:4])
+                workdict["month"] = int(dates[dateIndex][5:7])
+                workdict["day"] = int(dates[dateIndex][8:10])
+                workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
+                    dates[dateIndex][0:4])
+                workdict["epochTime"] = gmt_midnight
+                workdict["value"] = {opn: np.float64(values[dateIndex])}
+                if intervaltype == 0:
+                    dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
+                elif intervaltype == 1:
+                    dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
+                elif intervaltype == 2:
+                    dateObject = dateutils.createDateFromYear(workdict["year"])
+                workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
+                resultlist.append(workdict)
+            merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
+                          "datatype": datatype, "operationtype": operationtype,
+                          "intervaltype": intervaltype,
+                          "derived_product": False}
+        except Exception as e:
+            logger.error("FFFFFFFFFFFFFFFFFFF: " + str(e))
     filename = params.resultsdir + request["uniqueid"] + ".txt"
     f = open(filename, 'w+')
     json.dump(merged_obj, f)
