@@ -168,8 +168,11 @@ def start_processing(request):
             for obj1 in split_obj:
                 obj = obj1.get()
                 logger.error("Made it to 1.1.1")
-                dates.extend(obj["dates"])
-                values.extend(obj["values"])
+                try:
+                    dates.extend(obj["dates"])
+                    values.extend(obj["values"])
+                except Exception as e:
+                    logger.error("making result list failed: " + str(e))
             logger.error("Made it to 1")
             uniqueid = request['uniqueid']
             datatype = request['datatype']
