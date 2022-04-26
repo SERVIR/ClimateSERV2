@@ -27,6 +27,8 @@ Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
+global results
+global jobs
 
 
 def start_processing(request):
@@ -36,9 +38,9 @@ def start_processing(request):
     except Exception as e:
         print(e)
     date_range_list = []
-    global jobs
+
     jobs = []
-    global results
+
     results = []
     dataset = ""
     operationtype = ""
