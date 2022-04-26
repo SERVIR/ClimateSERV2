@@ -53,6 +53,7 @@ def start_processing(request):
 
         dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
         id = uu.getUUID()
+        logger.error("custom adding both jobs")
         jobs.append({"uniqueid": request["uniqueid"], "id": id, "bounds": bounds, "dates": dates, "months": months,
                      "subtype": "chirps"})
         id = uu.getUUID()
@@ -278,14 +279,7 @@ def start_processing(request):
 
 
 def start_worker_process(job_item):
-    logger.error("Starting worker for: "
-                 + job_item['start_date']
-                 + " to "
-                 + job_item['end_date']
-                 + " File: "
-                 + str(",".join(job_item['file_list']))
-                 + "job: "
-                 + job_item["uniqueid"])
+
     # here is where you would open each netcdf
     # and do the processing and create the data
     # to return to the parent for said year.
