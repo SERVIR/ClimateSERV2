@@ -127,7 +127,7 @@ def start_processing(request):
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
-    split_obj = results
+    split_obj = my_results
     dates = []
     values = []
     LTA = []
@@ -161,7 +161,8 @@ def start_processing(request):
     else:
         dates = []
         values = []
-        for obj in split_obj:
+        for obj1 in split_obj:
+            obj = obj1.get()
             dates.extend(obj["dates"])
             values.extend(obj["values"])
         uniqueid = request['uniqueid']
