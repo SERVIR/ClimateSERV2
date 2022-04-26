@@ -114,6 +114,7 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
+    db.connections.close_all()
     params = Parameters.objects.first()
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')

@@ -128,7 +128,10 @@ def start_processing(request):
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
-    split_obj = my_results
+    split_obj = []
+    for res in my_results:
+        split_obj.append(res.get())
+    # split_obj = my_results
     dates = []
     values = []
     LTA = []
@@ -166,8 +169,8 @@ def start_processing(request):
             logger.error("Made it to 1.1")
             dates = []
             values = []
-            for obj1 in split_obj:
-                obj = obj1.get()
+            for obj in split_obj:
+                # obj = obj1.get()
                 logger.error("Memory: " + str(psutil.cpu_percent()))
                 logger.error("Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
                 logger.error("Made it to 1.1.1")
