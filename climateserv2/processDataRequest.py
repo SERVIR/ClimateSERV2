@@ -159,14 +159,14 @@ def start_processing(request):
         resultlist = []
         uid = uu.getUUID()
         suid = uu.getUUID()
-        # temp = []
-        # for d in dates:
-        #     if d not in temp:
-        #         temp.append(d)
-        # dates = temp
+        temp = []
+        for d in dates:
+            if d not in temp:
+                temp.append(d)
+        dates = temp
         logger.error("just b4 for obj in split_obj")
         for obj in split_obj:
-            logger.error('subtype = obj["subtype"]')
+            logger.error(str(obj))
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
