@@ -274,6 +274,7 @@ def get_date_range_from_nc_file(nc_file):
 
 
 def get_monthlyanalysis_dates_bounds(geom):
+    db.connections.close_all()
     params = Parameters.objects.first()
     # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
