@@ -111,8 +111,7 @@ def start_processing(request):
     for job in jobs:
         pool.apply_async(start_worker_process,
                          args=[job],
-                         callback=log_result,
-                         error_callback=pool_error
+                         callback=log_result
                          )
     pool.close()
     pool.join()
@@ -283,11 +282,6 @@ def start_worker_process(job_item):
         'subtype': job_item["subtype"],
         'zipfilepath': ""
     }
-
-
-def pool_error(retval):
-    results.append({})
-    logger.error(retval.get())
 
 
 def log_result(retval):
