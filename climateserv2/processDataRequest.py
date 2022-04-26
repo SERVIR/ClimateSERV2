@@ -248,6 +248,7 @@ def start_processing(request):
 
     # Terminating main process
     jobs.clear()
+    logger.error("EEEEEEEEEEEEEEEEENNNNNNNNNNNNNNNNNNNNDDDDDDDDDDDDDDDDDDDD")
     sys.exit(1)
 
 
