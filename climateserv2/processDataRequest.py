@@ -126,21 +126,17 @@ def start_processing(request):
     LTA = []
     subtype = ""
     if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
-        logger.error("custom_job_typecustom_job_typecustom_job_type")
         uniqueid = request['uniqueid']
         opn = "avg"
         resultlist = []
         uid = uu.getUUID()
         suid = uu.getUUID()
-        temp = []
-        for d in dates:
-            if d not in temp:
-                temp.append(d)
-        dates = temp
-        logger.error("just b4 for obj in split_obj")
-        logger.error('split_obj.length: ' + str(len(split_obj)))
+        # temp = []
+        # for d in dates:
+        #     if d not in temp:
+        #         temp.append(d)
+        # dates = temp
         for obj in split_obj:
-            logger.error(str(obj))
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -153,32 +149,21 @@ def start_processing(request):
                     workdict['value'] = {opn: np.float64(obj["values"][dateIndex])}
 
                 resultlist.append(workdict)
-        logger.error("making merged object")
         merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(resultlist)}
 
     else:
         try:
-            logger.error("Made it to 1.0")
-
-            logger.error("Made it to 1.1")
             dates = []
             values = []
             for obj in split_obj:
-                # obj = obj1.get()
-                logger.error("Memory: " + str(psutil.cpu_percent()))
-                logger.error(
-                    "Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
-                logger.error("Made it to 1.1.1")
                 db.connections.close_all()
                 try:
                     dates.extend(obj["dates"])
                     values.extend(obj["values"])
                 except Exception as e:
                     logger.error("making result list failed: " + str(e))
-            logger.error("Made it to 1")
             uniqueid = request['uniqueid']
             datatype = request['datatype']
-            logger.error("Made it to 2")
             polygon_Str_ToPass = polygon_string
             intervaltype = request['intervaltype']
             operationtype = request['operationtype']
@@ -188,7 +173,6 @@ def start_processing(request):
                 {'name': 'year', 'pattern': '%Y'}
             ]
             opn = literal_eval(params.parameters)[operationtype][1]
-            logger.error("Made it to 3")
             resultlist = []
             for dateIndex in range(len(dates)):
                 gmt_midnight = calendar.timegm(
@@ -210,13 +194,12 @@ def start_processing(request):
                     dateObject = dateutils.createDateFromYear(workdict["year"])
                 workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
                 resultlist.append(workdict)
-            logger.error("Made it to 4")
             merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
                           "datatype": datatype, "operationtype": operationtype,
                           "intervaltype": intervaltype,
                           "derived_product": False}
         except Exception as e:
-            logger.error("FFFFFFFFFFFFFFFFFFF: " + str(e))
+            logger.error("Making merge_obj failed: " + str(e))
     filename = params.resultsdir + request["uniqueid"] + ".txt"
     f = open(filename, 'w+')
     json.dump(merged_obj, f)
@@ -285,7 +268,6 @@ def start_worker_process(job_item):
             dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
                                                           job_item['end_date'], job_item['variable'], job_item['geom'],
                                                           job_item['operation'], job_item['file_list'])
-            logger.error("got back for job: " + job_item["uniqueid"])
     db.connections.close_all()
     return {
         "uid": job_item["uniqueid"],
