@@ -165,7 +165,7 @@ def start_processing(request):
                 temp.append(d)
         dates = temp
         logger.error("just b4 for obj in split_obj")
-        logger.error('split_obj.length: ' + len(split_obj))
+        logger.error('split_obj.length: ' + str(len(split_obj)))
         for obj in split_obj:
             logger.error(str(obj))
             subtype = obj["subtype"]
