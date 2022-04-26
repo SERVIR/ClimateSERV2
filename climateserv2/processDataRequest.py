@@ -110,20 +110,14 @@ def start_processing(request):
         logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
     my_results = []
-    if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
-        for job in jobs:
-            pool.apply_async(start_worker_process,
-                                               args=[job],
-                                               callback=log_result
-                                               )
-    else:
-        for job in jobs:
-            my_results.append(pool.apply_async(start_worker_process,
-                                               args=[job],
-                                               callback=log_result
-                                               ))
-        pool.close()
-        pool.join()
+
+    for job in jobs:
+        my_results.append(pool.apply_async(start_worker_process,
+                                           args=[job],
+                                           callback=log_result
+                                           ))
+    pool.close()
+    pool.join()
 
     logger.error("len(results): " + str(len(results)))
     logger.error("len(jobs): " + str(len(jobs)))
@@ -143,7 +137,7 @@ def start_processing(request):
                 split_obj.append(res.get())
         except Exception as e:
             logger.error("the split error is: " + str(e))
-            logger.error(str(my_results[0]))
+            logger.error(str(my_results[0].get()))
             split_obj = results
     else:
         split_obj = results
