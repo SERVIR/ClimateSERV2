@@ -104,16 +104,22 @@ def start_processing(request):
                              "variable": variable, "geom": polygon_string,
                              "operation": literal_eval(params.parameters)[request["operationtype"]][1],
                              "file_list": file_list,
-                             "derivedtype": False, "subtype": None})
+                             "derivedtype": False, "subtype": None
+                             })
         logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
     for job in jobs:
         pool.apply_async(start_worker_process, args=[job], callback=log_result)
+
+
+    logger.error("len(results): " + str(len(results)))
+    logger.error("len(jobs): " + str(len(jobs)))
+
+    while len(results) / len(jobs) < 1:
+        logger.error("wrongwrongwrongwrongwrongwrong")
+        time.sleep(1)
     pool.close()
     pool.join()
-
-    # while len(results) / len(jobs) < 1:
-    #     time.sleep(1)
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
