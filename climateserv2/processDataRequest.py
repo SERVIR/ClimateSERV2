@@ -137,17 +137,20 @@ def start_processing(request):
     LTA = []
     subtype = ""
     if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
+        logger.error("custom_job_typecustom_job_typecustom_job_type")
         uniqueid = request['uniqueid']
         opn = "avg"
         resultlist = []
         uid = uu.getUUID()
         suid = uu.getUUID()
-        temp = []
-        for d in dates:
-            if d not in temp:
-                temp.append(d)
-        dates = temp
+        # temp = []
+        # for d in dates:
+        #     if d not in temp:
+        #         temp.append(d)
+        # dates = temp
+        logger.error("just b4 for obj in split_obj")
         for obj in split_obj:
+            logger.error('subtype = obj["subtype"]')
             subtype = obj["subtype"]
             for dateIndex in range(len(obj["dates"])):
                 workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
@@ -160,6 +163,7 @@ def start_processing(request):
                     workdict['value'] = {opn: np.float64(obj["values"][dateIndex])}
 
                 resultlist.append(workdict)
+        logger.error("making merged object")
         merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(resultlist)}
 
     else:
