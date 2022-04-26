@@ -162,7 +162,7 @@ def start_processing(request):
     else:
         try:
             logger.error("Made it to 1.0")
-            db.connections.close_all()
+
             logger.error("Made it to 1.1")
             dates = []
             values = []
@@ -171,6 +171,7 @@ def start_processing(request):
                 logger.error("Memory: " + str(psutil.cpu_percent()))
                 logger.error("Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
                 logger.error("Made it to 1.1.1")
+                db.connections.close_all()
                 try:
                     dates.extend(obj["dates"])
                     values.extend(obj["values"])
