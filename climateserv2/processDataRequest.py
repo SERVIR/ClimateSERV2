@@ -108,16 +108,18 @@ def start_processing(request):
                              })
         logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
+    my_results = []
     for job in jobs:
-        pool.apply_async(start_worker_process,
+        my_results.append(pool.apply_async(start_worker_process,
                          args=[job],
                          callback=log_result
-                         )
+                         ))
     pool.close()
     pool.join()
 
     logger.error("len(results): " + str(len(results)))
     logger.error("len(jobs): " + str(len(jobs)))
+    logger.error("my_results: " + str(len(my_results)))
 
     # while len(results) / len(jobs) < 1:
     #     logger.error("wrongwrongwrongwrongwrongwrong")
