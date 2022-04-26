@@ -131,7 +131,7 @@ def start_processing(request):
     split_obj = []
     for res in my_results:
         split_obj.append(res.get())
-    # split_obj = my_results
+    logger.error("after split_obj")
     dates = []
     values = []
     LTA = []
