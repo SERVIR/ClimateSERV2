@@ -134,6 +134,9 @@ def start_processing(request):
     if len(my_results) > 0:
         try:
             for res in my_results:
+                logger.error("b4 bob")
+                bob = res.get()
+                logger.error("got bob")
                 split_obj.append(res.get())
         except Exception as e:
             logger.error("the split error is: " + str(e))
