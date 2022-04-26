@@ -311,7 +311,7 @@ def log_result(retval):
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
-
+        db.connections.close_all()
         log = reqLog.Request_Progress.objects.get(request_id=retval["uid"])
         log.progress = progress - .5
         log.save()
