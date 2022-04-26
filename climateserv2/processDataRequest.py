@@ -128,6 +128,7 @@ def start_processing(request):
     # this is the final list that would be returned by the jobs
     # you likely have to merge them, i'm guessing you had to do
     # similar with the results of zmq
+    logger.error("b4 split_obj")
     split_obj = []
     for res in my_results:
         split_obj.append(res.get())
