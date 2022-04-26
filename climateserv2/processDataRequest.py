@@ -112,9 +112,9 @@ def start_processing(request):
     my_results = []
     for job in jobs:
         my_results.append(pool.apply_async(start_worker_process,
-                         args=[job],
-                         callback=log_result
-                         ))
+                                           args=[job],
+                                           callback=log_result
+                                           ))
     pool.close()
     pool.join()
 
@@ -130,8 +130,12 @@ def start_processing(request):
     # similar with the results of zmq
     logger.error("b4 split_obj")
     split_obj = []
-    for res in my_results:
-        split_obj.append(res.get())
+    try:
+        for res in my_results:
+            split_obj.append(res.get())
+    except Exception as e:
+        logger.error(str(e))
+        split_obj = my_results
     logger.error("after split_obj")
     dates = []
     values = []
@@ -177,7 +181,8 @@ def start_processing(request):
             for obj in split_obj:
                 # obj = obj1.get()
                 logger.error("Memory: " + str(psutil.cpu_percent()))
-                logger.error("Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
+                logger.error(
+                    "Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
                 logger.error("Made it to 1.1.1")
                 db.connections.close_all()
                 try:
@@ -201,7 +206,8 @@ def start_processing(request):
             logger.error("Made it to 3")
             resultlist = []
             for dateIndex in range(len(dates)):
-                gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
+                gmt_midnight = calendar.timegm(
+                    time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
                 workdict = {}
                 workdict["year"] = int(dates[dateIndex][0:4])
                 workdict["month"] = int(dates[dateIndex][5:7])
@@ -211,7 +217,8 @@ def start_processing(request):
                 workdict["epochTime"] = gmt_midnight
                 workdict["value"] = {opn: np.float64(values[dateIndex])}
                 if intervaltype == 0:
-                    dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"], workdict["day"])
+                    dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"],
+                                                                      workdict["day"])
                 elif intervaltype == 1:
                     dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
                 elif intervaltype == 2:
