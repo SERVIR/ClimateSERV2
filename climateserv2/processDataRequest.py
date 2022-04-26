@@ -167,8 +167,10 @@ def start_processing(request):
                 obj = obj1.get()
                 dates.extend(obj["dates"])
                 values.extend(obj["values"])
+            logger.error("Made it to 1")
             uniqueid = request['uniqueid']
             datatype = request['datatype']
+            logger.error("Made it to 2")
             polygon_Str_ToPass = polygon_string
             intervaltype = request['intervaltype']
             operationtype = request['operationtype']
@@ -178,6 +180,7 @@ def start_processing(request):
                 {'name': 'year', 'pattern': '%Y'}
             ]
             opn = literal_eval(params.parameters)[operationtype][1]
+            logger.error("Made it to 3")
             resultlist = []
             for dateIndex in range(len(dates)):
                 gmt_midnight = calendar.timegm(time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
@@ -197,6 +200,7 @@ def start_processing(request):
                     dateObject = dateutils.createDateFromYear(workdict["year"])
                 workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
                 resultlist.append(workdict)
+            logger.error("Made it to 4")
             merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
                           "datatype": datatype, "operationtype": operationtype,
                           "intervaltype": intervaltype,
@@ -297,7 +301,7 @@ def log_result(retval):
     except Exception as e:
         logger.error('len(jobs) error: ' + str(e))
         pass
-    results.append(retval)
+    results.append("")
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
