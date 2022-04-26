@@ -21,6 +21,7 @@ import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
 from api.models import Track_Usage
 from api.models import Parameters as real_params
+import psutil
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -167,6 +168,8 @@ def start_processing(request):
             values = []
             for obj1 in split_obj:
                 obj = obj1.get()
+                logger.error("Memory: " + str(psutil.cpu_percent()))
+                logger.error("Available: " + str(psutil.virtual_memory().available * 100 / psutil.virtual_memory().total))
                 logger.error("Made it to 1.1.1")
                 try:
                     dates.extend(obj["dates"])
