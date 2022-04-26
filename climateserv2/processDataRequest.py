@@ -53,7 +53,6 @@ def start_processing(request):
 
         dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
         id = uu.getUUID()
-        logger.error("custom adding both jobs")
         jobs.append({"uniqueid": request["uniqueid"], "id": id, "bounds": bounds, "dates": dates, "months": months,
                      "subtype": "chirps"})
         id = uu.getUUID()
@@ -95,11 +94,9 @@ def start_processing(request):
         counter = 0
 
         for dates in date_range_list:
-            logger.error(str(",".join(dates)))
             id = uu.getUUID()
             dataset = ""
             file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
-            logger.error(str(counter) + "*************file_list: " + str(",".join(file_list)))
             counter += 1
             if len(file_list) > 0:
                 jobs.append({"uniqueid": request["uniqueid"], "id": id, "start_date": dates[0], "end_date": dates[1],
@@ -108,7 +105,6 @@ def start_processing(request):
                              "file_list": file_list,
                              "derivedtype": False, "subtype": None
                              })
-        logger.error("jobs length is: " + str(len(jobs)))
     pool = multiprocessing.Pool(os.cpu_count() * 2)
     my_results = []
 
@@ -120,32 +116,11 @@ def start_processing(request):
     pool.close()
     pool.join()
 
-    logger.error("len(results): " + str(len(results)))
-    logger.error("len(jobs): " + str(len(jobs)))
-    logger.error("my_results: " + str(len(my_results)))
-
-    # while len(results) / len(jobs) < 1:
-    #     logger.error("wrongwrongwrongwrongwrongwrong")
-    #     time.sleep(1)
-    # this is the final list that would be returned by the jobs
-    # you likely have to merge them, i'm guessing you had to do
-    # similar with the results of zmq
-    logger.error("b4 split_obj")
     split_obj = []
-    if len(my_results) > 0:
-        try:
-            for res in my_results:
-                logger.error("b4 bob")
-                bob = res.get()
-                logger.error("got bob")
-                split_obj.append(res.get())
-        except Exception as e:
-            logger.error("the split error is: " + str(e))
-            logger.error(str(my_results[0].get()))
-            split_obj = results
-    else:
-        split_obj = results
-    logger.error("after split_obj")
+
+    for res in my_results:
+        split_obj.append(res.get())
+
     dates = []
     values = []
     LTA = []
@@ -274,7 +249,6 @@ def start_processing(request):
 
     # Terminating main process
     jobs.clear()
-    logger.error("EEEEEEEEEEEEEEEEENNNNNNNNNNNNNNNNNNNNDDDDDDDDDDDDDDDDDDDD")
     sys.exit(1)
 
 
@@ -325,7 +299,7 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    results.append(retval)
+    # results.append(retval)
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
