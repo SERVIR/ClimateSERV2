@@ -135,7 +135,7 @@ def start_processing(request):
             split_obj.append(res.get())
     except Exception as e:
         logger.error("the split error is: " + str(e))
-        split_obj = my_results
+        split_obj = results
     logger.error("after split_obj")
     dates = []
     values = []
@@ -327,7 +327,7 @@ def log_result(retval):
     except Exception as e:
         logger.error('len(jobs) error: ' + str(e))
         pass
-    results.append("")
+    results.append(retval)
     try:
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
