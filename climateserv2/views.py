@@ -25,6 +25,7 @@ from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
+
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 exempt = -1
@@ -73,10 +74,8 @@ def process_callback(request, output, content_type):
     request_id = request.POST.get("id", request.GET.get("id", None))
 
     if request_id is None:
-        try:
-            request_id = get_id_from_output(output)
-        except:
-            request_id = None
+        request_id = get_id_from_output(output)
+
     callback = request.POST.get("callback", request.GET.get("callback"))
     if callback:
         http_response = HttpResponse(callback + "(" + output + ")", content_type=content_type)
@@ -127,6 +126,7 @@ def get_country_code(r):
         return g.country_code(get_client_ip(r))
     except AddressNotFoundError:
         return "ZZ"
+
 
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
@@ -261,88 +261,89 @@ def get_file_for_job_id(request):
             return process_callback(request, json.dumps(ret_obj), "application/json")
     except Exception as e:
         return process_callback(request, json.dumps(str(e)), "application/json")
+
+
 # To get a list of all datatypes numbers by a custom property
-def get_DataTypeNumber_List_By_Property(propertyName, propertySearchValue):
-    dataTypes = ETL_Dataset.objects.all()
-    resultList = []
-    try:
-        for currentDataType in dataTypes:
-            try:
-                if currentDataType.ensemble != '':
-                    current_PropValue = currentDataType.ensemble
-                    if str(current_PropValue).lower() == str(propertySearchValue).lower():
-                        if currentDataType.number:
-                            resultList.append(currentDataType.number)
-            except:
-                pass
-    except:
-        pass
-    return resultList
+def get_data_type_number_list_by_property(property_name, property_search_value):
+    data_types = ETL_Dataset.objects.all()
+    result_list = []
+    for currentDataType in data_types:
+        if currentDataType.ensemble != '':
+            if str(currentDataType.ensemble).lower() == str(property_search_value).lower():
+                if currentDataType.number:
+                    result_list.append(currentDataType.number)
+
+    return result_list
+
 
 # To get a list of unique ensembles
-def get_ClimateEnsemble_List():
-    dataTypes = ETL_Dataset.objects.all()
-    resultList = []
-    try:
-        for currentDataType in dataTypes:
-            try:
-                if currentDataType.ensemble != '':
-                    current_Ensemble = currentDataType.ensemble
-                    resultList.append(current_Ensemble)
-            except:
-                pass
-    except:
-        pass
+def get_climate_ensemble_list():
+    data_types = ETL_Dataset.objects.all()
+    result_list = []
+    for current_data_type in data_types:
+        try:
+            if current_data_type.ensemble != '':
+                current_ensemble = current_data_type.ensemble
+                result_list.append(current_ensemble)
+        except:
+            pass
     # Now remove duplicates from the list
-    tempSet = set(resultList)
-    resultList = list(tempSet)
-    return resultList
+    temp_set = set(result_list)
+    result_list = list(temp_set)
+    return result_list
 
-# To get Climate Datatype Map (A list of objects that contains a unique ensemble name and a list of variables for that ensemble)
-def get_Climate_DatatypeMap():
-    resultList = []
+
+# To get Climate Datatype Map (A list of objects that contains a unique ensemble
+# name and a list of variables for that ensemble)
+def get_climate_datatype_map():
+    result_list = []
     # Get the list of ensembles
-    ensembleList = get_ClimateEnsemble_List()
+    ensemble_list = get_climate_ensemble_list()
     # Iterate through each ensemble
-    for currentEnsemble in ensembleList:
-        currentEnsemble_DataTypeNumbers = get_DataTypeNumber_List_By_Property("ensemble", currentEnsemble)
-        print(currentEnsemble_DataTypeNumbers)
-        currentEnsembleObject_List = []
-        for currentEnsemble_DataTypeNumber in currentEnsemble_DataTypeNumbers:
-            ds= ETL_Dataset.objects.filter(number=int(currentEnsemble_DataTypeNumber))[0]
-            currentVariable = ds.dataset_nc4_variable_name
-            currentEnsembleLabel = ""# ds.ensemble_Label
-            currentVariableLabel = ""#ds.variable_Label
+    for current_ensemble in ensemble_list:
+        current_ensemble_datatype_numbers = get_data_type_number_list_by_property("ensemble", current_ensemble)
+        print(current_ensemble_datatype_numbers)
+        current_ensemble_object_list = []
+        for current_ensemble_datatype_number in current_ensemble_datatype_numbers:
+            ds = ETL_Dataset.objects.filter(number=int(current_ensemble_datatype_number))[0]
+            current_variable = ds.dataset_nc4_variable_name
+            current_ensemble_label = ""  # ds.ensemble_Label
+            current_variable_label = ""  # ds.variable_Label
             # Create an object that maps the variable, ensemble with datatype number
-            ensembleVariableObject = {
-                "dataType_Number": currentEnsemble_DataTypeNumber,
-                "climate_Variable": currentVariable,
-                "climate_Ensemble": currentEnsemble,
-                "climate_Ensemble_Label": currentEnsembleLabel,
-                "climate_Variable_Label": currentVariableLabel
+            ensemble_variable_object = {
+                "dataType_Number": current_ensemble_datatype_number,
+                "climate_Variable": current_variable,
+                "climate_Ensemble": current_ensemble,
+                "climate_Ensemble_Label": current_ensemble_label,
+                "climate_Variable_Label": current_variable_label
             }
-            currentEnsembleObject_List.append(ensembleVariableObject)
+            current_ensemble_object_list.append(ensemble_variable_object)
 
         # An object that connects the current ensemble to the list of objects that map the variable with datatype number
-        currentEnsembleObject = {
-            "climate_Ensemble": currentEnsemble,
-            "climate_DataTypes": currentEnsembleObject_List
+        current_ensemble_object = {
+            "climate_Ensemble": current_ensemble,
+            "climate_DataTypes": current_ensemble_object_list
         }
-        resultList.append(currentEnsembleObject)
+        result_list.append(current_ensemble_object)
 
-    return resultList
+    return result_list
+
 
 # To get list of all climate change scenario info
 @csrf_exempt
 def get_climate_scenario_info(request):
+    from_ui = False
+    reason = CsrfViewMiddleware().process_view(request, None, (), {})
+    if not reason:
+        from_ui = True
     unique_id = uutools.getUUID()
     try:
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request)
-                                  ,country_ISO=get_country_code(request),
+                                  , country_ISO=get_country_code(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
-                                  AOI=json.dumps({}), metadata_request=True
+                                  AOI=json.dumps({}), metadata_request=True, ui_request=from_ui
                                   )
         track_usage.save()
     except MultiValueDictKeyError:
@@ -364,7 +365,7 @@ def get_climate_scenario_info(request):
                 }
             }
         ]
-        climate_datatype_map = get_Climate_DatatypeMap()
+        climate_datatype_map = get_climate_datatype_map()
         api_return_object = {
             "unique_id": unique_id,
             "RequestName": "getClimateScenarioInfo",
@@ -375,6 +376,7 @@ def get_climate_scenario_info(request):
     except:
         with open('/cserv2/django_app/ClimateSERV2/climateserv2/sample_climate_scenario.json', 'r') as climate_scenario:
             api_return_object = json.loads(climate_scenario.read())
+            api_return_object["unique_id"] = unique_id
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
@@ -400,7 +402,7 @@ def run_etl(request):
         end_day = request.POST["end_day"]
         from_last_processed = request.POST["from_last_processed"]
         merge = request.POST["merge"]
-        etl= request.POST["etl"]
+        etl = request.POST["etl"]
         merge_option = "nomerge"
         if merge == "true":
             if (str(etl.lower()) in ['chirp', 'chirps_gefs']) or ("emodis" in etl.lower()):
@@ -418,7 +420,7 @@ def run_etl(request):
                 print("processing yearly merge loop")
                 p = subprocess.Popen(
                     [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                     "--etl_dataset_uuid", str(uuid), "--from_last_processed",  "--merge_yearly"])
+                     "--etl_dataset_uuid", str(uuid), "--from_last_processed", "--merge_yearly"])
                 p.wait()
             else:
                 subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
@@ -435,7 +437,7 @@ def run_etl(request):
                                    "--etl_dataset_uuid", str(uuid),
                                    "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                                    start_month, "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day,
-                                   "--END_DAY_DD", end_day,  "--merge_yearly"])
+                                   "--END_DAY_DD", end_day, "--merge_yearly"])
             p1.wait()
         else:
             proc = subprocess.Popen(
@@ -560,7 +562,7 @@ def submit_data_request(request):
         # processes each of them would be able to update progress and when they
         # have updated it all the way to 100 we can merge their data and be ready for the
         # getDataFromRequest call where we could return it.
-        dictionary["params"] = model_to_dict(params);
+        dictionary["params"] = model_to_dict(params)
 
         p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=unique_id, progress=0)

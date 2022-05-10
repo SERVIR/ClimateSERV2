@@ -7,6 +7,15 @@
 This tool allows development practitioners, scientists/researchers, and government decision-makers to visualize and
 download historical rainfall data, vegetation condition data, and 180-day forecasts of rainfall and temperature to
 improve understanding of, and make improved decisions for, issues related to agriculture and water availability.
+These data can be accessed directly through the web application or can be accessed through the applications API
+using ClimateSERVpy in your python application.  You can get the python package using pip 
+```shell
+pip install climateserv
+```
+or conda
+```shell
+conda install -c servir climateserv
+```
 
 ## Setup and Installation
 
