@@ -13,13 +13,13 @@ let drawToolbar;
 let styleOptions = [];
 const admin_layer_url = location.hostname === "localhost" ||
 location.hostname === "127.0.0.1" ||
-location.hostname === "192.168.1.132"
-    ? "https://climateserv2.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100"
-    : "servirmap_102100/?&crs=EPSG%3A102100";
+location.hostname === "192.168.1.132" ?
+    "https://climateserv.servirglobal.net/servirmap_102100/?&crs=EPSG%3A102100" :
+    "servirmap_102100/?&crs=EPSG%3A102100";
 let retries = 0;
 let sidebar;
 let previous_chart;
-let layer_limits = {min: null, max: null}
+let layer_limits = {min: null, max: null};
 let queried_layers = [];
 let control_layer;
 let current_calculation;
@@ -70,7 +70,7 @@ function createLayer(item) {
     overlayMaps[item.id + "TimeLayer"].id = item.id;
     // Add to list to be activated if query string requested it
     if (item.id.includes(passedLayer)) {
-        queried_layers.push(item.id)
+        queried_layers.push(item.id);
     } else {
         if (!control_layer) {
             control_layer = item.id;
@@ -104,8 +104,8 @@ function buildStyles() {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.warn(jqXHR + textStatus + errorThrown);
     }).done(function (data, _textStatus, _jqXHR) {
-        if (data["errMsg"]) {
-            console.info(data["errMsg"]);
+        if (data.errMsg) {
+            console.info(data.errMsg);
         } else {
             try {
                 const jsonObj = ($.xml2json(data))["#document"];
@@ -334,9 +334,9 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             format: "image/png",
             transparent: true,
             colorscalerange:
-                document.getElementById("range-min").value
-                + ","
-                + document.getElementById("range-max").value,
+                document.getElementById("range-min").value +
+                "," +
+                document.getElementById("range-max").value,
             abovemaxcolor: document.getElementById("above_max").value,
             belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
@@ -353,9 +353,9 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
     active_layer.styles = style_table.val();
-    active_layer.colorrange = document.getElementById("range-min").value
-        + ","
-        + document.getElementById("range-max").value
+    active_layer.colorrange = document.getElementById("range-min").value +
+        "," +
+        document.getElementById("range-max").value;
     overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
     overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
 }
@@ -393,7 +393,7 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
         if (is_multi) {
             multi_ids.forEach((e, i) => {
                 apply_style_click(e + "TimeLayer", getLayer(multi_ids[i]), true);
-            })
+            });
         } else {
             apply_style_click(which, active_layer);
         }
@@ -469,7 +469,7 @@ function openSettings(which) {
  * @returns html
  */
 function baseSettingsHtml() {
-    return ($("#style_template:first").clone()).html();
+    return document.getElementById("style_template").text;
 }
 
 /**
@@ -490,8 +490,9 @@ function openLegend(which) {
         active_layer.colorrange +
         "&PALETTE=" +
         active_layer.styles.substr(active_layer.styles.indexOf("/") + 1);
+    const style = "text-align:center;";
     dialog.html(
-        '<p style="text-align:center;"><img src="' + src + '" alt="legend"></p>'
+        '<p style="'+ style +'"><img src="' + src + '" alt="legend"></p>'
     );
     dialog.dialog({
         title: active_layer.title,
@@ -549,9 +550,7 @@ function mapSetup() {
         const map_thumb = $("<div>");
         map_thumb.addClass("map-thumb");
         map_thumb.attr("datavalue", key);
-        map_thumb.on("click", function () {
-            handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
-        });
+        map_thumb.on("click", handleBaseMapSwitch);
 
         const thumb_cap = $("<div>");
         thumb_cap.addClass("caption-text");
@@ -560,16 +559,14 @@ function mapSetup() {
         thumb_text.text(baseLayers[key].options.displayName);
 
         thumb_text.appendTo(thumb_cap);
-        const img = $("<img src='"
-            + static_url + "frontend/"
-            + baseLayers[key].options.thumb
-            + "' alt='"
-            + baseLayers[key].options.displayName + "'>", {
+        const img = $("<img src='" +
+            static_url + "frontend/" +
+            baseLayers[key].options.thumb +
+            "' alt='" +
+            baseLayers[key].options.displayName + "'>", {
             title: baseLayers[key].options.displayName,
             datavalue: key,
-            click: function () {
-                handleBaseMapSwitch($(this)[0].getAttribute("datavalue"));
-            }
+            click: 'handleBaseMapSwitch($(this)[0].getAttribute("datavalue"))'
         });
         img.addClass("basemapbtn");
 
@@ -597,6 +594,9 @@ function mapSetup() {
  * @param {string} which - The Key of the basemap
  */
 function handleBaseMapSwitch(which) {
+    if (which.currentTarget) {
+        which = which.currentTarget.getAttribute('datavalue');
+    }
     map.removeLayer(baseLayers[active_basemap]);
     active_basemap = which;
     baseLayers[active_basemap].addTo(map);
@@ -640,7 +640,7 @@ function toggleLayer(which) {
             " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
     } else {
         map.timeDimension.setAvailableTimes([null], "replace");
-        $(".timecontrol-date").html("Time not available")
+        $(".timecontrol-date").html("Time not available");
         $("#slider-range-txt").text('N/A to N/A');
     }
 }
@@ -847,6 +847,21 @@ function addDataToMap(data) {
     }
 }
 
+function file_upload_complete() {
+    return (data) => {
+        addDataToMap(data);
+
+        $(".dimmer").removeClass("active");
+        $("#preview").addClass("disabled");
+        $("#epsg").val("");
+        $("#encoding").val("");
+        $("#info").addClass("picInfo");
+        $("#option").slideUp(500);
+        collect_review_data();
+        verify_ready();
+    };
+}
+
 /**
  * handleFiles
  * This is the file upload handler.  It handles json, geojson, and zip files
@@ -879,22 +894,11 @@ function handleFiles(e) {
                     encoding: "UTF-8",
                     EPSG: 4326,
                 },
-                function (data) {
-                    addDataToMap(data);
-
-                    $(".dimmer").removeClass("active");
-                    $("#preview").addClass("disabled");
-                    $("#epsg").val("");
-                    $("#encoding").val("");
-                    $("#info").addClass("picInfo");
-                    $("#option").slideUp(500);
-                    collect_review_data();
-                    verify_ready();
-                }
+                file_upload_complete()
             );
             $("#upload_error").hide();
         } else {
-            +upload_file_error();
+            upload_file_error();
         }
     }
 }
@@ -975,8 +979,8 @@ function enableDrawing() {
                         throw BreakException;
                     }
                 });
-            } catch (e) {
-                if (e !== BreakException) throw e;
+            } catch (err) {
+                if (err !== BreakException) throw e;
             }
         }
     });
@@ -1027,7 +1031,7 @@ function enableAdminFeature(which) {
                         adminHighlightLayer.remove();
                     }
 
-                    const selectedID = response["data"];
+                    const selectedID = response.data;
                     if (highlightedIDs.includes(selectedID)) {
                         highlightedIDs = highlightedIDs.filter((e) => e !== selectedID);
                     } else {
@@ -1135,8 +1139,8 @@ function sortableLayerSetup() {
 function upload_file_error() {
     const upload_error = $("#upload_error");
     upload_error.html(
-        "* invalid file upload, please see the <a href='" + $("#menu-help").attr('href')
-        + "#geojson'>Help Center</a> for more info about upload formats.")
+        "* invalid file upload, please see the <a href='" + $("#menu-help").attr('href') +
+        "#geojson'>Help Center</a> for more info about upload formats.");
     upload_error.show();
 }
 
@@ -1184,7 +1188,7 @@ function initMap() {
     adjustLayerIndex();
 
     const slider_range = '<div id="slider-range" onclick="open_range_picker()"' +
-        '><span id="slider-range-txt">N/A to N/A</span></div>'
+        '><span id="slider-range-txt">N/A to N/A</span></div>';
     $(".leaflet-bar.leaflet-bar-horizontal.leaflet-bar-timecontrol.leaflet-control").prepend(slider_range);
 }
 
@@ -1234,7 +1238,8 @@ function open_range_picker() {
         range_picker += 'greater than the start date</label></div>';
         range_picker += '</form>';
         range_picker += '<div class="just-buttons">';
-        range_picker += '<button style="width:45%" onclick="clearRange()">Clear Range</button>';
+        const style_width = "width:45%";
+        range_picker += '<button style="'+ style_width +'" onclick="clearRange()">Clear Range</button>';
         range_picker += '<button style="width:45%" onclick="setRange()">Set Range</button>';
         range_picker += '</div>';
     } else {
@@ -1344,12 +1349,26 @@ function isComplete() {
     return isReady;
 }
 
+
 /**
  * verify_ready
  * Verifies if the user has filled in enough information to send a request
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
+    function get_AOI_String() {
+        let aoi_string = "";
+        if (geometry.text().trim().indexOf("- Feature:") > -1) {
+            if (highlightedIDs.length > 0) {
+                aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
+                aoi_string += "&featureids=" + highlightedIDs.join(",");
+            }
+        } else {
+            aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
+        }
+        return aoi_string;
+    }
+
     const btnRequest = $("#btnRequest");
     let ready = true;
     const requestTypeSelect = $("#requestTypeSelect");
@@ -1360,8 +1379,8 @@ function verify_ready() {
     const download_aoi_holder = $("#download_aoi_holder");
     let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
 
-    if (requestTypeSelect.val() === 'monthly_analysis'
-        && (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')) {
+    if (requestTypeSelect.val() === 'monthly_analysis' &&
+        (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')) {
         btnRequest.prop("disabled", false);
     }
     if (requestTypeSelect.val() !== 'monthly_analysis') {
@@ -1374,53 +1393,40 @@ function verify_ready() {
         $("#btnAddToQuery").prop("disabled", disabled);
     }
 
-    if (geometry.text().trim().indexOf('{"type"') > -1
-        || geometry.text().trim().indexOf('{\"type\"') > -1) {
+    if (geometry.text().trim().indexOf('{"type"') > -1 ||
+        geometry.text().trim().indexOf('{\"type\"') > -1) {
         download_aoi_holder.show();
     } else {
         download_aoi_holder.hide();
     }
     let api_host = window.location.hostname;
     if (window.location.port) {
-        api_host += ":" + window.location.port
+        api_host += ":" + window.location.port;
     }
     try {
-        function get_AOI_String() {
-            let aoi_string = "";
-            if (geometry.text().trim().indexOf("- Feature:") > -1) {
-                if (highlightedIDs.length > 0) {
-                    aoi_string = "&layerid=" + adminHighlightLayer.options.layers.replace("_highlight", "");
-                    aoi_string += "&featureids=" + highlightedIDs.join(",");
-                }
-            } else {
-                aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
-            }
-            return aoi_string;
-        }
-
         const api_panel = $("#api_panel");
         if (requestTypeSelect.val() === "datasets") {
             api_panel.empty();
-            query_list.forEach(buildAPIReference);
+            query_list.forEach(function (value) {
+                api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
+                    api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() +
+                    get_AOI_String() + "</span>");
+            });
 
-            function buildAPIReference(value) {
-                api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                    + api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString()
-                    + get_AOI_String() + "</span>");
-            }
+
         } else if (requestTypeSelect.val() === "download") {
             // get from panel
             let formData = new FormData();
             buildForm(formData);
             api_panel.empty();
-            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                + api_host + "/api/submitDataRequest/?"
-                + new URLSearchParams(formData).toString() + get_AOI_String() + "</span>");
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
+                api_host + "/api/submitDataRequest/?" +
+                new URLSearchParams(formData).toString() + get_AOI_String() + "</span>");
             btnRequest.prop("disabled", disabled);
         } else {
             api_panel.empty();
-            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>"
-                + api_host + get_API_url() + "</span>");
+            api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
+                api_host + get_API_url() + "</span>");
         }
     } catch (e) {
         console.log(e);
@@ -1448,7 +1454,7 @@ function get_API_url() {
     url += "seasonal_start_date=" + csi.startDateTime;
     url += "&seasonal_end_date=" + csi.endDateTime;
     url += geometry_params;
-    return url
+    return url;
 }
 
 /**
@@ -1501,7 +1507,7 @@ function collect_review_data() {
     const csv = $("#csv");
 
     if (highlightedIDs.length > 0) {
-        const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature"
+        const feature_label = highlightedIDs.length > 1 ? "Features" : "Feature";
         geometry.text(
             adminHighlightLayer
                 .options
@@ -1672,6 +1678,50 @@ function append_AOI_to_form(formData) {
     }
 }
 
+function send_request_ajax_fail() {
+    return function (jqXHR, textStatus, errorThrown) {
+        console.warn(jqXHR + textStatus + errorThrown);
+        close_dialog();
+        let error_message = '<div style="width:100%; height:100%; display: flex;' +
+            '    align-items: center;' +
+            '}">';
+
+        error_message += '<div style="width:100%; text-align: center;">';
+        error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
+        error_message += '<p style="line-height: 2em;">There was am error processing this request';
+        error_message += '.  If this persists, please contact us for assistance and reference the id.</p>';
+
+        error_message += '</div>';
+        const dialog = $("#dialog");
+        dialog.html(error_message);
+        dialog.dialog({
+            title: "Processing Error",
+            resizable: false,
+            width: $(window).width() / 2,
+            height: 200,
+            position: {
+                my: "center",
+                at: "center",
+                of: window
+            },
+            close: function () {
+                $("#btnAddToQuery").prop("disabled", false);
+                //$("#btnViewAPI").prop("disabled", false);
+            }
+        });
+    };
+}
+
+function send_request_ajax_done() {
+    return function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
+            handle_initial_request_data(JSON.parse(data), false, this.query_index);
+        }
+    };
+}
+
 /**
  * sendRequest
  * Initiates the processing request to ClimateSERV
@@ -1706,7 +1756,7 @@ function sendRequest() {
 
             let api_host = window.location.hostname;
             if (window.location.port) {
-                api_host += ":" + window.location.port
+                api_host += ":" + window.location.port;
             }
             $("#api_query").text(api_host + "/api/submitDataRequest/?" + new URLSearchParams(formData).toString());
             $.ajax({
@@ -1719,42 +1769,7 @@ function sendRequest() {
                 crossDomain: true,
                 data: formData,
                 query_index: i,
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                console.warn(jqXHR + textStatus + errorThrown);
-                close_dialog();
-                let error_message = '<div style="width:100%; height:100%; display: flex;' +
-                    '    align-items: center;' +
-                    '}">';
-                error_message += '<div style="width:100%; text-align: center;">';
-                error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
-                error_message += '<p style="line-height: 2em;">There was am error processing this request';
-                error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
-
-                error_message += '</div>';
-                const dialog = $("#dialog");
-                dialog.html(error_message);
-                dialog.dialog({
-                    title: "Processing Error",
-                    resizable: false,
-                    width: $(window).width() / 2,
-                    height: 200,
-                    position: {
-                        my: "center",
-                        at: "center",
-                        of: window
-                    },
-                    close: function () {
-                        $("#btnAddToQuery").prop("disabled", false);
-                        //$("#btnViewAPI").prop("disabled", false);
-                    }
-                });
-            }).done(function (data, _textStatus, _jqXHR) {
-                if (data.errMsg) {
-                    console.info(data.errMsg);
-                } else {
-                    handle_initial_request_data(JSON.parse(data), false, this.query_index);
-                }
-            });
+            }).fail(send_request_ajax_fail()).done(send_request_ajax_done());
         }
 
     } else {
@@ -1788,15 +1803,16 @@ function updateProgress(val, index) {
         multi_progress_value[index] = val;
 
         let combined = 0;
-        multi_progress_value.forEach(combine);
+        multi_progress_value.forEach(
+            function (value) {
+                combined += value;
+            }
+        );
 
-        function combine(value) {
-            combined += value;
-        }
 
         final = (combined / query_list.length).toString();
     } else {
-        final = val
+        final = val;
     }
 
     $('.progress-bar').css('width', final + '%').attr('aria-valuenow', final);
@@ -1834,16 +1850,16 @@ function pollForProgress(id, isClimate, query_index) {
             } else if (val === 100) {
                 retries = 0;
                 const requestTypeValue = $("#requestTypeSelect").val();
-                const request_operation_format = (requestTypeValue === "datasets"
-                        ? $("#operationmenu").val()
-                        : requestTypeValue === "download"
-                            ? $("#format-menu").val()
-                            : "987654"
+                const request_operation_format = (requestTypeValue === "datasets" ?
+                        $("#operationmenu").val() :
+                        requestTypeValue === "download" ?
+                            $("#format-menu").val() :
+                            "987654"
                 );
                 if (
-                    request_operation_format === "6"
-                    || request_operation_format === "7"
-                    || request_operation_format === "8"
+                    request_operation_format === "6" ||
+                    request_operation_format === "7" ||
+                    request_operation_format === "8"
                 ) {
                     getDownLoadLink(id);
                 } else {
@@ -1856,7 +1872,7 @@ function pollForProgress(id, isClimate, query_index) {
                     retries++;
                     setTimeout(function () {
                         pollForProgress(id, isClimate);
-                    }, 500)
+                    }, 500);
                 } else {
                     retries = 0;
                     console.log("Server Error");
@@ -1869,7 +1885,7 @@ function pollForProgress(id, isClimate, query_index) {
                     error_message += '<div style="width:100%; text-align: center;">';
                     error_message += '<h1 class="step-marker" style="line-height: 2em;">Processing Error</h1>';
                     error_message += '<p style="line-height: 2em;">There was an error processing Job ID: ' + id;
-                    error_message += '.  If this persists, please contact us for assistance and reference the id.</p>'
+                    error_message += '.  If this persists, please contact us for assistance and reference the id.</p>';
 
                     error_message += '</div>';
                     const dialog = $("#dialog");
@@ -1946,20 +1962,19 @@ function configure_nmme(sdata, edit, edit_init_id) {
         }
         if (edit_init_id) {
             if (parseInt(edit_init_id) % 2 === 0) {
-                sent_variable = 'air_temperature'
+                sent_variable = 'air_temperature';
             }
         }
         const data = JSON.parse(sdata);
         const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
-        cc.startDateTime;
 
         $('#model_run_menu' + edit_string)
-            .append('<option value="' + cc.startDateTime + '">'
-                + cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-"))
-                + '</option>');
+            .append('<option value="' + cc.startDateTime + '">' +
+                cc.startDateTime.replaceAll("-", "/").substr(0, cc.startDateTime.lastIndexOf("-")) +
+                '</option>');
 
         // create date dropdowns
-        const mformat = "YYYY-MM-DD"
+        const mformat = "YYYY-MM-DD";
         let sdate = moment(cc.startDateTime, mformat);
         let edate = moment(cc.endDateTime, mformat);
         let count = 1;
@@ -1984,22 +1999,19 @@ function configure_nmme(sdata, edit, edit_init_id) {
             $("#forecastfrommenu" + edit_string)
                 .append
                 (
-                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_start + '>'
-                    + "f" + count.toString().padStart(3, "0")
-                    + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_start + '>' +
+                    "f" + count.toString().padStart(3, "0") +
+                    " " + sdate.format('YYYY-MM-DD') + '</option>');
             $("#forecasttomenu" + edit_string)
                 .append
                 (
-                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_end + '>'
-                    + "f" + count.toString().padStart(3, "0")
-                    + " " + sdate.format('YYYY-MM-DD') + '</option>');
+                    '<option value="' + sdate.format('YYYY-MM-DD') + '" ' + selected_end + '>' +
+                    "f" + count.toString().padStart(3, "0") +
+                    " " + sdate.format('YYYY-MM-DD') + '</option>');
             count++;
             sdate.add(1, "days");
-        } while (sdate < edate)
+        } while (sdate < edate);
 
-        cc.endDateTime;
-        cc.date_FormatString_For_ForecastRange;
-        cc.number_Of_ForecastDays;
         $("#ensemblevarmenu" + edit_string).empty();
         data.climate_DatatypeMap[0].climate_DataTypes.forEach((variable) => {
             // add variable with label to select
@@ -2007,11 +2019,11 @@ function configure_nmme(sdata, edit, edit_init_id) {
             if (variable.climate_Variable === sent_variable) {
                 selected = 'selected';
             }
-            const variable_text = variable.climate_Variable == "air_temperature" ? "Temperature" : "Precipitation";
+            const variable_text = variable.climate_Variable === "air_temperature" ? "Temperature" : "Precipitation";
             $("#ensemblevarmenu" + edit_string)
                 .append(
-                    '<option value="' + variable.climate_Variable
-                    + '" ' + selected + '>' + variable_text + '</option>');
+                    '<option value="' + variable.climate_Variable +
+                    '" ' + selected + '>' + variable_text + '</option>');
         });
     }
 }
@@ -2027,7 +2039,7 @@ function handleSourceSelected(which, edit, edit_init_id) {
     which = which.toString();
     let layer = client_layers.find(
         (item) => item.app_id === which
-    )
+    );
     if (layer) {
         if (edit) {
             $("#ensemble_builder_edit").hide();
@@ -2065,8 +2077,8 @@ function handleSourceSelected(which, edit, edit_init_id) {
             $("[id^=" + id + "]").each(function (index, item) {
                 const temp = getLayer(item.id);
                 let selected = '';
-                if (temp.app_id == init_id) {
-                    selected = 'selected'
+                if (temp.app_id === init_id) {
+                    selected = 'selected';
                 }
                 $("#ensemblemenu_edit").append('<option value="' + temp.app_id + '" ' + selected + '>' + temp.title + '</option>');
             });
@@ -2161,7 +2173,7 @@ function inti_chart_dialog() {
     let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
-    dialog_html += 'Simple Axis <label class="switch">'
+    dialog_html += 'Simple Axis <label class="switch">';
     dialog_html += '<input id="axis_toggle" type="checkbox" ' + checked_text + ' onclick="rebuildGraph()">';
     dialog_html += '<span class="slider round"></span>';
     dialog_html += '</label> Multi-Axis';
@@ -2204,33 +2216,38 @@ function inti_chart_dialog() {
 function open_previous_chart() {
     if (previous_chart) {
         inti_chart_dialog();
-        finalize_chart(previous_chart.compiled_series, previous_chart.units, previous_chart.xAxis_object, previous_chart.title, previous_chart.isClimate)
+        finalize_chart(
+            previous_chart.compiled_series,
+            previous_chart.units,
+            previous_chart.xAxis_object,
+            previous_chart.title,
+            previous_chart.isClimate);
     } else if (multiQueryData.length !== 0) {
         inti_chart_dialog();
         multi_chart_builder();
     } else {
-        alert("you have no previous chart, please send a request.")
+        alert("you have no previous chart, please send a request.");
     }
 }
 
-/**
- * getIndex
- * Helper function for monthly rainfall analysis graphing
- * @param which
- * @returns {number}
- */
-function getIndex(which) {
-    switch (which) {
-        case 'col02_MonthlyAverage':
-            return 0;
-        case 'col05_50thPercentile':
-            return 1;
-        case 'col03_25thPercentile':
-            return 2;
-        default:
-            return 3;
-    }
-}
+// /**
+//  * getIndex
+//  * Helper function for monthly rainfall analysis graphing
+//  * @param which
+//  * @returns {number}
+//  */
+// function getIndex(which) {
+//     switch (which) {
+//         case 'col02_MonthlyAverage':
+//             return 0;
+//         case 'col05_50thPercentile':
+//             return 1;
+//         case 'col03_25thPercentile':
+//             return 2;
+//         default:
+//             return 3;
+//     }
+// }
 
 /**
  * getDownLoadLink
@@ -2246,7 +2263,7 @@ function getDownLoadLink(id) {
     download += '<div style="width:100%; text-align: center;">';
     download += '<h1 class="step-marker" style="line-height: 2em;">File Download Ready</h1>';
     download += '<p style="line-height: 2em;">Job ID: ' + id + '</p>';
-    const url = '/api/getFileForJobID/?id=' + id
+    const url = '/api/getFileForJobID/?id=' + id;
     download += '<a href="' + url + '" class="step-marker" style="line-height: 2em;">Click Here to Download File</a>';
     download += '</div></div>';
     const dialog = $("#dialog");
@@ -2265,18 +2282,18 @@ function getDownLoadLink(id) {
     });
 }
 
-function format_data(i){
+function format_data(i) {
     const temp_data = multiQueryData[i].data;
 
-                let breaks_gone = multiQueryData[i].yAxis_format.formatter.toString().replace(/(\r\n|\n|\r)/gm, "")
-                let parsed_formula = breaks_gone.substring(breaks_gone.indexOf("return") + 6).replace("}", "").trim();
-
-                temp_data.map(x =>{
-
-                                    x[1] = eval(parsed_formula.replace("this.value", x[1]));
-                                    return x;
-                                });
-                multiQueryData[i].point_format = null;
+    let breaks_gone = multiQueryData[i].yAxis_format.formatter.toString().replace(/(\r\n|\n|\r)/gm, "");
+    let parsed_formula = breaks_gone.substring(breaks_gone.indexOf("return") + 6).replace("}", "").trim();
+console.log(parsed_formula);
+    temp_data.map(x => {
+        x[1] = eval(parsed_formula.replace("this.value", x[1]));
+        console.log(x[1]);
+        return x;
+    });
+    multiQueryData[i].point_format = null;
 }
 
 /**
@@ -2315,7 +2332,7 @@ function multi_chart_builder() {
         align: 'right',
         verticalAlign: 'middle'
     };
-    let point_format = ''
+    let point_format;
     if (multiQueryData[0].point_format) {
         point_format = multiQueryData[0].point_format;
     } else {
@@ -2323,7 +2340,7 @@ function multi_chart_builder() {
             pointFormatter: function () {
                 return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
             }
-        }
+        };
     }
     chart_object.series = [{
         color: "#758055",
@@ -2375,15 +2392,17 @@ function multi_chart_builder() {
                 }
             }
         }]
-    }
+    };
     console.log("init chart dialog");
     inti_chart_dialog();
 
     let dialog = $("#dialog");
-    dialog.dialog({resize: function () {
+    dialog.dialog({
+        resize: function () {
             Highcharts.charts[0].reflow();
             window.dispatchEvent(new Event('resize'));
-        }});
+        }
+    });
 
     console.log("first data");
     multiChart = Highcharts.chart('chart_holder', chart_object, function (chart) { // on complete
@@ -2401,7 +2420,7 @@ function multi_chart_builder() {
         "#022cfc",
         "#02f4fc",
         "#283601"
-    ]
+    ];
 
     if (multiQueryData.length > 1) {
         for (let i = 1; i < multiQueryData.length; i++) {
@@ -2417,23 +2436,22 @@ function multi_chart_builder() {
             if (multiQueryData[i].yAxis_format) {
                 format_data(i);
             }
-            let build_yAxis =  simpleAxis ? "simple" : "yaxis-" + i;
+            let build_yAxis = simpleAxis ? "simple" : "yaxis-" + i;
 
 
-
-            let point_format = ''
+            let point_format = '';
             if (multiQueryData[i].point_format) {
                 point_format = multiQueryData[i].point_format;
             } else {
                 point_format = {
                     pointFormatter: function () {
-                        if(multiQueryData[i] && multiQueryData[i].units) {
+                        if (multiQueryData[i] && multiQueryData[i].units) {
                             return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
-                        } else{
-                            return Highcharts.numberFormat(this.y, 2) +  "<br>";
+                        } else {
+                            return Highcharts.numberFormat(this.y, 2) + "<br>";
                         }
                     }
-                }
+                };
             }
             multiQueryData[i].yAxis_format = null;
             multiChart.addSeries({
@@ -2448,7 +2466,9 @@ function multi_chart_builder() {
         $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
+
 let passes = 0;
+
 /**
  * getDataFromRequest
  * Function to retrieve the processed data from the server with the id
@@ -2458,8 +2478,8 @@ let passes = 0;
  * @param query_index
  */
 function getDataFromRequest(id, isClimate, query_index) {
-    // only do this for the final dataset that goes thru, othewise continue the progress bar
-    passes ++;
+    // only do this for the final dataset that goes through, otherwise continue the progress bar
+    passes++;
     if (passes === query_list.length) {
         console.log("will show");
         let complete = '<div style="width:100%; height:100%; display: flex;' +
@@ -2468,7 +2488,8 @@ function getDataFromRequest(id, isClimate, query_index) {
         complete += '<div style="width:100%">';
         complete += '<h1 class="step-marker">Processing complete, downloading results.</h1>';
         complete += '<p>If this window is stuck for a long period of time there may be an error.  To reset ';
-        complete += 'the query status please click <button class="bread-crumb" onclick"reset_query()">Reset</button> ';
+        complete += 'the query status please click';
+        complete += '<button id="reset_btn" class="bread-crumb" onclick"reset_query">Reset</button> ';
         complete += '</div>';
         const dialog = $("#dialog");
         dialog.html(complete);
@@ -2483,6 +2504,10 @@ function getDataFromRequest(id, isClimate, query_index) {
                 of: window
             }
         });
+        $("#reset_btn").on("click", function(){
+            reset_query();
+        });
+
         passes = 0;
     }
 
@@ -2529,7 +2554,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                     // create these from the object dates
                     const xaxis = {
                         categories: []
-                    }
+                    };
                     let start_month = 13;
                     graph_obj.forEach((o, i) => {
                         let month_year;
@@ -2569,13 +2594,13 @@ function getDataFromRequest(id, isClimate, query_index) {
                     debug_data.push(data);
                     JSON.parse(data).data.forEach((d) => {
                         let val;
-                        val = d.value.hasOwnProperty('max')
-                            ? d.value.max
-                            : d.value.hasOwnProperty('min')
-                                ? d.value.min
-                                : d.value.hasOwnProperty('avg')
-                                    ? d.value.avg
-                                    : -9191;
+                        val = d.value.hasOwnProperty('max') ?
+                            d.value.max :
+                            d.value.hasOwnProperty('min') ?
+                                d.value.min :
+                                d.value.hasOwnProperty('avg') ?
+                                    d.value.avg :
+                                    -9191;
 
                         if (val > -9000) {
                             const darray = [];
@@ -2598,27 +2623,27 @@ function getDataFromRequest(id, isClimate, query_index) {
                     });
                     from_compiled = compiledData; // if this is empty, I need to let the user know there was no data
 
-                    let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])))
+                    let queried_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[query_index])));
 
                     let layer = client_layers.find(
                         (item) => item.app_id === queried_data.datatype
                     );
-                    const units = layer.units.includes("|units|")
-                        ? layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex]
-                        : layer.units;
+                    const units = layer.units.includes("|units|") ?
+                        layer.units.split("|units|")[document.getElementById("ensemblevarmenu").selectedIndex] :
+                        layer.units;
 
                     multiQueryData[query_index] = {
                         data: compiledData,
                         units: units,
                         yAxis_format: layer.yAxis_format || null,
                         point_format: layer.point_format || null,
-                        label: layer.title + ": " + (queried_data.operationtype === "0"
-                            ? "max"
-                            : queried_data.operationtype === "1"
-                                ? "min"
-                                : queried_data.operationtype === "5"
-                                    ? "avg"
-                                    : "n/a")
+                        label: layer.title + ": " + (queried_data.operationtype === "0" ?
+                            "max" :
+                            queried_data.operationtype === "1" ?
+                                "min" :
+                                queried_data.operationtype === "5" ?
+                                    "avg" :
+                                    "n/a")
                     };
 
                     if (multiQueryData.filter(Boolean).length === query_list.length) {
@@ -2646,7 +2671,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         $("#checkout_number").text("0 Queries");
                         $("#chart-builder").show();
                         $("#query_list_checkout").hide();
-                       // reset_query_panel();
+                        // reset_query_panel();
                     }
                 }
             }
@@ -2707,7 +2732,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     };
 
     if (yAxis_format) {
-        chart_obj.yAxis.labels = yAxis_format
+        chart_obj.yAxis.labels = yAxis_format;
     }
 
     chart_obj.legend = {
@@ -2825,21 +2850,21 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
     });
 }
 
-/**
- * getDataLine
- * Helper function for graphing the monthly rainfall analysis
- * @param mmm_Y
- * @param type
- * @param data
- * @returns {*[]}
- */
-function getDataLine(mmm_Y, type, data) {
-    const data_line = [];
-    data_line['Month_Year'] = mmm_Y;
-    data_line['data_series_type'] = type;
-    data_line['Monthly_Rainfall_mm'] = data;
-    return data_line;
-}
+// /**
+//  * getDataLine
+//  * Helper function for graphing the monthly rainfall analysis
+//  * @param mmm_Y
+//  * @param type
+//  * @param data
+//  * @returns {*[]}
+//  */
+// function getDataLine(mmm_Y, type, data) {
+//     const data_line = [];
+//     data_line['Month_Year'] = mmm_Y;
+//     data_line['data_series_type'] = type;
+//     data_line['Monthly_Rainfall_mm'] = data;
+//     return data_line;
+// }
 
 /**
  * check_query_status
@@ -2962,15 +2987,15 @@ function close_dialog() {
  */
 function stats_info(which) {
     close_dialog();
-    const title = which === "type"
-        ? "Type of request"
-        : which === "source"
-            ? "Data Source info" : "Calculation info"
+    const title = which === "type" ?
+        "Type of request" :
+        which === "source" ?
+            "Data Source info" : "Calculation info";
     let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
         '}">';
     stat_info += '<div style="width:100%; text-align: left;">';
-    stat_info += get_stat_body(which)
+    stat_info += get_stat_body(which);
     stat_info += '</div>';
     const dialog = $("#dialog");
     dialog.html(stat_info);
@@ -3134,7 +3159,7 @@ function init_tour() {
                 content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
                 onShow: function () {
                     const sidebar_content = $("#sidebar-content");
-                    if (!(sidebar_content.scrollTop() + sidebar_content.innerHeight() >= sidebar_content[0].scrollHeight)) {
+                    if ((sidebar_content.scrollTop() + sidebar_content.innerHeight() < sidebar_content[0].scrollHeight)) {
                         sidebar_content.animate({scrollTop: sidebar_content.prop("scrollHeight")}, 1000);
                     }
                 }
@@ -3195,7 +3220,7 @@ function init_tour() {
  * Opens tour and removes the localStorage key
  */
 function open_tour() {
-    localStorage.removeItem("hideTour")
+    localStorage.removeItem("hideTour");
     tour.start(true);
 }
 
@@ -3229,7 +3254,7 @@ $(function () {
         console.log(e2);
     }
     $(function () {
-        $('[data-toggle="tooltip"]').tooltip({container: 'body', trigger: 'hover'})
+        $('[data-toggle="tooltip"]').tooltip({container: 'body', trigger: 'hover'});
     });
     const sourcemenu = $('#sourcemenu');
     sourcemenu.val(0);
@@ -3395,7 +3420,7 @@ function review_query(no_toggle) {
             edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
             edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
             edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
-            edit_element += 'Query ' + (i + 1) + '</span>'
+            edit_element += 'Query ' + (i + 1) + '</span>';
             edit_element += '<a class="z5px" onclick="edit_query(' + i + ')" title="Edit">';
             edit_element += '<i class="fas fa-edit" style="color:#758055" aria-hidden="true"></i></a>';
             edit_element += '<a class="z5px" onclick="delete_query(' + i + ')" title="Delete">';
@@ -3416,12 +3441,12 @@ function review_query(no_toggle) {
 
             edit_element += '<i id="review-' + i + '-toggle" class="' + toggle_arrow + '"></i></a>';
             edit_element += '</p>';
-            element_holder.append(edit_element)
+            element_holder.append(edit_element);
 
 
             let layer = client_layers.find(
                 (item) => item.app_id === structured_data.datatype
-            )
+            );
             let element_panel = $('<div id="review-' + i + '" class="' + toggle_class + '">');
             element_panel.append(
                 get_form_group(
@@ -3432,15 +3457,14 @@ function review_query(no_toggle) {
             );
 
             // see if it is ensemble, if so see which variable it is and display in a new form group
-
-            if (structured_data["ensemble"] === "true") {
+            if (structured_data.ensemble === "true") {
                 element_panel.append(
                     get_form_group(
                         'Ensemble variable',
                         'ensemble_variable_review',
-                        (parseInt(structured_data["datatype"]) % 2 === 0)
-                            ? "Temperature"
-                            : "Precipitation"
+                        (parseInt(structured_data.datatype) % 2 === 0) ?
+                            "Temperature" :
+                            "Precipitation"
                     )
                 );
             }
@@ -3450,26 +3474,26 @@ function review_query(no_toggle) {
                 get_form_group(
                     'Begin time',
                     'begin_time_review',
-                    structured_data["begintime"]
+                    structured_data.begintime
                 )
             );
             element_panel.append(
                 get_form_group(
                     'End time',
                     'end_time_review',
-                    structured_data["endtime"]
+                    structured_data.endtime
                 )
             );
             element_panel.append(
                 get_form_group(
                     'Calculation',
                     'calculation_review',
-                    $('#operationmenu option[value=' + structured_data["operationtype"] + ']').text()
+                    $('#operationmenu option[value=' + structured_data.operationtype + ']').text()
                 )
             );
             element_holder.append(element_panel);
 
-            checkout_list.append(element_holder)
+            checkout_list.append(element_holder);
         }
     }
     if (!no_toggle) {
@@ -3477,16 +3501,10 @@ function review_query(no_toggle) {
     }
 }
 
-let debug_this;
-
 function edit_query(edit_index) {
 
     close_dialog();
     let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
-
-    let layer = client_layers.find(
-        (item) => item.app_id === structured_data.datatype
-    )
 
 
     let edit_query_form = $('<div>');
@@ -3498,8 +3516,8 @@ function edit_query(edit_index) {
     let dataset_type_menu = $("#dataset-type-menu").clone().prop('id', 'dataset-type-menu-edit').off('change');
 
     dataset_type_menu.removeAttr("onchange");
-    ;
-    dataset_type_menu.on('change', function (event) {
+
+    dataset_type_menu.on('change', function () {
         filter_edit_datasets_by();
     });
     if (structured_data.ensemble === 'true') {
@@ -3524,8 +3542,7 @@ function edit_query(edit_index) {
     }
 
     dataset_source_menu.removeAttr("onchange");
-    ;
-    dataset_source_menu.on('change', function (event) {
+    dataset_source_menu.on('change', function () {
         handleSourceSelected(this.value, true);
     });
 
@@ -3556,7 +3573,7 @@ function edit_query(edit_index) {
     let operation_edit = $("#operationmenu").clone().prop('id', 'operationmenu-edit');
     const opts = operation_edit.find("option");
     for (let i = 0; i < opts.length; i++) {
-        if (opts[i].value == structured_data.operationtype) {
+        if (opts[i].value === structured_data.operationtype) {
             operation_edit.prop('selectedIndex', i);
             break;
         }
@@ -3612,10 +3629,10 @@ function apply_edits(edit_index) {
     let structured_data = JSON.parse(JSON.stringify(Object.fromEntries(query_list[edit_index])));
     const formData = new FormData();
 
-    let datatype = '';
+    let datatype;
     if ($("#dataset-type-menu-edit").val() === 'model-forecast') {
         let edit_value = parseInt($("#ensemblemenu_edit").val());
-        if ($("#ensemblevarmenu_edit").val() == "precipitation") {
+        if ($("#ensemblevarmenu_edit").val() === "precipitation") {
             edit_value = edit_value + 1;
         }
 
@@ -3674,10 +3691,12 @@ function toggle_query_tabs() {
     $("#sidebar-content").scrollTop(0);
 }
 
-function reset_query(){
+function reset_query() {
+    console.log("here");
     query_list.length = 0;
     update_number_queries();
     reset_query_panel();
+    close_dialog();
 }
 
 function reset_query_panel() {
