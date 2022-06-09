@@ -422,17 +422,7 @@ function openSettings(which) {
         });
     }
 
-
     let settingsHtml = "";
-    // if (active_layer.dataset === "model") {
-    //     // all ensembles are adjusted by single setting
-    //     // if setting changes, they all change so dialog
-    //     // should be the same.  The hooks will have to be
-    //     // expanded to make all ensemble layers react in sync
-    //
-    //     //settingsHtml += "Get the Ens info to build the checkboxes";
-    // }
-
     settingsHtml += baseSettingsHtml();
     let dialog = $("#dialog");
     dialog.html(settingsHtml);
@@ -544,7 +534,6 @@ function mapSetup() {
 
     sidebar.open('chart');
 
-
     //create the basemap thumbnails in the panel
     for (let key of Object.keys(baseLayers)) {
         const map_thumb = $("<div>");
@@ -569,8 +558,6 @@ function mapSetup() {
             click: 'handleBaseMapSwitch($(this)[0].getAttribute("datavalue"))'
         });
         img.addClass("basemapbtn");
-
-
         img.appendTo(map_thumb);
         thumb_cap.appendTo(map_thumb);
         map_thumb.appendTo("#basemap");
@@ -629,7 +616,6 @@ function toggleLayer(which) {
 
     if (hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
-        //map.timeDimension.prepareNextTimes(5, 1, false)
 
         if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
@@ -754,7 +740,6 @@ function setPointAOI() {
     } else {
         $("#lat-lon-error").show();
     }
-
 }
 
 /**
@@ -847,16 +832,14 @@ function addDataToMap(data) {
     }
 }
 
+/**
+ * file_upload_complete: Adds the uploaded data to the map
+ * @returns {(function(*): void)|*}
+ */
 function file_upload_complete() {
     return (data) => {
         addDataToMap(data);
-
-        $(".dimmer").removeClass("active");
-        $("#preview").addClass("disabled");
-        $("#epsg").val("");
-        $("#encoding").val("");
-        $("#info").addClass("picInfo");
-        $("#option").slideUp(500);
+        console.log("just added:");
         collect_review_data();
         verify_ready();
     };
@@ -880,6 +863,8 @@ function handleFiles(e) {
     };
     const files = e.target.files || e.dataTransfer.files || this.files;
     for (let i = 0, file; (file = files[i]); i++) {
+        console.log(i);
+        console.log(file.name);
         if (file.type === "application/json") {
             reader.readAsText(file);
         } else if (file.name.indexOf(".geojson") > -1) {
@@ -888,7 +873,7 @@ function handleFiles(e) {
             if (uploadLayer) {
                 uploadLayer.clearLayers();
             }
-            loadshp(
+            load_shape(
                 {
                     url: file,
                     encoding: "UTF-8",
@@ -1115,13 +1100,17 @@ function getFeatureInfoUrl(map, layer, latlng, params) {
 /**
  * sortableLayerSetup
  * Sets up the sortable layers in the layer manager
+ * jshint says onChange is not used, but it is used.
+ * DO NOT REMOVE onChange
  */
 function sortableLayerSetup() {
     $("ol.layers").sortable({
         group: "simple_with_animation",
         handle: ".rst__moveHandle",
         pullPlaceholder: true,
-        // animation on drop
+        ghostClass: "sortable-ghost",
+        animation: 150,
+	    easing: "cubic-bezier(1, 0, 0, 1)",
         onEnd: function ($item, container, _super) {
             adjustLayerIndex();
         },
@@ -1926,11 +1915,9 @@ function filter_datasets_by() {
 }
 
 function filter_edit_datasets_by() {
-    console.log("doing it");
     $(".layer-on-edit, .layer-off-edit").toggleClass("layer-on-edit layer-off-edit");
 
     const firstLayerOn = $('#dataset-source-menu-edit option.layer-on-edit:first');
-    console.log(firstLayerOn.val());
     $("#dataset-source-menu-edit")[0].selectedIndex = firstLayerOn.index();
     handleSourceSelected(firstLayerOn.val(), true);
 }
@@ -2186,10 +2173,6 @@ function inti_chart_dialog() {
         resizable: isMobile.css("display") === "block" ? false : {handles: "se"},
         width: isMobile.css("display") === "block" ? $(window).width() : $(window).width() - ($("#sidebar").width() + 100),
         height: $(window).height() - 140,
-        // resize: function () {
-        //     Highcharts.charts[0].reflow();
-        //     window.dispatchEvent(new Event('resize'));
-        // },
         open: function () {
             window.dispatchEvent(new Event('resize'));
         },
@@ -2230,25 +2213,6 @@ function open_previous_chart() {
     }
 }
 
-// /**
-//  * getIndex
-//  * Helper function for monthly rainfall analysis graphing
-//  * @param which
-//  * @returns {number}
-//  */
-// function getIndex(which) {
-//     switch (which) {
-//         case 'col02_MonthlyAverage':
-//             return 0;
-//         case 'col05_50thPercentile':
-//             return 1;
-//         case 'col03_25thPercentile':
-//             return 2;
-//         default:
-//             return 3;
-//     }
-// }
-
 /**
  * getDownLoadLink
  * Creates the download link for a request ID and displays it in the dialog
@@ -2287,13 +2251,58 @@ function format_data(i) {
 
     let breaks_gone = multiQueryData[i].yAxis_format.formatter.toString().replace(/(\r\n|\n|\r)/gm, "");
     let parsed_formula = breaks_gone.substring(breaks_gone.indexOf("return") + 6).replace("}", "").trim();
-console.log(parsed_formula);
     temp_data.map(x => {
         x[1] = eval(parsed_formula.replace("this.value", x[1]));
-        console.log(x[1]);
         return x;
     });
     multiQueryData[i].point_format = null;
+}
+
+
+/**
+ *
+ * @param i the index of the data to be graphed
+ * @param colors the color of the line requested
+ */
+function configure_additional_chart(i, colors) {
+    if (!simpleAxis) {
+        multiChart.addAxis({
+            id: "yaxis-" + i,
+            opposite: i % 2 !== 0,
+            title: {
+                text: multiQueryData[i].units
+            },
+        }, false, false);
+    }
+    if (multiQueryData[i].yAxis_format) {
+        format_data(i);
+    }
+    let build_yAxis = simpleAxis ? "simple" : "yaxis-" + i;
+
+
+    let point_format;
+    if (multiQueryData[i].point_format) {
+        point_format = multiQueryData[i].point_format;
+    } else {
+        point_format = {
+            pointFormatter: function () {
+                if (multiQueryData[i] && multiQueryData[i].units) {
+                    return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
+                } else {
+                    return Highcharts.numberFormat(this.y, 2) + "<br>";
+                }
+            }
+        };
+    }
+    multiQueryData[i].yAxis_format = null;
+    multiChart.addSeries({
+        yAxis: build_yAxis,
+        color: colors[i - 1],
+        type: "line",
+        tooltip: point_format,
+        name: multiQueryData[i].label,
+        data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
+    });
 }
 
 /**
@@ -2303,7 +2312,6 @@ console.log(parsed_formula);
  * data has been added to the list
  */
 function multi_chart_builder() {
-    console.log("building chart");
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     const first_unit = multiQueryData[0].units;
 
@@ -2321,7 +2329,6 @@ function multi_chart_builder() {
         },
     };
     if (multiQueryData[0].yAxis_format) {
-        //chart_object.yAxis.labels = multiQueryData[0].yAxis_format;
         format_data(0);
         multiQueryData[0].yAxis_format = null;
     }
@@ -2332,23 +2339,18 @@ function multi_chart_builder() {
         align: 'right',
         verticalAlign: 'middle'
     };
-    let point_format;
-    if (multiQueryData[0].point_format) {
-        point_format = multiQueryData[0].point_format;
-    } else {
-        point_format = {
-            pointFormatter: function () {
-                return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
-            }
-        };
-    }
     chart_object.series = [{
         color: "#758055",
         type: "line",
         name: multiQueryData[0].label,
         data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
-        tooltip: point_format
-
+        tooltip: multiQueryData[0].point_format ?
+            multiQueryData[0].point_format :
+            {
+                pointFormatter: function () {
+                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
+                }
+            }
     }];
 
     chart_object.chart = {
@@ -2393,7 +2395,6 @@ function multi_chart_builder() {
             }
         }]
     };
-    console.log("init chart dialog");
     inti_chart_dialog();
 
     let dialog = $("#dialog");
@@ -2404,7 +2405,6 @@ function multi_chart_builder() {
         }
     });
 
-    console.log("first data");
     multiChart = Highcharts.chart('chart_holder', chart_object, function (chart) { // on complete
         originalWidth = chart.chartWidth;
         originalHeight = chart.chartHeight;
@@ -2424,44 +2424,7 @@ function multi_chart_builder() {
 
     if (multiQueryData.length > 1) {
         for (let i = 1; i < multiQueryData.length; i++) {
-            if (!simpleAxis) {
-                multiChart.addAxis({
-                    id: "yaxis-" + i,
-                    opposite: i % 2 !== 0,
-                    title: {
-                        text: multiQueryData[i].units
-                    },
-                }, false, false);
-            }
-            if (multiQueryData[i].yAxis_format) {
-                format_data(i);
-            }
-            let build_yAxis = simpleAxis ? "simple" : "yaxis-" + i;
-
-
-            let point_format = '';
-            if (multiQueryData[i].point_format) {
-                point_format = multiQueryData[i].point_format;
-            } else {
-                point_format = {
-                    pointFormatter: function () {
-                        if (multiQueryData[i] && multiQueryData[i].units) {
-                            return Highcharts.numberFormat(this.y, 2) + " " + multiQueryData[i].units + "<br>";
-                        } else {
-                            return Highcharts.numberFormat(this.y, 2) + "<br>";
-                        }
-                    }
-                };
-            }
-            multiQueryData[i].yAxis_format = null;
-            multiChart.addSeries({
-                yAxis: build_yAxis,
-                color: colors[i - 1],
-                type: "line",
-                tooltip: point_format,
-                name: multiQueryData[i].label,
-                data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
-            });
+            configure_additional_chart(i, colors);
         }
         $('#multi-switch-panel').css('visibility', 'visible');
     }
@@ -2481,7 +2444,6 @@ function getDataFromRequest(id, isClimate, query_index) {
     // only do this for the final dataset that goes through, otherwise continue the progress bar
     passes++;
     if (passes === query_list.length) {
-        console.log("will show");
         let complete = '<div style="width:100%; height:100%; display: flex;' +
             '    align-items: center;' +
             '}">';
@@ -2849,22 +2811,6 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
             .add();
     });
 }
-
-// /**
-//  * getDataLine
-//  * Helper function for graphing the monthly rainfall analysis
-//  * @param mmm_Y
-//  * @param type
-//  * @param data
-//  * @returns {*[]}
-//  */
-// function getDataLine(mmm_Y, type, data) {
-//     const data_line = [];
-//     data_line['Month_Year'] = mmm_Y;
-//     data_line['data_series_type'] = type;
-//     data_line['Monthly_Rainfall_mm'] = data;
-//     return data_line;
-// }
 
 /**
  * check_query_status
@@ -3244,7 +3190,7 @@ $(function () {
         console.log(e);
     }
     try {
-        loadshp(
+        load_shape(
             {
                 url: '/static/frontend/data/shape.zip',
                 encoding: "UTF-8",
@@ -3563,11 +3509,7 @@ function edit_query(edit_index) {
     edit_query_form.append($(data_source_group).append(dataset_source_menu));
 
     let operation_group = '<div class="form-group panel-buffer" id="panel_operation_edit"';
-    // if (structured_data.ensemble === 'true') {
-    //     operation_group += ' style="display:none;">';
-    // } else {
     operation_group += ' style="display:block;">';
-    // }
     operation_group += '<label for="operationmenu-edit">Calculation</label></div>';
 
     let operation_edit = $("#operationmenu").clone().prop('id', 'operationmenu-edit');
@@ -3692,7 +3634,6 @@ function toggle_query_tabs() {
 }
 
 function reset_query() {
-    console.log("here");
     query_list.length = 0;
     update_number_queries();
     reset_query_panel();
