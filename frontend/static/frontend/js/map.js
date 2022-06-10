@@ -47,6 +47,7 @@ const csrftoken = getCookie('csrftoken');
  */
 function createLayer(item) {
     // Create actual layer and put in overlayMaps
+    console.log("b4 create time");
     overlayMaps[item.id + "TimeLayer"] = L.timeDimension.layer.wms(
         L.tileLayer.wms(item.url + "&crs=EPSG%3A3857", {
             layers: item.layers,
@@ -67,6 +68,7 @@ function createLayer(item) {
             setDefaultTime: true,
         }
     );
+    console.log("after create time");
     overlayMaps[item.id + "TimeLayer"].id = item.id;
     // Add to list to be activated if query string requested it
     if (item.id.includes(passedLayer)) {
@@ -76,6 +78,7 @@ function createLayer(item) {
             control_layer = item.id;
         }
     }
+    console.log("set id of time");
 }
 
 /**
