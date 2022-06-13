@@ -2377,7 +2377,7 @@ function multi_chart_builder() {
                     load: function () {
                         const width = this.chartWidth - 105;
                         const height = this.chartHeight - 130;
-                        this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                        this.renderer.image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82
                         ).add();
                     }
                 }
@@ -2414,7 +2414,7 @@ function multi_chart_builder() {
         const width = chart.chartWidth - 105;
         const height = chart.chartHeight - 160;
         img = chart.renderer
-            .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
+            .image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82)
             .add();
     });
 
@@ -2757,7 +2757,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
                     load: function () {
                         const width = this.chartWidth - 105;
                         const height = this.chartHeight - 130;
-                        this.renderer.image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82
+                        this.renderer.image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82
                         ).add();
                     }
                 }
@@ -2810,7 +2810,7 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         const width = chart.chartWidth - 105;
         const height = chart.chartHeight - 160;
         img = chart.renderer
-            .image('https://servirglobal.net/images/servir_logo_full_color_stacked.jpg', width, height, 100, 82)
+            .image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82)
             .add();
     });
 }
