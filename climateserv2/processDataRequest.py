@@ -239,6 +239,7 @@ def start_processing(request):
         jobs.clear()
         sys.exit(1)
     except Exception as e:
+        logger.error("NEW ERROR ISSUE: " + str(e))
         try:
             # maybe need to create the appropriate file for extraction with error message
 

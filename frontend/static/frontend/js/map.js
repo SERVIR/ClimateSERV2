@@ -2482,8 +2482,41 @@ function getDataFromRequest(id, isClimate, query_index) {
     }).fail(function (jqXHR, textStatus, errorThrown) {
         console.warn(jqXHR + textStatus + errorThrown);
     }).done(function (data, _textStatus, _jqXHR) {
-        if (data.errMsg) {
-            console.info(data.errMsg);
+        if (JSON.parse(data).errMsg) {
+            console.info(JSON.parse(data).errMsg);
+            reset_query();
+            close_dialog();
+            const title = "Query Error";
+            let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
+                '    align-items: center;' +
+                '}">';
+            stat_info += '<div style="width:100%; text-align: left;">';
+            stat_info += "<H1>There was an error in your query</h1>";
+            stat_info += "<p>This may happen for a few different reasons for example, if you have chosen a date range";
+            stat_info += " where we have no data for the dataset selected, or the AOI could be too large, or we ";
+            stat_info += "possibly are having internal server issues due to extreme usage currently.  Please feel ";
+            stat_info += "to contact us if the problem persists so we can identify and resolve the issue.  </p>";
+            stat_info += '</div>';
+            const dialog = $("#dialog");
+            dialog.html(stat_info);
+            // const the_width = $(window).width() < 500 ? $(window).width() + "px" : "500px";
+            dialog.dialog({
+                title: title,
+                resizable: false,
+                width: '500px',
+                height: 'auto',
+                position: {
+                    my: "center",
+                    at: "center",
+                    of: window
+                },
+                open: function () {
+                    $(this).dialog('option', 'maxHeight', $(window).height());
+                    if ($(this).width() > $(window).width()) {
+                        $(this).dialog('option', 'width', $(window).width());
+                    }
+                }
+            });
         } else {
             if (data === "need to send id") {
                 if (too_fast < 5) {
