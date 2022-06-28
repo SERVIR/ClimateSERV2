@@ -9,6 +9,7 @@ from django.db.models import Count, Sum
 from django.db.models.functions import Trunc
 from api.models import Track_Usage
 import ast
+from datetime import datetime
 
 
 # sprint-2 init
@@ -22,22 +23,27 @@ def testing(request):
 @staff_member_required
 def hits(request):
     record_count = 10
+    date_filter = {}
+    if request.method == "GET":
+        filter_date = request.GET.get('date', None)
+        if filter_date:
+            date_filter['time_requested__date'] = datetime.strptime(filter_date, "%m/%d/%Y")
     if request.method == "POST":
         if "record_count" in request.POST:
             record_count = int(request.POST["record_count"])
     hits_per_country = Track_Usage.objects.values(
-        'country_ISO').annotate(
+        'country_ISO').filter(**date_filter).annotate(
         NumberOfHits=Count('country_ISO')).order_by(
         '-NumberOfHits')[:record_count]
 
     hits_per_dataset_all = Track_Usage.objects.exclude(
         dataset__contains="Climate Change Scenario:").values(
-        'dataset').annotate(
+        'dataset').filter(**date_filter).annotate(
         NumberOfHits=Count('dataset')).order_by(
         '-NumberOfHits')[:record_count]
     hits_per_dataset_nmme = Track_Usage.objects.filter(
         dataset__contains="Climate Change Scenario:").values(
-        'dataset').aggregate(
+        'dataset').filter(**date_filter).aggregate(
         NumberOfHits=Count('dataset'))
     hits_per_dataset_list = list(hits_per_dataset_all)
     hits_per_dataset_list.append(
@@ -46,11 +52,11 @@ def hits(request):
     hits_per_dataset = sorted(hits_per_dataset_list, key=lambda x: x['NumberOfHits'], reverse=True)
 
     hits_per_day = Track_Usage.objects.values(
-        day=Trunc('time_requested', 'day')).annotate(
+        day=Trunc('time_requested', 'day')).filter(**date_filter).annotate(
         NumberOfHits=Count('day')).order_by('-day')
 
     bytes_per_day = Track_Usage.objects \
-        .values(day=Trunc('time_requested', 'day')) \
+        .values(day=Trunc('time_requested', 'day')).filter(**date_filter) \
         .annotate(BytesDownloaded=Sum('file_size')) \
         .order_by('-day')
 
@@ -60,7 +66,8 @@ def hits(request):
         'hits_per_day': hits_per_day,
         'bytes_per_day': bytes_per_day,
         'number_of_items': record_count,
-        'total_hits': Track_Usage.objects.count(),
+        'total_hits': Track_Usage.objects.filter(**date_filter).count(),
+        'filter_date': filter_date,
     }
     return render(request, 'hits.html', context)
 

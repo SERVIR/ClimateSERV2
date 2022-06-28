@@ -15,7 +15,11 @@
 <div class="container">
     <header class="pt-3 pb-3">
     <p class="h2 pt-3">API Usage </p>
-    <p class="h3 pb-3">{{ total_hits }} requests logged until {% now "l, j F Y" %}</p>
+    {% if filter_date is not None %}
+        <p class="h3 pb-3">{{ total_hits }} requests logged on {{ filter_date }}</p>
+    {% else %}
+        <p class="h3 pb-3">{{ total_hits }} requests logged until {% now "l, j F Y" %}</p>
+    {% endif %}
     <form action="{% url 'ClimateSERV_SystemAdmin:hits' %}"
           method="POST" id="filter_form" name="filter_form">
         {% csrf_token %}
