@@ -7,7 +7,6 @@ from osgeo import ogr
 
 from api.models import Parameters
 
-
 module_path = os.path.abspath(os.getcwd())
 if module_path not in sys.path:
     sys.path.append(module_path)
@@ -20,10 +19,11 @@ def getShapefilePath(name):
         if item['id'] == name:
             return params.shapefilepath + item['shapefilename']
 
+
 # To get the geometry of a shape file based on layer and feature
-def getPolygon(shapefilePath, layer_id, fid):
-    shapef = ogr.Open(shapefilePath)
-    lyr = shapef.GetLayer(layer_id)
+def getPolygon(shapefile_path, layer_id, fid):
+    shapefile = ogr.Open(shapefile_path)
+    lyr = shapefile.GetLayer(layer_id)
     poly = None
     for i in range(lyr.GetFeatureCount()):
         feature = lyr.GetFeature(i)

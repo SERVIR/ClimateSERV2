@@ -24,9 +24,10 @@ def testing(request):
 def hits(request):
     record_count = 10
     date_filter = {}
-    if request.method == "GET":
-        filter_date = request.GET.get('date', None)
-        if filter_date:
+
+    filter_date = request.GET.get('date', request.POST.get('filter_date', None))
+    if filter_date:
+        if filter_date != "":
             date_filter['time_requested__date'] = datetime.strptime(filter_date, "%m/%d/%Y")
     if request.method == "POST":
         if "record_count" in request.POST:

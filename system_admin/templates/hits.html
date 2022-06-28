@@ -29,6 +29,9 @@
             <option value="20" {% if number_of_items == 20 %}selected{% endif %}>Top 20</option>
             <option value="30" {% if number_of_items == 30 %}selected{% endif %}>Top 30</option>
         </select>
+    {% if filter_date is not None %}
+        <input type="hidden" name="filter_date" id="filter_date" value="{{ filter_date }}" />
+    {% endif %}
     </form>
     </header>
     <div id="hits_per_country_container" class="container border-bottom pt-3 pb-3"></div>

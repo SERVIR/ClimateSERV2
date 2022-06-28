@@ -38,9 +38,12 @@ g = GeoIP2()
 def read_results(uid):
     params = Parameters.objects.first()
     filename = params.resultsdir + uid + ".txt"
-    f = open(filename, "r")
-    x = json.load(f)
-    f.close()
+    try:
+        f = open(filename, "r")
+        x = json.load(f)
+        f.close()
+    except Exception as e:
+        x = {"errMsg": "error"}
     return x
 
 
@@ -179,21 +182,26 @@ def int_try_parse(value):
 def get_data_request_progress(request):
     logger.debug("Getting Data Request Progress")
     try:
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
-        track_usage.progress = read_progress(request.GET["id"])
-        track_usage.data_retrieved = True
+        request_id = request.GET["id"]
+        progress = read_progress(request_id)
+        track_usage = Track_Usage.objects.get(unique_id=request_id)
+        track_usage.progress = progress
         track_usage.save()
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
     try:
-        request_id = request.GET["id"]
-        progress = read_progress(request_id)
         logger.debug("Progress =" + str(progress))
-        if progress == -1.0:
+        if progress == -5:
+            request_progress = Request_Progress(request_id=request_id, progress=100)
+            request_progress.save()
+            progress = -1
+        elif float(progress) < 0:
+            # decrement progress
+            request_progress = Request_Progress(request_id=request_id, progress=int(progress) - 1)
+            request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
-            return process_callback(request, json.dumps([-1]), "application/json")
-        else:
-            return process_callback(request, json.dumps([float(progress)]), "application/json")
+            progress = -1
+        return process_callback(request, json.dumps([float(progress)]), "application/json")
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
         return process_callback(request, json.dumps([-1]), "application/json")
@@ -530,13 +538,9 @@ def submit_data_request(request):
 
     elif len(error) == 0:
         # json_obj = {}
-        dictionary = {'uniqueid': unique_id,
-                      'datatype': datatype,
-                      'begintime': begin_time,
-                      'endtime': end_time,
-                      'intervaltype': interval_type,
-                      'operationtype': operation_type
-                      }
+        dictionary = {'uniqueid': unique_id, 'datatype': datatype, 'begintime': begin_time, 'endtime': end_time,
+                      'intervaltype': interval_type, 'operationtype': operation_type,
+                      'originating_IP': get_client_ip(request), 'request_type':request.method}
         if feature_list:
             dictionary['layerid'] = layer_id
             dictionary['featureids'] = feature_ids_list
@@ -578,6 +582,7 @@ def submit_data_request(request):
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         try:
+
             track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
@@ -590,6 +595,7 @@ def submit_data_request(request):
 
             track_usage.save()
         except Exception as e:
+            logger.error("THIS IS THE ISSUE!")
             logger.error(str(e))
         p.start()
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
@@ -622,7 +628,6 @@ def submit_monthly_rainfall_analysis_request(request):
     error = []
     seasonal_start_date = ""
     seasonal_end_date = ""
-    geometry = None
     feature_list = False
     feature_ids_list = []
     polygon_string = None
