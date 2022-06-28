@@ -43,7 +43,7 @@ def start_processing(request):
         dataset = ""
         pool = None
         uniqueid = request["uniqueid"]
-        operationtype = request["operationtype"]
+        operationtype = ""
         if 'geometry' in request:
             polygon_string = request["geometry"]
         elif 'layerid' in request:
@@ -52,7 +52,7 @@ def start_processing(request):
             polygon_string = sF.getPolygons(layer_id, feature_ids)
 
         if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
-
+            operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             id = uu.getUUID()
             jobs.append({"uniqueid": uniqueid, "id": id, "bounds": bounds, "dates": dates, "months": months,
@@ -62,6 +62,7 @@ def start_processing(request):
                          "subtype": "nmme"})
         else:
             # here calculate the years and create a list of jobs
+            operationtype = request["operationtype"]
             datatype = request['datatype']
             begin_time = request['begintime']
             end_time = request['endtime']
