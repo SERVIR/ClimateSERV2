@@ -61,6 +61,7 @@ INSTALLED_APPS = [
 
 ]
 MIDDLEWARE = [
+    'django.middleware.cache.UpdateCacheMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -68,7 +69,13 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django.middleware.cache.FetchFromCacheMiddleware',
 ]
+
+CACHE_MIDDLEWARE_ALIAS = 'default'  # which cache alias to use
+CACHE_MIDDLEWARE_SECONDS = 600   # number of seconds to cache a page for (TTL)
+CACHE_MIDDLEWARE_KEY_PREFIX = ''    # should be used if the cache is shared across
+                                    # multiple sites that use the same Django instance
 
 ROOT_URLCONF = 'climateserv2.urls'
 

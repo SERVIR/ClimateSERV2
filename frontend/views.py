@@ -6,10 +6,12 @@ from api.models import Track_Usage
 
 from django import template
 from django.template.defaultfilters import stringfilter
-
+from django.views.decorators.cache import cache_page
 
 register = template.Library()
 
+
+@cache_page(60 * 15)
 def index(request):
     return render(request, 'index.html', context={
         'page': 'menu-home',
