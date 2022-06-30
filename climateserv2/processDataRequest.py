@@ -2,7 +2,7 @@ import multiprocessing
 import shutil
 import time
 from ast import literal_eval
-from socket import socket
+# from socket import socket
 
 import climateserv2.file.TDSExtraction as GetTDSData
 import sys
@@ -12,16 +12,16 @@ import json
 import calendar
 import os
 import climateserv2.file.dateutils as dateutils
-import climateserv2.requestLog as reqLog
+# import climateserv2.requestLog as reqLog
 import numpy as np
 from django import db
 from django.apps import apps
 import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
-from api.models import Track_Usage, ETL_Dataset
+from api.models import Track_Usage  # , ETL_Dataset
 from api.models import Parameters as realParams
-import psutil
+# import psutil
 from zipfile import ZipFile
 from django.utils import timezone
 Request_Log = apps.get_model('api', 'Request_Log')
@@ -54,11 +54,11 @@ def start_processing(request):
         if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
-            id = uu.getUUID()
-            jobs.append({"uniqueid": uniqueid, "id": id, "bounds": bounds, "dates": dates, "months": months,
+            uu_id = uu.getUUID()
+            jobs.append({"uniqueid": uniqueid, "id": uu_id, "bounds": bounds, "dates": dates, "months": months,
                          "subtype": "chirps"})
-            id = uu.getUUID()
-            jobs.append({"uniqueid": uniqueid, "id": id, "bounds": bounds, "dates": dates, "months": months,
+            uu_id = uu.getUUID()
+            jobs.append({"uniqueid": uniqueid, "id": uu_id, "bounds": bounds, "dates": dates, "months": months,
                          "subtype": "nmme"})
         else:
             # here calculate the years and create a list of jobs
@@ -97,12 +97,12 @@ def start_processing(request):
             counter = 0
             # this breaks in data doesn't exist
             for dates in date_range_list:
-                id = uu.getUUID()
+                uu_id = uu.getUUID()
                 dataset = ""
                 file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
                 counter += 1
                 if len(file_list) > 0:
-                    jobs.append({"uniqueid": uniqueid, "id": id, "start_date": dates[0], "end_date": dates[1],
+                    jobs.append({"uniqueid": uniqueid, "id": uu_id, "start_date": dates[0], "end_date": dates[1],
                                  "variable": variable, "geom": polygon_string,
                                  "operation": literal_eval(params.parameters)[request["operationtype"]][1],
                                  "file_list": file_list,
@@ -211,10 +211,11 @@ def start_processing(request):
         json.dump(merged_obj, f)
         f.close()
         db.connections.close_all()
-        log = reqLog.Request_Progress.objects.get(request_id=uniqueid)
-        log.progress = 100
-        log.save()
-        if log.progress == 100:
+        logger.error("Processes joined and setting progress to 100")
+        request_progress = Request_Progress.objects.get(request_id=uniqueid)
+        request_progress.progress = 100
+        request_progress.save()
+        if request_progress.progress == 100:
             status = "Success"
         else:
             status = "In Progress"
@@ -335,7 +336,7 @@ def log_result(retval):
         progress = (len(results) / len(jobs)) * 100.0
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
         db.connections.close_all()
-        log = reqLog.Request_Progress.objects.get(request_id=retval["uid"])
+        log = Request_Progress.objects.get(request_id=retval["uid"])
         log.progress = progress - .5
         log.save()
     except Exception as e:
