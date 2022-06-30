@@ -1,6 +1,7 @@
 import json
 import logging
 import multiprocessing
+import threading
 import os
 import subprocess
 from ast import literal_eval
@@ -11,6 +12,7 @@ from django.apps import apps
 from django.db import DatabaseError
 from django.http import HttpResponse
 from django.utils.datastructures import MultiValueDictKeyError
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django import db
@@ -150,6 +152,7 @@ def get_feature_layers(request):
 
 
 # To get the actual data from the processing request
+@never_cache
 @csrf_exempt
 def get_data_from_request(request):
     logger.debug("Getting Data from Request")
@@ -178,6 +181,7 @@ def int_try_parse(value):
 
 
 # To get feedback on the request as to the progress of the request. Will return the float percentage of progress
+@never_cache
 @csrf_exempt
 def get_data_request_progress(request):
     logger.debug("Getting Data Request Progress")
@@ -208,6 +212,7 @@ def get_data_request_progress(request):
 
 
 # To get the file for the completed Job ID
+@never_cache
 @csrf_exempt
 def get_file_for_job_id(request):
     logger.debug("Getting File to download.")
@@ -338,6 +343,7 @@ def get_climate_datatype_map():
 
 
 # To get list of all climate change scenario info
+@never_cache
 @csrf_exempt
 def get_climate_scenario_info(request):
     from_ui = False
@@ -460,6 +466,7 @@ def run_etl(request):
 
 
 # Submit a data request for processing
+@never_cache
 @csrf_exempt
 def submit_data_request(request):
     params = Parameters.objects.first()
@@ -556,19 +563,10 @@ def submit_data_request(request):
                                                          {"type": "Feature", "properties": {},
                                                           "geometry": json.loads(polygon_string)}]})
 
-        # start multiprocessing here
-
-        # we could either start one process here from the dictionary
-        # which in turn could split the work into yearly increments
-        # then start a new process for each, or we could do the splitting here
-        # and start all the processes, i think the first idea is better this
-        # way we can give the user some progress feedback.  Inside the
-        # processes each of them would be able to update progress and when they
-        # have updated it all the way to 100 we can merge their data and be ready for the
-        # getDataFromRequest call where we could return it.
         dictionary["params"] = model_to_dict(params)
-
-        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+        # I used to use multiprocessing to start the multiprocessing, i think a thread is better
+        # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
+        t = threading.Thread(target=start_processing, args=(dictionary,))
         log = Request_Progress(request_id=unique_id, progress=0)
         log.save()
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
@@ -597,7 +595,9 @@ def submit_data_request(request):
         except Exception as e:
             logger.error("THIS IS THE ISSUE!")
             logger.error(str(e))
-        p.start()
+        t.setDaemon(True)
+        t.start()
+        # p.start()
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"

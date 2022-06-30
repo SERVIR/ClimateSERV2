@@ -35,10 +35,12 @@ def display_aoi(request, usage_id):
     })
 
 
+@cache_page(60 * 15)
 def about(request):
     return render(request, 'about.html', context={'page': 'menu-about'})
 
 
+@cache_page(60 * 15)
 def help_center(request):
     return render(request, 'help.html', context={
         'page': 'menu-help',
