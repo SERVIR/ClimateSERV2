@@ -118,7 +118,8 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     try:
         params = Parameters.objects.first()
         logger.debug("got parameters without closing connections")
-    except:
+    except Exception as e:
+        logger.debug("Hit exception getting parameters: " + e)
         db.connections.close_all()
         logger.debug("closed connections")
         params = Parameters.objects.first()
