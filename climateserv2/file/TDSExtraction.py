@@ -115,8 +115,12 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
     logger.debug("Made it to get_thredds_values")
-    db.connections.close_all()
-    params = Parameters.objects.first()
+    try:
+        db.connections.close_all()
+        logger.debug("closed connections")
+        params = Parameters.objects.first()
+    except:
+        params = Parameters.objects.first()
     logger.debug("past db and params")
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
@@ -127,18 +131,23 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         # If there is an exception with date format while converting, we can just ignore the conversion and use the
         # passed dates
         pass
+    logger.debug("past datetime stuff")
     try:
         jsonn = json.loads(str(geom))
     except Exception as e:
         jsonn = json.loads(json.dumps(geom))
+    logger.debug("past json loads ")
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
 
+    logger.debug("past adding feature ")
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
     json_aoi = json.dumps(jsonn)
+    logger.debug("past json dump ")
     geodf = gpd.read_file(json_aoi)
+    logger.debug("past reading it")
     lon1, lat1, lon2, lat2 = geodf.total_bounds
     # using xarray to open the temporary netcdf
     logger.debug("about to xarray open the data")
