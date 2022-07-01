@@ -116,10 +116,11 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     # Convert dates to %Y-%m-%d format for THREDDS URL
     logger.debug("Made it to get_thredds_values")
     try:
-        db.connections.close_all()
-        logger.debug("closed connections")
+        logger.debug("got parameters without closing connections")
         params = Parameters.objects.first()
     except:
+        db.connections.close_all()
+        logger.debug("closed connections")
         params = Parameters.objects.first()
     logger.debug("past db and params")
     try:
