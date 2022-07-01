@@ -373,13 +373,18 @@ def start_worker_process(job_item):
                 'zipfilepath': zip_file_path
             }
         else:
-            dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
+            logger.debug("about to get_thredds_values")
+            try:
+                dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
                                                           job_item['start_date'],
                                                           job_item['end_date'],
                                                           job_item['variable'],
                                                           job_item['geom'],
                                                           job_item['operation'],
                                                           job_item['file_list'])
+            except Exception:
+                logger.error("We have an error getting thredds values")
+
     db.connections.close_all()
     logger.debug("completed start_worker_process")
     return {
