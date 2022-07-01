@@ -3,7 +3,7 @@ from django.utils import timezone
 
 
 class Track_Usage(models.Model):
-    unique_id = models.CharField(max_length=50)
+    unique_id = models.CharField(max_length=50, unique=True)
     originating_IP = models.CharField(max_length=50, default=None)
     time_requested = models.DateTimeField(default=timezone.now)
     AOI = models.JSONField(default=None)

@@ -750,7 +750,9 @@ function setPointAOI() {
  */
 function triggerUpload(e) {
     document.getElementById("upload_files").value = "";
-    e.preventDefault();
+    try {
+        e.preventDefault();
+    } catch (eee){}
     $("#upload_files").trigger('click');
 }
 

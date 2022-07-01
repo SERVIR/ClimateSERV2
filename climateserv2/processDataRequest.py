@@ -24,13 +24,20 @@ from api.models import Parameters as realParams
 # import psutil
 from zipfile import ZipFile
 from django.utils import timezone
+
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
 
 
-def start_processing(request):
+def set_progress_to_100(uniqueid):
+    request_progress = Request_Progress.objects.get(request_id=uniqueid)
+    request_progress.progress = 100
+    request_progress.save()
+
+
+def start_processing(statistical_query):
     db.connections.close_all()
     try:
         params = realParams.objects.first()
@@ -42,30 +49,41 @@ def start_processing(request):
         results = []
         dataset = ""
         pool = None
-        uniqueid = request["uniqueid"]
+        uniqueid = statistical_query["uniqueid"]
         operationtype = ""
-        if 'geometry' in request:
-            polygon_string = request["geometry"]
-        elif 'layerid' in request:
-            layer_id = request['layerid']
-            feature_ids = request['featureids']
-            polygon_string = sF.getPolygons(layer_id, feature_ids)
+        if 'geometry' in statistical_query:
+            polygon_string = statistical_query["geometry"]
+        elif 'layerid' in statistical_query:
+            polygon_string = sF.getPolygons(statistical_query['layerid'], statistical_query['featureids'])
+        else:
+            raise Exception("Missing polygon_string")
 
-        if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
+        if ('custom_job_type' in statistical_query.keys() and
+                statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             uu_id = uu.getUUID()
-            jobs.append({"uniqueid": uniqueid, "id": uu_id, "bounds": bounds, "dates": dates, "months": months,
-                         "subtype": "chirps"})
+            jobs.append({
+                "uniqueid": uniqueid,
+                "id": uu_id,
+                "bounds": bounds,
+                "dates": dates,
+                "months": months,
+                "subtype": "chirps"})
             uu_id = uu.getUUID()
-            jobs.append({"uniqueid": uniqueid, "id": uu_id, "bounds": bounds, "dates": dates, "months": months,
-                         "subtype": "nmme"})
+            jobs.append({
+                "uniqueid": uniqueid,
+                "id": uu_id,
+                "bounds": bounds,
+                "dates": dates,
+                "months": months,
+                "subtype": "nmme"})
         else:
             # here calculate the years and create a list of jobs
-            operationtype = request["operationtype"]
-            datatype = request['datatype']
-            begin_time = request['begintime']
-            end_time = request['endtime']
+            operationtype = statistical_query["operationtype"]
+            datatype = statistical_query['datatype']
+            begin_time = statistical_query['begintime']
+            end_time = statistical_query['endtime']
             first_date = datetime.strptime(begin_time, '%m/%d/%Y')
             first_date_string = datetime.strftime(first_date, '%Y-%m-%d')
             last_date = datetime.strptime(end_time, '%m/%d/%Y')
@@ -74,13 +92,9 @@ def start_processing(request):
                 date_range_list.append([first_date_string, last_date_string])
             else:
                 years = [int(i.strftime("%Y")) for i in pd.date_range(start=begin_time, end=end_time, freq='MS')]
-                # print(years)
                 year_list = np.unique(years)
-                # print(year_list)
                 start_year = year_list[0]
-                # print("start: ", str(start_year))
                 end_year = year_list[len(year_list) - 1]
-                # print("end: ", str(end_year))
                 for year in year_list:
                     if year == start_year:
                         first_date_string = datetime.strftime(first_date, '%Y-%m-%d')
@@ -95,25 +109,38 @@ def start_processing(request):
                         last_date_string = str(year) + "-12-31"
                     date_range_list.append([first_date_string, last_date_string])
             counter = 0
-            # this breaks in data doesn't exist
+            # this breaks if data doesn't exist
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
                 file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
                 counter += 1
                 if len(file_list) > 0:
-                    jobs.append({"uniqueid": uniqueid, "id": uu_id, "start_date": dates[0], "end_date": dates[1],
-                                 "variable": variable, "geom": polygon_string,
-                                 "operation": literal_eval(params.parameters)[request["operationtype"]][1],
-                                 "file_list": file_list,
-                                 "derivedtype": False, "subtype": None
-                                 })
+                    jobs.append({
+                        "uniqueid": uniqueid,
+                        "id": uu_id,
+                        "start_date": dates[0],
+                        "end_date": dates[1],
+                        "variable": variable, "geom": polygon_string,
+                        "operation": literal_eval(params.parameters)[statistical_query["operationtype"]][1],
+                        "file_list": file_list,
+                        "derivedtype": False, "subtype": None
+                    })
         pool = multiprocessing.Pool(os.cpu_count() * 2)
         my_results = []
 
         def error_handler(exception):
             print(f'{exception} occurred, terminating pool.')
-            pool.terminate()
+            try:
+                set_progress_to_100(uniqueid)
+                pool.join()
+                pool.terminate()
+            except Exception:
+                try:
+                    set_progress_to_100(uniqueid)
+                except:
+                    pass
+                pool.terminate()
 
         for job in jobs:
             my_results.append(pool.apply_async(start_worker_process,
@@ -133,30 +160,29 @@ def start_processing(request):
         values = []
         LTA = []
         subtype = ""
-        if 'custom_job_type' in request.keys() and request['custom_job_type'] == 'MonthlyRainfallAnalysis':
+        if ('custom_job_type' in statistical_query.keys() and
+                statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             opn = "avg"
-            resultlist = []
+            result_list = []
             uid = uu.getUUID()
             suid = uu.getUUID()
-            # temp = []
-            # for d in dates:
-            #     if d not in temp:
-            #         temp.append(d)
-            # dates = temp
             for obj in split_obj:
                 subtype = obj["subtype"]
                 for dateIndex in range(len(obj["dates"])):
-                    workdict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
-                                'datatype_uuid_for_SeasonalForecast': suid, 'sub_type_name': subtype,
-                                'derived_product': True, 'special_type': 'MonthlyRainfallAnalysis',
-                                "date": obj["dates"][dateIndex]}
+                    work_dict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
+                                 'datatype_uuid_for_SeasonalForecast': suid, 'sub_type_name': subtype,
+                                 'derived_product': True, 'special_type': 'MonthlyRainfallAnalysis',
+                                 "date": obj["dates"][dateIndex]}
                     if subtype == "chirps":
-                        workdict["value"] = {opn: [obj["values"][dateIndex], np.float64(obj["LTA"][dateIndex])]}
+                        work_dict["value"] = {opn: [
+                            obj["values"][dateIndex],
+                            np.float64(obj["LTA"][dateIndex])
+                        ]}
                     if subtype == "nmme":
-                        workdict['value'] = {opn: np.float64(obj["values"][dateIndex])}
+                        work_dict['value'] = {opn: np.float64(obj["values"][dateIndex])}
 
-                    resultlist.append(workdict)
-            merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(resultlist)}
+                    result_list.append(work_dict)
+            merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(result_list)}
 
         else:
             try:
@@ -169,41 +195,43 @@ def start_processing(request):
                         values.extend(obj["values"])
                     except Exception as e:
                         logger.error("making result list failed: " + str(e))
-                datatype = request['datatype']
-                polygon_Str_ToPass = polygon_string
-                intervaltype = request['intervaltype']
-                operationtype = request['operationtype']
+                datatype = statistical_query['datatype']
+                polygon_str_to_pass = polygon_string
+                intervaltype = statistical_query['intervaltype']
+                operationtype = statistical_query['operationtype']
                 intervals = [
                     {'name': 'day', 'pattern': '%m/%d/%Y'},
                     {'name': 'month', 'pattern': '%m/%Y'},
                     {'name': 'year', 'pattern': '%Y'}
                 ]
                 opn = literal_eval(params.parameters)[operationtype][1]
-                resultlist = []
+                result_list = []
                 for dateIndex in range(len(dates)):
                     gmt_midnight = calendar.timegm(
                         time.strptime(dates[dateIndex] + " 00:00:00 UTC", "%Y-%m-%d %H:%M:%S UTC"))
-                    workdict = {}
-                    workdict["year"] = int(dates[dateIndex][0:4])
-                    workdict["month"] = int(dates[dateIndex][5:7])
-                    workdict["day"] = int(dates[dateIndex][8:10])
-                    workdict["date"] = str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
-                        dates[dateIndex][0:4])
-                    workdict["epochTime"] = gmt_midnight
-                    workdict["value"] = {opn: np.float64(values[dateIndex])}
+                    work_dict = {"year": int(dates[dateIndex][0:4]),
+                                 "month": int(dates[dateIndex][5:7]),
+                                 "day": int(dates[dateIndex][8:10]),
+                                 "date": str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
+                                     dates[dateIndex][0:4]), "epochTime": gmt_midnight,
+                                 "value": {opn: np.float64(values[dateIndex])}}
                     if intervaltype == 0:
-                        dateObject = dateutils.createDateFromYearMonthDay(workdict["year"], workdict["month"],
-                                                                          workdict["day"])
+                        date_object = dateutils.createDateFromYearMonthDay(work_dict["year"], work_dict["month"],
+                                                                           work_dict["day"])
                     elif intervaltype == 1:
-                        dateObject = dateutils.createDateFromYearMonth(workdict["year"], workdict["month"])
+                        date_object = dateutils.createDateFromYearMonth(work_dict["year"], work_dict["month"])
                     elif intervaltype == 2:
-                        dateObject = dateutils.createDateFromYear(workdict["year"])
-                    workdict["isodate"] = dateObject.strftime(intervals[0]["pattern"])
-                    resultlist.append(workdict)
-                merged_obj = {'data': resultlist, 'polygon_Str_ToPass': polygon_Str_ToPass, "uid": uniqueid,
-                              "datatype": datatype, "operationtype": operationtype,
-                              "intervaltype": intervaltype,
-                              "derived_product": False}
+                        date_object = dateutils.createDateFromYear(work_dict["year"])
+                    work_dict["isodate"] = date_object.strftime(intervals[0]["pattern"])
+                    result_list.append(work_dict)
+                merged_obj = {
+                    'data': result_list,
+                    'polygon_Str_ToPass': polygon_str_to_pass,
+                    "uid": uniqueid,
+                    "datatype": datatype,
+                    "operationtype": operationtype,
+                    "intervaltype": intervaltype,
+                    "derived_product": False}
             except Exception as e:
                 logger.error("Making merge_obj failed: " + str(e))
         filename = params.resultsdir + uniqueid + ".txt"
@@ -212,25 +240,20 @@ def start_processing(request):
         f.close()
         db.connections.close_all()
         logger.error("Processes joined and setting progress to 100")
-        request_progress = Request_Progress.objects.get(request_id=uniqueid)
-        request_progress.progress = 100
-        request_progress.save()
-        if request_progress.progress == 100:
-            status = "Success"
-        else:
-            status = "In Progress"
+        set_progress_to_100(uniqueid)
+
         track_usage = Track_Usage.objects.get(unique_id=uniqueid)
-        track_usage.status = status
+        track_usage.status = "Success"
         track_usage.save()
         if str(operationtype) == "6":
-            zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
-            if not os.path.exists(zipFilePath):
+            zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+            if not os.path.exists(zip_file_path):
                 track_usage = Track_Usage.objects.get(unique_id=uniqueid)
                 track_usage.status = "Fail"
                 track_usage.save()
             else:
                 track_usage = Track_Usage.objects.get(unique_id=uniqueid)
-                track_usage.file_size = os.stat(zipFilePath).st_size
+                track_usage.file_size = os.stat(zip_file_path).st_size
                 track_usage.save()
             try:
                 shutil.rmtree(params.zipFile_ScratchWorkspace_Path + uniqueid)
@@ -239,30 +262,50 @@ def start_processing(request):
 
         # Terminating main process
         jobs.clear()
-        sys.exit(1)
+        try:
+            try:
+                pool.join()
+            finally:
+                pool.terminate()
+        finally:
+            sys.exit(1)
     except Exception as e:
         logger.error("NEW ERROR ISSUE: " + str(e))
         try:
             # maybe need to create the appropriate file for extraction with error message
+            try:
+                track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+                track_usage.update(
+                    time_requested=timezone.now(),
+                    AOI=statistical_query["geometry"],
+                    dataset="unknown",
+                    calculation=statistical_query["operationtype"],
+                    request_type=statistical_query["request_type"],
+                    status="failed",
+                    progress=100,
+                    API_call="submitDataRequest",
+                    originating_IP=statistical_query["originating_IP"]
+                )
+            #
+            except Track_Usage.DoesNotExist:
+                track_usage = Track_Usage(
+                    time_requested=timezone.now(),
+                    AOI=statistical_query["geometry"],
+                    dataset="unknown",
+                    calculation=statistical_query["operationtype"],
+                    request_type=statistical_query["request_type"],
+                    status="failed",
+                    unique_id=uniqueid,
+                    progress=100,
+                    API_call="submitDataRequest",
+                    originating_IP=statistical_query["originating_IP"]
+                )
 
-            track_usage, created = Track_Usage.objects.get_or_create(
-                time_requested=timezone.now(),
-                AOI=request["geometry"],
-                dataset="unknown",
-                calculation=request["operationtype"],
-                request_type=request["request_type"],
-                status="failed",
-                unique_id=uniqueid,
-                progress=100,
-                API_call="submitDataRequest",
-                originating_IP=request["originating_IP"]
-            )
-
-            track_usage.save()
+                track_usage.save()
 
             if str(operationtype) in "6_7_8":
-                zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
-                if not os.path.exists(zipFilePath):
+                zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
+                if not os.path.exists(zip_file_path):
                     try:
                         with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
                             zipObj.writestr(
@@ -283,10 +326,17 @@ def start_processing(request):
         if pool is not None:
             pool.terminate()
         print(e)
+    finally:
+        try:
+            try:
+                pool.join()
+            finally:
+                pool.terminate()
+        finally:
+            sys.exit(1)
 
 
 def start_worker_process(job_item):
-
     # here is where you would open each netcdf
     # and do the processing and create the data
     # to return to the parent for said year.
