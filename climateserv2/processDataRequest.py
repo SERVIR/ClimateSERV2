@@ -387,14 +387,15 @@ def start_worker_process(job_item):
 def log_result(retval):
     results.append([""])
     try:
-        progress = (len(results) / len(jobs)) * 100.0
-        logger.info('{:.0%} done'.format(len(results) / len(jobs)))
-        db.connections.close_all()
-        log = Request_Progress.objects.get(request_id=retval["uid"])
-        # this is so the progress is not set to 100 before the output files are saved to the drive
-        # once saved it will update to 100.
-        log.progress = progress - .5
-        log.save()
+        if len(jobs) > 0:
+            progress = (len(results) / len(jobs)) * 100.0
+            logger.info('{:.0%} done'.format(len(results) / len(jobs)))
+            db.connections.close_all()
+            log = Request_Progress.objects.get(request_id=retval["uid"])
+            # this is so the progress is not set to 100 before the output files are saved to the drive
+            # once saved it will update to 100.
+            log.progress = progress - .5
+            log.save()
     except Exception as e:
         logger.info(str(e))
 
