@@ -39,16 +39,15 @@ def set_progress_to_100(uniqueid):
 
 def start_processing(statistical_query):
     db.connections.close_all()
+    pool = multiprocessing.Pool(os.cpu_count() * 2)
     try:
         params = realParams.objects.first()
-
         date_range_list = []
         global jobs
         jobs = []
         global results
         results = []
         dataset = ""
-        pool = None
         uniqueid = statistical_query["uniqueid"]
         operationtype = ""
         if 'geometry' in statistical_query:
@@ -121,12 +120,13 @@ def start_processing(statistical_query):
                         "id": uu_id,
                         "start_date": dates[0],
                         "end_date": dates[1],
-                        "variable": variable, "geom": polygon_string,
+                        "variable": variable,
+                        "geom": polygon_string,
                         "operation": literal_eval(params.parameters)[statistical_query["operationtype"]][1],
                         "file_list": file_list,
-                        "derivedtype": False, "subtype": None
+                        "subtype": None
                     })
-        pool = multiprocessing.Pool(os.cpu_count() * 2)
+
         my_results = []
 
         def error_handler(exception):
@@ -351,9 +351,9 @@ def start_worker_process(job_item):
         values, LTA = GetTDSData.get_nmme_data(job_item["bounds"])
     else:
         if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf':
-            zipfilepath = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
-                                                        job_item['end_date'], job_item['variable'], job_item['geom'],
-                                                        job_item['operation'], job_item['file_list'])
+            zip_file_path = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
+                                                          job_item['end_date'], job_item['variable'], job_item['geom'],
+                                                          job_item['operation'], job_item['file_list'])
             db.connections.close_all()
             return {
                 "uid": job_item["uniqueid"],
@@ -362,12 +362,16 @@ def start_worker_process(job_item):
                 'values': [],
                 'LTA': LTA,
                 'subtype': job_item["subtype"],
-                'zipfilepath': zipfilepath
+                'zipfilepath': zip_file_path
             }
         else:
-            dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
-                                                          job_item['end_date'], job_item['variable'], job_item['geom'],
-                                                          job_item['operation'], job_item['file_list'])
+            dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
+                                                          job_item['start_date'],
+                                                          job_item['end_date'],
+                                                          job_item['variable'],
+                                                          job_item['geom'],
+                                                          job_item['operation'],
+                                                          job_item['file_list'])
     db.connections.close_all()
     return {
         "uid": job_item["uniqueid"],
@@ -387,6 +391,8 @@ def log_result(retval):
         logger.info('{:.0%} done'.format(len(results) / len(jobs)))
         db.connections.close_all()
         log = Request_Progress.objects.get(request_id=retval["uid"])
+        # this is so the progress is not set to 100 before the output files are saved to the drive
+        # once saved it will update to 100.
         log.progress = progress - .5
         log.save()
     except Exception as e:
