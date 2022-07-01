@@ -38,8 +38,9 @@ def set_progress_to_100(uniqueid):
 
 
 def start_processing(statistical_query):
+    logger.info("start_processing has begun")
     db.connections.close_all()
-    pool = multiprocessing.Pool(os.cpu_count() * 2)
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         params = realParams.objects.first()
         date_range_list = []
@@ -79,6 +80,7 @@ def start_processing(statistical_query):
                 "subtype": "nmme"})
         else:
             # here calculate the years and create a list of jobs
+            logger.info("Regular query has been initiated")
             operationtype = statistical_query["operationtype"]
             datatype = statistical_query['datatype']
             begin_time = statistical_query['begintime']
@@ -109,6 +111,7 @@ def start_processing(statistical_query):
                     date_range_list.append([first_date_string, last_date_string])
             counter = 0
             # this breaks if data doesn't exist
+            logger.debug("about to get the data for the range")
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
@@ -128,6 +131,7 @@ def start_processing(statistical_query):
                     })
 
         my_results = []
+        logger.debug("Got file list")
 
         def error_handler(exception):
             print(f'{exception} occurred, terminating pool.')
@@ -148,9 +152,10 @@ def start_processing(statistical_query):
                                                callback=log_result,
                                                error_callback=error_handler
                                                ))
+        logger.debug("should be back from start_worker_process")
         pool.close()
         pool.join()
-
+        logger.debug("pool should be joined")
         split_obj = []
 
         for res in my_results:
@@ -185,6 +190,7 @@ def start_processing(statistical_query):
             merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(result_list)}
 
         else:
+            logger.debug("after join, preparing to create output")
             try:
                 dates = []
                 values = []
@@ -234,6 +240,7 @@ def start_processing(statistical_query):
                     "derived_product": False}
             except Exception as e:
                 logger.error("Making merge_obj failed: " + str(e))
+        logger.debug("preparing to write file")
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
         json.dump(merged_obj, f)
@@ -342,6 +349,7 @@ def start_worker_process(job_item):
     # to return to the parent for said year.
     # I am using fake data so i'm just changing
     # it so we can see it is being "processed"
+    logger.debug("start_worker_process")
     LTA = []
     if job_item["subtype"] == "chirps":
         dates = job_item["dates"]
@@ -373,6 +381,7 @@ def start_worker_process(job_item):
                                                           job_item['operation'],
                                                           job_item['file_list'])
     db.connections.close_all()
+    logger.debug("completed start_worker_process")
     return {
         "uid": job_item["uniqueid"],
         'id': uu.getUUID(),

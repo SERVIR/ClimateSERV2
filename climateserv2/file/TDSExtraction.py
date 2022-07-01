@@ -29,12 +29,12 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
     except Exception as e:
-        print(e)
+        print("failed to get dataset in get_filelist: " + e)
 
     try:
         dataset_name_format = working_dataset.dataset_name_format
     except Exception as e:
-        print(e)
+        print("failed to get name format in get_filelist" + e)
     final_load_dir = working_dataset.final_load_dir
     dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
     # params = Parameters.objects.first()
