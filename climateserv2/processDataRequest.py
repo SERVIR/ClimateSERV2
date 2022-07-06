@@ -1,4 +1,5 @@
 import multiprocessing
+import random
 import shutil
 import time
 from ast import literal_eval
@@ -147,6 +148,8 @@ def start_processing(statistical_query):
                 pool.terminate()
 
         for job in jobs:
+            rest_time = random.uniform(0.5, 1.5)
+            time.sleep(rest_time)
             my_results.append(pool.apply_async(start_worker_process,
                                                args=[job],
                                                callback=log_result,

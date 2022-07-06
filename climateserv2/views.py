@@ -4,6 +4,7 @@ import multiprocessing
 import threading
 import os
 import subprocess
+import time
 from ast import literal_eval
 from datetime import datetime
 import pandas as pd
@@ -27,6 +28,7 @@ from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
+import random
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -598,6 +600,8 @@ def submit_data_request(request):
         t.setDaemon(True)
         t.start()
         # p.start()
+        rest_time = random.uniform(0.5, 1.5)
+        time.sleep(rest_time)
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"
@@ -617,6 +621,10 @@ def submit_data_request(request):
                                   API_call="submitDataRequest", data_retrieved=False, ui_request=from_ui)
 
         track_usage.save()
+
+        rest_time = random.uniform(0.5, 1.5)
+        time.sleep(rest_time)
+
         return process_callback(request, json.dumps(error), "application/json")
 
 
