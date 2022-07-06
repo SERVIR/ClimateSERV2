@@ -1605,6 +1605,7 @@ function buildForm(formData) {
     formData.append("operationtype", current_calculation.value);
     formData.append("dateType_Category", "default");  // ClimateModel shouldn't be needed. please confirm
     formData.append("isZip_CurrentDataType", false);
+    formData.append("is_from_ui", true);
 }
 
 /**
@@ -2092,13 +2093,13 @@ function handleSourceSelected(which, edit, edit_init_id) {
             });
         }
         $.ajax({
-            url: "api/getClimateScenarioInfo/",
+            url: "api/getClimateScenarioInfo/?is_from_ui=true",
             type: "GET",
             async: true,
             crossDomain: true
         }).fail(function () {
             $.ajax({
-                url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
+                url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/?is_from_ui=true",
                 type: "GET",
                 async: true,
                 crossDomain: true
@@ -2913,13 +2914,13 @@ function openDataTypePanel(select_control) {
  */
 function getClimateScenarioInfo() {
     $.ajax({
-        url: "api/getClimateScenarioInfo/",
+        url: "api/getClimateScenarioInfo/?is_from_ui=true",
         type: "GET",
         async: true,
         crossDomain: true
     }).fail(function () {
         $.ajax({
-            url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/",
+            url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/?is_from_ui=true",
             type: "GET",
             async: true,
             crossDomain: true

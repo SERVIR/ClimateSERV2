@@ -348,10 +348,11 @@ def get_climate_datatype_map():
 @never_cache
 @csrf_exempt
 def get_climate_scenario_info(request):
-    from_ui = False
-    reason = CsrfViewMiddleware().process_view(request, None, (), {})
-    if not reason:
-        from_ui = True
+    from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
+
+    # reason = CsrfViewMiddleware().process_view(request, None, (), {})
+    # if not reason:
+    #     from_ui = True
     unique_id = uutools.getUUID()
     try:
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request)
@@ -473,10 +474,11 @@ def run_etl(request):
 def submit_data_request(request):
     params = Parameters.objects.first()
     logger.debug("Submitting Data Request")
-    from_ui = False
-    reason = CsrfViewMiddleware().process_view(request, None, (), {})
-    if not reason:
-        from_ui = True
+    from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
+
+    # reason = CsrfViewMiddleware().process_view(request, None, (), {})
+    # if not reason:
+    #     from_ui = True
 
     error = []
     polygon_string = None
