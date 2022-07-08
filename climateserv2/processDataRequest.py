@@ -58,17 +58,17 @@ def start_processing(statistical_query):
             polygon_string = sF.getPolygons(statistical_query['layerid'], statistical_query['featureids'])
         else:
             raise Exception("Missing polygon_string")
-        lock = threading.Lock()
-        lock.acquire()
+        # lock = threading.Lock()
+        # lock.acquire()
         jobs_object[uniqueid] = []
         results_object[uniqueid] = []
-        lock.release()
+        # lock.release()
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             uu_id = uu.getUUID()
-            lock.acquire()
+            # lock.acquire()
             jobs_object[uniqueid].append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
@@ -84,7 +84,7 @@ def start_processing(statistical_query):
                 "dates": dates,
                 "months": months,
                 "subtype": "nmme"})
-            lock.release()
+            # lock.release()
         else:
             # here calculate the years and create a list of jobs
             logger.info("Regular query has been initiated")
@@ -125,7 +125,7 @@ def start_processing(statistical_query):
                 file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
                 counter += 1
                 if len(file_list) > 0:
-                    lock.acquire()
+                    # lock.acquire()
                     jobs_object[uniqueid].append({
                         "uniqueid": uniqueid,
                         "id": uu_id,
@@ -137,7 +137,7 @@ def start_processing(statistical_query):
                         "file_list": file_list,
                         "subtype": None
                     })
-                    lock.release()
+                    # lock.release()
 
         my_results = []
         logger.debug("Got file list")
@@ -279,12 +279,12 @@ def start_processing(statistical_query):
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
         # Terminating main process
-        lock.acquire()
+        # lock.acquire()
         if uniqueid in jobs_object:
             del jobs_object[uniqueid]
         if uniqueid in results_object:
             del results_object[uniqueid]
-        lock.release()
+        # lock.release()
         try:
             try:
                 pool.join()
@@ -356,12 +356,12 @@ def start_processing(statistical_query):
             finally:
                 pool.terminate()
         finally:
-            lock.acquire()
+            # lock.acquire()
             if uniqueid in jobs_object:
                 del jobs_object[uniqueid]
             if uniqueid in results_object:
                 del results_object[uniqueid]
-            lock.release()
+            # lock.release()
             logger.info("I removed index, here is what's left: " + str(jobs_object))
             sys.exit(1)
 
@@ -422,10 +422,10 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    lock = threading.Lock()
+    # lock = threading.Lock()
     try:
         uniqueid = retval["uid"]
-        lock.acquire()
+        # lock.acquire()
         results_object[uniqueid].append([""])
         if len(jobs_object[uniqueid]) > 0:
             progress = (len(results_object[uniqueid]) / len(jobs_object[uniqueid])) * 100.0
@@ -434,9 +434,11 @@ def log_result(retval):
             log = Request_Progress.objects.get(request_id=uniqueid)
             # this is so the progress is not set to 100 before the output files are saved to the drive
             # once saved it will update to 100.
+            # log.progress = log.progress - (100/retval["job_length"])
+            logger.debug("**********************************" + str(log.progress))
             log.progress = progress - .5
             log.save()
-        lock.release()
+        # lock.release()
     except Exception as e:
         logger.info(str(e))
 
