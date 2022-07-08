@@ -13,7 +13,6 @@ import json
 import calendar
 import os
 import climateserv2.file.dateutils as dateutils
-# import climateserv2.requestLog as reqLog
 import numpy as np
 from django import db
 from django.apps import apps
@@ -22,7 +21,6 @@ import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
 from api.models import Track_Usage  # , ETL_Dataset
 from api.models import Parameters as realParams
-# import psutil
 from zipfile import ZipFile
 from django.utils import timezone
 
@@ -30,6 +28,10 @@ Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
+global jobs_object
+jobs_object = {}
+global results_object
+results_object = {}
 
 
 def set_progress_to_100(uniqueid):
@@ -45,10 +47,7 @@ def start_processing(statistical_query):
     try:
         params = realParams.objects.first()
         date_range_list = []
-        global jobs
-        jobs = []
-        global results
-        results = []
+
         dataset = ""
         uniqueid = statistical_query["uniqueid"]
         operationtype = ""
@@ -59,12 +58,15 @@ def start_processing(statistical_query):
         else:
             raise Exception("Missing polygon_string")
 
+        jobs_object[uniqueid] = []
+        results_object[uniqueid] = []
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             uu_id = uu.getUUID()
-            jobs.append({
+
+            jobs_object[uniqueid].append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
                 "bounds": bounds,
@@ -72,7 +74,7 @@ def start_processing(statistical_query):
                 "months": months,
                 "subtype": "chirps"})
             uu_id = uu.getUUID()
-            jobs.append({
+            jobs_object[uniqueid].append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
                 "bounds": bounds,
@@ -119,7 +121,7 @@ def start_processing(statistical_query):
                 file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
                 counter += 1
                 if len(file_list) > 0:
-                    jobs.append({
+                    jobs_object[uniqueid].append({
                         "uniqueid": uniqueid,
                         "id": uu_id,
                         "start_date": dates[0],
@@ -147,7 +149,7 @@ def start_processing(statistical_query):
                     pass
                 pool.terminate()
 
-        for job in jobs:
+        for job in jobs_object[uniqueid]:
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
             my_results.append(pool.apply_async(start_worker_process,
@@ -271,7 +273,10 @@ def start_processing(statistical_query):
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
         # Terminating main process
-        jobs.clear()
+        if uniqueid in jobs_object:
+            del jobs_object[uniqueid]
+        if uniqueid in results_object:
+            del results_object[uniqueid]
         try:
             try:
                 pool.join()
@@ -343,6 +348,11 @@ def start_processing(statistical_query):
             finally:
                 pool.terminate()
         finally:
+            if uniqueid in jobs_object:
+                del jobs_object[uniqueid]
+            if uniqueid in results_object:
+                del results_object[uniqueid]
+            logger.info("I removed index, here is what's left: " + str(jobs_object))
             sys.exit(1)
 
 
@@ -402,13 +412,15 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    results.append([""])
+
     try:
-        if len(jobs) > 0:
-            progress = (len(results) / len(jobs)) * 100.0
-            logger.info('{:.0%} done'.format(len(results) / len(jobs)))
+        uniqueid = retval["uid"]
+        results_object[uniqueid].append([""])
+        if len(jobs_object[uniqueid]) > 0:
+            progress = (len(results_object[uniqueid]) / len(jobs_object[uniqueid])) * 100.0
+            logger.info('{:.0%} done'.format(len(results_object[uniqueid]) / len(jobs_object[uniqueid])))
             db.connections.close_all()
-            log = Request_Progress.objects.get(request_id=retval["uid"])
+            log = Request_Progress.objects.get(request_id=uniqueid)
             # this is so the progress is not set to 100 before the output files are saved to the drive
             # once saved it will update to 100.
             log.progress = progress - .5
