@@ -150,8 +150,8 @@ def start_processing(statistical_query):
                 pool.terminate()
 
         for job in jobs_object[uniqueid]:
-            rest_time = random.uniform(0.5, 1.5)
-            time.sleep(rest_time)
+            # rest_time = random.uniform(0.5, 1.5)
+            # time.sleep(rest_time)
             my_results.append(pool.apply_async(start_worker_process,
                                                args=[job],
                                                callback=log_result,

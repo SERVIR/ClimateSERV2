@@ -602,8 +602,8 @@ def submit_data_request(request):
         t.setDaemon(True)
         t.start()
         # p.start()
-        rest_time = random.uniform(0.5, 1.5)
-        time.sleep(rest_time)
+        # rest_time = random.uniform(0.5, 1.5)
+        # time.sleep(rest_time)
         return process_callback(request, str(json.dumps([unique_id])), "application/json")
     else:
         status = "Fail"
@@ -624,8 +624,8 @@ def submit_data_request(request):
 
         track_usage.save()
 
-        rest_time = random.uniform(0.5, 1.5)
-        time.sleep(rest_time)
+        # rest_time = random.uniform(0.5, 1.5)
+        # time.sleep(rest_time)
 
         return process_callback(request, json.dumps(error), "application/json")
 
