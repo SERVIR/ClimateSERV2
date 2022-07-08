@@ -60,16 +60,16 @@ def start_processing(statistical_query):
             raise Exception("Missing polygon_string")
         # lock = threading.Lock()
         # lock.acquire()
-        jobs_object[uniqueid] = []
-        results_object[uniqueid] = []
+
         # lock.release()
+        jobs = []
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             uu_id = uu.getUUID()
             # lock.acquire()
-            jobs_object[uniqueid].append({
+            jobs.append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
                 "bounds": bounds,
@@ -77,7 +77,7 @@ def start_processing(statistical_query):
                 "months": months,
                 "subtype": "chirps"})
             uu_id = uu.getUUID()
-            jobs_object[uniqueid].append({
+            jobs.append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
                 "bounds": bounds,
@@ -126,7 +126,7 @@ def start_processing(statistical_query):
                 counter += 1
                 if len(file_list) > 0:
                     # lock.acquire()
-                    jobs_object[uniqueid].append({
+                    jobs.append({
                         "uniqueid": uniqueid,
                         "id": uu_id,
                         "start_date": dates[0],
@@ -155,7 +155,8 @@ def start_processing(statistical_query):
                     pass
                 pool.terminate()
 
-        for job in jobs_object[uniqueid]:
+        for job in jobs:
+            job['job_length'] = len(jobs)
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
             my_results.append(pool.apply_async(start_worker_process,
@@ -280,11 +281,12 @@ def start_processing(statistical_query):
 
         # Terminating main process
         # lock.acquire()
-        if uniqueid in jobs_object:
-            del jobs_object[uniqueid]
-        if uniqueid in results_object:
-            del results_object[uniqueid]
+        # if uniqueid in jobs_object:
+        #     del jobs_object[uniqueid]
+        # if uniqueid in results_object:
+        #     del results_object[uniqueid]
         # lock.release()
+        jobs.clear()
         try:
             try:
                 pool.join()
@@ -357,12 +359,12 @@ def start_processing(statistical_query):
                 pool.terminate()
         finally:
             # lock.acquire()
-            if uniqueid in jobs_object:
-                del jobs_object[uniqueid]
-            if uniqueid in results_object:
-                del results_object[uniqueid]
+            # if uniqueid in jobs_object:
+            #     del jobs_object[uniqueid]
+            # if uniqueid in results_object:
+            #     del results_object[uniqueid]
             # lock.release()
-            logger.info("I removed index, here is what's left: " + str(jobs_object))
+            job.clear()
             sys.exit(1)
 
 
@@ -425,19 +427,22 @@ def log_result(retval):
     # lock = threading.Lock()
     try:
         uniqueid = retval["uid"]
+        job_length = retval["job_length"]
         # lock.acquire()
-        results_object[uniqueid].append([""])
+
         if len(jobs_object[uniqueid]) > 0:
-            progress = (len(results_object[uniqueid]) / len(jobs_object[uniqueid])) * 100.0
-            logger.info('{:.0%} done'.format(len(results_object[uniqueid]) / len(jobs_object[uniqueid])))
+
             db.connections.close_all()
-            log = Request_Progress.objects.get(request_id=uniqueid)
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+
+            update_value = (request_progress.progress - (100/job_length)) - .5
+            logger.info('{:.0%} done'.format(update_value))
             # this is so the progress is not set to 100 before the output files are saved to the drive
             # once saved it will update to 100.
-            # log.progress = log.progress - (100/retval["job_length"])
-            logger.debug("**********************************" + str(log.progress))
-            log.progress = progress - .5
-            log.save()
+            request_progress.progress = update_value
+            logger.debug("**********************************" + str(request_progress.progress))
+            # log.progress = progress - .5
+            request_progress.save()
         # lock.release()
     except Exception as e:
         logger.info(str(e))
