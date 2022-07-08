@@ -437,8 +437,8 @@ def log_result(retval):
             db.connections.close_all()
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
 
-            update_value = (float(request_progress.progress) - (100/job_length)) - .5
-            logger.info('{:.0%} done'.format(update_value))
+            update_value = (float(request_progress.progress) + (100/job_length)) - .5
+            logger.info('{}% done'.format(update_value))
             # this is so the progress is not set to 100 before the output files are saved to the drive
             # once saved it will update to 100.
             request_progress.progress = update_value

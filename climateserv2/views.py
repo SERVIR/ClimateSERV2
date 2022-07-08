@@ -203,7 +203,7 @@ def get_data_request_progress(request):
             progress = -1
         elif float(progress) < 0:
             # decrement progress
-            request_progress = Request_Progress(request_id=request_id, progress=int(progress) - 1)
+            request_progress = Request_Progress(request_id=request_id, progress=float(progress) - 1)
             request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             progress = -1
