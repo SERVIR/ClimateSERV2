@@ -430,7 +430,7 @@ def log_result(retval):
         job_length = retval["job_length"]
         # lock.acquire()
 
-        if len(jobs_object[uniqueid]) > 0:
+        if job_length > 0:
 
             db.connections.close_all()
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
