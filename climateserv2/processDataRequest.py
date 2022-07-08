@@ -426,11 +426,11 @@ def start_worker_process(job_item):
 
 
 def log_result(retval):
-    # lock = threading.Lock()
+    lock = threading.Lock()
     try:
         uniqueid = retval["uid"]
         job_length = retval["job_length"]
-        # lock.acquire()
+        lock.acquire()
 
         if job_length > 0:
 
@@ -438,16 +438,17 @@ def log_result(retval):
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
 
             update_value = (float(request_progress.progress) + (100/job_length)) - .5
-            logger.info('{}% done'.format(update_value))
+            logger.info(str(update_value) + '% done')
             # this is so the progress is not set to 100 before the output files are saved to the drive
             # once saved it will update to 100.
             request_progress.progress = update_value
+            request_progress.save()
             logger.debug("**********************************" + str(request_progress.progress))
             # log.progress = progress - .5
-            request_progress.save()
-        # lock.release()
+            # request_progress.save()
+        lock.release()
     except Exception as e:
-        logger.info(str(e))
+        logger.info("LOCK ISSUE" + str(e))
 
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
