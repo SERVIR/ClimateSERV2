@@ -395,7 +395,8 @@ def start_worker_process(job_item):
                 'values': [],
                 'LTA': LTA,
                 'subtype': job_item["subtype"],
-                'zipfilepath': zip_file_path
+                'zipfilepath': zip_file_path,
+                'job_length': job_item["job_length"]
             }
         else:
             logger.debug("about to get_thredds_values")
@@ -419,7 +420,8 @@ def start_worker_process(job_item):
         'values': values,
         'LTA': LTA,
         'subtype': job_item["subtype"],
-        'zipfilepath': ""
+        'zipfilepath': "",
+        'job_length': job_item["job_length"]
     }
 
 
