@@ -159,19 +159,18 @@ def start_processing(statistical_query):
             job['job_length'] = len(jobs)
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
-            my_results.append(pool.apply_async(start_worker_process,
-                                               args=[job],
-                                               callback=log_result,
-                                               error_callback=error_handler
-                                               ))
+            my_results.append(pool.map(start_worker_process,
+                                       [job],
+                                       ))
         logger.debug("should be back from start_worker_process")
         pool.close()
         pool.join()
         logger.debug("pool should be joined")
-        split_obj = []
+        logger.info(str(my_results))
+        split_obj = my_results[0] #[]
 
-        for res in my_results:
-            split_obj.append(res.get())
+        # for res in my_results:
+        #     split_obj.append(res.get())
 
         dates = []
         values = []
@@ -293,7 +292,7 @@ def start_processing(statistical_query):
             finally:
                 pool.terminate()
         finally:
-            sys.exit(1)
+            sys.exit(0)
     except Exception as e:
         logger.error("NEW ERROR ISSUE: " + str(e))
         try:
@@ -402,17 +401,42 @@ def start_worker_process(job_item):
             logger.debug("about to get_thredds_values")
             try:
                 dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
-                                                          job_item['start_date'],
-                                                          job_item['end_date'],
-                                                          job_item['variable'],
-                                                          job_item['geom'],
-                                                          job_item['operation'],
-                                                          job_item['file_list'])
+                                                              job_item['start_date'],
+                                                              job_item['end_date'],
+                                                              job_item['variable'],
+                                                              job_item['geom'],
+                                                              job_item['operation'],
+                                                              job_item['file_list'])
             except Exception:
                 logger.error("We have an error getting thredds values")
 
     db.connections.close_all()
     logger.debug("completed start_worker_process")
+    # what if i update progress here instead of having the callback
+
+    lock = multiprocessing.Lock()
+    try:
+        uniqueid = job_item["uniqueid"]
+        job_length = job_item["job_length"]
+        lock.acquire()
+
+        if job_length > 0:
+            db.connections.close_all()
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+            logger.info(str(job_length) + ' - was the job_length')
+            update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+            logger.info(str(update_value) + '% done')
+            # this is so the progress is not set to 100 before the output files are saved to the drive
+            # once saved it will update to 100.
+            request_progress.progress = update_value
+            request_progress.save()
+            logger.debug("**********************************" + str(request_progress.progress))
+            # log.progress = progress - .5
+            # request_progress.save()
+        lock.release()
+    except Exception as e:
+        logger.info("LOCK ISSUE" + str(e))
+
     return {
         "uid": job_item["uniqueid"],
         'id': uu.getUUID(),
@@ -425,30 +449,31 @@ def start_worker_process(job_item):
     }
 
 
-def log_result(retval):
-    lock = threading.Lock()
-    try:
-        uniqueid = retval["uid"]
-        job_length = retval["job_length"]
-        lock.acquire()
-
-        if job_length > 0:
-
-            db.connections.close_all()
-            request_progress = Request_Progress.objects.get(request_id=uniqueid)
-            logger.info(str(job_length) + ' - was the job_length')
-            update_value = (float(request_progress.progress) + (100/job_length)) - .5
-            logger.info(str(update_value) + '% done')
-            # this is so the progress is not set to 100 before the output files are saved to the drive
-            # once saved it will update to 100.
-            request_progress.progress = update_value
-            request_progress.save()
-            logger.debug("**********************************" + str(request_progress.progress))
-            # log.progress = progress - .5
-            # request_progress.save()
-        lock.release()
-    except Exception as e:
-        logger.info("LOCK ISSUE" + str(e))
+def log_progress(retval):
+    logger.debug("************Nothing in log progress**********************")
+    # lock = threading.Lock()
+    # try:
+    #     uniqueid = retval["uid"]
+    #     job_length = retval["job_length"]
+    #     lock.acquire()
+    #
+    #     if job_length > 0:
+    #
+    #         db.connections.close_all()
+    #         request_progress = Request_Progress.objects.get(request_id=uniqueid)
+    #         logger.info(str(job_length) + ' - was the job_length')
+    #         update_value = (float(request_progress.progress) + (100/job_length)) - .5
+    #         logger.info(str(update_value) + '% done')
+    #         # this is so the progress is not set to 100 before the output files are saved to the drive
+    #         # once saved it will update to 100.
+    #         request_progress.progress = update_value
+    #         request_progress.save()
+    #         logger.debug("**********************************" + str(request_progress.progress))
+    #         # log.progress = progress - .5
+    #         # request_progress.save()
+    #     lock.release()
+    # except Exception as e:
+    #     logger.info("LOCK ISSUE" + str(e))
 
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
