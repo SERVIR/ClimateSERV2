@@ -115,7 +115,7 @@ def get_filelist(datatype, start_date, end_date):
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
-    logger.debug("Made it to get_thredds_values")
+    logger.debug("Made it to get_thredds_values for: " + uniqueid)
     # try:
     #     params = Parameters.objects.first()
     #     logger.debug("got parameters without closing connections")
@@ -124,7 +124,6 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     #     db.connections.close_all()
     #     logger.debug("closed connections")
     #     params = Parameters.objects.first()
-    logger.debug("past db and params")
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
@@ -134,30 +133,30 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         # If there is an exception with date format while converting, we can just ignore the conversion and use the
         # passed dates
         pass
-    logger.debug("past datetime stuff")
+    logger.debug("past datetime stuff for: " + uniqueid)
     try:
         jsonn = json.loads(str(geom))
     except Exception as e:
         jsonn = json.loads(json.dumps(geom))
-    logger.debug("past json loads ")
+    logger.debug("past json loads  for: " + uniqueid)
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
 
-    logger.debug("past adding feature ")
+    logger.debug("past adding feature  for: " + uniqueid)
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
     json_aoi = json.dumps(jsonn)
-    logger.debug("past json dump ")
+    logger.debug("past json dump  for: " + uniqueid)
     geodf = gpd.read_file(json_aoi)
-    logger.debug("past reading it")
+    logger.debug("past reading it for: " + uniqueid)
     lon1, lat1, lon2, lat2 = geodf.total_bounds
     # using xarray to open the temporary netcdf
-    logger.debug("about to xarray open the data")
+    logger.debug("about to xarray open the data for: " + uniqueid)
     try:
         nc_file = xr.open_mfdataset(file_list, chunks={'time': 16, 'longitude': 256, 'latitude': 256})
     except Exception as e:
-        print("open_mfdataset error: " + str(e))
+        logger.error("open_mfdataset error: " + str(e) + " for: " + uniqueid)
         return [], []
     lat_bounds = nc_file.sel(latitude=[lat1, lat2], method='nearest').latitude.values
     lon_bounds = nc_file.sel(longitude=[lon1, lon2], method='nearest').longitude.values
@@ -173,7 +172,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
     elif operation == "avg":
-        logger.debug("in operation")
+        logger.debug("in operation for: " + uniqueid)
         ds_vals = data.mean(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
         logger.debug("will be returning from avg operation")
@@ -190,7 +189,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
                              uniqueid + '.nc')
                 zipObj.close()
         except Exception as e:
-            print("to_netcdf or zip error: " + e)
+            logger.error("to_netcdf or zip error: " + str(e))
     elif operation == "download" or operation == "csv":
         if jsonn['features'][0]['geometry']['type'] == "Point":
             values = data.values
@@ -226,7 +225,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
                     # close the Zip File
                     zipObj.close()
                 except Exception as e:
-                    print(e)
+                    logger.error(str(e))
                 zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
             else:
                 zipFilePath = ""

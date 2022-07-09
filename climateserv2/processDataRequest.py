@@ -40,7 +40,7 @@ def set_progress_to_100(uniqueid):
 
 def start_processing(statistical_query):
     lock = multiprocessing.Lock()
-    logger.info("start_processing has begun")
+
     # db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
@@ -48,6 +48,7 @@ def start_processing(statistical_query):
 
         dataset = ""
         uniqueid = statistical_query["uniqueid"]
+        logger.info("start_processing has begun for: " + uniqueid)
         operationtype = ""
         if 'geometry' in statistical_query:
             polygon_string = statistical_query["geometry"]
@@ -84,7 +85,7 @@ def start_processing(statistical_query):
             # lock.release()
         else:
             # here calculate the years and create a list of jobs
-            logger.info("Regular query has been initiated")
+            logger.info("Regular query has been initiated for: " + uniqueid)
             operationtype = statistical_query["operationtype"]
             datatype = statistical_query['datatype']
             begin_time = statistical_query['begintime']
@@ -115,7 +116,7 @@ def start_processing(statistical_query):
                     date_range_list.append([first_date_string, last_date_string])
             counter = 0
             # this breaks if data doesn't exist
-            logger.debug("about to get the data for the range")
+            logger.debug("about to get the data for the range for: " + uniqueid)
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
@@ -124,7 +125,6 @@ def start_processing(statistical_query):
                 lock.release()
                 counter += 1
                 if len(file_list) > 0:
-                    # lock.acquire()
                     jobs.append({
                         "uniqueid": uniqueid,
                         "id": uu_id,
@@ -136,13 +136,12 @@ def start_processing(statistical_query):
                         "file_list": file_list,
                         "subtype": None
                     })
-                    # lock.release()
 
         my_results = []
-        logger.debug("Got file list")
+        logger.debug("Got file list for: " + uniqueid + " length: " + str(len(file_list)))
 
         def error_handler(exception):
-            print(f'{exception} occurred, terminating pool.')
+            logger.error(f'{exception} occurred, terminating pool. for: ' + uniqueid)
             try:
                 set_progress_to_100(uniqueid)
                 pool.join()
@@ -161,10 +160,10 @@ def start_processing(statistical_query):
             my_results.append(pool.map(start_worker_process,
                                        [job],
                                        ))
-        logger.debug("should be back from start_worker_process")
+        logger.debug("should be back from start_worker_process for: " + uniqueid)
         pool.close()
         pool.join()
-        logger.debug("pool should be joined")
+        logger.debug("pool should be joined for: " + uniqueid)
 
         split_obj = my_results[0] #[]
 
@@ -249,7 +248,7 @@ def start_processing(statistical_query):
                     "intervaltype": intervaltype,
                     "derived_product": False}
             except Exception as e:
-                logger.error("Making merge_obj failed: " + str(e))
+                logger.error("Making merge_obj failed: " + str(e) + " for: " + uniqueid)
         logger.debug("preparing to write file for: " + uniqueid)
         lock.acquire()
         filename = params.resultsdir + uniqueid + ".txt"
@@ -374,8 +373,9 @@ def start_worker_process(job_item):
     # to return to the parent for said year.
     # I am using fake data so i'm just changing
     # it so we can see it is being "processed"
+    uniqueid = job_item["uniqueid"]
     multiprocessing.Lock()
-    logger.debug("start_worker_process")
+    logger.debug("start_worker_process for: " + uniqueid)
     LTA = []
     if job_item["subtype"] == "chirps":
         dates = job_item["dates"]
@@ -400,7 +400,7 @@ def start_worker_process(job_item):
                 'job_length': job_item["job_length"]
             }
         else:
-            logger.debug("about to get_thredds_values")
+            logger.debug("about to get_thredds_values for: " + uniqueid)
             try:
                 dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
                                                               job_item['start_date'],
@@ -410,10 +410,10 @@ def start_worker_process(job_item):
                                                               job_item['operation'],
                                                               job_item['file_list'])
             except Exception:
-                logger.error("We have an error getting thredds values")
+                logger.error("We have an error getting thredds values for: " + uniqueid)
 
     # db.connections.close_all()
-    logger.debug("completed start_worker_process")
+    logger.debug("completed start_worker_process for: " + uniqueid)
     # what if i update progress here instead of having the callback
 
     lock = multiprocessing.Lock()
@@ -432,7 +432,7 @@ def start_worker_process(job_item):
             # once saved it will update to 100.
             request_progress.progress = update_value
             request_progress.save()
-            logger.debug(str(job_item["uniqueid"]) + " ********************************** " + str(request_progress.progress))
+            logger.debug(str(job_item["uniqueid"]) + " ***************************** " + str(request_progress.progress))
             # log.progress = progress - .5
             # request_progress.save()
         lock.release()
