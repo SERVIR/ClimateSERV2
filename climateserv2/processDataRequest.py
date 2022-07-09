@@ -421,9 +421,9 @@ def start_worker_process(job_item):
         uniqueid = job_item["uniqueid"]
         job_length = job_item["job_length"]
         lock.acquire()
-
+        logger.debug("lock.acquire for: " + uniqueid)
         if job_length > 0:
-            # db.connections.close_all()
+            logger.debug("job_length > 0 for: " + uniqueid)
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
             logger.info(str(job_length) + ' - was the job_length')
             update_value = (float(request_progress.progress) + (100 / job_length)) - .5
@@ -435,6 +435,11 @@ def start_worker_process(job_item):
             logger.debug(str(job_item["uniqueid"]) + " ***************************** " + str(request_progress.progress))
             # log.progress = progress - .5
             # request_progress.save()
+        else:
+            logger.debug("job_length was an issue somehow for: " + uniqueid)
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+            request_progress.progress = 99.5
+            request_progress.save()
         lock.release()
     except Exception as e:
         logger.info("LOCK ISSUE" + str(e))
