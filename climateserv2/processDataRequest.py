@@ -41,7 +41,7 @@ def set_progress_to_100(uniqueid):
 def start_processing(statistical_query):
     lock = multiprocessing.Lock()
     logger.info("start_processing has begun")
-    db.connections.close_all()
+    # db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         date_range_list = []
@@ -200,12 +200,12 @@ def start_processing(statistical_query):
             merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(result_list)}
 
         else:
-            logger.debug("after join, preparing to create output")
+            logger.debug("after join, preparing to create output for: " + uniqueid)
             try:
                 dates = []
                 values = []
                 for obj in split_obj:
-                    db.connections.close_all()
+                    # db.connections.close_all()
                     try:
                         dates.extend(obj["dates"])
                         values.extend(obj["values"])
