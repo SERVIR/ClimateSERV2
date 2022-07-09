@@ -42,6 +42,7 @@ def set_progress_to_100(uniqueid):
 
 
 def start_processing(statistical_query):
+    lock = multiprocessing.Lock()
     logger.info("start_processing has begun")
     db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
@@ -122,7 +123,9 @@ def start_processing(statistical_query):
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
+                lock.acquire()
                 file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
+                lock.release()
                 counter += 1
                 if len(file_list) > 0:
                     # lock.acquire()
@@ -166,7 +169,7 @@ def start_processing(statistical_query):
         pool.close()
         pool.join()
         logger.debug("pool should be joined")
-        logger.info(str(my_results))
+
         split_obj = my_results[0] #[]
 
         # for res in my_results:
@@ -258,11 +261,13 @@ def start_processing(statistical_query):
         f.close()
         db.connections.close_all()
         logger.error("Processes joined and setting progress to 100")
+        lock.acquire()
         set_progress_to_100(uniqueid)
 
         track_usage = Track_Usage.objects.get(unique_id=uniqueid)
         track_usage.status = "Success"
         track_usage.save()
+        lock.release()
         if str(operationtype) == "6":
             zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
             if not os.path.exists(zip_file_path):
@@ -373,6 +378,7 @@ def start_worker_process(job_item):
     # to return to the parent for said year.
     # I am using fake data so i'm just changing
     # it so we can see it is being "processed"
+    multiprocessing.Lock()
     logger.debug("start_worker_process")
     LTA = []
     if job_item["subtype"] == "chirps":
@@ -386,7 +392,7 @@ def start_worker_process(job_item):
             zip_file_path = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
                                                           job_item['end_date'], job_item['variable'], job_item['geom'],
                                                           job_item['operation'], job_item['file_list'])
-            db.connections.close_all()
+            # db.connections.close_all()
             return {
                 "uid": job_item["uniqueid"],
                 'id': uu.getUUID(),
@@ -410,7 +416,7 @@ def start_worker_process(job_item):
             except Exception:
                 logger.error("We have an error getting thredds values")
 
-    db.connections.close_all()
+    # db.connections.close_all()
     logger.debug("completed start_worker_process")
     # what if i update progress here instead of having the callback
 
@@ -421,7 +427,7 @@ def start_worker_process(job_item):
         lock.acquire()
 
         if job_length > 0:
-            db.connections.close_all()
+            # db.connections.close_all()
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
             logger.info(str(job_length) + ' - was the job_length')
             update_value = (float(request_progress.progress) + (100 / job_length)) - .5

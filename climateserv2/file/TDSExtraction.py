@@ -22,6 +22,7 @@ except:
     import locallog.locallogging as llog
 
 logger = llog.getNamedLogger("request_processor")
+params = Parameters.objects.first()
 
 
 def get_filelist(dataTypes, datatype, start_date, end_date, params):
@@ -115,14 +116,14 @@ def get_filelist(dataTypes, datatype, start_date, end_date, params):
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
     logger.debug("Made it to get_thredds_values")
-    try:
-        params = Parameters.objects.first()
-        logger.debug("got parameters without closing connections")
-    except Exception as e:
-        logger.debug("Hit exception getting parameters: " + e)
-        db.connections.close_all()
-        logger.debug("closed connections")
-        params = Parameters.objects.first()
+    # try:
+    #     params = Parameters.objects.first()
+    #     logger.debug("got parameters without closing connections")
+    # except Exception as e:
+    #     logger.debug("Hit exception getting parameters: " + e)
+    #     db.connections.close_all()
+    #     logger.debug("closed connections")
+    #     params = Parameters.objects.first()
     logger.debug("past db and params")
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
@@ -290,8 +291,8 @@ def get_date_range_from_nc_file(nc_file):
 
 
 def get_monthlyanalysis_dates_bounds(geom):
-    db.connections.close_all()
-    params = Parameters.objects.first()
+    # db.connections.close_all()
+    # params = Parameters.objects.first()
     # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
                               chunks={'time': 16, 'longitude': 128, 'latitude': 128})
@@ -312,7 +313,7 @@ def get_monthlyanalysis_dates_bounds(geom):
 
 
 def write_to_tiff(data_object, uniqueid):
-    params = Parameters.objects.first()
+    # params = Parameters.objects.first()
     os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid, exist_ok=True)
     os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid, 0o777)
     os.chdir(params.zipFile_ScratchWorkspace_Path + uniqueid)
