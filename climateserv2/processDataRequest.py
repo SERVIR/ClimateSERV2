@@ -29,10 +29,7 @@ Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
-global jobs_object
-jobs_object = {}
-global results_object
-results_object = {}
+params = realParams.objects.first()
 
 
 def set_progress_to_100(uniqueid):
@@ -47,7 +44,6 @@ def start_processing(statistical_query):
     db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
-        params = realParams.objects.first()
         date_range_list = []
 
         dataset = ""
@@ -124,7 +120,7 @@ def start_processing(statistical_query):
                 uu_id = uu.getUUID()
                 dataset = ""
                 lock.acquire()
-                file_list, variable = GetTDSData.get_filelist(dataTypes, datatype, dates[0], dates[1], params)
+                file_list, variable = GetTDSData.get_filelist(datatype, dates[0], dates[1])
                 lock.release()
                 counter += 1
                 if len(file_list) > 0:
@@ -254,14 +250,14 @@ def start_processing(statistical_query):
                     "derived_product": False}
             except Exception as e:
                 logger.error("Making merge_obj failed: " + str(e))
-        logger.debug("preparing to write file")
+        logger.debug("preparing to write file for: " + uniqueid)
+        lock.acquire()
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
         json.dump(merged_obj, f)
         f.close()
-        db.connections.close_all()
-        logger.error("Processes joined and setting progress to 100")
-        lock.acquire()
+        logger.error("Processes joined, file written, and setting progress to 100 for: " + uniqueid)
+
         set_progress_to_100(uniqueid)
 
         track_usage = Track_Usage.objects.get(unique_id=uniqueid)
@@ -436,7 +432,7 @@ def start_worker_process(job_item):
             # once saved it will update to 100.
             request_progress.progress = update_value
             request_progress.save()
-            logger.debug("**********************************" + str(request_progress.progress))
+            logger.debug(str(job_item["uniqueid"]) + " ********************************** " + str(request_progress.progress))
             # log.progress = progress - .5
             # request_progress.save()
         lock.release()

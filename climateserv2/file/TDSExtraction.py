@@ -25,8 +25,8 @@ logger = llog.getNamedLogger("request_processor")
 params = Parameters.objects.first()
 
 
-def get_filelist(dataTypes, datatype, start_date, end_date, params):
-    db.connections.close_all()
+def get_filelist(datatype, start_date, end_date):
+    # db.connections.close_all()
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
     except Exception as e:
