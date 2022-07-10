@@ -41,7 +41,7 @@ def set_progress_to_100(uniqueid):
 def start_processing(statistical_query):
     lock = multiprocessing.Lock()
 
-    # db.connections.close_all()
+    db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         date_range_list = []
@@ -157,6 +157,7 @@ def start_processing(statistical_query):
             job['job_length'] = len(jobs)
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
+            db.connections.close_all()
             my_results.append(pool.map(start_worker_process,
                                        [job],
                                        ))
@@ -373,6 +374,7 @@ def start_worker_process(job_item):
     # to return to the parent for said year.
     # I am using fake data so i'm just changing
     # it so we can see it is being "processed"
+    db.connections.close_all()
     uniqueid = job_item["uniqueid"]
     multiprocessing.Lock()
     logger.debug("start_worker_process for: " + uniqueid)
