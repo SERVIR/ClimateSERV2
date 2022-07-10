@@ -54,6 +54,7 @@ def read_results(uid):
 # To read progress from the database
 def read_progress(uid):
     try:
+        db.connections.close_all()
         return (Request_Progress.objects.get(request_id=str(uid))).progress
     except Exception as e:
         print(e)
@@ -192,9 +193,10 @@ def get_data_request_progress(request):
         lock.acquire()
         request_id = request.GET["id"]
         progress = read_progress(request_id)
-        track_usage = Track_Usage.objects.get(unique_id=request_id)
-        track_usage.progress = progress
-        track_usage.save()
+        if float(progress) > 0:
+            track_usage = Track_Usage.objects.get(unique_id=request_id)
+            track_usage.progress = progress
+            track_usage.save()
         lock.release()
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
