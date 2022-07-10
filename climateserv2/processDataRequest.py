@@ -426,6 +426,7 @@ def start_worker_process(job_item):
         logger.debug("lock.acquire for: " + uniqueid)
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
+            db.connections.close_all()
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
             logger.info(str(job_length) + ' - was the job_length')
             update_value = (float(request_progress.progress) + (100 / job_length)) - .5
