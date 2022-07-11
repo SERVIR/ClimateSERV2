@@ -378,7 +378,6 @@ def start_worker_process(job_item):
     # it so we can see it is being "processed"
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
-    multiprocessing.Lock()
 
     logger.debug("start_worker_process for: " + uniqueid)
     LTA = []
@@ -419,13 +418,10 @@ def start_worker_process(job_item):
 
     # db.connections.close_all()
     logger.debug("completed start_worker_process for: " + uniqueid)
-    # what if i update progress here instead of having the callback
-
-    lock = multiprocessing.Lock()
+    # what if I update progress here instead of having the callback
     try:
         uniqueid = job_item["uniqueid"]
         job_length = job_item["job_length"]
-        lock.acquire()
         logger.debug("lock.acquire for: " + uniqueid)
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
@@ -433,33 +429,29 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                # t_lock = threading.Lock()
-                # t_lock.acquire()
-                # db.connection.ensure_connection()
-                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
-                # logger.debug("got request object for: " + uniqueid)
-                # logger.info(str(job_length) + ' - was the job_length')
-                # update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-                # logger.info(str(update_value) + '% done')
-                # # this is so the progress is not set to 100 before the output files are saved to the drive
-                # # once saved it will update to 100.
-                # request_progress.progress = update_value
-                # logger.debug("updated progress for: " + uniqueid)
-                # request_progress.save()
-                # logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
+
+                request_progress = Request_Progress.objects.get(request_id=uniqueid)
+                logger.debug("got request object for: " + uniqueid)
+                logger.info(str(job_length) + ' - was the job_length')
+                update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+                logger.info(str(update_value) + '% done')
+                # this is so the progress is not set to 100 before the output files are saved to the drive
+                # once saved it will update to 100.
+                request_progress.progress = update_value
+                logger.debug("updated progress for: " + uniqueid)
+                request_progress.save()
+                logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
             except:
+                # Keep processing even if progress update fails
                 logger.error("error getting or updating progress")
                 pass
-            # log.progress = progress - .5
-            # request_progress.save()
         else:
             logger.debug("job_length was an issue somehow for: " + uniqueid)
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
             request_progress.progress = 99.5
             request_progress.save()
-        lock.release()
     except Exception as e:
-        logger.info("LOCK ISSUE" + str(e))
+        logger.info("ISSUE" + str(e))
 
     return {
         "uid": job_item["uniqueid"],
