@@ -433,8 +433,7 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                t_lock = threading.Lock()
-                t_lock.acquire()
+
                 request_progress = Request_Progress.objects.(request_id=uniqueid)
                 logger.debug("got request object for: " + uniqueid)
                 logger.info(str(job_length) + ' - was the job_length')
@@ -446,7 +445,6 @@ def start_worker_process(job_item):
                 logger.debug("updated progress for: " + uniqueid)
                 request_progress.save()
                 logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
-                t_lock.release()
             except:
                 logger.error("error getting or updating progress")
                 pass
