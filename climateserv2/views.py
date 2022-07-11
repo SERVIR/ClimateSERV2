@@ -578,13 +578,10 @@ def submit_data_request(request):
         # I used to use multiprocessing to start the multiprocessing, i think a thread is better
         # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         t = threading.Thread(target=start_processing, args=(dictionary,))
-        log = Request_Progress(request_id=unique_id, progress=0)
-        log.save()
-        log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
-        if log_obj.progress == 100:
-            status = "Success"
-        else:
-            status = "In Progress"
+        request_progress = Request_Progress(request_id=unique_id, progress=0)
+        request_progress.save()
+        request_progress.refresh_from_db()
+        status = "In Progress"
         if "geometry" in dictionary:
             aoi = dictionary['geometry']
         else:
@@ -599,7 +596,7 @@ def submit_data_request(request):
                                       start_date=pd.Timestamp(begin_time, tz='UTC'),
                                       end_date=pd.Timestamp(end_time, tz='UTC'),
                                       calculation=calculation, request_type=request.method,
-                                      status=status, progress=log_obj.progress, API_call="submitDataRequest",
+                                      status=status, progress=request_progress.progress, API_call="submitDataRequest",
                                       data_retrieved=False, ui_request=from_ui)
 
             track_usage.save()
@@ -618,7 +615,7 @@ def submit_data_request(request):
             aoi = request.POST['geometry']
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
+        request_progress = Request_Progress.objects.get(request_id=unique_id)
         logger.error("****FAIL********* ")
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
@@ -626,7 +623,7 @@ def submit_data_request(request):
                                   dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
-                                  request_type=request.method, status=status, progress=log_obj.progress,
+                                  request_type=request.method, status=status, progress=request_progress.progress,
                                   API_call="submitDataRequest", data_retrieved=False, ui_request=from_ui)
 
         track_usage.save()

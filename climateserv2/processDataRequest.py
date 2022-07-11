@@ -1,12 +1,8 @@
-import gc
 import multiprocessing
-import pathlib
 import random
 import shutil
-import threading
 import time
 from ast import literal_eval
-# from socket import socket
 
 import climateserv2.file.TDSExtraction as GetTDSData
 import sys
@@ -26,14 +22,12 @@ from api.models import Track_Usage  # , ETL_Dataset
 from api.models import Parameters as realParams
 from zipfile import ZipFile
 from django.utils import timezone
+from api.models import Request_Progress
 
-Request_Log = apps.get_model('api', 'Request_Log')
-Request_Progress = apps.get_model('api', 'Request_Progress')
+# Request_Progress = apps.get_model('api', 'Request_Progress')
 logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
-
-import climateserv2.views as parent_view
 
 
 def set_progress_to_100(uniqueid):
@@ -43,7 +37,6 @@ def set_progress_to_100(uniqueid):
 
 
 def start_processing(statistical_query):
-    lock = multiprocessing.Lock()
 
     db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
@@ -60,17 +53,14 @@ def start_processing(statistical_query):
             polygon_string = sF.getPolygons(statistical_query['layerid'], statistical_query['featureids'])
         else:
             raise Exception("Missing polygon_string")
-        # lock = threading.Lock()
-        # lock.acquire()
 
-        # lock.release()
         jobs = []
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
             uu_id = uu.getUUID()
-            # lock.acquire()
+
             jobs.append({
                 "uniqueid": uniqueid,
                 "id": uu_id,
@@ -86,7 +76,6 @@ def start_processing(statistical_query):
                 "dates": dates,
                 "months": months,
                 "subtype": "nmme"})
-            # lock.release()
         else:
             # here calculate the years and create a list of jobs
             logger.info("Regular query has been initiated for: " + uniqueid)
@@ -124,9 +113,7 @@ def start_processing(statistical_query):
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
-                lock.acquire()
                 file_list, variable = GetTDSData.get_filelist(datatype, dates[0], dates[1])
-                lock.release()
                 counter += 1
                 if len(file_list) > 0:
                     jobs.append({
@@ -255,7 +242,6 @@ def start_processing(statistical_query):
             except Exception as e:
                 logger.error("Making merge_obj failed: " + str(e) + " for: " + uniqueid)
         logger.debug("preparing to write file for: " + uniqueid)
-        lock.acquire()
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
         json.dump(merged_obj, f)
@@ -267,7 +253,6 @@ def start_processing(statistical_query):
         track_usage = Track_Usage.objects.get(unique_id=uniqueid)
         track_usage.status = "Success"
         track_usage.save()
-        lock.release()
         if str(operationtype) == "6":
             zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
             if not os.path.exists(zip_file_path):
@@ -283,13 +268,6 @@ def start_processing(statistical_query):
             except OSError as e:
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
-        # Terminating main process
-        # lock.acquire()
-        # if uniqueid in jobs_object:
-        #     del jobs_object[uniqueid]
-        # if uniqueid in results_object:
-        #     del results_object[uniqueid]
-        # lock.release()
         jobs.clear()
         try:
             try:
@@ -362,12 +340,6 @@ def start_processing(statistical_query):
             finally:
                 pool.terminate()
         finally:
-            # lock.acquire()
-            # if uniqueid in jobs_object:
-            #     del jobs_object[uniqueid]
-            # if uniqueid in results_object:
-            #     del results_object[uniqueid]
-            # lock.release()
             job.clear()
             sys.exit(1)
 
@@ -424,7 +396,6 @@ def start_worker_process(job_item):
     try:
         uniqueid = job_item["uniqueid"]
         job_length = job_item["job_length"]
-        logger.debug("lock.acquire for: " + uniqueid)
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
             try:
@@ -439,17 +410,17 @@ def start_worker_process(job_item):
                 # except Exception as e:
                 #     logger.error(str(e))
 
-                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
-                # logger.debug("got request object for: " + uniqueid)
-                # logger.info(str(job_length) + ' - was the job_length')
-                # update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-                # logger.info(str(update_value) + '% done')
-                # # this is so the progress is not set to 100 before the output files are saved to the drive
-                # # once saved it will update to 100.
-                # request_progress.progress = update_value
-                # logger.debug("updated progress for: " + uniqueid)
-                # request_progress.save()
-                # logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
+                request_progress = Request_Progress.objects.get(request_id=uniqueid)
+                logger.debug("got request object for: " + uniqueid)
+                logger.info(str(job_length) + ' - was the job_length')
+                update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+                logger.info(str(update_value) + '% done')
+                # this is so the progress is not set to 100 before the output files are saved to the drive
+                # once saved it will update to 100.
+                request_progress.progress = update_value
+                logger.debug("updated progress for: " + uniqueid)
+                request_progress.save()
+                logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
             except:
                 # Keep processing even if progress update fails
                 logger.error("error getting or updating progress")
@@ -476,11 +447,11 @@ def start_worker_process(job_item):
 
 def log_progress(retval):
     logger.debug("************Nothing in log progress**********************")
-    # lock = threading.Lock()
+    #
     # try:
     #     uniqueid = retval["uid"]
     #     job_length = retval["job_length"]
-    #     lock.acquire()
+    #
     #
     #     if job_length > 0:
     #
@@ -496,9 +467,9 @@ def log_progress(retval):
     #         logger.debug("**********************************" + str(request_progress.progress))
     #         # log.progress = progress - .5
     #         # request_progress.save()
-    #     lock.release()
+    #
     # except Exception as e:
-    #     logger.info("LOCK ISSUE" + str(e))
+    #     logger.info(" ISSUE" + str(e))
 
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
