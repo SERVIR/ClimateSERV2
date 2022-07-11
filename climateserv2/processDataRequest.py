@@ -33,6 +33,8 @@ logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
 
+import climateserv2.views as parent_view
+
 
 def set_progress_to_100(uniqueid):
     request_progress = Request_Progress.objects.get(request_id=uniqueid)
@@ -429,7 +431,8 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                # my_progress = Request_Progress.objects.raw("SELECT * FROM api_request_progress where request_id = '" + uniqueid + "' LIMIT 1;")
+                my_progress = parent_view.read_progress(uniqueid)
+                logger.debug(my_progress)
                 # try:
                 #     for p in my_progress:
                 #         logger.debug("The progress returned is....... " + str(p.progress))
