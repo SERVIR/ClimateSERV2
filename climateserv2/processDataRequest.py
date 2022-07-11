@@ -429,12 +429,12 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                my_progress = Request_Progress.objects.raw("SELECT * FROM api_request_progress where request_id = '" + uniqueid + "' LIMIT 1;")
-                try:
-                    for p in my_progress:
-                        logger.debug("The progress returned is....... " + str(p.progress))
-                except Exception as e:
-                    logger.error(str(e))
+                # my_progress = Request_Progress.objects.raw("SELECT * FROM api_request_progress where request_id = '" + uniqueid + "' LIMIT 1;")
+                # try:
+                #     for p in my_progress:
+                #         logger.debug("The progress returned is....... " + str(p.progress))
+                # except Exception as e:
+                #     logger.error(str(e))
 
                 # request_progress = Request_Progress.objects.get(request_id=uniqueid)
                 # logger.debug("got request object for: " + uniqueid)
