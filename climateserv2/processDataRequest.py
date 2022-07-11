@@ -1,3 +1,4 @@
+import gc
 import multiprocessing
 import random
 import shutil
@@ -427,6 +428,7 @@ def start_worker_process(job_item):
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
             try:
+                gc.collect()
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 request_progress = Request_Progress.objects.get(request_id=uniqueid)
