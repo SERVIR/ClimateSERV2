@@ -378,7 +378,7 @@ def start_worker_process(job_item):
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
     multiprocessing.Lock()
-    request_progress, created = Request_Progress.objects.get_or_create(request_id=uniqueid)
+
     logger.debug("start_worker_process for: " + uniqueid)
     LTA = []
     if job_item["subtype"] == "chirps":
@@ -433,17 +433,17 @@ def start_worker_process(job_item):
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
 
-                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
-                logger.debug("got request object for: " + uniqueid)
-                logger.info(str(job_length) + ' - was the job_length')
-                update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-                logger.info(str(update_value) + '% done')
-                # this is so the progress is not set to 100 before the output files are saved to the drive
-                # once saved it will update to 100.
-                request_progress.progress = update_value
-                logger.debug("updated progress for: " + uniqueid)
-                request_progress.save()
-                logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
+                # request_progress = Request_Progress.objects.(request_id=uniqueid)
+                # logger.debug("got request object for: " + uniqueid)
+                # logger.info(str(job_length) + ' - was the job_length')
+                # update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+                # logger.info(str(update_value) + '% done')
+                # # this is so the progress is not set to 100 before the output files are saved to the drive
+                # # once saved it will update to 100.
+                # request_progress.progress = update_value
+                # logger.debug("updated progress for: " + uniqueid)
+                # request_progress.save()
+                # logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
             except:
                 logger.error("error getting or updating progress")
                 pass
