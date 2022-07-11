@@ -1,5 +1,6 @@
 import gc
 import multiprocessing
+import pathlib
 import random
 import shutil
 import threading
@@ -432,8 +433,11 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-
-                with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", 'w+') as job_file:
+                if pathlib.Path('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt").is_dir():
+                    mode = "r+"
+                else:
+                    mode = "w+"
+                with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", mode) as job_file:
                     content = job_file.read()
                     if len(content) > 0:
                         logger.info("will update progress to: " + str((float(content) + (100 / job_length)) - .5))

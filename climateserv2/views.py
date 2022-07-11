@@ -56,7 +56,7 @@ def read_progress(uid):
     try:
         db.connections.close_all()
         return (Request_Progress.objects.get(request_id=str(uid))).progress
-        with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", 'w+') as job_file:
+        with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", 'r') as job_file:
             content = job_file.read()
             if len(content) > 0:
                 return "0"
