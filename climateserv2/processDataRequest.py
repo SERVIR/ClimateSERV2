@@ -410,17 +410,17 @@ def start_worker_process(job_item):
                 # except Exception as e:
                 #     logger.error(str(e))
 
-                request_progress = Request_Progress.objects.get(request_id=uniqueid)
-                logger.debug("got request object for: " + uniqueid)
-                logger.info(str(job_length) + ' - was the job_length')
-                update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-                logger.info(str(update_value) + '% done')
-                # this is so the progress is not set to 100 before the output files are saved to the drive
-                # once saved it will update to 100.
-                request_progress.progress = update_value
-                logger.debug("updated progress for: " + uniqueid)
-                request_progress.save()
-                logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
+                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
+                # logger.debug("got request object for: " + uniqueid)
+                # logger.info(str(job_length) + ' - was the job_length')
+                # update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+                # logger.info(str(update_value) + '% done')
+                # # this is so the progress is not set to 100 before the output files are saved to the drive
+                # # once saved it will update to 100.
+                # request_progress.progress = update_value
+                # logger.debug("updated progress for: " + uniqueid)
+                # request_progress.save()
+                # logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
             except:
                 # Keep processing even if progress update fails
                 logger.error("error getting or updating progress")
