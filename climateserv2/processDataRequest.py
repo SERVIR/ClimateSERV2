@@ -378,6 +378,7 @@ def start_worker_process(job_item):
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
     multiprocessing.Lock()
+    request_progress, created = Request_Progress.objects.get_or_create(request_id=uniqueid)
     logger.debug("start_worker_process for: " + uniqueid)
     LTA = []
     if job_item["subtype"] == "chirps":
@@ -431,8 +432,8 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                Request_Progress.refresh_from_db()
-                request_progress = Request_Progress.objects.get(request_id=uniqueid)
+
+                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
                 logger.debug("got request object for: " + uniqueid)
                 logger.info(str(job_length) + ' - was the job_length')
                 update_value = (float(request_progress.progress) + (100 / job_length)) - .5
