@@ -1,3 +1,4 @@
+import threading
 import multiprocessing
 import random
 import shutil
@@ -344,6 +345,23 @@ def start_processing(statistical_query):
             sys.exit(1)
 
 
+def update_progress(job_variables):
+    job_length = job_variables["progress"]
+    uniqueid = job_variables["uniqueid"]
+    request_progress = Request_Progress.objects.get(request_id=uniqueid)
+    logger.debug("got request object for: " + uniqueid)
+    logger.info(str(job_length) + ' - was the job_length')
+    update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+    logger.info(str(update_value) + '% done')
+    # this is so the progress is not set to 100 before the output files are saved to the drive
+    # once saved it will update to 100.
+    request_progress.progress = update_value
+    logger.debug("updated progress for: " + uniqueid)
+    request_progress.save()
+    logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
+
+
+
 def start_worker_process(job_item):
     # here is where you would open each netcdf
     # and do the processing and create the data
@@ -401,6 +419,10 @@ def start_worker_process(job_item):
             try:
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
+
+                t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
+                t.setDaemon(True)
+                t.start()
                 # This is the line that randomly hangs and will not recover
                 # my_progress = parent_view.read_progress(uniqueid)
                 # logger.debug(my_progress)
