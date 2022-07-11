@@ -433,7 +433,7 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                if pathlib.Path('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt").is_dir():
+                if pathlib.Path('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt").is_file():
                     mode = "r+"
                 else:
                     mode = "w+"
