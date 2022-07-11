@@ -55,14 +55,7 @@ def read_results(uid):
 def read_progress(uid):
     try:
         db.connections.close_all()
-        # return (Request_Progress.objects.get(request_id=str(uid))).progress
-        with open('/cserv2/django_app/tmp/' + str(uid) + ".txt", 'r') as job_file:
-            content = job_file.read()
-            if len(content) > 0:
-                return content
-            else:
-                return "0"
-        return "0"
+        return (Request_Progress.objects.get(request_id=str(uid))).progress
     except Exception as e:
         print(e)
         return "-1"
@@ -173,13 +166,6 @@ def get_data_from_request(request):
         track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
         track_usage.data_retrieved = True
         track_usage.save()
-        file_name = '/cserv2/django_app/tmp/' + request_id + ".txt"
-        logger.info("Remove file: " + file_name)
-        if os.path.exists(file_name):
-            logger.info("it exists")
-            os.remove(file_name)
-        else:
-            logger.info("no existo")
         return process_callback(request, json.dumps(json_results), "application/json")
     except DatabaseError:
         logger.warning("problem getting request data for id: " + str(request))
@@ -207,6 +193,10 @@ def get_data_request_progress(request):
         lock.acquire()
         request_id = request.GET["id"]
         progress = read_progress(request_id)
+        # if float(progress) > 0:
+        #     track_usage = Track_Usage.objects.get(unique_id=request_id)
+        #     track_usage.progress = progress
+        #     track_usage.save()
         lock.release()
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
@@ -239,13 +229,6 @@ def get_file_for_job_id(request):
     try:
         request_id = request.GET["id"]
         progress = read_progress(request_id)
-        file_name = '/cserv2/django_app/tmp/' + request_id + ".txt"
-        logger.info("Remove file: " + file_name)
-        if os.path.exists(file_name):
-            logger.info("it exists")
-            os.remove(file_name)
-        else:
-            logger.info("no existo")
         # Validate that progress is at 100%
         if float(progress) == 100.0:
             track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])

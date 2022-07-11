@@ -433,18 +433,18 @@ def start_worker_process(job_item):
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
                 # This is the line that randomly hangs and will not recover
-                if pathlib.Path('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt").is_file():
-                    mode = "r+"
-                else:
-                    mode = "w+"
-                with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", mode) as job_file:
-                    content = job_file.read()
-                    if len(content) > 0:
-                        logger.info("will update progress to: " + str((float(content) + (100 / job_length)) - .5))
-                        job_file.write(str((float(content) + (100 / job_length)) - .5))
-                    else:
-                        logger.info("thinks content is empty")
-                        job_file.write(str((100 / job_length) - .5))
+                # if pathlib.Path('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt").is_file():
+                #     mode = "r+"
+                # else:
+                #     mode = "w+"
+                # with open('/cserv2/django_app/tmp/' + job_item["uniqueid"] + ".txt", mode) as job_file:
+                #     content = job_file.read()
+                #     if len(content) > 0:
+                #         logger.info("will update progress to: " + str((float(content) + (100 / job_length)) - .5))
+                #         job_file.write(str((float(content) + (100 / job_length)) - .5))
+                #     else:
+                #         logger.info("thinks content is empty")
+                #         job_file.write(str((100 / job_length) - .5))
 
 
                 # request_progress = Request_Progress.objects.(request_id=uniqueid)
