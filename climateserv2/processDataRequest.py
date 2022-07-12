@@ -36,6 +36,7 @@ def set_progress_to_100(uniqueid):
 
 def start_processing(statistical_query):
     db.connections.close_all()
+    multiprocessing.log_to_stderr(logging.DEBUG)
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         date_range_list = []
