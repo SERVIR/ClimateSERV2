@@ -1,5 +1,3 @@
-import django
-django.setup()
 import threading
 import multiprocessing
 import random
@@ -25,10 +23,6 @@ from api.models import Parameters as realParams
 from zipfile import ZipFile
 from django.utils import timezone
 from api.models import Request_Progress
-from multiprocessing import set_start_method
-from multiprocessing import get_context
-
-
 logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
@@ -42,9 +36,7 @@ def set_progress_to_100(uniqueid):
 
 def start_processing(statistical_query):
     db.connections.close_all()
-
-    set_start_method("spawn")
-    pool = get_context("spawn").Pool()
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         date_range_list = []
 
