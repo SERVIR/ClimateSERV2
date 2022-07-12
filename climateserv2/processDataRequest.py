@@ -129,7 +129,7 @@ def start_processing(statistical_query):
                     })
 
         my_results = []
-        logger.debug("Got file list for: " + uniqueid + " length: " + str(len(file_list)))
+        # logger.debug("Got file list for: " + uniqueid + " length: " + str(len(file_list)))
 
         def error_handler(exception):
             logger.error(f'{exception} occurred, terminating pool. for: ' + uniqueid)
