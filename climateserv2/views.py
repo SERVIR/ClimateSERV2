@@ -187,22 +187,18 @@ def int_try_parse(value):
 @never_cache
 @csrf_exempt
 def get_data_request_progress(request):
-    logger.debug("Getting Data Request Progress")
-    lock = multiprocessing.Lock()
+    logger.debug("Getting Data Request Progress for: " + request.GET["id"])
     try:
-        lock.acquire()
         request_id = request.GET["id"]
         progress = read_progress(request_id)
         # if float(progress) > 0:
         #     track_usage = Track_Usage.objects.get(unique_id=request_id)
         #     track_usage.progress = progress
         #     track_usage.save()
-        lock.release()
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
     try:
-        logger.debug("Progress =" + str(progress))
-        lock.acquire()
+        logger.debug("Progress =" + str(progress) + " for " + request.GET["id"])
         if progress == -5:
             request_progress = Request_Progress(request_id=request_id, progress=100)
             request_progress.save()
@@ -213,7 +209,6 @@ def get_data_request_progress(request):
             request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             progress = -1
-        lock.release()
         return process_callback(request, json.dumps([float(progress)]), "application/json")
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))

@@ -1,3 +1,5 @@
+import django
+django.setup()
 import threading
 import multiprocessing
 import random
@@ -15,7 +17,6 @@ import os
 import climateserv2.file.dateutils as dateutils
 import numpy as np
 from django import db
-from django.apps import apps
 import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import logging
@@ -24,8 +25,10 @@ from api.models import Parameters as realParams
 from zipfile import ZipFile
 from django.utils import timezone
 from api.models import Request_Progress
+from multiprocessing import set_start_method
+from multiprocessing import get_context
 
-# Request_Progress = apps.get_model('api', 'Request_Progress')
+
 logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
@@ -39,7 +42,9 @@ def set_progress_to_100(uniqueid):
 
 def start_processing(statistical_query):
     db.connections.close_all()
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+
+    set_start_method("spawn")
+    pool = get_context("spawn").Pool()
     try:
         date_range_list = []
 
@@ -406,11 +411,12 @@ def start_worker_process(job_item):
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
             try:
-                db.connections.close_all()
-                logger.debug("db.connections.close_all() for: " + uniqueid)
                 t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
                 t.setDaemon(True)
                 t.start()
+                logger.debug("db.connections.close_all() for: " + uniqueid)
+
+                logger.debug("update progress thread started for: " + uniqueid)
             except:
                 logger.error("error getting or updating progress")
                 pass
