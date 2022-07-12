@@ -38,7 +38,6 @@ def set_progress_to_100(uniqueid):
 
 
 def start_processing(statistical_query):
-
     db.connections.close_all()
     pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
@@ -150,18 +149,18 @@ def start_processing(statistical_query):
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
             db.connections.close_all()
-            my_results.append(pool.map(start_worker_process,
-                                       [job],
-                                       ))
+            my_results.append(pool.apply_async(start_worker_process,
+                                               args=[job],
+                                               ))
         logger.debug("should be back from start_worker_process for: " + uniqueid)
         pool.close()
         pool.join()
         logger.debug("pool should be joined for: " + uniqueid)
 
-        split_obj = my_results[0] #[]
+        split_obj = []
 
-        # for res in my_results:
-        #     split_obj.append(res.get())
+        for res in my_results:
+            split_obj.append(res.get())
 
         dates = []
         values = []
@@ -353,21 +352,13 @@ def update_progress(job_variables):
     logger.info(str(job_length) + ' - was the job_length')
     update_value = (float(request_progress.progress) + (100 / job_length)) - .5
     logger.info(str(update_value) + '% done')
-    # this is so the progress is not set to 100 before the output files are saved to the drive
-    # once saved it will update to 100.
     request_progress.progress = update_value
     logger.debug("updated progress for: " + uniqueid)
     request_progress.save()
     logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
 
 
-
 def start_worker_process(job_item):
-    # here is where you would open each netcdf
-    # and do the processing and create the data
-    # to return to the parent for said year.
-    # I am using fake data so i'm just changing
-    # it so we can see it is being "processed"
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
 
@@ -384,7 +375,7 @@ def start_worker_process(job_item):
             zip_file_path = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
                                                           job_item['end_date'], job_item['variable'], job_item['geom'],
                                                           job_item['operation'], job_item['file_list'])
-            # db.connections.close_all()
+
             return {
                 "uid": job_item["uniqueid"],
                 'id': uu.getUUID(),
@@ -408,9 +399,7 @@ def start_worker_process(job_item):
             except Exception:
                 logger.error("We have an error getting thredds values for: " + uniqueid)
 
-    # db.connections.close_all()
     logger.debug("completed start_worker_process for: " + uniqueid)
-    # what if I update progress here instead of having the callback
     try:
         uniqueid = job_item["uniqueid"]
         job_length = job_item["job_length"]
@@ -419,32 +408,10 @@ def start_worker_process(job_item):
             try:
                 db.connections.close_all()
                 logger.debug("db.connections.close_all() for: " + uniqueid)
-
                 t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
                 t.setDaemon(True)
                 t.start()
-                # This is the line that randomly hangs and will not recover
-                # my_progress = parent_view.read_progress(uniqueid)
-                # logger.debug(my_progress)
-                # try:
-                #     for p in my_progress:
-                #         logger.debug("The progress returned is....... " + str(p.progress))
-                # except Exception as e:
-                #     logger.error(str(e))
-
-                # request_progress = Request_Progress.objects.get(request_id=uniqueid)
-                # logger.debug("got request object for: " + uniqueid)
-                # logger.info(str(job_length) + ' - was the job_length')
-                # update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-                # logger.info(str(update_value) + '% done')
-                # # this is so the progress is not set to 100 before the output files are saved to the drive
-                # # once saved it will update to 100.
-                # request_progress.progress = update_value
-                # logger.debug("updated progress for: " + uniqueid)
-                # request_progress.save()
-                # logger.debug(str(job_item["uniqueid"]) + "***************************** " + str(request_progress.progress))
             except:
-                # Keep processing even if progress update fails
                 logger.error("error getting or updating progress")
                 pass
         else:
@@ -465,33 +432,6 @@ def start_worker_process(job_item):
         'zipfilepath': "",
         'job_length': job_item["job_length"]
     }
-
-
-def log_progress(retval):
-    logger.debug("************Nothing in log progress**********************")
-    #
-    # try:
-    #     uniqueid = retval["uid"]
-    #     job_length = retval["job_length"]
-    #
-    #
-    #     if job_length > 0:
-    #
-    #         db.connections.close_all()
-    #         request_progress = Request_Progress.objects.get(request_id=uniqueid)
-    #         logger.info(str(job_length) + ' - was the job_length')
-    #         update_value = (float(request_progress.progress) + (100/job_length)) - .5
-    #         logger.info(str(update_value) + '% done')
-    #         # this is so the progress is not set to 100 before the output files are saved to the drive
-    #         # once saved it will update to 100.
-    #         request_progress.progress = update_value
-    #         request_progress.save()
-    #         logger.debug("**********************************" + str(request_progress.progress))
-    #         # log.progress = progress - .5
-    #         # request_progress.save()
-    #
-    # except Exception as e:
-    #     logger.info(" ISSUE" + str(e))
 
 
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
