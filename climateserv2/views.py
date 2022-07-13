@@ -209,6 +209,10 @@ def get_data_request_progress(request):
             request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             progress = -1
+        elif 99.4 < float(progress) < 100:
+            request_progress = Request_Progress(request_id=request_id, progress=float(progress) + .1)
+            request_progress.save()
+            # logger.warning("Problem with getDataRequestProgress: " + str(request))
         return process_callback(request, json.dumps([float(progress)]), "application/json")
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
