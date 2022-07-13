@@ -200,17 +200,20 @@ def get_data_request_progress(request):
     try:
         logger.debug("Progress =" + str(progress) + " for " + request.GET["id"])
         if progress == -5:
-            request_progress = Request_Progress(request_id=request_id, progress=100)
+            request_progress = Request_Progress.objects.get(request_id=str(request_id))
+            request_progress.progress=100
             request_progress.save()
             progress = -1
         elif float(progress) < 0:
             # decrement progress
-            request_progress = Request_Progress(request_id=request_id, progress=float(progress) - 1)
+            request_progress = Request_Progress.objects.get(request_id=str(request_id))
+            request_progress.progress=float(progress) - 1
             request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             progress = -1
         elif 99.4 < float(progress) < 100:
-            request_progress = Request_Progress(request_id=request_id, progress=float(progress) + .1)
+            request_progress = Request_Progress.objects.get(request_id=str(request_id))
+            request_progress.progress=float(progress) + .1
             request_progress.save()
             # logger.warning("Problem with getDataRequestProgress: " + str(request))
         return process_callback(request, json.dumps([float(progress)]), "application/json")
