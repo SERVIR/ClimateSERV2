@@ -1,9 +1,12 @@
+import ast
+import concurrent.futures
 import threading
 import multiprocessing
 import random
 import shutil
 import time
 from ast import literal_eval
+from concurrent.futures import ThreadPoolExecutor
 
 import climateserv2.file.TDSExtraction as GetTDSData
 import sys
@@ -145,23 +148,33 @@ def start_processing(statistical_query):
                     pass
                 pool.terminate()
 
+        split_obj = []
         for job in jobs:
             job['job_length'] = len(jobs)
             rest_time = random.uniform(0.5, 1.5)
             time.sleep(rest_time)
             db.connections.close_all()
-            my_results.append(pool.apply_async(start_worker_process,
-                                               args=[job],
-                                               ))
+
+            with ThreadPoolExecutor(max_workers=None) as executor:
+                my_results = {executor.submit(start_worker_process, job)}
+
+                for _ in concurrent.futures.as_completed(my_results):
+                    split_obj.append(_.result())
+
+            # my_results.append(pool.apply_async(start_worker_process,
+            #                                    args=[job],
+            #                                    ))
         logger.debug("should be back from start_worker_process for: " + uniqueid)
-        pool.close()
-        pool.join()
+        # pool.close()
+        # pool.join()
         logger.debug("pool should be joined for: " + uniqueid)
 
-        split_obj = []
-
-        for res in my_results:
-            split_obj.append(res.get())
+        # temp_obj = []
+        # for res in my_results:
+        #     temp_obj.append(res)
+        #
+        # for res2 in temp_obj:
+        #     split_obj.append(res2)
 
         dates = []
         values = []
@@ -196,8 +209,8 @@ def start_processing(statistical_query):
             try:
                 dates = []
                 values = []
+                logger.debug(str(split_obj))
                 for obj in split_obj:
-                    # db.connections.close_all()
                     try:
                         dates.extend(obj["dates"])
                         values.extend(obj["values"])
