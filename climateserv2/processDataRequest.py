@@ -32,6 +32,7 @@ params = realParams.objects.first()
 
 
 def set_progress_to_100(uniqueid):
+    time.sleep(.5)
     request_progress = Request_Progress.objects.get(request_id=uniqueid)
     request_progress.progress = 100
     request_progress.save()
@@ -420,9 +421,10 @@ def start_worker_process(job_item):
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
             try:
-                t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
-                t.setDaemon(True)
-                t.start()
+                # t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
+                # t.setDaemon(True)
+                # t.start()
+                update_progress({'progress': job_length, 'uniqueid': uniqueid})
                 logger.debug("db.connections.close_all() for: " + uniqueid)
 
                 logger.debug("update progress thread started for: " + uniqueid)
