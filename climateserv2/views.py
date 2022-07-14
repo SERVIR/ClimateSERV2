@@ -201,21 +201,23 @@ def get_data_request_progress(request):
         logger.debug("Progress =" + str(progress) + " for " + request.GET["id"])
         if progress == -5:
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
-            request_progress.progress=100
+            request_progress.progress = 100
             request_progress.save()
             progress = -1
         elif float(progress) < 0:
             # decrement progress
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
-            request_progress.progress=float(progress) - 1
+            request_progress.progress = float(progress) - 1
             request_progress.save()
             logger.warning("Problem with getDataRequestProgress: " + str(request))
             progress = -1
         elif 99.4 < float(progress) < 100:
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
-            request_progress.progress=float(progress) + .1
+            request_progress.progress = float(progress) + .1
             request_progress.save()
             # logger.warning("Problem with getDataRequestProgress: " + str(request))
+        if float(progress) > 100:
+            progress = 100
         return process_callback(request, json.dumps([float(progress)]), "application/json")
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: " + str(request) + " " + str(e))
@@ -560,7 +562,7 @@ def submit_data_request(request):
         # json_obj = {}
         dictionary = {'uniqueid': unique_id, 'datatype': datatype, 'begintime': begin_time, 'endtime': end_time,
                       'intervaltype': interval_type, 'operationtype': operation_type,
-                      'originating_IP': get_client_ip(request), 'request_type':request.method}
+                      'originating_IP': get_client_ip(request), 'request_type': request.method}
         if feature_list:
             dictionary['layerid'] = layer_id
             dictionary['featureids'] = feature_ids_list

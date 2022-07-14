@@ -1,9 +1,12 @@
+from django.utils.timezone import now
+
 from django.db import models
 
 
 class Request_Progress(models.Model):
     request_id = models.CharField(max_length=50)
     progress = models.CharField(max_length=50)
+    date_created = models.DateTimeField(default=now, blank=True)
 
     def __str__(self):
         return f"{self.request_id}"
