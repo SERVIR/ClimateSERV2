@@ -32,7 +32,7 @@ params = realParams.objects.first()
 
 
 def set_progress_to_100(uniqueid):
-    time.sleep(.5)
+    # time.sleep(.5)
     request_progress = Request_Progress.objects.get(request_id=uniqueid)
     request_progress.progress = 100
     request_progress.save()
