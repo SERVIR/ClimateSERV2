@@ -1,4 +1,6 @@
 from __future__ import absolute_import, unicode_literals
+
+import celery
 from celery import shared_task
 import ast
 import concurrent.futures
@@ -43,18 +45,15 @@ def set_progress_to_100(uniqueid):
 
 @shared_task
 def start_processing(statistical_query):
+    logger.info("I am here")
+    logger.info("celery.current_task: " + str(celery.current_task.request.id))
     logger.info("celery told me to go here")
-    # db.connections.close_all()
-    #
-    # mp_logger = multiprocessing.log_to_stderr(logging.DEBUG)
-    # mp_logger.setLevel(logging.DEBUG)
-    # mp_logger.addHandler(logger)
-    # pool = multiprocessing.Pool(multiprocessing.cpu_count())
+
     try:
         date_range_list = []
 
         dataset = ""
-        uniqueid = statistical_query["uniqueid"]
+        uniqueid = str(celery.current_task.request.id)
         logger.info("start_processing has begun for: " + uniqueid)
         operationtype = ""
         if 'geometry' in statistical_query:
@@ -140,20 +139,7 @@ def start_processing(statistical_query):
 
         my_results = []
 
-        # logger.debug("Got file list for: " + uniqueid + " length: " + str(len(file_list)))
 
-        def error_handler(exception):
-            logger.error(f'{exception} occurred, terminating pool. for: ' + uniqueid)
-            try:
-                set_progress_to_100(uniqueid)
-                # pool.join()
-                # pool.terminate()
-            except Exception:
-                try:
-                    set_progress_to_100(uniqueid)
-                except:
-                    pass
-                # pool.terminate()
 
         split_obj = []
         for job in jobs:
@@ -168,25 +154,10 @@ def start_processing(statistical_query):
                 for _ in concurrent.futures.as_completed(my_results):
                     split_obj.append(_.result())
 
-            # my_results.append(pool.apply_async(start_worker_process,
-            #                                    args=[job],
-            #                                    ))
         logger.debug("should be back from start_worker_process for: " + uniqueid)
-        # pool.close()
-        # pool.join()
+
         logger.debug("pool should be joined for: " + uniqueid)
 
-        # temp_obj = []
-        # for res in my_results:
-        #     temp_obj.append(res)
-        #
-        # for res2 in temp_obj:
-        #     split_obj.append(res2)
-
-        dates = []
-        values = []
-        LTA = []
-        subtype = ""
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             opn = "avg"

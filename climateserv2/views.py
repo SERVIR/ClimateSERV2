@@ -487,10 +487,6 @@ def submit_data_request(request):
     logger.debug("Submitting Data Request")
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
 
-    # reason = CsrfViewMiddleware().process_view(request, None, (), {})
-    # if not reason:
-    #     from_ui = True
-
     error = []
     polygon_string = None
     datatype = None
@@ -539,11 +535,9 @@ def submit_data_request(request):
         logger.warning("issue with operation_type" + str(request))
         error.append("Error with operation_type")
 
-    unique_id = uutools.getUUID()
-    logger.info("Submitting " + unique_id)
-    # Submit requests to the ipcluster service to get data
-
     if datatype == 35 or datatype == 36:
+        unique_id = uutools.getUUID()
+        logger.info("Submitting " + unique_id)
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
@@ -559,8 +553,7 @@ def submit_data_request(request):
         return process_callback(request, json.dumps([unique_id]), "application/json")
 
     elif len(error) == 0:
-        # json_obj = {}
-        dictionary = {'uniqueid': unique_id, 'datatype': datatype, 'begintime': begin_time, 'endtime': end_time,
+        dictionary = {'datatype': datatype, 'begintime': begin_time, 'endtime': end_time,
                       'intervaltype': interval_type, 'operationtype': operation_type,
                       'originating_IP': get_client_ip(request), 'request_type': request.method}
         if feature_list:
@@ -571,7 +564,6 @@ def submit_data_request(request):
             try:
                 if dictionary['geometry'].index('FeatureCollection') > -1:
                     print("all is well")
-                    # json_obj = json.loads(dictionary['geometry'])
             except ValueError:
                 dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
                                                      "features": [
@@ -579,22 +571,33 @@ def submit_data_request(request):
                                                           "geometry": json.loads(polygon_string)}]})
 
         dictionary["params"] = model_to_dict(params)
-        # I used to use multiprocessing to start the multiprocessing, i think a thread is better
-        # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
 
-        logger.info("celery should be created")
-        request_progress = Request_Progress(request_id=unique_id, progress=0)
-        request_progress.save()
-        request_progress.refresh_from_db()
         status = "In Progress"
         if "geometry" in dictionary:
             aoi = dictionary['geometry']
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
+        if from_ui:
+            try:
+                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
+                logger.info("my_id" + str(my_id))
+            except Exception as e:
+                logger.error(str(e))
+
+            logger.info("should have gone to celery")
+        else:
+            logger.info("about to start celery")
+            try:
+                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
+            except Exception as e:
+                logger.error(str(e))
+        request_progress = Request_Progress(request_id=str(my_id), progress=0)
+        request_progress.save()
+        request_progress.refresh_from_db()
         try:
 
-            track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+            track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
                                       dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
@@ -608,50 +611,23 @@ def submit_data_request(request):
         except Exception as e:
             logger.error("THIS IS THE ISSUE!")
             logger.error(str(e))
-        if from_ui:
-            logger.info("starting thread")
-            # t = threading.Thread(target=start_processing, args=(dictionary,))
-            # t.setDaemon(True)
-            # t.start()
-            try:
-                start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
-            except Exception as e:
-                logger.error(str(e))
 
-            logger.info("should have gone to celery")
-        else:
-            logger.info("about to start celery")
-            try:
-                start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
-            except Exception as e:
-                logger.error(str(e))
-
-        # p.start()
-        # rest_time = random.uniform(0.5, 1.5)
-        # time.sleep(rest_time)
-        return process_callback(request, str(json.dumps([unique_id])), "application/json")
+        return process_callback(request, str(json.dumps([str(my_id)])), "application/json")
     else:
-        status = "Fail"
         if "geometry" in request.POST:
             aoi = request.POST['geometry']
         else:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        request_progress = Request_Progress.objects.get(request_id=unique_id)
-        logger.error("****FAIL********* ")
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+
+        track_usage = Track_Usage(unique_id=uutools.getUUID(), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
-                                  request_type=request.method, status=status, progress=request_progress.progress,
+                                  request_type=request.method, status="Fail", progress=0,
                                   API_call="submitDataRequest", data_retrieved=False, ui_request=from_ui)
-
         track_usage.save()
-
-        # rest_time = random.uniform(0.5, 1.5)
-        # time.sleep(rest_time)
-
         return process_callback(request, json.dumps(error), "application/json")
 
 
