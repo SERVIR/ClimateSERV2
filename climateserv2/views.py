@@ -610,12 +610,21 @@ def submit_data_request(request):
             logger.error(str(e))
         if from_ui:
             logger.info("starting thread")
-            t = threading.Thread(target=start_processing, args=(dictionary,))
-            t.setDaemon(True)
-            t.start()
+            # t = threading.Thread(target=start_processing, args=(dictionary,))
+            # t.setDaemon(True)
+            # t.start()
+            try:
+                start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
+            except Exception as e:
+                logger.error(str(e))
+
+            logger.info("should have gone to celery")
         else:
             logger.info("about to start celery")
-            start_processing.delay(dictionary)
+            try:
+                start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
+            except Exception as e:
+                logger.error(str(e))
 
         # p.start()
         # rest_time = random.uniform(0.5, 1.5)
