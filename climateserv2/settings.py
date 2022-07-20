@@ -13,6 +13,9 @@ import os
 from pathlib import Path
 import json
 
+
+CELERY_TASK_ANNOTATIONS = {'*': {'rate_limit': '1/s'}}
+
 # Opening JSON file
 f = open('/cserv2/django_app/ClimateSERV2/climateserv2/data.json', )
 

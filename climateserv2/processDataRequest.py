@@ -1,3 +1,5 @@
+from __future__ import absolute_import, unicode_literals
+from celery import shared_task
 import ast
 import concurrent.futures
 import threading
@@ -26,6 +28,7 @@ from api.models import Parameters as realParams
 from zipfile import ZipFile
 from django.utils import timezone
 from api.models import Request_Progress
+
 logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
@@ -38,13 +41,15 @@ def set_progress_to_100(uniqueid):
     request_progress.save()
 
 
+@shared_task
 def start_processing(statistical_query):
-    db.connections.close_all()
-
-    mp_logger = multiprocessing.log_to_stderr(logging.DEBUG)
-    mp_logger.setLevel(logging.DEBUG)
-    mp_logger.addHandler(logger)
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
+    logger.info("celery told me to go here")
+    # db.connections.close_all()
+    #
+    # mp_logger = multiprocessing.log_to_stderr(logging.DEBUG)
+    # mp_logger.setLevel(logging.DEBUG)
+    # mp_logger.addHandler(logger)
+    # pool = multiprocessing.Pool(multiprocessing.cpu_count())
     try:
         date_range_list = []
 
@@ -134,20 +139,21 @@ def start_processing(statistical_query):
                     })
 
         my_results = []
+
         # logger.debug("Got file list for: " + uniqueid + " length: " + str(len(file_list)))
 
         def error_handler(exception):
             logger.error(f'{exception} occurred, terminating pool. for: ' + uniqueid)
             try:
                 set_progress_to_100(uniqueid)
-                pool.join()
-                pool.terminate()
+                # pool.join()
+                # pool.terminate()
             except Exception:
                 try:
                     set_progress_to_100(uniqueid)
                 except:
                     pass
-                pool.terminate()
+                # pool.terminate()
 
         split_obj = []
         for job in jobs:
@@ -284,13 +290,7 @@ def start_processing(statistical_query):
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
         jobs.clear()
-        try:
-            try:
-                pool.join()
-            finally:
-                pool.terminate()
-        finally:
-            sys.exit(0)
+        sys.exit(0)
     except Exception as e:
         logger.error("NEW ERROR ISSUE: " + str(e))
         try:
@@ -345,18 +345,10 @@ def start_processing(statistical_query):
             logger.info("Failed updating progress")
             logger.info(str(e2))
             pass
-        if pool is not None:
-            pool.terminate()
+
         print(e)
     finally:
-        try:
-            try:
-                pool.join()
-            finally:
-                pool.terminate()
-        finally:
-            job.clear()
-            sys.exit(1)
+        sys.exit(1)
 
 
 def update_progress(job_variables):

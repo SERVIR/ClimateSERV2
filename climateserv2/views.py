@@ -581,7 +581,8 @@ def submit_data_request(request):
         dictionary["params"] = model_to_dict(params)
         # I used to use multiprocessing to start the multiprocessing, i think a thread is better
         # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
-        t = threading.Thread(target=start_processing, args=(dictionary,))
+
+        logger.info("celery should be created")
         request_progress = Request_Progress(request_id=unique_id, progress=0)
         request_progress.save()
         request_progress.refresh_from_db()
@@ -607,8 +608,15 @@ def submit_data_request(request):
         except Exception as e:
             logger.error("THIS IS THE ISSUE!")
             logger.error(str(e))
-        t.setDaemon(True)
-        t.start()
+        if from_ui:
+            logger.info("starting thread")
+            t = threading.Thread(target=start_processing, args=(dictionary,))
+            t.setDaemon(True)
+            t.start()
+        else:
+            logger.info("about to start celery")
+            start_processing.delay(dictionary)
+
         # p.start()
         # rest_time = random.uniform(0.5, 1.5)
         # time.sleep(rest_time)
