@@ -144,8 +144,8 @@ def start_processing(statistical_query):
         split_obj = []
         for job in jobs:
             job['job_length'] = len(jobs)
-            rest_time = random.uniform(0.5, 1.5)
-            time.sleep(rest_time)
+            # rest_time = random.uniform(0.5, 1.5)
+            # time.sleep(rest_time)
             db.connections.close_all()
 
             with ThreadPoolExecutor(max_workers=None) as executor:
