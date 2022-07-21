@@ -3107,7 +3107,8 @@ function init_tour() {
             {
                 element: "#menu-about",
                 title: "Welcome to the ClimateSERV tour",
-                content: "You may return to this tour anytime by clicking the <i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
+                content: "You may return to this tour anytime by clicking the " +
+                    "<i class=\"fas fa-info-circle example-style\"></i> button at the bottom left of this page",
                 placement: "bottom"
 
             },
@@ -3138,7 +3139,10 @@ function init_tour() {
             {
                 element: "#operationmenu",
                 title: "Select Data",
-                content: "Set the parameters of the data you would like to query.  Choose from our datasets or select monthly rainfall analysis as the type.  Select data source, calculation, start and end dates, the click Send Request.",
+                content: "Set the parameters of the data you would like to query. Choose Type of request " +
+                    "(if you choose Monthly Rainfall Analysis no other options are needed), Dataset type, " +
+                    "Dataset Source, calculation, start and end dates, the click Add Query, you may add up to 5 " +
+                    "to send and graph together. When ready click Submit (n) Queries.",
                 onShow: function () {
                     const sidebar_content = $("#sidebar-content");
                     if ((sidebar_content.scrollTop() + sidebar_content.innerHeight() < sidebar_content[0].scrollHeight)) {
@@ -3149,7 +3153,10 @@ function init_tour() {
             {
                 element: "#tab-layers",
                 title: "Display Data",
-                content: "Click here to show layer panel.  Check the layer you would like on the map. <br />To see that layers key, click the content stack below the name.  <br />To adjust the settings for the layer, click the gear.  <br />To animate the layer(s) use the animation controls at the bottom of the map.",
+                content: "Click here to show layer panel.  Check the checkbox next to the layer you would like on " +
+                    "the map. <br />To see a layer's legend, click the content stack below the name.  <br />" +
+                    "To adjust the settings for the layer, click the gear.  <br />" +
+                    "To animate the layer(s) use the animation controls at the bottom of the map.",
                 onShow: function () {
                     sidebar.open('layers');
                 },
@@ -3157,18 +3164,15 @@ function init_tour() {
             {
                 element: ".leaflet-control-timecontrol.timecontrol-play.play:first",
                 title: "Layer Animation",
-                content: "You animate the layers with these controls. The system will begin to cache the tiles for a smooth animation.  <br />While caching feel free to click the next button and caching will still continue in the background. <br />",
-                // onShow: function (tour) {
-                //     sidebar.open('layers');
-                // },
+                content: "You animate the layers with these controls. The system will begin to cache the tiles " +
+                    "for a smooth animation.  <br />While caching feel free to click the next button and caching " +
+                    "will still continue in the background. <br />",
             },
             {
                 element: "#slider-range-txt",
                 title: "Animation range",
-                content: "You may select a specific animation range by clicking this button.  It will bring up a date range control for you to use.<br />",
-                // onShow: function (tour) {
-                //     sidebar.open('layers');
-                // },
+                content: "You may select a specific animation range by clicking this button.  It will bring up " +
+                    "a date range control for you to use.<br />",
             },
             {
                 element: "#basemap_link",
@@ -3212,18 +3216,27 @@ function open_tour() {
  * @event map-ready
  */
 $(function () {
-    initMap();
+    let started_tour = false;
     try {
         init_tour();
         tour.init();
         /* This will have to check if they want to "not show" */
         if (!localStorage.getItem("hideTour")) {
-            sidebar.close();
+            // sidebar.close();
+            started_tour = true;
             tour.setCurrentStep(0);
             open_tour();
         }
     } catch (e) {
         console.log(e);
+    }
+    initMap();
+    if (started_tour) {
+        try {
+            sidebar.close();
+        } catch (e) {
+            console.log(e);
+        }
     }
     try {
         load_shape(

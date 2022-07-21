@@ -489,12 +489,7 @@ def submit_data_request(request):
 
     error = []
     polygon_string = None
-    datatype = None
-    begin_time = None
-    end_time = None
-    interval_type = None
     layer_id = None
-    calculation = None
     feature_ids_list = []
     feature_list = False
     operation_type = None
@@ -580,7 +575,7 @@ def submit_data_request(request):
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         if from_ui:
             try:
-                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=100)
+                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
                 logger.info("my_id" + str(my_id))
             except Exception as e:
                 logger.error(str(e))
