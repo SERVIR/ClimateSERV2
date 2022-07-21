@@ -2370,20 +2370,7 @@ function multi_chart_builder() {
             }
         }
     };
-    chart_object.exporting = {
-        chartOptions: {
-            chart: {
-                events: {
-                    load: function () {
-                        const width = this.chartWidth - 105;
-                        const height = this.chartHeight - 130;
-                        this.renderer.image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82
-                        ).add();
-                    }
-                }
-            }
-        }
-    };
+
     chart_object.responsive = {
         rules: [{
             condition: {
@@ -2783,20 +2770,6 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         };
     }
 
-    chart_obj.exporting = {
-        chartOptions: {
-            chart: {
-                events: {
-                    load: function () {
-                        const width = this.chartWidth - 105;
-                        const height = this.chartHeight - 130;
-                        this.renderer.image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82
-                        ).add();
-                    }
-                }
-            }
-        }
-    };
     chart_obj.chart = {
         zoomType: 'xy',
         events: {
@@ -2843,7 +2816,11 @@ function finalize_chart(compiled_series, units, xAxis_object, title, isClimate, 
         const width = chart.chartWidth - 105;
         const height = chart.chartHeight - 160;
         img = chart.renderer
-            .image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png', width, height, 100, 82)
+            .image('https://climateserv.servirglobal.net/static/frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png',
+                width,
+                height,
+                100,
+                82)
             .add();
     });
 }
@@ -2972,7 +2949,9 @@ function stats_info(which) {
     const title = which === "type" ?
         "Type of request" :
         which === "source" ?
-            "Data Source info" : "Calculation info";
+            "Data Source info" :
+        which === "calculation" ?
+            "Calculation info" : "Dataset Type";
     let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
         '}">';
@@ -3011,61 +2990,81 @@ function get_stat_body(which) {
     let html = '';
     switch (which) {
         case 'type':
-            html += "<div style='text-align:left'><p>ClimateSERV offers direct <b>Dataset</b> queries for your AOI and specific time period " +
-                "which result offer results in graphs with " +
-                "download options or downloadable raw data.</p><br>";
-            html += "<p>In addition we offer a <b>Monthly Rainfall Analysis</b> which is derived from a combination" +
-                " of CHIRPS historical data and current NMME seasonal forecast data. </p><br></div>";
+            html += "<div><div class='servir_tooltip_body'>ClimateSERV offers three types of requests:</div> " +
+                "<div class='servir_tooltip_header'>Time-series Analysis</div> " +
+                "<div class='servir_tooltip_body'>which will display results of your query in a graph that has " +
+                "download options for png, jpeg, pdf, svg, csv or xls formats.</div>" +
+                "<div class='servir_tooltip_header'>Download Raw Data</div> " +
+                "<div class='servir_tooltip_body'>which will display a clickable link for you to " +
+                "download the selected data in a zipped NetCDF, or zipped collection of tif files.  " +
+                "If your AOI was a point, the download will be a csv.</div>" +
+                "<div class='servir_tooltip_header'>Monthly Rainfall Analysis</div> " +
+                "<div class='servir_tooltip_body'>which will display a six-month forecast derived from a " +
+                "combination of CHIRPS historical data and current NMME seasonal forecast data.</div><br></div>";
             break;
         case 'source':
-            html += "<div id=\"popup_SelectData_DataSource_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -325px auto auto 324px;\">    " +
-                "  <div class=\"servir_tooltip_header\">CHIRPS Rainfall</div>" +
-                "  <div class=\"servir_tooltip_body\">Climate Hazards group IR Precipitation with Stations (CHIRPS).</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+            html += "<div>    " +
+                "  <div class='servir_tooltip_header'>CHIRPS Rainfall</div>" +
+                "  <div class='servir_tooltip_body'>Climate Hazards group IR Precipitation " +
+                "with Stations (CHIRPS).</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">eMODIS NDVI</div>" +
-                "  <div class=\"servir_tooltip_body\">MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI).  NDVI datasets for the following regions are available: West Africa, East Africa, Southern Africa, and Central Asia</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <div class='servir_tooltip_header'>eMODIS NDVI</div>" +
+                "  <div class='servir_tooltip_body'>MODIS-derived Normalized Difference Vegetation Index " +
+                "(eMODIS NDVI).  NDVI datasets for the following regions are available: West Africa, " +
+                "East Africa, Southern Africa, and Central Asia</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">Seasonal Forecast</div>" +
-                "  <div class=\"servir_tooltip_body\">North American Multi-Model Ensemble (NMME).  Up to 180 day forecast models available.  This dataset supports download capabilities.</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <div class='servir_tooltip_header'>Seasonal Forecast</div>" +
+                "  <div class='servir_tooltip_body'>North American Multi-Model Ensemble (NMME).  Up to " +
+                "180 day forecast models available.  This dataset supports download capabilities.</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">IMERG 1 Day</div>" +
-                "  <div class=\"servir_tooltip_body\">1 Day rainfall accumulations product from the Integrated Multi-satellitE Retrievals (IMERG) for Global Precipitation Mission (GPM).</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <div class='servir_tooltip_header'>IMERG 1 Day</div>" +
+                "  <div class='servir_tooltip_body'>1 Day rainfall accumulations product from the " +
+                "Integrated Multi-satellitE Retrievals (IMERG) for Global Precipitation Mission (GPM).</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">GEFS</div>" +
-                "  <div class=\"servir_tooltip_body\">Global Ensemble Forecast System (GEFS) a weather forecast model made up of 21 separate forecasts, or ensemble members. Availability: January 1, 1985, to present.</div>" +
+                "  <div class='servir_tooltip_header'>GEFS</div>" +
+                "  <div class='servir_tooltip_body'>Global Ensemble Forecast System (GEFS) a weather " +
+                "forecast model made up of 21 separate forecasts, or ensemble members. Availability: " +
+                "January 1, 1985, to present.</div>" +
                 "    <br>" +
-                "    <div class=\"servir_tooltip_header\">Evaporative Stress Index  (ESI)</div>" +
-                "    <div class=\"servir_tooltip_body\">ESI is a global dataset produced weekly at 5-kilometer resolution and reveals regions of drought where vegetation is stressed due to lack of water.</div>" +
+                "    <div class='servir_tooltip_header'>Evaporative Stress Index  (ESI)</div>" +
+                "    <div class='servir_tooltip_body'>ESI is a global dataset produced weekly at 5-kilometer " +
+                "resolution and reveals regions of drought where vegetation is stressed due to lack of water.</div>" +
                 "    <br>" +
-                "    <div class=\"servir_tooltip_header\">NASA-USDA SMAP</div>" +
-                "    <div class=\"servir_tooltip_body\">The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
+                "    <div class='servir_tooltip_header'>NASA-USDA SMAP</div>" +
+                "    <div class='servir_tooltip_body'>The NASA-USDA Enhanced SMAP Global soil moisture data " +
+                "provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
                 "<br>" +
-                "<div class=\"servir_tooltip_header\">For more information please visit the <a href='" + help_link + "' style='color:#3b6e22;'>Help Center</a></div>" +
+                "<div class='servir_tooltip_header'>For more information please visit the " +
+                "<a href='" + help_link + "' style='color:#3b6e22;'>Help Center</a><br><br></div>" +
                 "</div>";
             break;
         case 'calculation':
-            html += "<div id=\"popup_SelectData_Calculations_ToolTip\" class=\"ui inverted popup servir_helper_width_215rem right center transition hidden\" style=\"max-height: 808px; inset: -220.5px auto auto 324px;\">    " +
-                "  <div class=\"servir_tooltip_header\">Min</div>" +
-                "  <div class=\"servir_tooltip_body\">The minimum value found for all data in a given geographical selected area for each time interval in the date range.  Sometimes for large area selections, a value of 0 will be returned for every date.  If this happens, try selecting a smaller area.</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+            html += "<div>    " +
+                "  <div class='servir_tooltip_header'>Min</div>" +
+                "  <div class='servir_tooltip_body'>The minimum value found for all data in a given " +
+                "geographical selected area for each time interval in the date range.  Sometimes for " +
+                "large area selections, a value of 0 will be returned for every date.  If this happens, " +
+                "try selecting a smaller area.</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">Max</div>" +
-                "  <div class=\"servir_tooltip_body\">The maximum value found for all data in a given geographical selected area for each time interval in the selected date range.</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <div class='servir_tooltip_header'>Max</div>" +
+                "  <div class='servir_tooltip_body'>The maximum value found for all data in a given " +
+                "geographical selected area for each time interval in the selected date range.</div>" +
                 "  <br>" +
-                "  <div class=\"servir_tooltip_header\">Average</div>" +
-                "  <div class=\"servir_tooltip_body\">The average value for the entire geographical selected area for each time interval in the selected date range.</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
-                "  <br>" +
-                "  <div class=\"servir_tooltip_header\">Download</div>" +
-                "  <div class=\"servir_tooltip_body\">Some datasets support the option to download a zip file of clipped raw data.  The format of data download is a single zip file which contains a set of geotif files for each time interval in the date selected range.</div>" +
-                "  <!--<div class=\"servir_tooltip_link\" onclick=\"alert('hook me up to something!!');\">Learn more</div>-->" +
+                "  <div class='servir_tooltip_header'>Average</div>" +
+                "  <div class='servir_tooltip_body'>The average value for the entire geographical " +
+                "selected area for each time interval in the selected date range.</div>" +
                 "<br></div>";
             break;
+        case 'dataset-type':
+            html += "<div>    " +
+                "  <div class='servir_tooltip_header'>Observation</div>" +
+                "  <div class='servir_tooltip_body'>Datasets obtained from satellites</div>" +
+                "  <br>" +
+                "  <div class='servir_tooltip_header'>Model Forecast</div>" +
+                "  <div class='servir_tooltip_body'>Data is derived from a forecase model using ensembles</div>" +
+                "<br></div>";
+            break;
+
     }
     return html;
 }
@@ -3411,7 +3410,8 @@ function review_query(no_toggle) {
             element_html += '; color: ' + text_color + '">';
             let element_holder = $(element_html);
             let edit_element = '<p style="text-align: right;" class="form-group panel-buffer">';
-            edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
+            edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; ' +
+                'width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
             edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
             edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
             edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';

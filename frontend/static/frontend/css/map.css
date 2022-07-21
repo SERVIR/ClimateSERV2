@@ -134,12 +134,13 @@ body {
 }
 
 .ui-widget {
-    font-family: inherit;
+    font-family: "Work Sans", Roboto;;
      font-size: inherit;
 }
 
 .ui-dialog-content {
     font-size: inherit;
+    color: #666666;
 }
 
 .ui-dialog-content input, .ui-dialog-content select {
