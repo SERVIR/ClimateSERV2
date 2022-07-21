@@ -3114,7 +3114,7 @@ function init_tour() {
             {
                 element: "#btnAOIselect",
                 title: "Statistical Query",
-                content: "Start your query by either drawing, uploading, or selection the area of interest (AOI)",
+                content: "Start your query by either drawing, uploading, or selecting the area of interest (AOI)",
                 smartPlacement: true,
                 onShow: function () {
                     sidebar.open('chart');
@@ -3140,7 +3140,7 @@ function init_tour() {
                 title: "Select Data",
                 content: "Set the parameters of the data you would like to query. Choose Type of request " +
                     "(if you choose Monthly Rainfall Analysis no other options are needed), Dataset type, " +
-                    "Dataset Source, calculation, start and end dates, the click Add Query, you may add up to 5 " +
+                    "Dataset source, calculation, start and end dates, then click Add Query, you may add up to 5 " +
                     "to send and graph together. When ready click Submit (n) Queries.",
                 onShow: function () {
                     const sidebar_content = $("#sidebar-content");

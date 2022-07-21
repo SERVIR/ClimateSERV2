@@ -116,14 +116,6 @@ def get_filelist(datatype, start_date, end_date):
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
     logger.debug("Made it to get_thredds_values for: " + uniqueid)
-    # try:
-    #     params = Parameters.objects.first()
-    #     logger.debug("got parameters without closing connections")
-    # except Exception as e:
-    #     logger.debug("Hit exception getting parameters: " + e)
-    #     db.connections.close_all()
-    #     logger.debug("closed connections")
-    #     params = Parameters.objects.first()
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')

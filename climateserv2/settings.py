@@ -19,6 +19,9 @@ CELERY_TASK_QUEUE_MAX_PRIORITY = 10
 CELERY_TASK_DEFAULT_PRIORITY = 5
 CELERY_ACKS_LATE = True
 CELERYD_PREFETCH_MULTIPLIER = 1
+CCELERY_BROKER_POOL_LIMIT = None
+
+
 
 # Opening JSON file
 f = open('/cserv2/django_app/ClimateSERV2/climateserv2/data.json', )
@@ -57,7 +60,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.humanize',
     'django.contrib.staticfiles',
-    #
+    # 'django_celery_results',
     'django_extensions',
     'rest_framework',
     #

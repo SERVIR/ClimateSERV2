@@ -37,13 +37,12 @@ params = realParams.objects.first()
 
 
 def set_progress_to_100(uniqueid):
-    # time.sleep(.5)
     request_progress = Request_Progress.objects.get(request_id=uniqueid)
     request_progress.progress = 100
     request_progress.save()
 
 
-@shared_task
+@shared_task()
 def start_processing(statistical_query):
     logger.info("I am here")
     logger.info("celery.current_task: " + str(celery.current_task.request.id))
@@ -261,7 +260,7 @@ def start_processing(statistical_query):
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
         jobs.clear()
-        sys.exit(0)
+        # sys.exit(0)
     except Exception as e:
         logger.error("NEW ERROR ISSUE: " + str(e))
         try:
@@ -318,8 +317,8 @@ def start_processing(statistical_query):
             pass
 
         print(e)
-    finally:
-        sys.exit(1)
+    # finally:
+        # sys.exit(1)
 
 
 def update_progress(job_variables):
