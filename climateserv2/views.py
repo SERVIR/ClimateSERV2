@@ -580,7 +580,7 @@ def submit_data_request(request):
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         if from_ui:
             try:
-                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
+                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=100)
                 logger.info("my_id" + str(my_id))
             except Exception as e:
                 logger.error(str(e))
@@ -673,13 +673,10 @@ def submit_monthly_rainfall_analysis_request(request):
         else:
             logger.warning(geometry)
 
-    unique_id = uutools.getUUID()
-    logger.info("Submitting (getMonthlyRainfallAnalysis) " + unique_id)
-
     # Submit requests to the ipcluster service to get data
     if len(error) == 0:
         json_geom = None
-        dictionary = {'uniqueid': unique_id,
+        dictionary = {
                       'custom_job_type': custom_job_type,
                       'seasonal_start_date': seasonal_start_date,
                       'seasonal_end_date': seasonal_end_date
@@ -694,6 +691,10 @@ def submit_monthly_rainfall_analysis_request(request):
             except json.decoder.JSONDecodeError:
                 dictionary['geometry'] = {"type": "FeatureCollection",
                                           "features": [{"type": "Feature", "properties": {}, "geometry": json_geom}]}
+
+        my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
+        unique_id = str(my_id)
+        # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         logger.info("Adding progress (getMonthlyRainfallAnalysis) " + unique_id)
 
         log = Request_Progress(request_id=unique_id, progress=0)
@@ -701,19 +702,17 @@ def submit_monthly_rainfall_analysis_request(request):
 
         log.save()
 
-        p = multiprocessing.Process(target=start_processing, args=(dictionary,))
-
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
         if log_obj.progress == 100:
             status = "Success"
         else:
             status = "In Progress"
         log_usage(request, layer_id, feature_ids_list, unique_id, seasonal_start_date, seasonal_end_date, status)
-        p.start()
+        # p.start()
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
-        log_usage(request, layer_id, feature_ids_list, unique_id, seasonal_start_date, seasonal_end_date, status)
+        log_usage(request, layer_id, feature_ids_list, uutools.getUUID(), seasonal_start_date, seasonal_end_date, status)
         return process_callback(request, json.dumps(error), "application/json")
 
 
