@@ -1400,8 +1400,8 @@ function verify_ready() {
             api_panel.empty();
             query_list.forEach(function (value) {
                 api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
-                    api_host + "/api/submitDataRequest/?" + new URLSearchParams(value).toString() +
-                    get_AOI_String() + "</span>");
+                    (api_host + "/api/submitDataRequest/?" + (new URLSearchParams(value).toString()) +
+                        get_AOI_String()).replace("is_from_ui=true&", "") + "</span>");
             });
 
 
@@ -1411,13 +1411,13 @@ function verify_ready() {
             buildForm(formData);
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
-                api_host + "/api/submitDataRequest/?" +
-                new URLSearchParams(formData).toString() + get_AOI_String() + "</span>");
+                (api_host + "/api/submitDataRequest/?" +
+                new URLSearchParams(formData).toString() + get_AOI_String()).replace("is_from_ui=true&", "") + "</span>");
             btnRequest.prop("disabled", disabled);
         } else {
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
-                api_host + get_API_url() + "</span>");
+                (api_host + get_API_url()).replace("is_from_ui=true&", "")  + "</span>");
         }
     } catch (e) {
         console.log(e);
