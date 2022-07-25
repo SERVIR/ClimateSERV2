@@ -23,7 +23,7 @@ let layer_limits = {min: null, max: null};
 let queried_layers = [];
 let control_layer;
 let current_calculation;
-let climateModelInfo;
+
 let rainfall_data;
 let from_compiled;
 let too_fast = 0;
@@ -1955,7 +1955,7 @@ function configure_nmme(sdata, edit, edit_init_id) {
                 sent_variable = 'air_temperature';
             }
         }
-        const data = JSON.parse(sdata);
+        const data = sdata;
         const cc = data.climate_DataTypeCapabilities[0].current_Capabilities;
 
         $('#model_run_menu' + edit_string)
@@ -2092,38 +2092,11 @@ function handleSourceSelected(which, edit, edit_init_id) {
                 $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
             });
         }
-        $.ajax({
-            url: "api/getClimateScenarioInfo/?is_from_ui=true",
-            type: "GET",
-            async: true,
-            crossDomain: true
-        }).fail(function () {
-            $.ajax({
-                url: "https://climateserv.servirglobal.net/api/getClimateScenarioInfo/?is_from_ui=true",
-                type: "GET",
-                async: true,
-                crossDomain: true
-            }).fail(function (jqXHR, textStatus, errorThrown) {
-                console.warn(jqXHR + textStatus + errorThrown);
-            }).done(function (data, _textStatus, _jqXHR) {
-                if (data.errMsg) {
-                    console.info(data.errMsg);
-                } else {
-                    if (edit) {
-                        configure_nmme(data, true, edit_init_id);
-                    } else {
-                        configure_nmme(data);
-                    }
-                }
-            });
-            console.warn("NMME queries may not work if you are doing local development");
-        }).done(function (sdata, _textStatus, _jqXHR) {
-            if (edit) {
-                configure_nmme(sdata, true, edit_init_id);
-            } else {
-                configure_nmme(sdata);
-            }
-        });
+        if (edit) {
+            configure_nmme(climateModelInfo, true, edit_init_id);
+        } else {
+            configure_nmme(climateModelInfo);
+        }
     }
     $("#btnAddToQuery").prop("disabled", false);
 }
@@ -3252,11 +3225,6 @@ $(function () {
     });
     const sourcemenu = $('#sourcemenu');
     sourcemenu.val(0);
-    try {
-        getClimateScenarioInfo();
-    } catch (e) {
-        console.log("ClimateScenarioInfo Failed");
-    }
     try {
         const inputElement = document.getElementById("upload_files");
         inputElement.addEventListener("change", handleFiles, false);

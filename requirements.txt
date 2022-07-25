@@ -3,6 +3,7 @@ asgiref==3.3.4
 attrs==21.2.0
 boto3==1.18.54
 bs4==0.0.1
+celery==5.2.7
 certifi==2021.5.30
 chardet==4.0.0
 click-plugins==1.1.1

@@ -44,6 +44,9 @@
         const help_link = "{% url 'ClimateSERV_UI:help' %}";
         const static_url = "{% static '' %}";
         let client_layers = [];
+
+        let temp_info = $("<div/>").html("{{ climateModelInfo }}").text();
+        let climateModelInfo = JSON.parse(temp_info);
         {% for layer in data_layers %}
 
             {% if layer.isMultiEnsemble %}

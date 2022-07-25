@@ -8,7 +8,7 @@ This tool allows development practitioners, scientists/researchers, and governme
 download historical rainfall data, vegetation condition data, and 180-day forecasts of rainfall and temperature to
 improve understanding of, and make improved decisions for, issues related to agriculture and water availability.
 These data can be accessed directly through the web application or can be accessed through the applications API
-using ClimateSERVpy in your python application.  You can get the python package using pip 
+using ClimateSERVpy in your python application.  You can get the ClimateSERVpy python package using pip 
 ```shell
 pip install climateserv
 ```
@@ -129,7 +129,95 @@ pip install -r requirements.txt
 conda install --file conda_requirements.txt
 ```
 
-Upon completion, you should be able to begin application setup.  Start with 
+Upon completion, you will need to add one more global lib to broker the message queues.  To do this
+use 
+```shell
+sudo apt-get install rabbitmq-server
+sudo systemctl enable rabbitmq-server
+sudo service rabbitmq-server start
+
+```
+
+Now we can create a service and config file to start celery which is our task queue with focus on real-time processing.
+You will need to create two files, one at /etc/systemd/system/celery.service and the other at /etc/conf.d/celery
+In celery.service you will need the following (you may need to adjust paths)
+
+```shell
+[Unit]
+Description=Celery Service
+After=rabbitmq-server.service network.target
+Requires=rabbitmq-server.service
+RuntimeDirectory=celery 
+
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+EnvironmentFile=/etc/conf.d/celery
+WorkingDirectory=/cserv2/django_app/ClimateSERV2
+ExecStart=/bin/bash -c '${CELERY_BIN} -A $CELERY_APP multi start $CELERYD_NODES \
+    --pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    --loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS' 
+ExecStop=/bin/sh -c '${CELERY_BIN} multi stopwait $CELERYD_NODES \
+    --pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    --loglevel="${CELERYD_LOG_LEVEL}"'
+ExecReload=/bin/sh -c '${CELERY_BIN} -A $CELERY_APP multi restart $CELERYD_NODES \
+    --pidfile=${CELERYD_PID_FILE} --logfile=${CELERYD_LOG_FILE} \
+    --loglevel="${CELERYD_LOG_LEVEL}" $CELERYD_OPTS'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+And in /etc/conf.d/celery you can paste
+```shell
+CELERYD_NODES="w1 w2 w3"
+DJANGO_SETTINGS_MODULE="climateserv2.settings"
+
+# Absolute or relative path to the 'celery' command:
+CELERY_BIN="/cserv2/python_environments/conda/anaconda3/envs/climateserv2/bin/celery"
+
+# App instance to use
+CELERY_APP="climateserv2"
+CELERYD_MULTI="multi"
+
+# Extra command-line arguments to the worker
+CELERYD_OPTS="--time-limit=300 --concurrency=8"
+CELERYD_PID_FILE="/var/run/celery/%n.pid"
+CELERYD_LOG_FILE="/var/log/celery/%n%I.log"
+
+```
+
+Celery uses a temp directory that will need to be automatically created on reboot, to do this
+create /usr/lib/tmpfiles.d and paste the following inside:
+
+```shell
+D /var/run/celery 0777 root root - -
+```
+
+Create this directory now manually, along with a couple others:
+```shell
+sudo mkdir /var/run/celery 
+sudo chmod 777 /var/run/celery -R
+
+sudo mkdir /opt/celery
+sudo chmod 777 /opt/celery
+
+sudo mkdir /var/log/celery
+sudo chmod 777 /var/log/celery -R
+```
+
+You should be able to enable and start celery now
+
+```shell
+sudo chmod 644 /etc/systemd/system/celery.service
+sudo systemctl daemon-reload
+sudo systemctl enable celery
+sudo service celery restart
+```
+
+you should be able to begin application setup.  Start with 
 
 ```
 python manage.py migrate
