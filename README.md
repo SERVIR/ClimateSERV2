@@ -298,10 +298,10 @@ alias crestart='cstop; cstart;'
 
 ### Authors
 
-- [Billy Ashmall (NASA)](mailto:billy.ashmall@nasa.gov)
-- [Roberto Fontanarosa (NASA)](mailto:roberto.fontanarosa@nasa.gov)
-- [Alexandre Goberna (NASA)](mailto:alex.goberna@nasa.gov)
-- [Githika Tondapu (NASA)](mailto:githika.tondapu@nasa.gov)
+- [Billy Ashmall (NASA)](https://github.com/billyz313)
+- [Roberto Fontanarosa (NASA)](https://github.com/rfontanarosa)
+- [Alexandre Goberna (NASA)](https://github.com/agoberna)
+- [Githika Tondapu (NASA)](https://github.com/gtondapu)
 
 ## License and Distribution
 
