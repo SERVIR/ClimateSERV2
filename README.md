@@ -101,14 +101,18 @@ conda deactivate
 
 - Create database connection file
 Create /cserv2/django_app/ClimateSERV2/climateserv2/data.json
-Paste the following connection properties inside it.
+Paste the following connection properties inside it.  For the SECRET_KEY  
+must be a large random value, and it must be kept secret.  For DEBUG, in 
+development, set it to "True", for production set it to "False"
 
 ``` 
 {
   "NAME": "cs2_db",
   "USER": "csadmin",
   "PASSWORD": "PASSWORD_YOU_SET_FOR_THIS_USER",
-  "HOST": "127.0.0.1"
+  "HOST": "127.0.0.1",
+  "SECRET_KEY": "Your_super_secret_key_for_django"
+  "DEBUG": "False"
 }
 ```
 
