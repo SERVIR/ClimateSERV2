@@ -37,7 +37,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = '09t&&#7n=u2hdh@uaxu#!u(9h&b7h^k9fhw*%#ibkkdfe!n4)x'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = json.loads((data["DEBUG"]).lower())
 
 ALLOWED_HOSTS = ['climateserv2.servirglobal.net', 'climateserv.servirglobal.net', "localhost", "127.0.0.1",
                  "192.168.1.132", "192.168.56.132", 'csdev.servirglobal.net']
