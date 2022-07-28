@@ -299,7 +299,7 @@ alias crestart='cstop; cstart;'
 ### Authors
 
 - [Billy Ashmall (NASA)](https://github.com/billyz313)
-- [Roberto Fontanarosa (NASA)](https://github.com/rfontanarosa)
+- [Roberto Fontanarosa (Former NASA)](https://github.com/rfontanarosa)
 - [Alexandre Goberna (NASA)](https://github.com/agoberna)
 - [Githika Tondapu (NASA)](https://github.com/gtondapu)
 
