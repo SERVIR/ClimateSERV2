@@ -8,7 +8,7 @@ from .etl_granule_model import ETL_Granule
 class ETL_Log(models.Model):
     uuid = models.CharField(default=uuid.uuid4, editable=False, max_length=40, primary_key=True)
     #
-    activity_event_type = models.TextField('Standardized Activity Event Type', max_length=255,blank=False,
+    activity_event_type = models.TextField('Standardized Activity Event Type', max_length=255, blank=False,
                                            default="Unknown ETL Activity Event Type",
                                            help_text="What is the standardized type for this ETL Activity Event?")
     activity_description = models.TextField('Activity Description', default="No Description",
@@ -44,9 +44,9 @@ class ETL_Log(models.Model):
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
     status = models.CharField('Status', max_length=255, blank=False,
-                                           default="In Progress")
-    start_time = models.DateTimeField('start_time', blank=True,null=True)
-    end_time = models.DateTimeField('end_time', blank=True,null=True)
+                              default="In Progress")
+    start_time = models.DateTimeField('start_time', blank=True, null=True)
+    end_time = models.DateTimeField('end_time', blank=True, null=True)
 
     def __str__(self):
         return '{} - {}'.format(self.activity_event_type, self.created_by)

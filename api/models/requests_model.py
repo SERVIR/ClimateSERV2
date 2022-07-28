@@ -1,6 +1,9 @@
 from django.utils.timezone import now
-
 from django.db import models
+
+
+# def get_time():
+#     return datetime.utcnow().replace(tzinfo=pytz.utc)
 
 
 class Request_Progress(models.Model):

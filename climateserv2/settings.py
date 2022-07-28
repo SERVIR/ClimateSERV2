@@ -13,15 +13,12 @@ import os
 from pathlib import Path
 import json
 
-
 CELERY_TASK_ANNOTATIONS = {'*': {'rate_limit': '1/s'}}
 CELERY_TASK_QUEUE_MAX_PRIORITY = 10
 CELERY_TASK_DEFAULT_PRIORITY = 5
 CELERY_ACKS_LATE = True
 CELERYD_PREFETCH_MULTIPLIER = 1
 CCELERY_BROKER_POOL_LIMIT = None
-
-
 
 # Opening JSON file
 f = open('/cserv2/django_app/ClimateSERV2/climateserv2/data.json', )
@@ -83,9 +80,9 @@ MIDDLEWARE = [
 ]
 
 CACHE_MIDDLEWARE_ALIAS = 'default'  # which cache alias to use
-CACHE_MIDDLEWARE_SECONDS = 600   # number of seconds to cache a page for (TTL)
-CACHE_MIDDLEWARE_KEY_PREFIX = ''    # should be used if the cache is shared across
-                                    # multiple sites that use the same Django instance
+CACHE_MIDDLEWARE_SECONDS = 600  # number of seconds to cache a page for (TTL)
+CACHE_MIDDLEWARE_KEY_PREFIX = ''  # should be used if the cache is shared across
+# multiple sites that use the same Django instance
 
 ROOT_URLCONF = 'climateserv2.urls'
 
@@ -129,6 +126,9 @@ DATABASES = {
         'PASSWORD': data["PASSWORD"],
         'HOST': data["HOST"],
         'POST': '',
+        'TEST': {
+            'NAME': 'mytestdatabase',
+        },
     }
 }
 
@@ -181,7 +181,7 @@ LOGGING = {
     'formatters': {
         'verbose': {
             'format': '%(levelname)s, %(asctime)s, %(module)s, %(process)d, %(thread)d, %(message)s',
-            'datefmt' : "%d/%b/%Y %H:%M:%S"
+            'datefmt': "%d/%b/%Y %H:%M:%S"
         },
         'simple': {
             'format': '%(levelname)s, %(message)s'
