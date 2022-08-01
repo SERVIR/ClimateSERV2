@@ -159,6 +159,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
+    logger.debug('operation: ' + operation)
     if operation == "min":
         ds_vals = data.min(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
@@ -174,15 +175,34 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
     elif operation == "netcdf":
+        logger.debug("*********************NetCDF*******************************")
         try:
-            data.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc')
+            os.makedirs(params.zipFile_ScratchWorkspace_Path + uniqueid, exist_ok=True)
+            os.chmod(params.zipFile_ScratchWorkspace_Path + uniqueid, 0o777)
+            data.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + start_date + '-' + end_date + '.nc')
+            # need to put in temp directory, then add all from temp directory to zip
+            # I think this zipping needs to come out of here since we're zipping the directory
+            # every time a worker completes instead of at the end of all workers
+            # but to fix this bug quickly I will do it here, then move it.
+            # Also, for the initial fix it will have multile NetCDF files,
+            # however I will merge them for the final fix
+
             with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
-                zipObj.write(params.zipFile_ScratchWorkspace_Path + uniqueid + '.nc',
-                             uniqueid + '.nc')
+                for folderName, subfolders, filenames in os.walk(
+                        params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
+                    for filename in filenames:
+                        # create complete filepath of file in directory
+                        filePath = os.path.join(folderName, filename)
+                        # Add file to zip
+                        zipObj.write(filePath, basename(filePath))
+
+                # zipObj.write(params.zipFile_ScratchWorkspace_Path + uniqueid + '_' + start_date + '-' + end_date + '.nc',
+                #              uniqueid + '_ ' + start_date + '-' + end_date + '.nc')
                 zipObj.close()
         except Exception as e:
             logger.error("to_netcdf or zip error: " + str(e))
     elif operation == "download" or operation == "csv":
+        logger.debug("*********************download*******************************")
         if jsonn['features'][0]['geometry']['type'] == "Point":
             values = data.values
             values[np.isnan(values)] = -9999
