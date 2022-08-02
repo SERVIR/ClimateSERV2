@@ -1,4 +1,6 @@
 from __future__ import absolute_import, unicode_literals
+import xarray as xr
+import subprocess
 
 import celery
 from celery import shared_task
@@ -30,6 +32,7 @@ from api.models import Parameters as realParams
 from zipfile import ZipFile
 from django.utils import timezone
 from api.models import Request_Progress
+from os.path import basename
 
 logger = logging.getLogger("request_processor")
 dataTypes = None
@@ -138,8 +141,6 @@ def start_processing(statistical_query):
 
         my_results = []
 
-
-
         split_obj = []
         for job in jobs:
             job['job_length'] = len(jobs)
@@ -232,6 +233,26 @@ def start_processing(statistical_query):
                     "derived_product": False}
             except Exception as e:
                 logger.error("Making merge_obj failed: " + str(e) + " for: " + uniqueid)
+
+        if str(operationtype) in "6_7":
+            if operationtype == 7:
+                nc_list = os.listdir(params.zipFile_ScratchWorkspace_Path + uniqueid)
+
+                ds = xr.open_mfdataset(params.zipFile_ScratchWorkspace_Path + uniqueid + '/*.nc')
+                ds.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + uniqueid + '.nc')
+                for file in nc_list:
+                    os.remove(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + file)
+            with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
+                for folderName, subfolders, filenames in os.walk(
+                        params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
+                    for filename in filenames:
+                        # create complete filepath of file in directory
+                        filePath = os.path.join(folderName, filename)
+                        # Add file to zip
+                        zipObj.write(filePath, basename(filePath))
+                zipObj.close()
+            logger.debug("Created zip at: " + params.zipFile_ScratchWorkspace_Path + uniqueid)
+
         logger.debug("preparing to write file for: " + uniqueid)
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
@@ -318,7 +339,7 @@ def start_processing(statistical_query):
 
         print(e)
     # finally:
-        # sys.exit(1)
+    # sys.exit(1)
 
 
 def update_progress(job_variables):
