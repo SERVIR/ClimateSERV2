@@ -242,8 +242,7 @@ def start_processing(statistical_query):
                 ds.to_netcdf(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + uniqueid + '.nc')
                 for file in nc_list:
                     os.remove(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + file)
-                while len(os.listdir(params.zipFile_ScratchWorkspace_Path + uniqueid)) > 1:
-                    print("need to wait")
+                time.sleep(0.5)
             with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
                 for folderName, subfolders, filenames in os.walk(
                         params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
