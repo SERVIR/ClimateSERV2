@@ -248,9 +248,10 @@ def start_processing(statistical_query):
                         params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
                     for filename in filenames:
                         # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
-                        # Add file to zip
-                        zipObj.write(filePath, basename(filePath))
+                        if filename.index(".") > 0:
+                            filePath = os.path.join(folderName, filename)
+                            # Add file to zip
+                            zipObj.write(filePath, basename(filePath))
                 zipObj.close()
             logger.debug("Created zip at: " + params.zipFile_ScratchWorkspace_Path + uniqueid)
 
