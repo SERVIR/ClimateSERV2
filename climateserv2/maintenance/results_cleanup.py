@@ -18,6 +18,11 @@ def remove_from(where):
             hours_old = filetime.total_seconds() / 3600
             if hours_old >= 12:
                 os.remove(os.path.join(root, name))
+        for folder in directories:
+
+            if len(os.listdir(folder)) == 0:
+                print(str(folder))
+                os.rmdir(folder)
 
 
 remove_from('''/mnt/cs-temp/request_out/''')
