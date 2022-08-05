@@ -1398,6 +1398,7 @@ function verify_ready() {
     } else if(uploadLayer && uploadLayer.getLayers().length > 0){
         if(get_aoi_area(uploadLayer) > 10000000){
             is_aoi_too_large = true;
+            selectAOI('upload');
         }
     }
 
