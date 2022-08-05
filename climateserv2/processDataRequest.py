@@ -140,13 +140,14 @@ def start_processing(statistical_query):
                     })
 
         my_results = []
-
         split_obj = []
         for job in jobs:
             job['job_length'] = len(jobs)
             # rest_time = random.uniform(0.5, 1.5)
             # time.sleep(rest_time)
             db.connections.close_all()
+
+
 
             with ThreadPoolExecutor(max_workers=None) as executor:
                 my_results = {executor.submit(start_worker_process, job)}
@@ -389,6 +390,7 @@ def start_worker_process(job_item):
         else:
             logger.debug("about to get_thredds_values for: " + uniqueid)
             try:
+                # can i multiprocess this?
                 dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
                                                               job_item['start_date'],
                                                               job_item['end_date'],

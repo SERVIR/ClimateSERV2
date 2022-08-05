@@ -482,7 +482,7 @@ function openLegend(which) {
         active_layer.styles.substr(active_layer.styles.indexOf("/") + 1);
     const style = "text-align:center;";
     dialog.html(
-        '<p style="'+ style +'"><img src="' + src + '" alt="legend"></p>'
+        '<p style="' + style + '"><img src="' + src + '" alt="legend"></p>'
     );
     dialog.dialog({
         title: active_layer.title,
@@ -752,7 +752,8 @@ function triggerUpload(e) {
     document.getElementById("upload_files").value = "";
     try {
         e.preventDefault();
-    } catch (eee){}
+    } catch (eee) {
+    }
     $("#upload_files").trigger('click');
 }
 
@@ -929,9 +930,27 @@ function enableDrawing() {
             drawnItems.addLayer(layer);
         } else {
             if (drawnItems.getLayers().length < 20) {
-                drawnItems.addLayer(layer);
-                if (drawnItems.getLayers().length === 20) {
-                    alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
+
+                const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
+                console.log("area " + area);
+                let multi_area = 0;
+                let sq_kilos = 0;
+                drawnItems.getLayers().forEach(multi_layer => {
+                    // This is square meters
+                    multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
+                });
+                console.log('multi_area: ' + multi_area);
+                sq_kilos += (multi_area + area) / 1000000;
+                // if sq_kilos > 10000000 we should not let them continue
+                console.log("sq_kilos for all: " + sq_kilos);
+
+                if (sq_kilos < 10000000) {
+                    drawnItems.addLayer(layer);
+                    if (drawnItems.getLayers().length === 20) {
+                        alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
+                    }
+                } else {
+                    alert("Your total AOI must be under 10,000,000 Km2, Please edit the polygon and try again.")
                 }
             } else {
                 alert("You may not add this polygon because you have reached the limit of 20.");
@@ -1112,7 +1131,7 @@ function sortableLayerSetup() {
         pullPlaceholder: true,
         ghostClass: "sortable-ghost",
         animation: 150,
-	    easing: "cubic-bezier(1, 0, 0, 1)",
+        easing: "cubic-bezier(1, 0, 0, 1)",
         onEnd: function ($item, container, _super) {
             adjustLayerIndex();
         },
@@ -1230,7 +1249,7 @@ function open_range_picker() {
         range_picker += '</form>';
         range_picker += '<div class="just-buttons">';
         const style_width = "width:45%";
-        range_picker += '<button style="'+ style_width +'" onclick="clearRange()">Clear Range</button>';
+        range_picker += '<button style="' + style_width + '" onclick="clearRange()">Clear Range</button>';
         range_picker += '<button style="width:45%" onclick="setRange()">Set Range</button>';
         range_picker += '</div>';
     } else {
@@ -1340,6 +1359,14 @@ function isComplete() {
     return isReady;
 }
 
+function get_aoi_area(active_layer){
+    let multi_area = 0;
+    active_layer.getLayers().forEach(multi_layer => {
+        multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
+    });
+    return multi_area / 1000000;
+}
+
 
 /**
  * verify_ready
@@ -1359,6 +1386,20 @@ function verify_ready() {
         }
         return aoi_string;
     }
+    let is_aoi_too_large = false;
+    //Check area of AOI here to make sure it's not over 10000000
+    if (highlightedIDs.length > 0) {
+        /* build AOI on server to calculate area */
+        console.log("check AOI from API call, need to build");
+    } else if(drawnItems.getLayers().length > 0){
+        if(get_aoi_area(drawnItems) > 10000000){
+            is_aoi_too_large = true;
+        }
+    } else if(uploadLayer && uploadLayer.getLayers().length > 0){
+        if(get_aoi_area(uploadLayer) > 10000000){
+            is_aoi_too_large = true;
+        }
+    }
 
     const btnRequest = $("#btnRequest");
     let ready = true;
@@ -1369,7 +1410,9 @@ function verify_ready() {
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
     let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
-
+    if (is_aoi_too_large){
+        disabled = true;
+    }
     if (requestTypeSelect.val() === 'monthly_analysis' &&
         (geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}')) {
         btnRequest.prop("disabled", false);
@@ -1412,15 +1455,19 @@ function verify_ready() {
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
                 (api_host + "/api/submitDataRequest/?" +
-                new URLSearchParams(formData).toString() + get_AOI_String()).replace("is_from_ui=true&", "") + "</span>");
+                    new URLSearchParams(formData).toString() + get_AOI_String()).replace("is_from_ui=true&", "") + "</span>");
             btnRequest.prop("disabled", disabled);
         } else {
             api_panel.empty();
             api_panel.append("<span class='form-control' style='word-wrap: break-word; height: fit-content;'>" +
-                (api_host + get_API_url()).replace("is_from_ui=true&", "")  + "</span>");
+                (api_host + get_API_url()).replace("is_from_ui=true&", "") + "</span>");
         }
     } catch (e) {
         console.log(e);
+    }
+    if (is_aoi_too_large){
+        alert("The AOI you have created is too large, there is a limit of 10,000,000 km2.  \r\n " +
+            "Please alter the AOI to proceed.");
     }
 }
 
@@ -2429,7 +2476,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                 of: window
             }
         });
-        $("#reset_btn").on("click", function(){
+        $("#reset_btn").on("click", function () {
             reset_query();
         });
 
@@ -2923,8 +2970,8 @@ function stats_info(which) {
         "Type of request" :
         which === "source" ?
             "Data Source info" :
-        which === "calculation" ?
-            "Calculation info" : "Dataset Type";
+            which === "calculation" ?
+                "Calculation info" : "Dataset Type";
     let stat_info = '<div style="font-size:unset; width:100%; height:100%; display: flex;' +
         '    align-items: center;' +
         '}">';
