@@ -1390,6 +1390,7 @@ function verify_ready() {
     //Check area of AOI here to make sure it's not over 10000000
     if (highlightedIDs.length > 0) {
         /* build AOI on server to calculate area */
+        /* Example call is /api/get_aoi_area?layerid=country&featureids=119 */
         console.log("check AOI from API call, need to build");
     } else if(drawnItems.getLayers().length > 0){
         if(get_aoi_area(drawnItems) > 10000000){

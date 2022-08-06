@@ -8,6 +8,7 @@ import time
 from ast import literal_eval
 from datetime import datetime
 import pandas as pd
+import geopandas as gpd
 import xarray as xr
 from django.apps import apps
 from django.db import DatabaseError
@@ -28,7 +29,9 @@ from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
+import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import random
+from area import area
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -90,14 +93,16 @@ def process_callback(request, output, content_type):
     else:
         http_response = HttpResponse(output)
     try:
-        if http_response.status_code == 200:
-            track_usage = Track_Usage.objects.get(unique_id=request_id)
-            track_usage.status = "Complete"
-            track_usage.save()
-        else:
-            track_usage = Track_Usage.objects.get(unique_id=request_id)
-            track_usage.status = "Fail"
-            track_usage.save()
+        if request_id:
+            print("request_id: " + str(request_id))
+            if http_response.status_code == 200:
+                track_usage = Track_Usage.objects.get(unique_id=request_id)
+                track_usage.status = "Complete"
+                track_usage.save()
+            else:
+                track_usage = Track_Usage.objects.get(unique_id=request_id)
+                track_usage.status = "Fail"
+                track_usage.save()
     except (DatabaseError, Track_Usage.DoesNotExist) as e:
         error_msg = "ERROR saving usage object to database"
         logger.error(error_msg)
@@ -626,6 +631,18 @@ def submit_data_request(request):
         return process_callback(request, json.dumps(error), "application/json")
 
 
+@csrf_exempt
+def get_area_from_admin_selection(request):
+    my_area = sF.get_aoi_area(request.POST.get("layerid", request.GET.get("layerid", None)),
+                              (request.POST.get("featureids", request.GET.get("featureids", None))).split(","))
+
+    print(my_area)
+    # return process_callback(request, json.dumps({'area': polygon_string}), "application/json")
+    return_object = {"area": str(my_area), "unique_id": None}
+    print(return_object)
+    return process_callback(request, json.dumps(return_object), "application/json")
+
+
 # To submit request for Monthly Analysis
 @csrf_exempt
 def submit_monthly_rainfall_analysis_request(request):
@@ -672,10 +689,10 @@ def submit_monthly_rainfall_analysis_request(request):
     if len(error) == 0:
         json_geom = None
         dictionary = {
-                      'custom_job_type': custom_job_type,
-                      'seasonal_start_date': seasonal_start_date,
-                      'seasonal_end_date': seasonal_end_date
-                      }
+            'custom_job_type': custom_job_type,
+            'seasonal_start_date': seasonal_start_date,
+            'seasonal_end_date': seasonal_end_date
+        }
         if feature_list:
             dictionary['layerid'] = layer_id
             dictionary['featureids'] = feature_ids_list
@@ -707,7 +724,8 @@ def submit_monthly_rainfall_analysis_request(request):
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
-        log_usage(request, layer_id, feature_ids_list, uutools.getUUID(), seasonal_start_date, seasonal_end_date, status)
+        log_usage(request, layer_id, feature_ids_list, uutools.getUUID(), seasonal_start_date, seasonal_end_date,
+                  status)
         return process_callback(request, json.dumps(error), "application/json")
 
 

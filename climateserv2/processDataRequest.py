@@ -147,8 +147,6 @@ def start_processing(statistical_query):
             # time.sleep(rest_time)
             db.connections.close_all()
 
-
-
             with ThreadPoolExecutor(max_workers=None) as executor:
                 my_results = {executor.submit(start_worker_process, job)}
 
