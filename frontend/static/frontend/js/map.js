@@ -1362,7 +1362,11 @@ function isComplete() {
 function get_aoi_area(active_layer){
     let multi_area = 0;
     active_layer.getLayers().forEach(multi_layer => {
-        multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
+        if( active_layer.getLayers()[0] instanceof L.Marker){
+            multi_area += 0;
+        } else {
+            multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
+        }
     });
     return multi_area / 1000000;
 }
@@ -1374,6 +1378,51 @@ function get_aoi_area(active_layer){
  * When ready, enables the request button as well and the view API button
  */
 function verify_ready() {
+    let is_geometry = true;
+    let is_aoi_too_large = false;
+    //Check area of AOI here to make sure it's not over 10000000
+    if (highlightedIDs.length > 0) {
+        /* build AOI on server to calculate area */
+        /* Example call is /api/get_aoi_area?layerid=country&featureids=119 */
+        $.ajax({
+            url: '/api/get_aoi_area?layerid=' + adminHighlightLayer.options.layers.replace("_highlight", "") + '&featureids=' + highlightedIDs.toString(),
+            type: "GET",
+            async: true,
+            crossDomain: true
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                const full_area = (JSON.parse(data)).area;
+                if(full_area > 10000000) {
+                    is_aoi_too_large = true;
+                    selectAOI('select');
+                    verify_ready_end(true);
+                } else{
+                    verify_ready_end(false);
+                }
+            }
+        });
+        is_geometry = false;
+    } else if(drawnItems.getLayers().length > 0){
+        if(get_aoi_area(drawnItems) > 10000000){
+            is_aoi_too_large = true;
+        }
+    } else if(uploadLayer && uploadLayer.getLayers().length > 0){
+        if(get_aoi_area(uploadLayer) > 10000000){
+            is_aoi_too_large = true;
+            selectAOI('upload');
+        }
+    }
+
+    if(is_geometry){
+        verify_ready_end(is_aoi_too_large);
+    }
+}
+
+function verify_ready_end(is_aoi_too_large) {
     function get_AOI_String() {
         let aoi_string = "";
         if (geometry.text().trim().indexOf("- Feature:") > -1) {
@@ -1385,22 +1434,6 @@ function verify_ready() {
             aoi_string = "&geometry=" + encodeURI(geometry.text().trim());
         }
         return aoi_string;
-    }
-    let is_aoi_too_large = false;
-    //Check area of AOI here to make sure it's not over 10000000
-    if (highlightedIDs.length > 0) {
-        /* build AOI on server to calculate area */
-        /* Example call is /api/get_aoi_area?layerid=country&featureids=119 */
-        console.log("check AOI from API call, need to build");
-    } else if(drawnItems.getLayers().length > 0){
-        if(get_aoi_area(drawnItems) > 10000000){
-            is_aoi_too_large = true;
-        }
-    } else if(uploadLayer && uploadLayer.getLayers().length > 0){
-        if(get_aoi_area(uploadLayer) > 10000000){
-            is_aoi_too_large = true;
-            selectAOI('upload');
-        }
     }
 
     const btnRequest = $("#btnRequest");
