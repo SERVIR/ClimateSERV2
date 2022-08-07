@@ -31,7 +31,6 @@ from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
 import random
-from area import area
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
