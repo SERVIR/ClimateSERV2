@@ -33,8 +33,9 @@ from zipfile import ZipFile
 from django.utils import timezone
 from api.models import Request_Progress
 from os.path import basename
+from celery.utils.log import get_task_logger
+logger = get_task_logger("request_processor")
 
-logger = logging.getLogger("request_processor")
 dataTypes = None
 params = realParams.objects.first()
 
@@ -47,9 +48,7 @@ def set_progress_to_100(uniqueid):
 
 @shared_task()
 def start_processing(statistical_query):
-    logger.info("I am here")
     logger.info("celery.current_task: " + str(celery.current_task.request.id))
-    logger.info("celery told me to go here")
 
     try:
         date_range_list = []
@@ -120,7 +119,6 @@ def start_processing(statistical_query):
                     date_range_list.append([first_date_string, last_date_string])
             counter = 0
             # this breaks if data doesn't exist
-            logger.debug("about to get the data for the range for: " + uniqueid)
             for dates in date_range_list:
                 uu_id = uu.getUUID()
                 dataset = ""
@@ -153,10 +151,6 @@ def start_processing(statistical_query):
                 for _ in concurrent.futures.as_completed(my_results):
                     split_obj.append(_.result())
 
-        logger.debug("should be back from start_worker_process for: " + uniqueid)
-
-        logger.debug("pool should be joined for: " + uniqueid)
-
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             opn = "avg"
@@ -182,11 +176,9 @@ def start_processing(statistical_query):
             merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(result_list)}
 
         else:
-            logger.debug("after join, preparing to create output for: " + uniqueid)
             try:
                 dates = []
                 values = []
-                logger.debug(str(split_obj))
                 for obj in split_obj:
                     try:
                         dates.extend(obj["dates"])
@@ -259,7 +251,7 @@ def start_processing(statistical_query):
         f = open(filename, 'w+')
         json.dump(merged_obj, f)
         f.close()
-        logger.error("Processes joined, file written, and setting progress to 100 for: " + uniqueid)
+        logger.debug("Processes joined, file written, and setting progress to 100 for: " + uniqueid)
 
         set_progress_to_100(uniqueid)
 
@@ -334,8 +326,8 @@ def start_processing(statistical_query):
             request_progress.progress = 100
             request_progress.save()
         except Exception as e2:
-            logger.info("Failed updating progress")
-            logger.info(str(e2))
+            logger.debug("Failed updating progress")
+            logger.debug(str(e2))
             pass
 
         print(e)
@@ -348,9 +340,9 @@ def update_progress(job_variables):
     uniqueid = job_variables["uniqueid"]
     request_progress = Request_Progress.objects.get(request_id=uniqueid)
     logger.debug("got request object for: " + uniqueid)
-    logger.info(str(job_length) + ' - was the job_length')
+    logger.debug(str(job_length) + ' - was the job_length')
     update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-    logger.info(str(update_value) + '% done')
+    logger.debug(str(update_value) + '% done')
     request_progress.progress = update_value
     logger.debug("updated progress for: " + uniqueid)
     request_progress.save()
@@ -406,13 +398,7 @@ def start_worker_process(job_item):
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
             try:
-                # t = threading.Thread(target=update_progress, args=({'progress': job_length, 'uniqueid': uniqueid},))
-                # t.setDaemon(True)
-                # t.start()
                 update_progress({'progress': job_length, 'uniqueid': uniqueid})
-                logger.debug("db.connections.close_all() for: " + uniqueid)
-
-                logger.debug("update progress thread started for: " + uniqueid)
             except:
                 logger.error("error getting or updating progress")
                 pass
@@ -422,7 +408,7 @@ def start_worker_process(job_item):
             request_progress.progress = 99.5
             request_progress.save()
     except Exception as e:
-        logger.info("ISSUE" + str(e))
+        logger.error("ISSUE" + str(e))
 
     return {
         "uid": job_item["uniqueid"],

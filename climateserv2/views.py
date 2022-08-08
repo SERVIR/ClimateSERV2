@@ -1,14 +1,12 @@
 import json
 import logging
-import multiprocessing
-import threading
 import os
 import subprocess
-import time
 from ast import literal_eval
 from datetime import datetime
+from json import JSONDecodeError
+
 import pandas as pd
-import geopandas as gpd
 import xarray as xr
 from django.apps import apps
 from django.db import DatabaseError
@@ -25,17 +23,14 @@ from api.models import Parameters
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .processtools import uutools as uutools
-from django.middleware.csrf import CsrfViewMiddleware
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
-import random
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
 exempt = -1
-global_CONST_LogToken = "SomeRandomStringThatGoesHere"
 logger = logging.getLogger("request_processor")
 g = GeoIP2()
 
@@ -48,8 +43,8 @@ def read_results(uid):
         f = open(filename, "r")
         x = json.load(f)
         f.close()
-    except Exception as e:
-        x = {"errMsg": "error"}
+    except (OSError, JSONDecodeError) as e:
+        x = {"errMsg": "error: " + str(e)}
     return x
 
 
@@ -145,7 +140,8 @@ def get_country_code(r):
 def get_feature_layers(request):
     params = Parameters.objects.first()
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id=request.GET["id"], originating_IP=get_client_ip(request),
+    track_usage = Track_Usage(unique_id=request.POST.get("id", request.GET.get("id", None)),
+                              originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
                               progress=100, API_call="getFeatureLayers", data_retrieved=False
@@ -164,16 +160,16 @@ def get_feature_layers(request):
 def get_data_from_request(request):
     logger.debug("Getting Data from Request")
     try:
-        request_id = request.GET["id"]
+        request_id = request.POST.get("id", request.GET.get("id", None))
         logger.debug("Getting Data from Request " + request_id)
         json_results = read_results(request_id)
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", None)))
         track_usage.data_retrieved = True
         track_usage.save()
         return process_callback(request, json.dumps(json_results), "application/json")
     except DatabaseError:
         logger.warning("problem getting request data for id: " + str(request))
-        track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", None)))
         track_usage.data_retrieved = False
         track_usage.save()
         return process_callback(request, "need to send id", "application/json")
@@ -191,18 +187,19 @@ def int_try_parse(value):
 @never_cache
 @csrf_exempt
 def get_data_request_progress(request):
-    logger.debug("Getting Data Request Progress for: " + request.GET["id"])
+    logger.debug("Getting Data Request Progress for: " + request.POST.get("id", request.GET.get("id", None)))
+    progress = 0
+    request_id = request.POST.get("id", request.GET.get("id", None))
     try:
-        request_id = request.GET["id"]
         progress = read_progress(request_id)
-        # if float(progress) > 0:
-        #     track_usage = Track_Usage.objects.get(unique_id=request_id)
-        #     track_usage.progress = progress
-        #     track_usage.save()
+        if float(progress) > 0:
+            track_usage = Track_Usage.objects.get(unique_id=request_id)
+            track_usage.progress = progress
+            track_usage.save()
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
     try:
-        logger.debug("Progress =" + str(progress) + " for " + request.GET["id"])
+        logger.debug("Progress =" + str(progress) + " for " + request.POST.get("id", request.GET.get("id", None)))
         if progress == -5:
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
             request_progress.progress = 100
@@ -219,7 +216,6 @@ def get_data_request_progress(request):
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
             request_progress.progress = float(progress) + .1
             request_progress.save()
-            # logger.warning("Problem with getDataRequestProgress: " + str(request))
         if float(progress) > 100:
             progress = 100
         return process_callback(request, json.dumps([float(progress)]), "application/json")
@@ -235,11 +231,11 @@ def get_file_for_job_id(request):
     logger.debug("Getting File to download.")
     params = Parameters.objects.first()
     try:
-        request_id = request.GET["id"]
+        request_id = request.POST.get("id", request.GET.get("id", None))
         progress = read_progress(request_id)
         # Validate that progress is at 100%
         if float(progress) == 100.0:
-            track_usage = Track_Usage.objects.get(unique_id=request.GET["id"])
+            track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.data_retrieved = True
             track_usage.save()
             expected_file_location = ""
@@ -311,12 +307,10 @@ def get_climate_ensemble_list():
     data_types = ETL_Dataset.objects.all()
     result_list = []
     for current_data_type in data_types:
-        try:
-            if current_data_type.ensemble != '':
-                current_ensemble = current_data_type.ensemble
-                result_list.append(current_ensemble)
-        except:
-            pass
+        if current_data_type.ensemble != '':
+            current_ensemble = current_data_type.ensemble
+            result_list.append(current_ensemble)
+
     # Now remove duplicates from the list
     temp_set = set(result_list)
     result_list = list(temp_set)
@@ -364,14 +358,10 @@ def get_climate_datatype_map():
 @csrf_exempt
 def get_climate_scenario_info(request):
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
-
-    # reason = CsrfViewMiddleware().process_view(request, None, (), {})
-    # if not reason:
-    #     from_ui = True
     unique_id = uutools.getUUID()
     try:
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request)
-                                  , country_ISO=get_country_code(request),
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
                                   progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
@@ -381,6 +371,11 @@ def get_climate_scenario_info(request):
     except MultiValueDictKeyError:
         error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
         logger.error(error_msg)
+    api_return_object = get_nmme_info(unique_id)
+    return process_callback(request, json.dumps(api_return_object), "application/javascript")
+
+
+def get_nmme_info(unique_id):
     try:
         nc_file = xr.open_dataset(
             '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
@@ -405,11 +400,11 @@ def get_climate_scenario_info(request):
             "climate_DataTypeCapabilities": climate_model_datatype_capabilities_list,
             "isError": is_error
         }
-    except:
+    except FileNotFoundError:
         with open('/cserv2/django_app/ClimateSERV2/climateserv2/sample_climate_scenario.json', 'r') as climate_scenario:
             api_return_object = json.loads(climate_scenario.read())
             api_return_object["unique_id"] = unique_id
-    return process_callback(request, json.dumps(api_return_object), "application/javascript")
+    return api_return_object
 
 
 def get_client_ip(request):
@@ -490,7 +485,7 @@ def submit_data_request(request):
     params = Parameters.objects.first()
     logger.debug("Submitting Data Request")
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
-
+    my_progress = 0
     error = []
     polygon_string = None
     layer_id = None
@@ -503,31 +498,8 @@ def submit_data_request(request):
     ps = literal_eval(params.parameters)
     calculation = ps[int(calculation_string)][2]
     # Get geometry from parameter or from shapefile
-    geometry = None
-    layer_id_request = request.POST.get("layerid", request.GET.get("layerid", None))
-    if layer_id_request is not None:
-        feature_ids_list = []
-        try:
-            layer_id = str(layer_id_request)
-            feature_ids_list = get_feature_ids_list(request)
-            feature_list = True
-            logger.debug("submitDataRequest: Loaded feature ids, feature_ids_list: " + str(feature_ids_list))
-        except KeyError:
-            logger.warning("issue with finding geometry")
-            error.append(
-                "Error finding geometry: layerid:" + str(layer_id) + " feature_id: " + str(feature_ids_list))
-    else:
-        try:
-            polygon_string = request.POST.get("geometry", request.GET.get("geometry", None))
-            geometry = decodeGeoJSON(polygon_string)
-        except KeyError:
-            logger.warning("Problem with geometry")
-            error.append("problem decoding geometry " + polygon_string)
-
-        if geometry is None:
-            logger.warning("Problem in that the geometry is a problem")
-        else:
-            logger.warning(geometry)
+    feature_ids_list, feature_list, layer_id, polygon_string = get_geometry(error, feature_ids_list, feature_list,
+                                                                            layer_id, polygon_string, request)
     try:
         operation_type = int(request.POST.get("operationtype", request.GET.get("operationtype", None)))
     except KeyError:
@@ -582,16 +554,24 @@ def submit_data_request(request):
                 my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
                 logger.info("my_id" + str(my_id))
             except Exception as e:
+                my_id = uutools.getUUID()
+                status = "failed"
+                my_progress = -1
                 logger.error(str(e))
 
             logger.info("should have gone to celery")
         else:
             logger.info("about to start celery")
+            my_progress = 0
             try:
                 my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
             except Exception as e:
+                my_id = uutools.getUUID()
+                status = "failed"
+                my_progress = -1
                 logger.error(str(e))
-        request_progress = Request_Progress(request_id=str(my_id), progress=0)
+
+        request_progress = Request_Progress(request_id=str(my_id), progress=my_progress)
         request_progress.save()
         request_progress.refresh_from_db()
         try:
@@ -608,14 +588,12 @@ def submit_data_request(request):
 
             track_usage.save()
         except Exception as e:
-            logger.error("THIS IS THE ISSUE!")
             logger.error(str(e))
 
         return process_callback(request, str(json.dumps([str(my_id)])), "application/json")
     else:
-        if "geometry" in request.POST:
-            aoi = request.POST['geometry']
-        else:
+        aoi = request.POST.get("geometry", request.GET.get("geometry", None))
+        if aoi is None:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
 
         track_usage = Track_Usage(unique_id=uutools.getUUID(), originating_IP=get_client_ip(request),
@@ -630,34 +608,7 @@ def submit_data_request(request):
         return process_callback(request, json.dumps(error), "application/json")
 
 
-@csrf_exempt
-def get_area_from_admin_selection(request):
-    my_area = sF.get_aoi_area(request.POST.get("layerid", request.GET.get("layerid", None)),
-                              (request.POST.get("featureids", request.GET.get("featureids", None))).split(","))
-
-    print(my_area)
-    # return process_callback(request, json.dumps({'area': polygon_string}), "application/json")
-    return_object = {"area": str(my_area), "unique_id": None}
-    print(return_object)
-    return process_callback(request, json.dumps(return_object), "application/json")
-
-
-# To submit request for Monthly Analysis
-@csrf_exempt
-def submit_monthly_rainfall_analysis_request(request):
-    custom_job_type = "MonthlyRainfallAnalysis"
-    logger.info("Submitting Data Request for Monthly Rainfall Analysis")
-    error = []
-    seasonal_start_date = ""
-    seasonal_end_date = ""
-    feature_list = False
-    feature_ids_list = []
-    polygon_string = None
-    layer_id = ""
-
-    seasonal_start_date, seasonal_end_date = validate_seasonal_dates(request, error)
-
-    # Get geometry from parameter Or extract from shapefile
+def get_geometry(error, feature_ids_list, feature_list, layer_id, polygon_string, request):
     geometry = None
     layer_id_request = request.POST.get("layerid", request.GET.get("layerid", None))
     if layer_id_request is not None:
@@ -683,8 +634,35 @@ def submit_monthly_rainfall_analysis_request(request):
             logger.warning("Problem in that the geometry is a problem")
         else:
             logger.warning(geometry)
+    return feature_ids_list, feature_list, layer_id, polygon_string
 
-    # Submit requests to the ipcluster service to get data
+
+@csrf_exempt
+def get_area_from_admin_selection(request):
+    my_area = sF.get_aoi_area(request.POST.get("layerid", request.GET.get("layerid", None)),
+                              (request.POST.get("featureids", request.GET.get("featureids", None))).split(","))
+    return_object = {"area": str(my_area), "unique_id": None}
+    return process_callback(request, json.dumps(return_object), "application/json")
+
+
+# To submit request for Monthly Analysis
+@csrf_exempt
+def submit_monthly_rainfall_analysis_request(request):
+    custom_job_type = "MonthlyRainfallAnalysis"
+    logger.info("Submitting Data Request for Monthly Rainfall Analysis")
+    error = []
+    feature_list = False
+    feature_ids_list = []
+    polygon_string = None
+    layer_id = ""
+
+    seasonal_start_date, seasonal_end_date = validate_seasonal_dates(request, error)
+
+    # Get geometry from parameter Or extract from shapefile
+    feature_ids_list, feature_list, layer_id, polygon_string = get_geometry(error, feature_ids_list, feature_list,
+                                                                            layer_id, polygon_string, request)
+
+    # Submit requests to the ip_cluster service to get data
     if len(error) == 0:
         json_geom = None
         dictionary = {
@@ -705,12 +683,10 @@ def submit_monthly_rainfall_analysis_request(request):
 
         my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
         unique_id = str(my_id)
-        # p = multiprocessing.Process(target=start_processing, args=(dictionary,))
         logger.info("Adding progress (getMonthlyRainfallAnalysis) " + unique_id)
 
         log = Request_Progress(request_id=unique_id, progress=0)
         logger.info("Added progress (getMonthlyRainfallAnalysis) " + unique_id)
-
         log.save()
 
         log_obj = requestLog.Request_Progress.objects.get(request_id=unique_id)
@@ -719,7 +695,6 @@ def submit_monthly_rainfall_analysis_request(request):
         else:
             status = "In Progress"
         log_usage(request, layer_id, feature_ids_list, unique_id, seasonal_start_date, seasonal_end_date, status)
-        # p.start()
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
@@ -730,9 +705,8 @@ def submit_monthly_rainfall_analysis_request(request):
 
 def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seasonal_end_date, status):
     logg = requestLog.Request_Progress.objects.get(request_id=uniqueid)
-    if "geometry" in request.POST:
-        aoi = request.POST['geometry']
-    else:
+    aoi = request.POST.get("geometry", request.GET.get("geometry", None))
+    if aoi is None:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
     track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
@@ -771,14 +745,14 @@ def validate_vars(request, error):
     interval_type = None
     try:
         var = "datatype"
-        datatype = int(request.GET["datatype"]) if request.method == 'GET' else int(request.POST["datatype"])
+
+        datatype = int(request.POST.get("datatype", request.GET.get("datatype", None)))
         var = "begintime"
-        begin_time = request.GET["begintime"] if request.method == 'GET' else request.POST["begintime"]
+        begin_time = request.POST.get("begintime", request.GET.get("begintime", None))
         var = "endtime"
-        end_time = request.GET["endtime"] if request.method == 'GET' else request.POST["endtime"]
+        end_time = request.POST.get("endtime", request.GET.get("endtime", None))
         var = "intervaltype"
-        interval_type = int(request.GET["intervaltype"]) if request.method == 'GET' \
-            else int(request.POST["intervaltype"])
+        interval_type = int(request.POST.get("intervaltype", request.GET.get("intervaltype", None)))
     except KeyError:
         logger.warning("issue with " + str(request))
         error.append("Error with " + var)
@@ -786,10 +760,7 @@ def validate_vars(request, error):
 
 
 def get_feature_ids_list(request):
-    if request.method == 'GET':
-        feature_ids = str(request.GET["featureids"]).split(',')
-    else:
-        feature_ids = str(request.POST.get("featureids")).split(',')
+    feature_ids = str(request.POST.get("featureids", request.GET.get("featureids", None))).split(',')
     feature_ids_list = []
     for fid in feature_ids:
         value, is_int = int_try_parse(fid)

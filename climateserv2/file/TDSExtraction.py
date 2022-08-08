@@ -1,4 +1,5 @@
 import json
+from json import JSONDecodeError
 from os.path import basename
 
 import pandas as pd
@@ -115,31 +116,28 @@ def get_filelist(datatype, start_date, end_date):
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for THREDDS URL
-    logger.debug("Made it to get_thredds_values for: " + uniqueid)
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
         start_date = datetime.strftime(st, '%Y-%m-%d')
         end_date = datetime.strftime(et, '%Y-%m-%d')
-    except:
+    except (ValueError, TypeError):
         # If there is an exception with date format while converting, we can just ignore the conversion and use the
         # passed dates
         pass
     logger.debug("past datetime stuff for: " + uniqueid)
     try:
         jsonn = json.loads(str(geom))
-    except Exception as e:
+    except JSONDecodeError as e:
         jsonn = json.loads(json.dumps(geom))
     logger.debug("past json loads  for: " + uniqueid)
     for x in range(len(jsonn["features"])):
         if "properties" not in jsonn["features"][x]:
             jsonn["features"][x]["properties"] = {}
 
-    logger.debug("past adding feature  for: " + uniqueid)
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
     json_aoi = json.dumps(jsonn)
-    logger.debug("past json dump  for: " + uniqueid)
     geodf = gpd.read_file(json_aoi)
     logger.debug("past reading it for: " + uniqueid)
     lon1, lat1, lon2, lat2 = geodf.total_bounds
