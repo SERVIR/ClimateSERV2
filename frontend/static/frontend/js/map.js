@@ -35,6 +35,7 @@ let simpleAxis = true;
 let debug_data = [];
 let multiChart;
 const csrftoken = getCookie('csrftoken');
+const animation_range = {};
 
 /**
  * createLayer
@@ -616,14 +617,26 @@ function toggleLayer(which) {
 
     if (hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
-
-        if (!map.timeDimension.getLowerLimit()) {
+        let saved_range = false;
+        if ('range' in animation_range){
+            const startTime = animation_range.range.startTime;
+            const endTime = animation_range.range.endTime;
+            map.timeDimension.setLowerLimit(startTime);
+            map.timeDimension.setUpperLimit(endTime);
+            map.timeDimension.setCurrentTime(startTime);
+            $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
+                " to " + moment(endTime).utc().format('MM/DD/YYYY'));
+            saved_range = true;
+        }
+        else if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
-        $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
-            " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
+        if (! saved_range) {
+            $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
+                " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
+        }
     } else {
         map.timeDimension.setAvailableTimes([null], "replace");
         $(".timecontrol-date").html("Time not available");
@@ -1278,6 +1291,10 @@ function open_range_picker() {
 function setRange() {
     const startTime = new Date($('#begin_range_date').val());
     const endTime = new Date($('#end_range_date').val());
+    animation_range.range = {
+        "startTime": startTime,
+        "endTime": endTime
+    };
     map.timeDimension.setLowerLimit(startTime);
     map.timeDimension.setUpperLimit(endTime);
     map.timeDimension.setCurrentTime(startTime);
@@ -1291,6 +1308,7 @@ function setRange() {
  * Clears the range set by the user
  */
 function clearRange() {
+    delete animation_range.range;
     map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
     map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
     document
