@@ -34,10 +34,11 @@ exempt = -1
 logger = logging.getLogger("request_processor")
 g = GeoIP2()
 
+params = Parameters.objects.first()
+
 
 # To read a results file from the filesystem based on uuid
 def read_results(uid):
-    params = Parameters.objects.first()
     filename = params.resultsdir + uid + ".txt"
     try:
         f = open(filename, "r")
@@ -122,7 +123,6 @@ def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_
 # To get a list of all the parameter types
 @csrf_exempt
 def get_parameter_types(request):
-    params = Parameters.objects.first()
     print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
@@ -138,7 +138,7 @@ def get_country_code(r):
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
-    params = Parameters.objects.first()
+
     logger.info("Getting Feature Layers")
     track_usage = Track_Usage(unique_id=request.POST.get("id", request.GET.get("id", None)),
                               originating_IP=get_client_ip(request),
@@ -229,7 +229,6 @@ def get_data_request_progress(request):
 @csrf_exempt
 def get_file_for_job_id(request):
     logger.debug("Getting File to download.")
-    params = Parameters.objects.first()
     try:
         request_id = request.POST.get("id", request.GET.get("id", None))
         progress = read_progress(request_id)
@@ -418,7 +417,6 @@ def get_client_ip(request):
 
 @csrf_exempt
 def run_etl(request):
-    params = Parameters.objects.first()
     if request.method == 'POST':
         uuid = request.POST["uuid"]
         start_year = request.POST["start_year"]
@@ -482,7 +480,6 @@ def run_etl(request):
 @never_cache
 @csrf_exempt
 def submit_data_request(request):
-    params = Parameters.objects.first()
     logger.debug("Submitting Data Request")
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
     my_progress = 0

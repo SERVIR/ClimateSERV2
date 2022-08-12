@@ -137,13 +137,9 @@ def start_processing(statistical_query):
                         "subtype": None
                     })
 
-        my_results = []
         split_obj = []
         for job in jobs:
             job['job_length'] = len(jobs)
-            # rest_time = random.uniform(0.5, 1.5)
-            # time.sleep(rest_time)
-            db.connections.close_all()
 
             with ThreadPoolExecutor(max_workers=None) as executor:
                 my_results = {executor.submit(start_worker_process, job)}

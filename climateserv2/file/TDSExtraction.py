@@ -144,7 +144,7 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     # using xarray to open the temporary netcdf
     logger.debug("about to xarray open the data for: " + uniqueid)
     try:
-        nc_file = xr.open_mfdataset(file_list, chunks={'time': 16, 'longitude': 256, 'latitude': 256})
+        nc_file = xr.open_mfdataset(file_list, parallel=True, chunks={'time': 32, 'longitude': 500, 'latitude': 500})
     except Exception as e:
         logger.error("open_mfdataset error: " + str(e) + " for: " + uniqueid)
         return [], []
