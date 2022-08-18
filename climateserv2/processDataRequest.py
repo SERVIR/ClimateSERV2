@@ -1,40 +1,35 @@
 from __future__ import absolute_import, unicode_literals
-import xarray as xr
-import subprocess
 
-import celery
-from celery import shared_task
-import ast
+import calendar
 import concurrent.futures
-import threading
-import multiprocessing
-import random
+import json
+import os
 import shutil
 import time
+import uuid
 from ast import literal_eval
 from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime
+from os.path import basename
+from zipfile import ZipFile
+
+import celery
+import numpy as np
+import pandas as pd
+import xarray as xr
+from celery import shared_task
+from celery.utils.log import get_task_logger
+from django import db
+from django.utils import timezone
 
 import climateserv2.file.TDSExtraction as GetTDSData
-import sys
-from datetime import datetime
-import climateserv2.processtools.uutools as uu
-import json
-import calendar
-import os
 import climateserv2.file.dateutils as dateutils
-import numpy as np
-from django import db
-import pandas as pd
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
-import logging
-from api.models import Track_Usage  # , ETL_Dataset
 from api.models import Parameters as realParams
-from zipfile import ZipFile
-from django.utils import timezone
 from api.models import Request_Progress
-from os.path import basename
-from celery.utils.log import get_task_logger
-logger = get_task_logger("request_processor")
+from api.models import Track_Usage  # , ETL_Dataset
+
+logger = get_task_logger(__name__)
 
 dataTypes = None
 params = realParams.objects.first()
@@ -48,19 +43,19 @@ def set_progress_to_100(uniqueid):
 
 @shared_task()
 def start_processing(statistical_query):
+    merged_obj = None
     logger.info("celery.current_task: " + str(celery.current_task.request.id))
-
+    uniqueid = "Not assigned yet"
+    operationtype = "None"
     try:
         date_range_list = []
-
-        dataset = ""
         uniqueid = str(celery.current_task.request.id)
         logger.info("start_processing has begun for: " + uniqueid)
         operationtype = ""
         if 'geometry' in statistical_query:
             polygon_string = statistical_query["geometry"]
         elif 'layerid' in statistical_query:
-            polygon_string = sF.getPolygons(statistical_query['layerid'], statistical_query['featureids'])
+            polygon_string = sF.get_polygons(statistical_query['layerid'], statistical_query['featureids'])
         else:
             raise Exception("Missing polygon_string")
 
@@ -69,19 +64,18 @@ def start_processing(statistical_query):
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
             dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
-            uu_id = uu.getUUID()
 
             jobs.append({
                 "uniqueid": uniqueid,
-                "id": uu_id,
+                "id": str(uuid.uuid4()),
                 "bounds": bounds,
                 "dates": dates,
                 "months": months,
                 "subtype": "chirps"})
-            uu_id = uu.getUUID()
+
             jobs.append({
                 "uniqueid": uniqueid,
-                "id": uu_id,
+                "id": str(uuid.uuid4()),
                 "bounds": bounds,
                 "dates": dates,
                 "months": months,
@@ -120,14 +114,12 @@ def start_processing(statistical_query):
             counter = 0
             # this breaks if data doesn't exist
             for dates in date_range_list:
-                uu_id = uu.getUUID()
-                dataset = ""
                 file_list, variable = GetTDSData.get_filelist(datatype, dates[0], dates[1])
                 counter += 1
                 if len(file_list) > 0:
                     jobs.append({
                         "uniqueid": uniqueid,
-                        "id": uu_id,
+                        "id": str(uuid.uuid4()),
                         "start_date": dates[0],
                         "end_date": dates[1],
                         "variable": variable,
@@ -151,13 +143,11 @@ def start_processing(statistical_query):
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             opn = "avg"
             result_list = []
-            uid = uu.getUUID()
-            suid = uu.getUUID()
             for obj in split_obj:
                 subtype = obj["subtype"]
                 for dateIndex in range(len(obj["dates"])):
-                    work_dict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': uid,
-                                 'datatype_uuid_for_SeasonalForecast': suid, 'sub_type_name': subtype,
+                    work_dict = {'uid': uniqueid, 'datatype_uuid_for_CHIRPS': str(uuid.uuid4()),
+                                 'datatype_uuid_for_SeasonalForecast': str(uuid.uuid4()), 'sub_type_name': subtype,
                                  'derived_product': True, 'special_type': 'MonthlyRainfallAnalysis',
                                  "date": obj["dates"][dateIndex]}
                     if subtype == "chirps":
@@ -208,6 +198,8 @@ def start_processing(statistical_query):
                         date_object = dateutils.createDateFromYearMonth(work_dict["year"], work_dict["month"])
                     elif intervaltype == 2:
                         date_object = dateutils.createDateFromYear(work_dict["year"])
+                    else:
+                        date_object = dateutils.createDateFromYear(work_dict["year"])
                     work_dict["isodate"] = date_object.strftime(intervals[0]["pattern"])
                     result_list.append(work_dict)
                 merged_obj = {
@@ -231,21 +223,24 @@ def start_processing(statistical_query):
                     os.remove(params.zipFile_ScratchWorkspace_Path + uniqueid + '/' + file)
                 time.sleep(0.5)
             with ZipFile(params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip', 'w') as zipObj:
-                for folderName, subfolders, filenames in os.walk(
+                for folderName, sub_folders, filenames in os.walk(
                         params.zipFile_ScratchWorkspace_Path + uniqueid + '/'):
                     for filename in filenames:
                         # create complete filepath of file in directory
                         if filename.index(".") > 0:
-                            filePath = os.path.join(folderName, filename)
+                            file_path = os.path.join(folderName, filename)
                             # Add file to zip
-                            zipObj.write(filePath, basename(filePath))
+                            zipObj.write(file_path, basename(file_path))
                 zipObj.close()
             logger.debug("Created zip at: " + params.zipFile_ScratchWorkspace_Path + uniqueid)
 
         logger.debug("preparing to write file for: " + uniqueid)
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
-        json.dump(merged_obj, f)
+        if merged_obj:
+            json.dump(merged_obj, f)
+        else:
+            json.dump({"Error": "There was an error processing your request."}, f)
         f.close()
         logger.debug("Processes joined, file written, and setting progress to 100 for: " + uniqueid)
 
@@ -326,7 +321,6 @@ def start_processing(statistical_query):
             logger.debug(str(e2))
             pass
 
-        print(e)
     # finally:
     # sys.exit(1)
 
@@ -348,42 +342,43 @@ def update_progress(job_variables):
 def start_worker_process(job_item):
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
-
+    dates = None
+    values = None
     logger.debug("start_worker_process for: " + uniqueid)
-    LTA = []
+    long_term_average = []
     if job_item["subtype"] == "chirps":
         dates = job_item["dates"]
-        values, LTA = GetTDSData.get_chirps_climatology(job_item["months"], job_item["bounds"])
+        values, long_term_average = GetTDSData.get_chirps_climatology(job_item["months"], job_item["bounds"])
     elif job_item["subtype"] == "nmme":
         dates = job_item["dates"]
-        values, LTA = GetTDSData.get_nmme_data(job_item["bounds"])
+        values, long_term_average = GetTDSData.get_nmme_data(job_item["bounds"])
     else:
         if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf':
-            zip_file_path = GetTDSData.get_thredds_values(job_item["uniqueid"], job_item['start_date'],
-                                                          job_item['end_date'], job_item['variable'], job_item['geom'],
-                                                          job_item['operation'], job_item['file_list'])
+            zip_file_path = GetTDSData.get_data_values(job_item["uniqueid"], job_item['start_date'],
+                                                       job_item['end_date'], job_item['variable'], job_item['geom'],
+                                                       job_item['operation'], job_item['file_list'])
 
             return {
                 "uid": job_item["uniqueid"],
-                'id': uu.getUUID(),
+                'id': str(uuid.uuid4()),
                 'dates': [],
                 'values': [],
-                'LTA': LTA,
+                'LTA': long_term_average,
                 'subtype': job_item["subtype"],
                 'zipfilepath': zip_file_path,
                 'job_length': job_item["job_length"]
             }
         else:
-            logger.debug("about to get_thredds_values for: " + uniqueid)
+            logger.debug("about to get_data_values for: " + uniqueid)
             try:
-                # can i multiprocess this?
-                dates, values = GetTDSData.get_thredds_values(job_item["uniqueid"],
-                                                              job_item['start_date'],
-                                                              job_item['end_date'],
-                                                              job_item['variable'],
-                                                              job_item['geom'],
-                                                              job_item['operation'],
-                                                              job_item['file_list'])
+                # can I multiprocess this?
+                dates, values = GetTDSData.get_data_values(job_item["uniqueid"],
+                                                           job_item['start_date'],
+                                                           job_item['end_date'],
+                                                           job_item['variable'],
+                                                           job_item['geom'],
+                                                           job_item['operation'],
+                                                           job_item['file_list'])
             except Exception:
                 logger.error("We have an error getting thredds values for: " + uniqueid)
 
@@ -408,10 +403,10 @@ def start_worker_process(job_item):
 
     return {
         "uid": job_item["uniqueid"],
-        'id': uu.getUUID(),
+        'id': str(uuid.uuid4()),
         'dates': dates,
         'values': values,
-        'LTA': LTA,
+        'LTA': long_term_average,
         'subtype': job_item["subtype"],
         'zipfilepath': "",
         'job_length': job_item["job_length"]

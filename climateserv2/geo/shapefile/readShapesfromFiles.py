@@ -3,7 +3,7 @@ import sys
 import json
 from ast import literal_eval
 
-from osgeo import ogr, osr
+from osgeo import ogr
 
 from api.models import Parameters
 import geopandas as gpd
@@ -14,7 +14,7 @@ if module_path not in sys.path:
 
 
 # To get path to shape file based on the name
-def getShapefilePath(name):
+def get_shapefile_path(name):
     params = Parameters.objects.first()
     for item in literal_eval(params.shapefileName):
         if item['id'] == name:
@@ -22,7 +22,7 @@ def getShapefilePath(name):
 
 
 # To get the geometry of a shape file based on layer and feature
-def getPolygon(shapefile_path, layer_id, fid):
+def get_polygon(shapefile_path, layer_id, fid):
     shapefile = ogr.Open(shapefile_path)
     lyr = shapefile.GetLayer(layer_id)
     poly = None
@@ -37,11 +37,11 @@ def getPolygon(shapefile_path, layer_id, fid):
 
 
 # To get geometry of shape file based on layer and multiple features
-def getPolygons(layer_id, feat_ids):
-    path = getShapefilePath(layer_id)
+def get_polygons(layer_id, feat_ids):
+    path = get_shapefile_path(layer_id)
     output = {"type": "FeatureCollection", "features": []}
     for feature in feat_ids:
-        geometry = getPolygon(path, str(layer_id), int(feature))
+        geometry = get_polygon(path, str(layer_id), int(feature))
         for x in geometry:
             f = {"type": "Feature", "geometry": json.loads(x.ExportToJson())}
             output["features"].append(f)
@@ -50,14 +50,14 @@ def getPolygons(layer_id, feat_ids):
 
 # To get geometry of shape file based on layer and multiple features
 def get_aoi_area(layer_id, feat_ids):
-    path = getShapefilePath(layer_id)
+    path = get_shapefile_path(layer_id)
     output = 0
 
     print(path)
 
     for feature in feat_ids:
         print(feature)
-        polygon = getPolygon(path, str(layer_id), int(feature))
+        polygon = get_polygon(path, str(layer_id), int(feature))
         print(polygon)
         test = gpd.read_file(path)
         selected = test.loc[test['geom_id'] == int(feature)]

@@ -2340,7 +2340,7 @@ function format_data(i) {
  * @param i the index of the data to be graphed
  * @param colors the color of the line requested
  */
-function configure_additional_chart(i, colors) {
+function configure_additional_chart(i, colors, conversion) {
     if (!simpleAxis) {
         multiChart.addAxis({
             id: "yaxis-" + i,
@@ -2381,13 +2381,58 @@ function configure_additional_chart(i, colors) {
     });
 }
 
+function convert_monthly(data, calculation){
+	const monthly_data = [];
+	const temp_data = {};
+	for(let i =0; i < data.length; i++)
+	{
+		const date_key =  (moment.utc(data[i][0]).month() + 1) + "/" + "01/" + moment.utc(data[i][0]).year();
+        console.log("data[i][0]: " + data[i][0]);
+        console.log(moment.utc(data[i][0]).month());
+        console.log(date_key);
+		if(date_key in temp_data){
+			temp_data[date_key].push(data[i][1]);
+		} else {
+			temp_data[date_key] = [data[i][1]];
+		}
+	}
+	for (let key in temp_data) {
+        if (temp_data.hasOwnProperty(key)) {
+			var max = temp_data[key][0];
+			var min = temp_data[key][0];
+			var sum = temp_data[key][0];
+			for (var i = 1; i < temp_data[key].length; i++) {
+				if (temp_data[key][i] > max) {
+					max = temp_data[key][i];
+				}
+				if (temp_data[key][i] < min) {
+					min = temp_data[key][i];
+				}
+				sum = sum + temp_data[key][i];
+			}
+			switch(calculation){
+				case "avg":
+					monthly_data.push([Date.parse(key), sum/temp_data[key].length]);
+					break;
+				case "min":
+					monthly_data.push([Date.parse(key), min]);
+					break;
+				case "max":
+					monthly_data.push([Date.parse(key), max])
+					break;
+			}
+		}
+	}
+	return monthly_data;
+}
+
 /**
  * multi_chart_builder
  * This will build the chart with the data that has been stored
  * in the multiQueryData list.  This should only be called after
  * data has been added to the list
  */
-function multi_chart_builder() {
+function multi_chart_builder(conversion) {
     simpleAxis = $('input[name="axis_type"]:checked').val() === "simple";
     const first_unit = multiQueryData[0].units;
 
@@ -2415,11 +2460,23 @@ function multi_chart_builder() {
         align: 'right',
         verticalAlign: 'middle'
     };
+    let final_data;
+    if(conversion){
+        switch (conversion) {
+            case "monthly":
+                final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation);
+                break;
+        }
+    } else{
+        final_data = multiQueryData[0].data;
+    }
+
+
     chart_object.series = [{
         color: "#758055",
         type: "line",
         name: multiQueryData[0].label,
-        data: multiQueryData[0].data.sort((a, b) => a[0] - b[0]),
+        data: final_data.sort((a, b) => a[0] - b[0]),
         tooltip: multiQueryData[0].point_format ?
             multiQueryData[0].point_format :
             {
@@ -2695,6 +2752,13 @@ function getDataFromRequest(id, isClimate, query_index) {
                         units: units,
                         yAxis_format: layer.yAxis_format || null,
                         point_format: layer.point_format || null,
+                        operation: (queried_data.operationtype === "0" ?
+                            "max" :
+                            queried_data.operationtype === "1" ?
+                                "min" :
+                                queried_data.operationtype === "5" ?
+                                    "avg" :
+                                    "n/a"),
                         label: layer.title + ": " + (queried_data.operationtype === "0" ?
                             "max" :
                             queried_data.operationtype === "1" ?

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import subprocess
+import uuid
 from ast import literal_eval
 from datetime import datetime
 from json import JSONDecodeError
@@ -22,7 +23,6 @@ from api.models import Track_Usage, ETL_Dataset
 from api.models import Parameters
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
-from .processtools import uutools as uutools
 from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
@@ -71,7 +71,7 @@ def get_id_from_output(output):
         else:
             return json.loads(output)[0]
     except (json.decoder.JSONDecodeError, IndexError):
-        return uutools.getUUID()
+        return str(uuid.uuid4())
 
 
 # Creates the HTTP response loaded with the callback to allow javascript callback
@@ -357,7 +357,7 @@ def get_climate_datatype_map():
 @csrf_exempt
 def get_climate_scenario_info(request):
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
-    unique_id = uutools.getUUID()
+    unique_id = str(uuid.uuid4())
     try:
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
@@ -418,7 +418,7 @@ def get_client_ip(request):
 @csrf_exempt
 def run_etl(request):
     if request.method == 'POST':
-        uuid = request.POST["uuid"]
+        request_uuid = request.POST["uuid"]
         start_year = request.POST["start_year"]
         end_year = request.POST["end_year"]
         start_month = request.POST["start_month"]
@@ -439,27 +439,27 @@ def run_etl(request):
                 print("chirp should be here!")
                 p = subprocess.Popen(
                     [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                     "--etl_dataset_uuid", str(uuid), "--from_last_processed", "--merge_monthly"])
+                     "--etl_dataset_uuid", str(request_uuid), "--from_last_processed", "--merge_monthly"])
                 p.wait()
             elif merge_option == "yearly":
                 print("processing yearly merge loop")
                 p = subprocess.Popen(
                     [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                     "--etl_dataset_uuid", str(uuid), "--from_last_processed", "--merge_yearly"])
+                     "--etl_dataset_uuid", str(request_uuid), "--from_last_processed", "--merge_yearly"])
                 p.wait()
             else:
                 subprocess.call([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                 "--etl_dataset_uuid", str(uuid), "--from_last_processed"])
+                                 "--etl_dataset_uuid", str(request_uuid), "--from_last_processed"])
         elif merge_option == "monthly":
             p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                   "--etl_dataset_uuid", str(uuid),
+                                   "--etl_dataset_uuid", str(request_uuid),
                                    "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                                    start_month, "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day,
                                    "--END_DAY_DD", end_day, "--merge_monthly"])
             p1.wait()
         elif merge_option == "yearly":
             p1 = subprocess.Popen([params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                                   "--etl_dataset_uuid", str(uuid),
+                                   "--etl_dataset_uuid", str(request_uuid),
                                    "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                                    start_month, "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day,
                                    "--END_DAY_DD", end_day, "--merge_yearly"])
@@ -467,7 +467,7 @@ def run_etl(request):
         else:
             proc = subprocess.Popen(
                 [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
-                 "--etl_dataset_uuid", str(uuid),
+                 "--etl_dataset_uuid", str(request_uuid),
                  "--START_YEAR_YYY", start_year, "--END_YEAR_YYY", end_year, "--START_MONTH_MM",
                  start_month,
                  "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
@@ -504,7 +504,7 @@ def submit_data_request(request):
         error.append("Error with operation_type")
 
     if datatype == 35 or datatype == 36:
-        unique_id = uutools.getUUID()
+        unique_id = str(uuid.uuid4())
         logger.info("Submitting " + unique_id)
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
@@ -551,7 +551,7 @@ def submit_data_request(request):
                 my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
                 logger.info("my_id" + str(my_id))
             except Exception as e:
-                my_id = uutools.getUUID()
+                my_id = str(uuid.uuid4())
                 status = "failed"
                 my_progress = -1
                 logger.error(str(e))
@@ -563,7 +563,7 @@ def submit_data_request(request):
             try:
                 my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
             except Exception as e:
-                my_id = uutools.getUUID()
+                my_id = str(uuid.uuid4())
                 status = "failed"
                 my_progress = -1
                 logger.error(str(e))
@@ -593,7 +593,7 @@ def submit_data_request(request):
         if aoi is None:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
 
-        track_usage = Track_Usage(unique_id=uutools.getUUID(), originating_IP=get_client_ip(request),
+        track_usage = Track_Usage(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
@@ -695,7 +695,7 @@ def submit_monthly_rainfall_analysis_request(request):
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
-        log_usage(request, layer_id, feature_ids_list, uutools.getUUID(), seasonal_start_date, seasonal_end_date,
+        log_usage(request, layer_id, feature_ids_list, str(uuid.uuid4()), seasonal_start_date, seasonal_end_date,
                   status)
         return process_callback(request, json.dumps(error), "application/json")
 

@@ -7,6 +7,7 @@ import geopandas as gpd
 import numpy as np
 import xarray as xr
 import rasterio as rio
+import regionmask as rm
 import csv
 from zipfile import ZipFile
 from datetime import datetime, timedelta
@@ -27,7 +28,6 @@ params = Parameters.objects.first()
 
 
 def get_filelist(datatype, start_date, end_date):
-    # db.connections.close_all()
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
     except Exception as e:
@@ -114,8 +114,8 @@ def get_filelist(datatype, start_date, end_date):
 
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
-def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
-    # Convert dates to %Y-%m-%d format for THREDDS URL
+def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
+    # Convert dates to %Y-%m-%d format for NetCDF
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
         et = datetime.strptime(end_date, '%m/%d/%Y')
@@ -153,8 +153,16 @@ def get_thredds_values(uniqueid, start_date, end_date, variable, geom, operation
     latSlice = slice(lat_bounds[0], lat_bounds[1])
     lonSlice = slice(lon_bounds[0], lon_bounds[1])
 
+    unmasked_data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
 
-    data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
+    bool_mask = rm.mask_3D_geopandas(geodf, unmasked_data, lon_name='longitude', lat_name='latitude', drop=True)
+        # .squeeze(
+        # dim='time',
+        # drop=True)
+    # bool_mask.plot.pcolormesh()
+
+    data = unmasked_data.where(bool_mask)
+
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)

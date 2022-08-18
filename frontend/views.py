@@ -1,18 +1,15 @@
 import json
+import uuid
 
 from django.contrib.admin.views.decorators import staff_member_required
 from django.shortcuts import render
-
-from climateserv2.file import TDSExtraction
-from climateserv2.processtools import uutools
-from climateserv2.views import get_climate_datatype_map, get_nmme_info
+from climateserv2.views import get_nmme_info
 from .models import *
 from api.models import Track_Usage
 
 from django import template
 from django.template.defaultfilters import stringfilter
 from django.views.decorators.cache import cache_page
-import xarray as xr
 
 register = template.Library()
 
@@ -30,7 +27,7 @@ def map_app(request):
     return render(request, 'map.html', context={
         'page': 'menu-map',
         'data_layers': DataLayer.objects.order_by('title').all(),
-        'climateModelInfo': json.dumps(get_nmme_info(uutools.getUUID())),
+        'climateModelInfo': json.dumps(get_nmme_info(str(uuid.uuid4()))),
     })
 
 
@@ -59,4 +56,3 @@ def help_center(request):
 @stringfilter
 def trim(value):
     return value.strip()
-

@@ -215,7 +215,12 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
-        }, 'request_processor': {
+        }, '': {
+            'handlers': ['file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
+        , 'request_processor': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
