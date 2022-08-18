@@ -177,7 +177,7 @@ MEDIA_URL = '/media/'
 
 LOGGING = {
     'version': 1,
-    'disable_existing_loggers': True,
+    'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '%(levelname)s, %(asctime)s, %(module)s, %(process)d, %(thread)d, %(message)s',
@@ -215,7 +215,7 @@ LOGGING = {
             'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
-        }, '': {
+        }, 'climateserv2.processDataRequest': {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,

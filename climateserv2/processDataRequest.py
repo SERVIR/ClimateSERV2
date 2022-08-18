@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import calendar
 import concurrent.futures
 import json
+import logging
 import os
 import shutil
 import time
@@ -28,8 +29,11 @@ import climateserv2.geo.shapefile.readShapesfromFiles as sF
 from api.models import Parameters as realParams
 from api.models import Request_Progress
 from api.models import Track_Usage  # , ETL_Dataset
+import climateserv2.locallog.locallogging as llog
 
-logger = get_task_logger(__name__)
+logger = get_task_logger('climateserv2.processDataRequest')
+logger.level = logging.DEBUG
+
 
 dataTypes = None
 params = realParams.objects.first()
@@ -44,7 +48,7 @@ def set_progress_to_100(uniqueid):
 @shared_task()
 def start_processing(statistical_query):
     merged_obj = None
-    logger.info("celery.current_task: " + str(celery.current_task.request.id))
+    logger.debug("celery.current_task: " + str(celery.current_task.request.id))
     uniqueid = "Not assigned yet"
     operationtype = "None"
     try:
