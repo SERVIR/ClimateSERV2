@@ -2243,7 +2243,7 @@ function inti_chart_dialog(conversion, isMonthly) {
     let dialog_html = '<div style="height:calc(100% - 69px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     let display_options = isMonthly ? "hidden" : "visible";
-    dialog_html += '<div id="graph-options" class="graph-options" style="'+ display_options +'">';
+    dialog_html += '<div id="graph-options" class="graph-options" style="visibility:'+ display_options +'">';
     dialog_html += '<div id="interval-options" class="left-graph-options">'
         dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
     dialog_html += '<option value="" '+default_selected+'>Default</option>';
