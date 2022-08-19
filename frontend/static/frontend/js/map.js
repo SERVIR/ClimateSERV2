@@ -2244,7 +2244,7 @@ function inti_chart_dialog(conversion) {
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     dialog_html += '<div id="graph-options" class="graph-options">';
     dialog_html += '<div id="interval-options" class="left-graph-options">'
-        dialog_html += '<select onchange="multi_chart_builder(this.value)">';
+        dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
     dialog_html += '<option value="" '+default_selected+'>Default</option>';
     const is_monthly = conversion === "monthly" ? "selected": "";
     dialog_html += '<option value="monthly" ' + is_monthly + '>Monthly</option>';
