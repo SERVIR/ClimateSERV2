@@ -2355,6 +2355,16 @@ function configure_additional_chart(i, colors, conversion) {
     }
     let build_yAxis = simpleAxis ? "simple" : "yaxis-" + i;
 
+    let final_data;
+    if(conversion){
+        switch (conversion) {
+            case "monthly":
+                final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation);
+                break;
+        }
+    } else{
+        final_data = multiQueryData[i].data;
+    }
 
     let point_format;
     if (multiQueryData[i].point_format) {
@@ -2377,10 +2387,12 @@ function configure_additional_chart(i, colors, conversion) {
         type: "line",
         tooltip: point_format,
         name: multiQueryData[i].label,
-        data: multiQueryData[i].data.sort((a, b) => a[0] - b[0]),
+        data: final_data.sort((a, b) => a[0] - b[0]),
     });
 }
 
+//change this to take conversion parameter monthly or yearly
+// fix name of function add logic for yearly
 function convert_monthly(data, calculation){
 	const monthly_data = [];
 	const temp_data = {};
@@ -2544,7 +2556,7 @@ function multi_chart_builder(conversion) {
 
     if (multiQueryData.length > 1) {
         for (let i = 1; i < multiQueryData.length; i++) {
-            configure_additional_chart(i, colors);
+            configure_additional_chart(i, colors, (conversion||null));
         }
         $('#multi-switch-panel').css('visibility', 'visible');
     }
