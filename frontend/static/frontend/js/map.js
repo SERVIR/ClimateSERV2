@@ -2228,18 +2228,37 @@ function rebuildGraph() {
  * inti_chart_dialog
  * Creates the chart dialog
  */
-function inti_chart_dialog() {
+function inti_chart_dialog(conversion) {
+    let default_selected = false;
+    if(conversion){
+        console.log(conversion);
+    } else{
+        conversion = "default";
+        default_selected = "selected";
+    }
     close_dialog();
     $("#btnPreviousChart").prop("disabled", true);
     const dialog = $("#dialog");
     const isMobile = $("#isMobile");
-    let dialog_html = '<div style="height:calc(100% - 32px)"><div id="chart_holder"></div></div>';
+    let dialog_html = '<div style="height:calc(100% - 69px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
-    dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; ">';
+    dialog_html += '<div id="graph-options" class="graph-options">';
+    dialog_html += '<div id="interval-options" class="left-graph-options">'
+        dialog_html += '<select onchange="multi_chart_builder(this.value)">';
+    dialog_html += '<option value="" '+default_selected+'>Default</option>';
+    const is_monthly = conversion === "monthly" ? "selected": "";
+    dialog_html += '<option value="monthly" ' + is_monthly + '>Monthly</option>';
+    const is_yearly = conversion === "yearly" ? "selected": "";
+    dialog_html += '<option value="yearly" ' + is_yearly + '>Yearly</option>';
+    dialog_html += '</select>';
+     dialog_html += '</div>';
+    dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; " class="right-graph-options">';
+
     dialog_html += 'Simple Axis <label class="switch">';
     dialog_html += '<input id="axis_toggle" type="checkbox" ' + checked_text + ' onclick="rebuildGraph()">';
     dialog_html += '<span class="slider round"></span>';
     dialog_html += '</label> Multi-Axis';
+    dialog_html += '</div>';
     dialog_html += '</div>';
     dialog.html(
         dialog_html
@@ -2357,12 +2376,7 @@ function configure_additional_chart(i, colors, conversion) {
 
     let final_data;
     if(conversion){
-        final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation, conversion);
-        // switch (conversion) {
-        //     case "monthly":
-        //         final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation, conversion);
-        //         break;
-        // }
+        final_data = convert_to_interval(multiQueryData[i].data, multiQueryData[0].operation, conversion);
     } else{
         final_data = multiQueryData[i].data;
     }
@@ -2394,7 +2408,7 @@ function configure_additional_chart(i, colors, conversion) {
 
 //change this to take conversion parameter monthly or yearly
 // fix name of function add logic for yearly
-function convert_monthly(data, calculation, interval){
+function convert_to_interval(data, calculation, interval){
 	const monthly_data = [];
 	const temp_data = {};
 	for(let i =0; i < data.length; i++)
@@ -2480,12 +2494,7 @@ function multi_chart_builder(conversion) {
     };
     let final_data;
     if(conversion){
-        final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation, conversion);
-        // switch (conversion) {
-        //     case "monthly":
-        //         final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation);
-        //         break;
-        // }
+        final_data = convert_to_interval(multiQueryData[0].data, multiQueryData[0].operation, conversion);
     } else{
         final_data = multiQueryData[0].data;
     }
@@ -2534,7 +2543,7 @@ function multi_chart_builder(conversion) {
             }
         }]
     };
-    inti_chart_dialog();
+    inti_chart_dialog(conversion);
 
     let dialog = $("#dialog");
     dialog.dialog({

@@ -133,6 +133,29 @@ body {
     cursor: move;
 }
 
+.graph-options {
+    display: flex;
+    flex-direction: row;
+    font-size: 30px;
+    text-align: center;
+}
+
+.left-graph-options {
+  padding: 10px;
+  flex: 50%;
+}
+
+.right-graph-options {
+  padding: 10px;
+  flex: 50%;
+}
+
+@media (max-width: 800px) {
+  .graph-options {
+    flex-direction: column;
+  }
+}
+
 .ui-widget {
     font-family: "Work Sans", Roboto;;
      font-size: inherit;
