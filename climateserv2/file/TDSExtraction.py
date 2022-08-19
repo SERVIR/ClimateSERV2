@@ -154,14 +154,10 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     lonSlice = slice(lon_bounds[0], lon_bounds[1])
 
     unmasked_data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
-    if operation == "download":
+    if operation == "download" or operation == "csv" or jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
     else:
         bool_mask = rm.mask_3D_geopandas(geodf, unmasked_data, lon_name='longitude', lat_name='latitude', drop=True)
-            # .squeeze(
-            # dim='time',
-            # drop=True)
-        # bool_mask.plot.pcolormesh()
 
         data = unmasked_data.where(bool_mask)
 
@@ -193,6 +189,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     elif operation == "download" or operation == "csv":
         logger.debug("*********************download*******************************")
         if jsonn['features'][0]['geometry']['type'] == "Point":
+            logger.debug("*********************download-Point*******************************")
             values = data.values
             values[np.isnan(values)] = -9999
             keylist = ["Date", "Value"]
@@ -208,7 +205,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
                 else:
                     outfile.writerow({"Date": "No data", "Value": "No data"})
 
-            zipFilePath = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
+            zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv'
         else:
             files = [write_to_tiff(data.sel(time=[x]), uniqueid) for x in data.time.values]
             if len(files) > 0:

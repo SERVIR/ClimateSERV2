@@ -242,7 +242,12 @@ def start_processing(statistical_query):
         filename = params.resultsdir + uniqueid + ".txt"
         f = open(filename, 'w+')
         if merged_obj:
-            json.dump(merged_obj, f)
+            try:
+                logger.debug("trying to dump")
+                json.dump(merged_obj, f)
+            except:
+                logger.debug("trying to toList the dump")
+                json.dump(merged_obj.toList(), f)
         else:
             json.dump({"Error": "There was an error processing your request."}, f)
         f.close()
@@ -357,7 +362,9 @@ def start_worker_process(job_item):
         dates = job_item["dates"]
         values, long_term_average = GetTDSData.get_nmme_data(job_item["bounds"])
     else:
-        if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf':
+        if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf' or job_item['operation'] == "csv":
+
+            logger.debug("zip_file_path - GetTDSData.get_data_values")
             zip_file_path = GetTDSData.get_data_values(job_item["uniqueid"], job_item['start_date'],
                                                        job_item['end_date'], job_item['variable'], job_item['geom'],
                                                        job_item['operation'], job_item['file_list'])

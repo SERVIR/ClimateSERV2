@@ -233,7 +233,7 @@ def get_file_for_job_id(request):
         request_id = request.POST.get("id", request.GET.get("id", None))
         progress = read_progress(request_id)
         # Validate that progress is at 100%
-        if float(progress) == 100.0:
+        if float(progress) >= 100.0:
             track_usage = Track_Usage.objects.get(unique_id=request_id)
             track_usage.data_retrieved = True
             track_usage.save()
