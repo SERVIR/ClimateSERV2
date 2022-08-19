@@ -2357,11 +2357,12 @@ function configure_additional_chart(i, colors, conversion) {
 
     let final_data;
     if(conversion){
-        switch (conversion) {
-            case "monthly":
-                final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation);
-                break;
-        }
+        final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation, conversion);
+        // switch (conversion) {
+        //     case "monthly":
+        //         final_data = convert_monthly(multiQueryData[i].data, multiQueryData[0].operation, conversion);
+        //         break;
+        // }
     } else{
         final_data = multiQueryData[i].data;
     }
@@ -2393,12 +2394,17 @@ function configure_additional_chart(i, colors, conversion) {
 
 //change this to take conversion parameter monthly or yearly
 // fix name of function add logic for yearly
-function convert_monthly(data, calculation){
+function convert_monthly(data, calculation, interval){
 	const monthly_data = [];
 	const temp_data = {};
 	for(let i =0; i < data.length; i++)
 	{
-		const date_key =  (moment.utc(data[i][0]).month() + 1) + "/" + "01/" + moment.utc(data[i][0]).year();
+        let date_key;
+        if(interval === "monthly") {
+            date_key = (moment.utc(data[i][0]).month() + 1) + "/" + "01/" + moment.utc(data[i][0]).year();
+        } else if(interval === "yearly"){
+            date_key = moment.utc(data[i][0]).year();
+        }
         console.log("data[i][0]: " + data[i][0]);
         console.log(moment.utc(data[i][0]).month());
         console.log(date_key);
@@ -2474,11 +2480,12 @@ function multi_chart_builder(conversion) {
     };
     let final_data;
     if(conversion){
-        switch (conversion) {
-            case "monthly":
-                final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation);
-                break;
-        }
+        final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation, conversion);
+        // switch (conversion) {
+        //     case "monthly":
+        //         final_data = convert_monthly(multiQueryData[0].data, multiQueryData[0].operation);
+        //         break;
+        // }
     } else{
         final_data = multiQueryData[0].data;
     }
