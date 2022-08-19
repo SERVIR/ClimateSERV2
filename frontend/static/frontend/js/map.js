@@ -2228,7 +2228,7 @@ function rebuildGraph() {
  * inti_chart_dialog
  * Creates the chart dialog
  */
-function inti_chart_dialog(conversion) {
+function inti_chart_dialog(conversion, isMonthly) {
     let default_selected = false;
     if(conversion){
         console.log(conversion);
@@ -2242,7 +2242,8 @@ function inti_chart_dialog(conversion) {
     const isMobile = $("#isMobile");
     let dialog_html = '<div style="height:calc(100% - 69px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
-    dialog_html += '<div id="graph-options" class="graph-options">';
+    let display_options = isMonthly ? "hidden" : "visible";
+    dialog_html += '<div id="graph-options" class="graph-options" style="'+ display_options +'">';
     dialog_html += '<div id="interval-options" class="left-graph-options">'
         dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
     dialog_html += '<option value="" '+default_selected+'>Default</option>';
@@ -2724,7 +2725,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                         rainfall_data[3].data.push(value_or_null(o.col04_75thPercentile));
 
                     });
-                    inti_chart_dialog();
+                    inti_chart_dialog(null, true);
                     finalize_chart(rainfall_data, "mm", xaxis, "Monthly Rainfall Analysis", isClimate);
 
                     //reset_query_panel();
