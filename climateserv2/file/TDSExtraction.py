@@ -154,13 +154,13 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     lonSlice = slice(lon_bounds[0], lon_bounds[1])
 
     unmasked_data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
-    if operation == "download" or operation == "csv" or jsonn['features'][0]['geometry']['type'] == "Point":
+    if jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
     else:
-        bool_mask = rm.mask_3D_geopandas(geodf, unmasked_data, lon_name='longitude', lat_name='latitude', drop=True)
+        bool_mask = rm.mask_3D_geopandas(geodf, unmasked_data, lon_name='longitude', lat_name='latitude') \
+            .squeeze(dim='region', drop=True)
 
         data = unmasked_data.where(bool_mask)
-
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
