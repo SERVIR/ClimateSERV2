@@ -70,7 +70,7 @@ def start_processing(statistical_query):
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
             operationtype = "Rainfall"
-            dates, months, bounds = GetTDSData.get_monthlyanalysis_dates_bounds(polygon_string)
+            dates, months, bounds = GetTDSData.get_monthly_analysis_dates_bounds(polygon_string)
 
             jobs.append({
                 "uniqueid": uniqueid,

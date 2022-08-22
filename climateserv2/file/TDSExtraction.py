@@ -1,33 +1,23 @@
+import csv
 import json
-import logging
+import os
+from datetime import datetime, timedelta
 from json import JSONDecodeError
-from os.path import basename
-from typing import Union, List, Generator
-from shapely.geometry import mapping, Polygon, LineString, GeometryCollection
-from shapely import affinity
-from shapely.ops import split
-import math
-import copy
 
-import pandas as pd
 import geopandas as gpd
 import numpy as np
-import xarray as xr
+import pandas as pd
 import rasterio as rio
 import regionmask as rm
-import csv
-from zipfile import ZipFile
-from datetime import datetime, timedelta
-import os
-import shutil
-from django import db
+import xarray as xr
+
 from api.models import ETL_Dataset
 from api.models import Parameters
 
 try:
     import climateserv2.locallog.locallogging as llog
 
-except:
+except ImportError:
     import locallog.locallogging as llog
 
 logger = llog.getNamedLogger("request_processor")
@@ -38,15 +28,14 @@ def get_filelist(datatype, start_date, end_date):
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
     except Exception as e:
-        print("failed to get dataset in get_filelist: " + e)
-
+        print("failed to get dataset in get_filelist: " + str(e))
+        raise e
     try:
         dataset_name_format = working_dataset.dataset_name_format
     except Exception as e:
-        print("failed to get name format in get_filelist" + e)
-    final_load_dir = working_dataset.final_load_dir
+        print("failed to get name format in get_filelist" + str(e))
+        raise e
     dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
-    # params = Parameters.objects.first()
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
@@ -120,128 +109,6 @@ def get_filelist(datatype, start_date, end_date):
     return filelist, dataset_nc4_variable_name
 
 
-def check_crossing(lon1: float, lon2: float, validate: bool = False, dlon_threshold: float = 180.0):
-    """
-    Assuming a minimum travel distance between two provided longitude coordinates,
-    checks if the 180th meridian (antimeridian) is crossed.
-    """
-    print(lon1, lon2)
-    if validate and any([abs(x) > 180.0 for x in [lon1, lon2]]):
-        raise ValueError("longitudes must be in degrees [-180.0, 180.0]")
-    return abs(lon2 - lon1) > dlon_threshold
-
-
-def translate_polygons(geometry_collection: GeometryCollection,
-                       output_format: str = "geojson") -> Generator[
-    Union[List[dict], List[Polygon]], None, None
-]:
-    for polygon in geometry_collection:
-        (minx, _, maxx, _) = polygon.bounds
-        if minx < -180:
-            geo_polygon = affinity.translate(polygon, xoff=360)
-        elif maxx > 180:
-            geo_polygon = affinity.translate(polygon, xoff=-360)
-        else:
-            geo_polygon = polygon
-
-        yield_geojson = output_format == "geojson"
-        yield json.dumps(mapping(geo_polygon)) if (yield_geojson) else geo_polygon
-
-
-def split_polygon(geojson: dict, output_format: str = "geojson", validate: bool = False) -> Union[
-    List[dict], List[Polygon], GeometryCollection]:
-    """
-    Given a GeoJSON representation of a Polygon, returns a collection of
-    'antimeridian-safe' constituent polygons split at the 180th meridian,
-    ensuring compliance with GeoJSON standards (https://tools.ietf.org/html/rfc7946#section-3.1.9)
-    Assumptions:
-      - Any two consecutive points with over 180 degrees difference in
-        longitude are assumed to cross the antimeridian
-      - The polygon spans less than 360 degrees in longitude (i.e. does not wrap around the globe)
-      - However, the polygon may cross the antimeridian on multiple occasions
-    Parameters:
-        geojson (dict): GeoJSON of input polygon to be split. For example:
-                        {
-                        "type": "Polygon",
-                        "coordinates": [
-                          [
-                            [179.0, 0.0], [-179.0, 0.0], [-179.0, 1.0],
-                            [179.0, 1.0], [179.0, 0.0]
-                          ]
-                        ]
-                        }
-        output_format (str): Available options: "geojson", "polygons", "geometrycollection"
-                             If "geometrycollection" returns a Shapely GeometryCollection.
-                             Otherwise, returns a list of either GeoJSONs or Shapely Polygons
-        validate (bool): Checks if all longitudes are within [-180.0, 180.0]
-
-    Returns:
-        List[dict]/List[Polygon]/GeometryCollection: antimeridian-safe polygon(s)
-    """
-    output_format = output_format.replace("-", "").strip().lower()
-    coords_shift = copy.deepcopy(geojson["coordinates"])
-    shell_minx = shell_maxx = None
-    split_meridians = set()
-    splitter = None
-
-    for ring_index, ring in enumerate(coords_shift):
-        if len(ring) < 1:
-            continue
-        else:
-            ring_minx = ring_maxx = ring[0][0]
-            crossings = 0
-
-        for coord_index, (lon, _) in enumerate(ring[1:], start=1):
-            lon_prev = ring[coord_index - 1][0]  # [0] corresponds to longitude coordinate
-            if check_crossing(lon, lon_prev, validate=validate):
-                direction = math.copysign(1, lon - lon_prev)
-                coords_shift[ring_index][coord_index][0] = lon - (direction * 360.0)
-                crossings += 1
-
-            x_shift = coords_shift[ring_index][coord_index][0]
-            if x_shift < ring_minx: ring_minx = x_shift
-            if x_shift > ring_maxx: ring_maxx = x_shift
-
-        # Ensure that any holes remain contained within the (translated) outer shell
-        if (ring_index == 0):  # by GeoJSON definition, first ring is the outer shell
-            shell_minx, shell_maxx = (ring_minx, ring_maxx)
-        elif (ring_minx < shell_minx):
-            ring_shift = [[x + 360, y] for (x, y) in coords_shift[ring_index]]
-            coords_shift[ring_index] = ring_shift
-            ring_minx, ring_maxx = (x + 360 for x in (ring_minx, ring_maxx))
-        elif (ring_maxx > shell_maxx):
-            ring_shift = [[x - 360, y] for (x, y) in coords_shift[ring_index]]
-            coords_shift[ring_index] = ring_shift
-            ring_minx, ring_maxx = (x - 360 for x in (ring_minx, ring_maxx))
-
-        if crossings:  # keep track of meridians to split on
-            if ring_minx < -180: split_meridians.add(-180)
-            if ring_maxx > 180: split_meridians.add(180)
-
-    n_splits = len(split_meridians)
-    if n_splits > 1:
-        raise NotImplementedError(
-            """Splitting a Polygon by multiple meridians (MultiLineString) 
-               not supported by Shapely"""
-        )
-    elif n_splits == 1:
-        split_lon = next(iter(split_meridians))
-        meridian = [[split_lon, -90.0], [split_lon, 90.0]]
-        splitter = LineString(meridian)
-
-    shell, *holes = coords_shift if splitter else geojson["coordinates"]
-    if splitter:
-        split_polygons = split(Polygon(shell, holes), splitter)
-    else:
-        split_polygons = GeometryCollection([Polygon(shell, holes)])
-
-    geo_polygons = list(translate_polygons(split_polygons, output_format))
-    if output_format == "geometrycollection":
-        return GeometryCollection(geo_polygons)
-    else:
-        return geo_polygons
-
-
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
     # Convert dates to %Y-%m-%d format for NetCDF
@@ -257,7 +124,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     logger.debug("past datetime stuff for: " + uniqueid)
     try:
         jsonn = json.loads(str(geom))
-    except JSONDecodeError as e:
+    except JSONDecodeError:
         jsonn = json.loads(json.dumps(geom))
     logger.debug("past json loads  for: " + uniqueid)
     for x in range(len(jsonn["features"])):
@@ -267,9 +134,9 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     # If the geometry is not a point, map the area of interest to the netCDF and extract values
     # If the geometry is a point, get dates and values from the openDAP URL as shown below (line 120)
     json_aoi = json.dumps(jsonn)
-    geodf = gpd.read_file(json_aoi)
+    geo_data_frame = gpd.read_file(json_aoi)
     logger.debug("past reading it for: " + uniqueid)
-    lon1, lat1, lon2, lat2 = geodf.total_bounds
+    lon1, lat1, lon2, lat2 = geo_data_frame.total_bounds
     # using xarray to open the temporary netcdf
     logger.debug("about to xarray open the data for: " + uniqueid)
     try:
@@ -277,34 +144,24 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     except Exception as e:
         logger.error("open_mfdataset error: " + str(e) + " for: " + uniqueid)
         return [], []
-    lat_bounds = nc_file.sel(latitude=[lat1, lat2], method='nearest').latitude.values
-    lon_bounds = nc_file.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-    latSlice = slice(lat_bounds[0], lat_bounds[1])
-    lonSlice = slice(lon_bounds[0], lon_bounds[1])
 
-    unmasked_data = nc_file[variable].sel(longitude=lonSlice, latitude=latSlice).sel(time=slice(start_date, end_date))
+    lat_slice, lon_slice = get_bounds_from_dataset(nc_file, lat1, lat2, lon1, lon2)
+
+    unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(time=slice(start_date, end_date))
     if jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
     else:
         bool_mask = None
         try:
-            bool_mask = rm.mask_3D_geopandas(geodf, unmasked_data, lon_name='longitude', lat_name='latitude') \
-                .squeeze(dim='region', drop=True)
+            aoi_combined = geo_data_frame.assign(combine=1).dissolve(by='combine', aggfunc='sum')
+            bool_mask = rm.mask_3D_geopandas(aoi_combined, unmasked_data, lon_name='longitude',
+                                             lat_name='latitude').squeeze(dim='region', drop=True)
+
         except Exception as mask_exception:
-            logger.error(str(mask_exception))
-            try:
-                splitpoly = split_polygon(geojson=geodf, output_format='geometrycollection', validate=False)
-                polygon3 = gpd.GeoDataFrame(splitpoly, geometry=0)
-                # .assign(combine=1).dissolve(by='combine',aggfunc='sum')
-                bool_mask = rm.mask_3D_geopandas(polygon3, unmasked_data, lon_name='longitude', lat_name='latitude')\
-                    .squeeze(dim='region', drop=True)
-            except Exception as second_try:
-                logger.error(second_try)
+            logger.error("mask_exception: " + str(mask_exception))
         if bool_mask is None:
-            logging.error('bool_mask is None')
             data = unmasked_data
         else:
-            logging.error('bool_mask seems available')
             data = unmasked_data.where(bool_mask)
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
@@ -337,12 +194,12 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
             logger.debug("*********************download-Point*******************************")
             values = data.values
             values[np.isnan(values)] = -9999
-            keylist = ["Date", "Value"]
+            key_list = ["Date", "Value"]
             dct = {}
             for ind in range(len(dates)):
                 dct[dates[ind]] = values[ind]
             with open(params.zipFile_ScratchWorkspace_Path + uniqueid + '.csv', "w") as file:
-                outfile = csv.DictWriter(file, fieldnames=keylist)
+                outfile = csv.DictWriter(file, fieldnames=key_list)
                 outfile.writeheader()
                 if len(dates) > 0:
                     for k, v in dct.items():
@@ -366,22 +223,27 @@ def get_chirps_climatology(month_nums, total_bounds):
     basepath = '/mnt/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
     ds = xr.open_dataset(basepath, chunks={'time': 12, 'longitude': 128, 'latitude': 128})
     lon1, lat1, lon2, lat2 = total_bounds
-    lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
-    lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-    latSlice = slice(lat_bounds[0], lat_bounds[1])
-    lonSlice = slice(lon_bounds[0], lon_bounds[1])
-    precip = ds.precipitation_amount.sel(longitude=lonSlice, latitude=latSlice).mean(dim=['latitude', 'longitude'])
-    LTA = precip.groupby('time.month').mean(
+    lat_slice, lon_slice = get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2)
+    precip = ds.precipitation_amount.sel(longitude=lon_slice, latitude=lat_slice).mean(dim=['latitude', 'longitude'])
+    lta = precip.groupby('time.month').mean(
         dim='time').values  # this give the mean climatology for the spatial averages
-    LTA[np.isnan(LTA)] = -9999
+    lta[np.isnan(lta)] = -9999
     value = precip.chunk(dict(time=-1)).groupby('time.month').quantile(q=[0.25, 0.50, 0.75], dim='time').values
     value[np.isnan(value)] = -9999
-    resarr = [list(value[month_nums[0] - 1]), list(value[month_nums[1] - 1]), list(value[month_nums[2] - 1]),
-              list(value[month_nums[3] - 1]),
-              list(value[month_nums[4] - 1]), list(value[month_nums[5] - 1])]
-    LTAarr = [LTA[month_nums[0] - 1], LTA[month_nums[1] - 1], LTA[month_nums[2] - 1], LTA[month_nums[3] - 1],
-              LTA[month_nums[4] - 1], LTA[month_nums[5] - 1]]
-    return resarr, LTAarr
+    res_arr = [list(value[month_nums[0] - 1]), list(value[month_nums[1] - 1]), list(value[month_nums[2] - 1]),
+               list(value[month_nums[3] - 1]),
+               list(value[month_nums[4] - 1]), list(value[month_nums[5] - 1])]
+    lta_arr = [lta[month_nums[0] - 1], lta[month_nums[1] - 1], lta[month_nums[2] - 1], lta[month_nums[3] - 1],
+               lta[month_nums[4] - 1], lta[month_nums[5] - 1]]
+    return res_arr, lta_arr
+
+
+def get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2):
+    lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
+    lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
+    lat_slice = slice(lat_bounds[0], lat_bounds[1])
+    lon_slice = slice(lon_bounds[0], lon_bounds[1])
+    return lat_slice, lon_slice
 
 
 # To retrieve NMME data from start date of the netCDF to 180 days from start date
@@ -389,23 +251,21 @@ def get_chirps_climatology(month_nums, total_bounds):
 # Uses first five ensembles from both sensors
 def get_nmme_data(total_bounds):
     # set number of ensembles to use from each dataset.
-    numEns = 5
-    LTA = []
-    for iens in np.arange(numEns):
+    num_ens = 5
+    lta = []
+    for ens in np.arange(num_ens):
         lon1, lat1, lon2, lat2 = total_bounds
-    basepath = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
-    ds = xr.open_dataset(basepath, chunks={'time': 7, 'longitude': 256, 'latitude': 256})
-    lat_bounds = ds.sel(latitude=[lat1, lat2], method='nearest').latitude.values
-    lon_bounds = ds.sel(longitude=[lon1, lon2], method='nearest').longitude.values
-    latSlice = slice(lat_bounds[0], lat_bounds[1])
-    lonSlice = slice(lon_bounds[0], lon_bounds[1])
+    base_path = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
+    ds = xr.open_dataset(base_path, chunks={'time': 7, 'longitude': 256, 'latitude': 256})
+    lat_slice, lon_slice = get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2)
     try:
-        nmme_values = ds.precipitation.sel(longitude=lonSlice, latitude=latSlice).mean(
+        nmme_values = ds.precipitation.sel(longitude=lon_slice, latitude=lat_slice).mean(
             dim=['latitude', 'longitude']).values
     except Exception as e:
-        print(e)
+        logger.error("get_nmme_data Error: " + str(e))
+        nmme_values = []
     nmme_values[np.isnan(nmme_values)] = -9999
-    return (nmme_values).tolist(), LTA
+    return nmme_values.tolist(), lta
 
 
 def get_date_range_from_nc_file(nc_file):
@@ -417,9 +277,7 @@ def get_date_range_from_nc_file(nc_file):
     return start_date, end_date
 
 
-def get_monthlyanalysis_dates_bounds(geom):
-    # db.connections.close_all()
-    # params = Parameters.objects.first()
+def get_monthly_analysis_dates_bounds(geom):
     # Get start date and end date for NMME from netCDf file
     nc_file = xr.open_dataset(params.nmme_ccsm4_path + 'nmme-ccsm4_bcsd.latest.global.0.5deg.daily.ens001.nc4',
                               chunks={'time': 16, 'longitude': 128, 'latitude': 128})
