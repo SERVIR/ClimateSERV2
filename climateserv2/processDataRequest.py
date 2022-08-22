@@ -58,8 +58,11 @@ def start_processing(statistical_query):
         operationtype = ""
         if 'geometry' in statistical_query:
             polygon_string = statistical_query["geometry"]
+            logger.error("I had geometry in query")
+            logger.debug(polygon_string)
         elif 'layerid' in statistical_query:
             polygon_string = sF.get_polygons(statistical_query['layerid'], statistical_query['featureids'])
+            logger.debug(polygon_string)
         else:
             raise Exception("Missing polygon_string")
 
@@ -245,9 +248,10 @@ def start_processing(statistical_query):
             try:
                 logger.debug("trying to dump")
                 json.dump(merged_obj, f)
-            except:
+            except Exception as merge_error:
+                logger.error(str(merge_error))
                 logger.debug("trying to toList the dump")
-                json.dump(merged_obj.toList(), f)
+                json.dump(list(merged_obj), f)
         else:
             json.dump({"Error": "There was an error processing your request."}, f)
         f.close()
@@ -390,7 +394,8 @@ def start_worker_process(job_item):
                                                            job_item['geom'],
                                                            job_item['operation'],
                                                            job_item['file_list'])
-            except Exception:
+            except Exception as err:
+                logger.error(str(err))
                 logger.error("We have an error getting thredds values for: " + uniqueid)
 
     logger.debug("completed start_worker_process for: " + uniqueid)

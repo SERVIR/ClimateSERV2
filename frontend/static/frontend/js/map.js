@@ -2416,12 +2416,12 @@ function convert_to_interval(data, calculation, interval){
 	{
         let date_key;
         if(interval === "monthly") {
-            date_key = (moment.utc(data[i][0]).month() + 1) + "/" + "01/" + moment.utc(data[i][0]).year();
+            date_key = (moment.utc(data[i][0]).format('MMM')) + " " + moment.utc(data[i][0]).year();
         } else if(interval === "yearly"){
             date_key = moment.utc(data[i][0]).year();
         }
         console.log("data[i][0]: " + data[i][0]);
-        console.log(moment.utc(data[i][0]).month());
+        console.log(moment.utc(data[i][0]).format('MMM'));
         console.log(date_key);
 		if(date_key in temp_data){
 			temp_data[date_key].push(data[i][1]);
@@ -2451,7 +2451,7 @@ function convert_to_interval(data, calculation, interval){
 					monthly_data.push([Date.parse(key), min]);
 					break;
 				case "max":
-					monthly_data.push([Date.parse(key), max])
+					monthly_data.push([Date.parse(key), max]);
 					break;
 			}
 		}
