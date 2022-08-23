@@ -13,6 +13,8 @@ import xarray as xr
 
 from api.models import ETL_Dataset
 from api.models import Parameters
+from django.db import IntegrityError, transaction
+from api.models import Request_Progress
 
 try:
     import climateserv2.locallog.locallogging as llog
@@ -109,8 +111,34 @@ def get_filelist(datatype, start_date, end_date):
     return filelist, dataset_nc4_variable_name
 
 
+def update_progress(job_variables):
+    job_length = job_variables["progress"]
+    uniqueid = job_variables["uniqueid"]
+    try:
+        with transaction.atomic():
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+            logger.debug("got request object for: " + uniqueid)
+            logger.debug(str(job_length) + ' - was the job_length')
+            update_value = (float(request_progress.progress) + ((100 / job_length) / 3)) - .5
+            logger.debug(str(update_value) + '% done')
+            request_progress.progress = update_value
+            logger.debug("updated progress for: " + uniqueid)
+            request_progress.save()
+            logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
+    except IntegrityError:
+        logger.error("Progress update issue")
+
+
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
-def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list):
+def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list, job_length):
+    # Work this out so we can update progress here as well.
+    # at the end we will need to subtract whatever we are adding here or maybe
+    # even better don't update at the end, we'll have to consider what changes need ot be
+    # made to do either method.
+
+    update_progress({'progress': job_length, 'uniqueid': uniqueid})
+
+
     # Convert dates to %Y-%m-%d format for NetCDF
     try:
         st = datetime.strptime(start_date, '%m/%d/%Y')
@@ -148,6 +176,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     lat_slice, lon_slice = get_bounds_from_dataset(nc_file, lat1, lat2, lon1, lon2)
 
     unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(time=slice(start_date, end_date))
+    update_progress({'progress': job_length, 'uniqueid': uniqueid})
     if jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
     else:
@@ -166,15 +195,14 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
+    update_progress({'progress': job_length, 'uniqueid': uniqueid})
     if operation == "min":
         ds_vals = data.min(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
         return dates, ds_vals
     elif operation == "avg":
-        logger.debug("in operation for: " + uniqueid)
         ds_vals = data.mean(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
-        logger.debug("will be returning from avg operation")
         return dates, ds_vals
     elif operation == "max":
         ds_vals = data.max(dim=['latitude', 'longitude']).values

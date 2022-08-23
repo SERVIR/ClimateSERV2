@@ -348,24 +348,6 @@ def start_processing(statistical_query):
     # sys.exit(1)
 
 
-def update_progress(job_variables):
-    job_length = job_variables["progress"]
-    uniqueid = job_variables["uniqueid"]
-    try:
-        with transaction.atomic():
-            request_progress = Request_Progress.objects.get(request_id=uniqueid)
-            logger.debug("got request object for: " + uniqueid)
-            logger.debug(str(job_length) + ' - was the job_length')
-            update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-            logger.debug(str(update_value) + '% done')
-            request_progress.progress = update_value
-            logger.debug("updated progress for: " + uniqueid)
-            request_progress.save()
-            logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
-    except IntegrityError:
-        logger.error("Progress update issue")
-
-
 def start_worker_process(job_item):
     db.connections.close_all()
     uniqueid = job_item["uniqueid"]
@@ -385,7 +367,8 @@ def start_worker_process(job_item):
             logger.debug("zip_file_path - GetTDSData.get_data_values")
             zip_file_path = GetTDSData.get_data_values(job_item["uniqueid"], job_item['start_date'],
                                                        job_item['end_date'], job_item['variable'], job_item['geom'],
-                                                       job_item['operation'], job_item['file_list'])
+                                                       job_item['operation'], job_item['file_list'],
+                                                       job_item["job_length"])
 
             return {
                 "uid": job_item["uniqueid"],
@@ -400,14 +383,14 @@ def start_worker_process(job_item):
         else:
             logger.debug("about to get_data_values for: " + uniqueid)
             try:
-                # can I multiprocess this?
                 dates, values = GetTDSData.get_data_values(job_item["uniqueid"],
                                                            job_item['start_date'],
                                                            job_item['end_date'],
                                                            job_item['variable'],
                                                            job_item['geom'],
                                                            job_item['operation'],
-                                                           job_item['file_list'])
+                                                           job_item['file_list'],
+                                                           job_item["job_length"])
             except Exception as err:
                 logger.error(str(err))
                 logger.error("We have an error getting NetCDF values for: " + uniqueid)
@@ -418,11 +401,11 @@ def start_worker_process(job_item):
         job_length = job_item["job_length"]
         if job_length > 0:
             logger.debug("job_length > 0 for: " + uniqueid)
-            try:
-                update_progress({'progress': job_length, 'uniqueid': uniqueid})
-            except:
-                logger.error("error getting or updating progress")
-                pass
+            # try:
+            #     update_progress({'progress': job_length, 'uniqueid': uniqueid})
+            # except:
+            #     logger.error("error getting or updating progress")
+            #     pass
         else:
             try:
                 with transaction.atomic():
