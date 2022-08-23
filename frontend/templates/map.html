@@ -756,9 +756,7 @@
             integrity="sha512-37T7leoNS06R80c8Ulq7cdCDU5MNQBwlYoy1TX/WUsLFC2eYNqtKlV0QjH7r8JpG/S0GUMZwebnVFLPd6SU5yg=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
-    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
-            integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
-            crossorigin=""></script>
+    <script src="{% static 'frontend/js/leaflet.js '%}"></script>
     <script type="text/javascript" src="{% static 'frontend/js/leaflet.draw.js' %}"></script>
     <script
             type="text/javascript"
@@ -773,11 +771,10 @@
             type="text/javascript"
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
-    <script src="https://code.highcharts.com/highcharts.js"></script>
-    {#    <script src="https://code.highcharts.com/modules/series-label.js"></script>#}
-    <script src="https://code.highcharts.com/modules/exporting.js"></script>
-    <script src="https://code.highcharts.com/modules/export-data.js"></script>
-    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <script src="{% static 'frontend/js/highcharts.js'%}"></script>
+    <script src="{% static 'frontend/js/modules/exporting.js'%}"></script>
+    <script src="{% static 'frontend/js/modules/export-data.js'%}"></script>
+    <script src="{% static 'frontend/js/modules/accessibility.js'%}"></script>
     <script src="{% static 'frontend/js/map-layers.js' %}"></script>
     <script src="{% static 'frontend/js/base-layers.js' %}"></script>
     <script

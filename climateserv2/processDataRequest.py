@@ -396,7 +396,7 @@ def start_worker_process(job_item):
                                                            job_item['file_list'])
             except Exception as err:
                 logger.error(str(err))
-                logger.error("We have an error getting thredds values for: " + uniqueid)
+                logger.error("We have an error getting NetCDF values for: " + uniqueid)
 
     logger.debug("completed start_worker_process for: " + uniqueid)
     try:

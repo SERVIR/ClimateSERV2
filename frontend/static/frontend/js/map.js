@@ -945,17 +945,17 @@ function enableDrawing() {
             if (drawnItems.getLayers().length < 20) {
 
                 const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                console.log("area " + area);
+                // console.log("area " + area);
                 let multi_area = 0;
                 let sq_kilos = 0;
                 drawnItems.getLayers().forEach(multi_layer => {
                     // This is square meters
                     multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
                 });
-                console.log('multi_area: ' + multi_area);
+                // console.log('multi_area: ' + multi_area);
                 sq_kilos += (multi_area + area) / 1000000;
                 // if sq_kilos > 10000000 we should not let them continue
-                console.log("sq_kilos for all: " + sq_kilos);
+                // console.log("sq_kilos for all: " + sq_kilos);
 
                 if (sq_kilos < 10000000) {
                     drawnItems.addLayer(layer);
@@ -2230,9 +2230,7 @@ function rebuildGraph() {
  */
 function inti_chart_dialog(conversion, isMonthly) {
     let default_selected = false;
-    if(conversion){
-        console.log(conversion);
-    } else{
+    if(!conversion){
         conversion = "default";
         default_selected = "selected";
     }
@@ -2420,9 +2418,6 @@ function convert_to_interval(data, calculation, interval){
         } else if(interval === "yearly"){
             date_key = moment.utc(data[i][0]).year();
         }
-        console.log("data[i][0]: " + data[i][0]);
-        console.log(moment.utc(data[i][0]).format('MMM'));
-        console.log(date_key);
 		if(date_key in temp_data){
 			temp_data[date_key].push(data[i][1]);
 		} else {

@@ -76,8 +76,8 @@ function getCommonBaseLayers(map) {
     satGroupLayer.options.displayName = "Satellite";
 
 
-    var gSatLayer = L.tileLayer.wms(
-        "https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
+    var gSatLayer = L.tileLayer(
+        "https://{s}.google.com/vt/lyrs=y&x={x}&y={y}&z={z}",
         {
             format: "image/png",
             transparent: true,
@@ -86,6 +86,7 @@ function getCommonBaseLayers(map) {
             opacity: 1,
             thumb: "img/gsatellite.png",
             displayName: "Google Satellite",
+            subdomains:['mt0','mt1','mt2','mt3']
         }
     );
     gSatLayer.addTo(map);
