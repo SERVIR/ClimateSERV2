@@ -2511,7 +2511,8 @@ function multi_chart_builder(conversion) {
             {
                 pointFormatter: function () {
                     return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
-                }
+                },
+                xDateFormat: conversion === "monthly" ? "%b - %Y": ""
             }
     }];
 
@@ -3572,7 +3573,7 @@ function review_query(no_toggle) {
             let element_holder = $(element_html);
             let edit_element = '<p style="text-align: right;" class="form-group panel-buffer">';
             edit_element += '<span style="position: absolute; cursor:pointer; left: 10px; ' +
-                'width: calc(100% - 80px); text-align: left;" data-toggle="collapse"';
+                'width: calc(100% - 100px); text-align: left;" data-toggle="collapse"';
             edit_element += ' href="#review-' + i + '" role="button" aria-expanded="false" ';
             edit_element += 'aria-controls="review-' + i + '" title="Show/Hide"';
             edit_element += 'onclick="toggleUpDownIcon(\'review-' + i + '-toggle\')">';
