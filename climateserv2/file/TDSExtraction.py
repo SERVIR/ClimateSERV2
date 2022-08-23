@@ -248,6 +248,7 @@ def get_chirps_climatology(month_nums, total_bounds, uniqueid):
     lon1, lat1, lon2, lat2 = total_bounds
     lat_slice, lon_slice = get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2)
     precip = ds.precipitation_amount.sel(longitude=lon_slice, latitude=lat_slice).mean(dim=['latitude', 'longitude'])
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     lta = precip.groupby('time.month').mean(
         dim='time').values  # this give the mean climatology for the spatial averages
     lta[np.isnan(lta)] = -9999
@@ -282,6 +283,7 @@ def get_nmme_data(total_bounds, uniqueid):
         lon1, lat1, lon2, lat2 = total_bounds
     base_path = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
     ds = xr.open_dataset(base_path, chunks={'time': 7, 'longitude': 256, 'latitude': 256})
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     lat_slice, lon_slice = get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2)
     try:
         nmme_values = ds.precipitation.sel(longitude=lon_slice, latitude=lat_slice).mean(
