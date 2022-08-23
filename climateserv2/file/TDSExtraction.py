@@ -131,13 +131,7 @@ def update_progress(job_variables):
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list, job_length):
-    # Work this out so we can update progress here as well.
-    # at the end we will need to subtract whatever we are adding here or maybe
-    # even better don't update at the end, we'll have to consider what changes need ot be
-    # made to do either method.
-
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
-
 
     # Convert dates to %Y-%m-%d format for NetCDF
     try:
@@ -247,7 +241,8 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
 
 # To retrive the CHIRPS data from 1981  to 2020 for Monthly Analysis.
 # Retrieves 25th, 50th, 75th percentiles corresponding to month list from NMME
-def get_chirps_climatology(month_nums, total_bounds):
+def get_chirps_climatology(month_nums, total_bounds, uniqueid):
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     basepath = '/mnt/climateserv/process_tmp/downloads/chirps/ucsb-chirps-monthly-resolved-for-climatology.nc4'
     ds = xr.open_dataset(basepath, chunks={'time': 12, 'longitude': 128, 'latitude': 128})
     lon1, lat1, lon2, lat2 = total_bounds
@@ -263,6 +258,7 @@ def get_chirps_climatology(month_nums, total_bounds):
                list(value[month_nums[4] - 1]), list(value[month_nums[5] - 1])]
     lta_arr = [lta[month_nums[0] - 1], lta[month_nums[1] - 1], lta[month_nums[2] - 1], lta[month_nums[3] - 1],
                lta[month_nums[4] - 1], lta[month_nums[5] - 1]]
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     return res_arr, lta_arr
 
 
@@ -277,8 +273,9 @@ def get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2):
 # To retrieve NMME data from start date of the netCDF to 180 days from start date
 # Requires bounds of the geometry to get the data from CCSM4 and CFSV2 sensor files.
 # Uses first five ensembles from both sensors
-def get_nmme_data(total_bounds):
+def get_nmme_data(total_bounds, uniqueid):
     # set number of ensembles to use from each dataset.
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     num_ens = 5
     lta = []
     for ens in np.arange(num_ens):
@@ -293,6 +290,7 @@ def get_nmme_data(total_bounds):
         logger.error("get_nmme_data Error: " + str(e))
         nmme_values = []
     nmme_values[np.isnan(nmme_values)] = -9999
+    update_progress({'progress': 2, 'uniqueid': uniqueid})
     return nmme_values.tolist(), lta
 
 

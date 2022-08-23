@@ -357,10 +357,12 @@ def start_worker_process(job_item):
     long_term_average = []
     if job_item["subtype"] == "chirps":
         dates = job_item["dates"]
-        values, long_term_average = GetTDSData.get_chirps_climatology(job_item["months"], job_item["bounds"])
+        values, long_term_average = GetTDSData.get_chirps_climatology(job_item["months"],
+                                                                      job_item["bounds"],
+                                                                      job_item["uniqueid"])
     elif job_item["subtype"] == "nmme":
         dates = job_item["dates"]
-        values, long_term_average = GetTDSData.get_nmme_data(job_item["bounds"])
+        values, long_term_average = GetTDSData.get_nmme_data(job_item["bounds"], job_item["uniqueid"])
     else:
         if job_item['operation'] == 'download' or job_item['operation'] == 'netcdf' or job_item['operation'] == "csv":
 
