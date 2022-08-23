@@ -22,6 +22,7 @@ from celery import shared_task
 from celery.utils.log import get_task_logger
 from django import db
 from django.utils import timezone
+from django.db import IntegrityError, transaction
 
 import climateserv2.file.TDSExtraction as GetTDSData
 import climateserv2.file.dateutils as dateutils
@@ -40,9 +41,14 @@ params = realParams.objects.first()
 
 
 def set_progress_to_100(uniqueid):
-    request_progress = Request_Progress.objects.get(request_id=uniqueid)
-    request_progress.progress = 100
-    request_progress.save()
+    try:
+        with transaction.atomic():
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+            request_progress.progress = 100
+            request_progress.save()
+    except IntegrityError:
+        logger.error("Progress update issue")
+
 
 
 @shared_task()
@@ -325,10 +331,14 @@ def start_processing(statistical_query):
                             zipObj.close()
                     except Exception as e:
                         print(e)
-            request_progress, created = Request_Progress.objects.get_or_create(request_id=uniqueid)
-            logger.debug("created: " + str(created))
-            request_progress.progress = 100
-            request_progress.save()
+            try:
+                with transaction.atomic():
+                    request_progress, created = Request_Progress.objects.get_or_create(request_id=uniqueid)
+                    logger.debug("created: " + str(created))
+                    request_progress.progress = 100
+                    request_progress.save()
+            except IntegrityError:
+                logger.error("Progress update issue")
         except Exception as e2:
             logger.debug("Failed updating progress")
             logger.debug(str(e2))
@@ -341,15 +351,19 @@ def start_processing(statistical_query):
 def update_progress(job_variables):
     job_length = job_variables["progress"]
     uniqueid = job_variables["uniqueid"]
-    request_progress = Request_Progress.objects.get(request_id=uniqueid)
-    logger.debug("got request object for: " + uniqueid)
-    logger.debug(str(job_length) + ' - was the job_length')
-    update_value = (float(request_progress.progress) + (100 / job_length)) - .5
-    logger.debug(str(update_value) + '% done')
-    request_progress.progress = update_value
-    logger.debug("updated progress for: " + uniqueid)
-    request_progress.save()
-    logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
+    try:
+        with transaction.atomic():
+            request_progress = Request_Progress.objects.get(request_id=uniqueid)
+            logger.debug("got request object for: " + uniqueid)
+            logger.debug(str(job_length) + ' - was the job_length')
+            update_value = (float(request_progress.progress) + (100 / job_length)) - .5
+            logger.debug(str(update_value) + '% done')
+            request_progress.progress = update_value
+            logger.debug("updated progress for: " + uniqueid)
+            request_progress.save()
+            logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
+    except IntegrityError:
+        logger.error("Progress update issue")
 
 
 def start_worker_process(job_item):
@@ -410,10 +424,14 @@ def start_worker_process(job_item):
                 logger.error("error getting or updating progress")
                 pass
         else:
-            logger.debug("job_length was an issue somehow for: " + uniqueid)
-            request_progress = Request_Progress.objects.get(request_id=uniqueid)
-            request_progress.progress = 99.5
-            request_progress.save()
+            try:
+                with transaction.atomic():
+                    logger.debug("job_length was an issue somehow for: " + uniqueid)
+                    request_progress = Request_Progress.objects.get(request_id=uniqueid)
+                    request_progress.progress = 99.5
+                    request_progress.save()
+            except IntegrityError:
+                logger.error("Progress update issue")
     except Exception as e:
         logger.error("ISSUE" + str(e))
 
