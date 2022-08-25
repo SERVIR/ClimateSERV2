@@ -35,7 +35,6 @@ import climateserv2.locallog.locallogging as llog
 logger = get_task_logger('climateserv2.processDataRequest')
 logger.level = logging.DEBUG
 
-
 dataTypes = None
 params = realParams.objects.first()
 
@@ -50,8 +49,7 @@ def set_progress_to_100(uniqueid):
         logger.error("Progress update issue")
 
 
-
-@shared_task()
+@shared_task(time_limit=3000)
 def start_processing(statistical_query):
     merged_obj = None
     logger.debug("celery.current_task: " + str(celery.current_task.request.id))
