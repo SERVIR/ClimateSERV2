@@ -571,6 +571,7 @@ class ETL_Pipeline():
 
         # STEP: execute__Step__Post_ETL_Custom
         if has_error == False:
+            print('***************8STEP: execute__Step__Post_ETL_Custom***********')
             step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__POST_ETL_CUSTOM",
                                                  default_or_error_return_value="Post ETL Custom")
             has_error, step_result = self.execute__Step__Post_ETL_Custom()
@@ -600,6 +601,7 @@ class ETL_Pipeline():
 
         # STEP: execute__Step__Clean_Up
         if has_error == False:
+            print('***************8STEP: execute__Step__Clean_Up***********')
             step_name = Config_Setting.get_value(setting_name="ETL_PIPELINE_STEP__CLEAN_UP",
                                                  default_or_error_return_value="ETL Cleanup")
             has_error, step_result = self.execute__Step__Clean_Up()
@@ -702,12 +704,15 @@ class ETL_Pipeline():
         return has_error, step_result
 
     def execute__Step__Post_ETL_Custom(self):
+        print("inside execute__Step__Post_ETL_Custom")
         has_error = False
         step_result = {}
         try:
             step_result = self.Subtype_ETL_Instance.execute__Step__Post_ETL_Custom()
             has_error = step_result['is_error']
-        except:
+        except Exception as e:
+            print("Post had the following error message!")
+            print(str(e))
             sysErrorData = str(sys.exc_info())
             step_result[
                 'sys_error'] = "System Error in function: execute__Step__Post_ETL_Custom:  System Error Message: " + str(

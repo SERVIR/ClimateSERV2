@@ -1,6 +1,12 @@
-import os, pandas as pd, re, shutil
+import os
+import pandas as pd
+import re
+import shutil
+import logging
 
 from django.core.management import call_command
+
+logger = logging.getLogger("request_processor")
 
 
 class ETL_Dataset_Subtype():
@@ -16,6 +22,7 @@ class ETL_Dataset_Subtype():
         self.merge_monthly = params.get('merge_monthly')
 
     def execute__Step__Post_ETL_Custom(self):
+        print("Post processing step")
         if self.merge_yearly:
             years = list(range(self.YYYY__Year__Start, self.YYYY__Year__End + 1))
             for year in years:
@@ -23,6 +30,7 @@ class ETL_Dataset_Subtype():
                 call_command('merge_etl_dataset', etl_dataset_uuid=self.etl_parent_pipeline_instance.etl_dataset_uuid,
                              YEAR_YYYY=year, MONTH_MM=None)
         if self.merge_monthly:
+            print("in monthly merge option")
             pr = pd.period_range(
                 start='{}-{}'.format(self.YYYY__Year__Start, self.MM__Month__Start),
                 end='{}-{}'.format(self.YYYY__Year__End, self.MM__Month__End),
