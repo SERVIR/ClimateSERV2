@@ -73,7 +73,7 @@ class ETL_Dataset_Subtype_CHIRPS_GEFS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_I
             for _, link in enumerate(soup.findAll('a')):
                 if link.get('href').endswith('.tif'):
                     date_string= link.get('href').split('/')[-1].split('_')
-                    l_date_string = link.get('href').split('/')[-1].split('_')[2].split('.')[0]
+                    l_date_string = link.get('href').split('/')[-1].split('_')[1].split('.')[0]
                     date = datetime.datetime.strptime(l_date_string,'%Y%m%d')
                     if start_date <= date <= end_date:
                         filenames.append(link.get_text())

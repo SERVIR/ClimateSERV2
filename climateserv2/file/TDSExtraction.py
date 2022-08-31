@@ -42,6 +42,7 @@ def get_filelist(datatype, start_date, end_date):
     filelist = []
     dataset_name = dataset_name_format.split('_')
     final_load_dir = working_dataset.fast_directory_path
+    logger.debug('final_load_dir ' + final_load_dir)
     if not os.path.exists(final_load_dir):
         os.makedirs(final_load_dir)
     if "ucsb-chirps" == dataset_name[0]:

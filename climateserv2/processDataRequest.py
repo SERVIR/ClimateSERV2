@@ -63,10 +63,9 @@ def start_processing(statistical_query):
         if 'geometry' in statistical_query:
             polygon_string = statistical_query["geometry"]
             logger.error("I had geometry in query")
-            logger.debug(polygon_string)
         elif 'layerid' in statistical_query:
             polygon_string = sF.get_polygons(statistical_query['layerid'], statistical_query['featureids'])
-            logger.debug(polygon_string)
+
         else:
             raise Exception("Missing polygon_string")
 
