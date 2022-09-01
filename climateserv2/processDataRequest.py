@@ -33,7 +33,7 @@ from api.models import Track_Usage  # , ETL_Dataset
 import climateserv2.locallog.locallogging as llog
 
 logger = get_task_logger('climateserv2.processDataRequest')
-logger.level = logging.DEBUG
+# logger.level = logging.DEBUG
 
 dataTypes = None
 params = realParams.objects.first()
