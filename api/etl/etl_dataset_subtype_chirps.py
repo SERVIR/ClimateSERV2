@@ -1,7 +1,7 @@
 import datetime, gzip, os, requests, shutil, sys, urllib
 import glob
 
-from .utils import sendNotification,listFD
+from .utils import sendNotification, listFD
 import xarray as xr
 import pandas as pd
 import numpy as np
@@ -20,7 +20,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
         super().__init__()
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
-        self.misc_error=""
+        self.misc_error = ""
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
         self._expected_granules = []
@@ -195,10 +195,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         # Make sure the directories exist
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
@@ -218,10 +218,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         # final_load_dir_path
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(
@@ -242,11 +242,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
-
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         # Ended, now for reporting
         ret__detail_state_info['class_name'] = self.__class__.__name__
@@ -256,11 +255,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             len(self._expected_granules)).strip() + " expected granules to process."
 
         return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                   is_error=ret__is_error, event_description=ret__event_description,
+                                                   error_description=ret__error_description,
+                                                   detail_state_info=ret__detail_state_info)
 
-    def execute__Step__Download(self,uuid):
+    def execute__Step__Download(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
@@ -304,8 +303,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 local_full_filepath_tif_gz = expected_granule['local_full_filepath_tif_gz']
 
                 # for ETL alerts
-                list_of_files = glob.glob(self.final_load_dir_path+'/*')
-                if len(list_of_files)>0:
+                list_of_files = glob.glob(self.final_load_dir_path + '/*')
+                if len(list_of_files) > 0:
                     latest_file = max(list_of_files, key=os.path.getctime)
                     if self.mode == 'chirps':
                         date = latest_file.split('.')[2]
@@ -328,7 +327,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     elif r.status_code == 404:
                         current_url_to_download = urllib.parse.urljoin(remote_directory_path, tif_filename)
                         r = requests.get(current_url_to_download)
-                        if r.status_code== 404:
+                        if r.status_code == 404:
                             if self.mode == 'chirps':
                                 file_Date = tif_gz_filename.split('.')[2] + tif_gz_filename.split('.')[3] + \
                                             tif_gz_filename.split('.')[4]
@@ -347,7 +346,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                                 status_msg = False
                                 datetime_object = datetime.datetime.strptime(date_part, '%Y%m%d')
                                 tmp_date = datetime.datetime.strptime(file_Date, '%Y%m%d')
-                                #delta = tmp_date - datetime_object
+                                # delta = tmp_date - datetime_object
                                 delta = datetime.datetime.now() - tmp_date
                                 if (int(delta.days) > int(self.etl_parent_pipeline_instance.dataset.late_after)):
                                     dates_arr.append(file_Date)
@@ -400,9 +399,11 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
             # Increment the loop counter
             loop_counter = loop_counter + 1
-        if len(dates_arr)>0:
-            sendNotification(uuid, self.etl_parent_pipeline_instance.dataset.dataset_name+"-"+self.etl_parent_pipeline_instance.dataset.dataset_subtype, dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
-            #ret__is_error=True
+        if len(dates_arr) > 0:
+            sendNotification(uuid,
+                             self.etl_parent_pipeline_instance.dataset.dataset_name + "-" + self.etl_parent_pipeline_instance.dataset.dataset_subtype,
+                             dates_arr, int(self.etl_parent_pipeline_instance.dataset.late_after))
+            # ret__is_error=True
 
         # Ended, now for reporting
         #
@@ -415,9 +416,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             download_counter).strip() + " files."
         #
         ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                      is_error=ret__is_error, event_description=ret__event_description,
+                                                      error_description=ret__error_description,
+                                                      detail_state_info=ret__detail_state_info)
         return ret_obj
 
     def execute__Step__Extract(self):
@@ -490,9 +491,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__detail_state_info['detail_errors'] = detail_errors
 
         ret_objbj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                        is_error=ret__is_error,
+                                                        event_description=ret__event_description,
+                                                        error_description=ret__error_description,
+                                                        detail_state_info=ret__detail_state_info)
         return ret_objbj
 
     def execute__Step__Transform(self):
@@ -583,7 +585,7 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         # Handle selecting/adding the dimesions
                         # select the singleton band dimension and drop out the associated coordinate.
                         ds = ds.isel(band=0).reset_coords('band',
-                                                          drop=True)  
+                                                          drop=True)
                         # Add the time dimension as a new coordinate.
                         ds = ds.assign_coords(time=start_time).expand_dims(dim='time', axis=0)
                         # Add an additional variable "time_bnds" for the time boundaries.
@@ -602,22 +604,24 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             [('long_name', 'longitude'), ('units', 'degrees_east'), ('axis', 'X')])
                         ds.time.attrs = OrderedDict([('long_name', 'time'), ('axis', 'T'), ('bounds', 'time_bnds')])
                         ds.time_bnds.attrs = OrderedDict([('long_name', 'time_bounds')])
-                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict([('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name), ('units', 'mm'),
-                                                                     ('accumulation_interval', temporal_resolution),
-                                                                     ('comment', str(mode_var__precipAttr_comment))])
+                        ds[self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name].attrs = OrderedDict(
+                            [('long_name', self.etl_parent_pipeline_instance.dataset.dataset_nc4_variable_name),
+                             ('units', 'mm'),
+                             ('accumulation_interval', temporal_resolution),
+                             ('comment', str(mode_var__precipAttr_comment))])
                         ds.attrs = OrderedDict([
                             ('Description', str(mode_var__fileAttr_Description)),
                             ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                             ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
                             ('Source',
                              'University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, '
-                             'pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'), 
+                             'pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/'),
                             ('Version', str(mode_var__fileAttr_Version)),
                             ('Reference',
                              'Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, '
                              'J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, '
                              'A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey '
-                             'Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'), 
+                             'Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.'),
                             ('RangeStartTime', start_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
                             ('RangeEndTime', end_time.strftime('%Y-%m-%dT%H:%M:%SZ')),
                             ('SouthernmostLatitude', np.min(ds.latitude.values)),
@@ -635,7 +639,8 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                             'chunksizes': (1, 256, 256)
                         }
                         ds.time.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
-                        ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z', 'dtype': np.dtype('int32')}
+                        ds.time_bnds.encoding = {'units': 'seconds since 1970-01-01T00:00:00Z',
+                                                 'dtype': np.dtype('int32')}
 
                         # 5) Output File
                         outputFile_FullPath = os.path.join(local_extract_path, final_nc4_filename)
@@ -691,10 +696,10 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                          is_error=ret__is_error,
+                                                          event_description=ret__event_description,
+                                                          error_description=ret__error_description,
+                                                          detail_state_info=ret__detail_state_info)
             return ret_obj
 
         ret__detail_state_info['class_name'] = self.__class__.__name__
@@ -702,9 +707,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         ret__detail_state_info['detail_errors'] = detail_errors
 
         ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                      is_error=ret__is_error, event_description=ret__event_description,
+                                                      error_description=ret__error_description,
+                                                      detail_state_info=ret__detail_state_info)
         return ret_obj
 
     def execute__Step__Load(self):
@@ -801,16 +806,16 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                          is_error=ret__is_error,
+                                                          event_description=ret__event_description,
+                                                          error_description=ret__error_description,
+                                                          detail_state_info=ret__detail_state_info)
             return ret_obj
 
         ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                      is_error=ret__is_error, event_description=ret__event_description,
+                                                      error_description=ret__error_description,
+                                                      detail_state_info=ret__detail_state_info)
         return ret_obj
 
     def execute__Step__Post_ETL_Custom(self):
@@ -826,9 +831,9 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             print(e)
 
         ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                      is_error=ret__is_error, event_description=ret__event_description,
+                                                      error_description=ret__error_description,
+                                                      detail_state_info=ret__detail_state_info)
         return ret_obj
 
     def execute__Step__Clean_Up(self):
@@ -894,14 +899,14 @@ class ETL_Dataset_Subtype_CHIRPS(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
             ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                          is_error=ret__is_error,
+                                                          event_description=ret__event_description,
+                                                          error_description=ret__error_description,
+                                                          detail_state_info=ret__detail_state_info)
             return ret_obj
 
         ret_obj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                      is_error=ret__is_error, event_description=ret__event_description,
+                                                      error_description=ret__error_description,
+                                                      detail_state_info=ret__detail_state_info)
         return ret_obj

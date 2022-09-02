@@ -7,7 +7,6 @@ from django.core.management.base import BaseCommand
 from api.etl import etl_exceptions
 from api.models import ETL_Dataset
 
-
 logger = logging.getLogger("request_processor")
 
 
@@ -88,10 +87,10 @@ class Command(BaseCommand):
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(year_yyyy, month_mm))
 
             if not os.path.exists(etl_dataset.temp_working_dir + '/by_month/'):
-                os.makedirs(etl_dataset.temp_working_dir + '/by_month/')
+                os.makedirs(etl_dataset.temp_working_dir + '/by_month/', mode=0o777, exist_ok=True)
             temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_month/')
             if not os.path.exists(temp_aggregate_path):
-                os.makedirs(temp_aggregate_path)
+                os.makedirs(temp_aggregate_path, mode=0o777, exist_ok=True)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(year_yyyy, month_mm))
         else:
             if etl_dataset.dataset_subtype.lower() == 'chirps':
@@ -131,7 +130,7 @@ class Command(BaseCommand):
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(year_yyyy))
             temp_aggregate_path = os.path.join(temp_aggregate_filepath, 'by_year/')
             if not os.path.exists(temp_aggregate_path):
-                os.makedirs(temp_aggregate_path)
+                os.makedirs(temp_aggregate_path, mode=0o777, exist_ok=True)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(year_yyyy))
 
         if ncrcat_options == '':
@@ -141,14 +140,16 @@ class Command(BaseCommand):
             command_str = f'ncra -Y {command_str}'
 
         print("about to run the merge command")
+        print(command_str)
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
             if not os.path.exists(temp_fast_path):
-                os.makedirs(temp_fast_path)
+                os.makedirs(temp_fast_path, mode=0o777, exist_ok=True)
             shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
-            shutil.rmtree(temp_aggregate_path)
+            # this should happen in the cleanup step
+            # shutil.rmtree(temp_aggregate_path)
 
         else:
             print(f'File not found: {temp_aggregate_filepath}')
