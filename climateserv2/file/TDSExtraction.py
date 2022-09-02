@@ -183,6 +183,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
 
         except Exception as mask_exception:
             logger.error("mask_exception: " + str(mask_exception))
+            bool_mask = None
         if bool_mask is None:
             data = unmasked_data
         else:
