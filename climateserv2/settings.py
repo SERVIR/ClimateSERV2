@@ -166,14 +166,15 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = os.path.join(BASE_DIR, 'staticfiles/')
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+print(STATIC_ROOT)
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 GEOIP_PATH = "/cserv2/django_app/ClimateSERV2/climateserv2/geolite"
 
-MEDIA_URL = '/media/'
+MEDIA_URL = os.path.join(BASE_DIR, 'media/')
 
 LOGGING = {
     'version': 1,

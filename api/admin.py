@@ -2,6 +2,8 @@ from django.contrib import admin
 from django.utils.html import format_html
 from .models import Config_Setting, Storage_Review, Run_ETL, Profile
 from .models import ETL_Dataset
+from .models import ETL_Dataset_V2
+from .models import ETL_Dataset_V3
 from .models import ETL_Granule
 from .models import ETL_Log
 from .models import ETL_PipelineRun
@@ -15,6 +17,14 @@ admin.site.register(Config_Setting)
 @admin.register(ETL_Dataset)
 class ETLDatasetAdmin(admin.ModelAdmin):
     list_display = ('dataset_name','final_load_dir','dataset_nc4_variable_name','late_after', 'contact_info', 'source_url')
+
+@admin.register(ETL_Dataset_V2)
+class ETLDatasetAdmin(admin.ModelAdmin):
+    list_display = ('dataset_name','final_load_dir','dataset_nc4_variable_name','late_after', 'contact_info', 'source_url')
+
+@admin.register(ETL_Dataset_V3)
+class ETLDatasetAdmin(admin.ModelAdmin):
+    list_display = ('dataset_name','dataset_subtype')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):

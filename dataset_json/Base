@@ -1,0 +1,21 @@
+{
+	"preformat_nc4_filename" : "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+	"data" : {
+		"0": {
+			"preformat_filename": "",
+			"extension": "",
+			"source": "",
+			"variables": {
+				"0": ""
+			}
+		}
+	},
+	"metadata" : {
+		"source": "", 
+		"comment": "", 
+		"contact": "", 
+		"version": "", 
+		"reference": "", 
+		"description": ""
+	}
+}
