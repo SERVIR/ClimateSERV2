@@ -125,6 +125,11 @@ class Command(BaseCommand):
                 pattern_filename = 'usda-smap.{}*.nc4'
                 aggregate_filename = 'usda-smap.global.10km.3dy.{}.nc4'
                 ncrcat_options = '-4 -h --cnk_dmn time,31 --cnk_dmn latitude,256 --cnk_dmn longitude,256'
+            elif etl_dataset.dataset_subtype.lower() == 'sport_lis':
+                # temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_lis')
+                pattern_filename = 'sport-lis.{}*.nc4'
+                aggregate_filename = 'sport-lis.africa.0.03deg.daily.{}.nc4'
+                ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             else:
                 pass
             pattern_filepath = os.path.join(pattern_filepath, pattern_filename.format(year_yyyy))
@@ -143,10 +148,14 @@ class Command(BaseCommand):
         print(command_str)
         process = subprocess.Popen(command_str, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdout, stderr = process.communicate()
+        print("merged")
+        print(temp_aggregate_filepath)
         if temp_aggregate_filepath:
             _, tail = os.path.split(temp_aggregate_filepath)
+            print("temp_fast_path: " + temp_fast_path)
             if not os.path.exists(temp_fast_path):
                 os.makedirs(temp_fast_path, mode=0o777, exist_ok=True)
+            print("copying from: " + temp_aggregate_filepath + " to: " + os.path.join(temp_fast_path, tail))
             shutil.copyfile(temp_aggregate_filepath, os.path.join(temp_fast_path, tail))
             # this should happen in the cleanup step
             # shutil.rmtree(temp_aggregate_path)

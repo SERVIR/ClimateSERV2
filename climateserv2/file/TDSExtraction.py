@@ -30,6 +30,7 @@ def get_filelist(datatype, start_date, end_date):
     try:
         working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
     except Exception as e:
+        logger.info("failed to get dataset in get_filelist: " + str(e))
         print("failed to get dataset in get_filelist: " + str(e))
         raise e
     try:
@@ -42,9 +43,19 @@ def get_filelist(datatype, start_date, end_date):
     filelist = []
     dataset_name = dataset_name_format.split('_')
     final_load_dir = working_dataset.fast_directory_path
-    logger.debug('final_load_dir ' + final_load_dir)
+
     if not os.path.exists(final_load_dir):
         os.makedirs(final_load_dir)
+    # All the info below should be able to come from the dataset db entry.
+    # There should be no reason to hardcode any of this or have separate conditions.
+    # In fact the fields exist in the current DataModel but are not being used ¯\_(ツ)_/¯
+    # I stand corrected...
+    # There should be a condition for yearly and monthly merge, which is not indicated in the
+    # current DataModel, so we would have to hardcode a list of names for like.
+    # if (str(dataset_name[0].lower()) in ['chirp', 'chirps_gefs', 'emodis']):
+    #     ...add the month to the name, else don't.
+    # nmme looks like it's different as well, so maybe 3 conditions
+
     if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
             name = final_load_dir + "ucsb_chirps" + ".global." + dataset_name[
@@ -101,6 +112,12 @@ def get_filelist(datatype, start_date, end_date):
                    + ".global." + dataset_name[2] + ".4wk." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
+    elif "sport-lis" in dataset_name:
+        for year in year_nums:
+            name = final_load_dir + dataset_name[0] \
+                   + ".africa." + dataset_name[2] + ".daily." + str(year) + ".nc4"
+            if os.path.exists(name):
+                filelist.append(name)
     else:
         if "ndvi" in dataset_name[0]:
             for year in year_nums:
@@ -132,6 +149,7 @@ def update_progress(job_variables):
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
 def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, file_list, job_length):
+    logger.debug("Just entered get_data_values: " + uniqueid)
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
 
     # Convert dates to %Y-%m-%d format for NetCDF

@@ -24,6 +24,7 @@ from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_usda_smap import ETL_Dataset_Subtype_USDA_SMAP
 from .etl_dataset_subtype_nsidc_smap import ETL_Dataset_Subtype_NSIDC_SMAP
 from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
+from .etl_dataset_subtype_africa_lis import ETL_Dataset_Subtype_africa_lis
 
 from . import etl_exceptions
 
@@ -245,6 +246,7 @@ class ETL_Pipeline():
     # Convenient function to call just before using a return statement during 'execute_pipeline_control_function'
     def log__pipeline_run__exit(self):
         # Log Activity - Pipeline Ended
+        print("log__pipeline_run__exit")
         activity_event_type = str(Config_Setting.get_value(setting_name="ETL_LOG_ACTIVITY_EVENT_TYPE__PIPELINE_ENDED",
                                                        default_or_error_return_value="ETL Pipeline Ended"))
         activity_description = "Pipeline Completed for Dataset: " + str(self.dataset_name)
@@ -326,6 +328,8 @@ class ETL_Pipeline():
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_ESI_SERVIR(self, dataset_subtype)
             elif dataset_subtype in ('nsidc_smap_9km', 'nsidc_smap_36km'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP(self, dataset_subtype)
+            elif dataset_subtype == 'sport_lis':
+                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_africa_lis(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
 
@@ -630,6 +634,7 @@ class ETL_Pipeline():
                 self.log_etl_event(activity_event_type=activity_event_type, activity_description=activity_description,
                                    etl_granule_uuid="", is_alert=False, additional_json=additional_json)
 
+        print("should exit now")
         # Exit the pipeline
         self.log__pipeline_run__exit()
         return

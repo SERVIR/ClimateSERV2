@@ -90,6 +90,8 @@ def process_callback(request, output, content_type):
     try:
         if request_id:
             print("request_id: " + str(request_id))
+            if request_id == "internal":
+                return http_response
             if http_response.status_code == 200:
                 track_usage = Track_Usage.objects.get(unique_id=request_id)
                 track_usage.status = "Complete"
@@ -473,7 +475,7 @@ def run_etl(request):
                  "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             proc.wait()
 
-    return "success"
+    return process_callback(request, str(json.dumps({"message" : "success", "unique_id": "internal"})), "application/json")
 
 
 # Submit a data request for processing
