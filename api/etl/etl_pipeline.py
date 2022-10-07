@@ -24,7 +24,7 @@ from .etl_dataset_subtype_imerg import ETL_Dataset_Subtype_IMERG
 from .etl_dataset_subtype_usda_smap import ETL_Dataset_Subtype_USDA_SMAP
 from .etl_dataset_subtype_nsidc_smap import ETL_Dataset_Subtype_NSIDC_SMAP
 from .etl_dataset_subtype_esi_servir import ETL_Dataset_Subtype_ESI_SERVIR
-from .etl_dataset_subtype_africa_lis import ETL_Dataset_Subtype_africa_lis
+from .etl_dataset_subtype_africa_lis import ETLDatasetSubtypeAfricaLis
 
 from . import etl_exceptions
 
@@ -329,7 +329,7 @@ class ETL_Pipeline():
             elif dataset_subtype in ('nsidc_smap_9km', 'nsidc_smap_36km'):
                 self.Subtype_ETL_Instance = ETL_Dataset_Subtype_NSIDC_SMAP(self, dataset_subtype)
             elif dataset_subtype == 'sport_lis':
-                self.Subtype_ETL_Instance = ETL_Dataset_Subtype_africa_lis(self, dataset_subtype)
+                self.Subtype_ETL_Instance = ETLDatasetSubtypeAfricaLis(self, dataset_subtype)
             else:
                 raise etl_exceptions.InvalidDatasetSubtypeException()
 

@@ -1,4 +1,5 @@
 import datetime
+import inspect
 import os
 import shutil
 import sys
@@ -16,7 +17,7 @@ from .etl_dataset_subtype_interface import ETL_Dataset_Subtype_Interface
 from ..models import Config_Setting
 
 
-class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
+class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interface):
 
     # init (Passing a reference from the calling class, so we can call the error handler)
     def __init__(self, etl_parent_pipeline_instance=None, dataset_subtype=None):
@@ -77,14 +78,14 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     dates.append(file_time)
 
             for filename, date in zip(filenames, dates):
-                current_year__YYYY_str = "{:0>4d}".format(date.year)
-                current_month__MM_str = "{:02d}".format(date.month)
-                current_day__DD_str = "{:02d}".format(date.day)
+                current_year__yyyy_str = "{:0>4d}".format(date.year)
+                current_month__mm_str = "{:02d}".format(date.month)
+                current_day__dd_str = "{:02d}".format(date.day)
 
                 final_nc4_filename = 'sport-lis.{}{}{}T000000Z.africa.{}.{}.nc4'.format(
-                    current_year__YYYY_str,
-                    current_month__MM_str,
-                    current_day__DD_str,
+                    current_year__yyyy_str,
+                    current_month__mm_str,
+                    current_day__dd_str,
                     '0.03deg',
                     'daily'
                 )
@@ -97,43 +98,39 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     'local_final_load_path'] = local_final_load_path  # Final nc file location.
 
                 current_obj['domain_file_path'] = domain_file_path  # remote_full_filepath_tif
-                current_obj['date_year'] = current_year__YYYY_str
-                current_obj['date_month'] = current_month__MM_str
-                current_obj['date_day'] = current_day__DD_str
+                current_obj['date_year'] = current_year__yyyy_str
+                current_obj['date_month'] = current_month__mm_str
+                current_obj['date_day'] = current_day__dd_str
                 current_obj['final_nc4_filename'] = final_nc4_filename
                 granule_name = final_nc4_filename
                 granule_contextual_information = ""
                 granule_pipeline_state = Config_SettingService.get_value(
                     setting_name="GRANULE_PIPELINE_STATE__ATTEMPTING", default_or_error_return_value="Attempting")
                 additional_json = current_obj
-                new_Granule_UUID = self.etl_parent_pipeline_instance.log_etl_granule(
+                new_granule_uuid = self.etl_parent_pipeline_instance.log_etl_granule(
                     granule_name=granule_name,
                     granule_contextual_information=granule_contextual_information,
                     granule_pipeline_state=granule_pipeline_state,
                     additional_json=additional_json)
 
                 # Save the Granule's UUID for reference in later steps
-                current_obj['Granule_UUID'] = str(new_Granule_UUID).strip()
+                current_obj['Granule_UUID'] = str(new_granule_uuid).strip()
 
                 # Add to the granules list
                 self._expected_granules.append(current_obj)
 
         except:
-            sysErrorData = str(sys.exc_info())
-            print(sysErrorData)
-            error_JSON = {}
-            error_JSON[
-                'error'] = "Error: There was an error when generating the expected remote filepaths.  See the " \
-                           "additional data for details on which expected file caused the error.  System Error " \
-                           "Message: " + str(
-                sysErrorData)
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = self.class_name
-            error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
+            sys_error_data = str(sys.exc_info())
+            print(sys_error_data)
+            error_json = {'error': "Error: There was an error when generating the expected remote filepaths.  See "
+                                   "the additional data for details on which expected file caused the error.  "
+                                   "System Error Message: " + str(sys_error_data),
+                          'is_error': True, 'class_name': self.class_name,
+                          'function_name': "execute__Step__Pre_ETL_Custom"}
             # Exit Here With Error info loaded up
             ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
+            ret__error_description = error_json['error']
+            ret__detail_state_info = error_json
             return common.get_function_response_object(class_name=self.class_name,
                                                        function_name=ret__function_name,
                                                        is_error=ret__is_error,
@@ -144,20 +141,20 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         # Make sure the directories exist
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(self.temp_working_dir)
         if is_error_creating_directory:
-            error_JSON = {}
-            error_JSON[
-                'error'] = "Error: There was an error when the pipeline tried to create a new directory on the " \
-                           "filesystem.  The path that the pipeline tried to create was: " + str(
-                self.temp_working_dir) + ".  There should be another error logged just before this one that contains " \
-                                         "system error info.  That info should give clues to why the directory was " \
-                                         "not able to be created. "
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = self.class_name
-            error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
+            error_json = {'error': "Error: There was an error when the pipeline tried to create a new directory on  "
+                                   "the filesystem.  The path that the pipeline tried to create was: "
+                                   + str(self.temp_working_dir) + ".  There should be another error logged just before "
+                                                                  "this one that contains "
+                                                                  "system error info.  That info should give clues "
+                                                                  "to why the directory was "
+                                                                  "not able to be created. ",
+                          'is_error': True,
+                          'class_name': self.class_name,
+                          'function_name': "execute__Step__Pre_ETL_Custom"}
             # Exit Here With Error info loaded up
             ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
+            ret__error_description = error_json['error']
+            ret__detail_state_info = error_json
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                        is_error=ret__is_error,
                                                        event_description=ret__event_description,
@@ -167,21 +164,20 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         # final_load_dir_path
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(
             self.final_load_dir_path)
-        if is_error_creating_directory == True:
-            error_JSON = {}
-            error_JSON[
-                'error'] = "Error: There was an error when the pipeline tried to create a new directory on the " \
-                           "filesystem.  The path that the pipeline tried to create was: " + str(
-                self.final_load_dir_path) + ".  There should be another error logged just before this one that " \
-                                            "contains system error info.  That info should give clues to why the " \
-                                            "directory was not able to be created. "
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = self.class_name
-            error_JSON['function_name'] = "execute__Step__Pre_ETL_Custom"
+        if is_error_creating_directory:
+            error_json = {'error': "Error: There was an error when the pipeline tried to create a new directory on the "
+                                   "filesystem.  The path that the pipeline tried to create was: " +
+                                   str(self.final_load_dir_path) + ".  There should be another error logged"
+                                                                   " just before this one that "
+                                                                   "contains system error info.  That info should "
+                                                                   " give clues to why the "
+                                                                   "directory was not able to be created. ",
+                          'is_error': True,
+                          'class_name': self.class_name, 'function_name': "execute__Step__Pre_ETL_Custom"}
             # Exit Here With Error info loaded up
             ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
+            ret__error_description = error_json['error']
+            ret__detail_state_info = error_json
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                        is_error=ret__is_error,
                                                        event_description=ret__event_description,
@@ -203,7 +199,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                                    detail_state_info=ret__detail_state_info)
 
     def execute__Step__Download(self, uuid):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -215,7 +211,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                                    detail_state_info=ret__detail_state_info)
 
     def execute__Step__Extract(self):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -229,7 +225,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                                    detail_state_info=ret__detail_state_info)
 
     def execute__Step__Transform(self):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -245,16 +241,16 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                 try:
 
                     temporal_resolution = 'daily'
-                    mode_var__precipAttr_comment = "LIS model output"
-                    mode_var__fileAttr_Description = "Land Information System output from the Noah land surface model."
-                    mode_var__fileAttr_Version = "1.0"
+                    mode_var__precip_attr_comment = "LIS model output"
+                    mode_var__file_attr_description = "Land Information System output from the Noah land surface model."
+                    mode_var__file_attr_version = "1.0"
 
                     print(expected_granules_object["domain_file_path"])
 
                     ds = xr.open_dataset(expected_granules_object["domain_file_path"])
 
-                    latVals = np.round(np.round(np.nanmin(ds.lat.values), 3) + 0.03 * np.arange(0, 2231), 3)
-                    lonVals = np.round(np.round(np.nanmin(ds.lon.values), 3) + 0.03 * np.arange(0, 2351), 3)
+                    lat_vals = np.round(np.round(np.nanmin(ds.lat.values), 3) + 0.03 * np.arange(0, 2231), 3)
+                    lon_vals = np.round(np.round(np.nanmin(ds.lon.values), 3) + 0.03 * np.arange(0, 2351), 3)
 
                     ds = ds.rename({
                         'Evap_acc': 'Evapotranspiration',
@@ -264,15 +260,15 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     })
                     ds = ds.rename_dims({'north_south': 'latitude', 'east_west': 'longitude'})
                     ds = ds.drop_vars(['lat', 'lon', 'PotEvap_acc'])
-                    ds = ds.assign_coords(latitude=latVals)  # something like this, may be dim not dims
-                    ds = ds.assign_coords(longitude=lonVals)
+                    ds = ds.assign_coords(latitude=lat_vals)  # something like this, may be dim not dims
+                    ds = ds.assign_coords(longitude=lon_vals)
 
-                    yearStr = expected_granules_object["date_year"]
-                    monthStr = expected_granules_object["date_month"]
-                    dayStr = expected_granules_object["date_day"]
+                    year_str = expected_granules_object["date_year"]
+                    month_str = expected_granules_object["date_month"]
+                    day_str = expected_granules_object["date_day"]
 
-                    start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(yearStr, monthStr, dayStr))
-                    end_time = pd.Timestamp('{}-{}-{}T23:59:59'.format(yearStr, monthStr, dayStr))
+                    start_time = pd.Timestamp('{}-{}-{}T00:00:00'.format(year_str, month_str, day_str))
+                    end_time = pd.Timestamp('{}-{}-{}T23:59:59'.format(year_str, month_str, day_str))
 
                     # ds = ds.isel(band=0).reset_coords('band', drop=True)
                     # Add the time dimension as a new coordinate.
@@ -293,7 +289,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         [('long_name', "Evapotranspiration"),
                          ('units', 'mm'),
                          ('accumulation_interval', temporal_resolution),
-                         ('comment', str(mode_var__precipAttr_comment))])
+                         ('comment', str(mode_var__precip_attr_comment))])
 
                     ds["Evapotranspiration"].encoding = {
                         '_FillValue': np.float32(-9999.0),
@@ -305,7 +301,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     ds["Soil Moisture"].attrs = OrderedDict(
                         [('long_name', "Soil Moisture"),
                          ('units', 'm^3 m-3'),
-                         ('comment', str(mode_var__precipAttr_comment) + ". Layers: 0-10, 10-40, 40-100, 100-200 cm")])
+                         ('comment', str(mode_var__precip_attr_comment) + ". Layers: 0-10, 10-40, 40-100, 100-200 cm")])
 
                     ds["Soil Moisture"].encoding = {
                         '_FillValue': np.float32(-9999.0),
@@ -318,7 +314,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         [('long_name', "Surface runoff"),
                          ('units', 'mm'),
                          ('accumulation_interval', temporal_resolution),
-                         ('comment', str(mode_var__precipAttr_comment))])
+                         ('comment', str(mode_var__precip_attr_comment))])
 
                     ds["Runoff"].encoding = {
                         '_FillValue': np.float32(-9999.0),
@@ -331,7 +327,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         [('long_name', "Subsurface runoff"),
                          ('units', 'mm'),
                          ('accumulation_interval', temporal_resolution),
-                         ('comment', str(mode_var__precipAttr_comment))])
+                         ('comment', str(mode_var__precip_attr_comment))])
 
                     ds["Baseflow"].encoding = {
                         '_FillValue': np.float32(-9999.0),
@@ -340,13 +336,13 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         'chunksizes': (1, 256, 256)
                     }
                     ds.attrs = OrderedDict([
-                        ('Description', str(mode_var__fileAttr_Description)),
+                        ('Description', str(mode_var__file_attr_description)),
                         ('DateCreated', pd.Timestamp.now().strftime('%Y-%m-%dT%H:%M:%SZ')),
                         ('Contact', 'Lance Gilliland, lance.gilliland@nasa.gov'),
                         ('Source',
                          'NASA Short-Term Prediction Research and Transition (SPoRT) Center; Clay Blankenship, '
                          'clay.blankenship@nasa.gov'),
-                        ('Version', str(mode_var__fileAttr_Version)),
+                        ('Version', str(mode_var__file_attr_version)),
                         ('Reference',
                          'Ellenburg, W. L., V. Mishra, J. Roberts, A. Limaye, J. L. Case, C. B. Blankenship, '
                          'and K. Cressman, '
@@ -386,13 +382,13 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     print(e)
                     ret__is_error = True
 
-                    sysErrorData = str(sys.exc_info())
+                    sys_error_data = str(sys.exc_info())
 
-                    Granule_UUID = expected_granules_object['Granule_UUID']
+                    granule_uuid = expected_granules_object['Granule_UUID']
 
                     error_message = "usada_smap.execute__Step__Transform: An Error occurred during the Transform " \
-                                    "step with ETL_Granule UUID: " + str(
-                        Granule_UUID) + ".  System Error Message: " + str(sysErrorData)
+                                    "step with ETL_Granule UUID: " + str(granule_uuid) + \
+                                    ".  System Error Message: " + str(sys_error_data)
 
                     print("DEBUG: PRINT ERROR HERE: (error_message) " + str(error_message))
 
@@ -400,39 +396,37 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                     error_counter = error_counter + 1
                     detail_errors.append(error_message)
 
-                    error_JSON = {}
-                    error_JSON['error_message'] = error_message
+                    error_json = {'error_message': error_message}
 
                     # Update this Granule for Failure (store the error info in the granule also)
                     new__granule_pipeline_state = Config_Setting.get_value(
                         setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
+                        granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state,
                         is_error=is_error)
                     new_json_key_to_append = "execute__Step__Transform"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(
-                        granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append,
-                        sub_jsonable_object=error_JSON)
+                        granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append,
+                        sub_jsonable_object=error_json)
 
                 pass
 
         except:
 
-            sysErrorData = str(sys.exc_info())
-            error_JSON = {}
-            error_JSON[
-                'error'] = "Error: There was an uncaught error when processing the Transform step on all of the " \
-                           "expected Granules.  See the additional data and system error message for details on what " \
-                           "caused this error.  System Error Message: " + str(
-                sysErrorData)
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = self.class_name
-            error_JSON['function_name'] = "execute__Step__Transform"
+            sys_error_data = str(sys.exc_info())
+            error_json = {
+                'error': "Error: There was an uncaught error when processing the Transform step on all of the " 
+                         "expected Granules.  See the additional data and system error message for details on what " 
+                         "caused this error.  System Error Message: " +
+                         str(sys_error_data),
+                'is_error': True,
+                'class_name': self.class_name,
+                'function_name': "execute__Step__Transform"}
             # Exit Here With Error info loaded up
             ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
+            ret__error_description = error_json['error']
+            ret__detail_state_info = error_json
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                        is_error=ret__is_error,
                                                        event_description=ret__event_description,
@@ -449,7 +443,7 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                                                    detail_state_info=ret__detail_state_info)
 
     def execute__Step__Load(self):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -472,79 +466,76 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
                         'local_full_filepath_final_nc4_file']
 
                     print(expected_full_path_to_local_final_nc4_file)
-                    Granule_UUID = expected_granules_object['Granule_UUID']
+                    granule_uuid = expected_granules_object['Granule_UUID']
 
                     new__granule_pipeline_state = Config_Setting.get_value(
                         setting_name="GRANULE_PIPELINE_STATE__SUCCESS", default_or_error_return_value="SUCCESS")  #
                     is_error = False
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
+                        granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state,
                         is_error=is_error)
 
-                    additional_json = {}
-                    additional_json['MostRecent__ETL_Granule_UUID'] = str(Granule_UUID).strip()
+                    additional_json = {'MostRecent__ETL_Granule_UUID': str(granule_uuid).strip()}
 
                 except:
-                    sysErrorData = str(sys.exc_info())
-                    error_JSON = {}
-                    error_JSON[
-                        'error'] = "Error: There was an error when attempting to copy the current nc4 file to it's " \
-                                   "final directory location.  See the additional data and system error message for " \
-                                   "details on what caused this error.  System Error Message: " + str(
-                        sysErrorData)
-                    error_JSON['is_error'] = True
-                    error_JSON['class_name'] = self.class_name
-                    error_JSON['function_name'] = "execute__Step__Load"
+                    sys_error_data = str(sys.exc_info())
+                    error_json = {
+                        'error': "Error: There was an error when attempting to copy the current nc4 file to it's " 
+                                 "final directory location.  See the additional data and system error message for " 
+                                 "details on what caused this error.  System Error Message: " +
+                                 str(sys_error_data),
+                        'is_error': True,
+                        'class_name': self.class_name,
+                        'function_name': "execute__Step__Load",
+                        'expected_full_path_to_local_working_nc4_file':
+                            str(expected_full_path_to_local_working_nc4_file).strip(),
+                        'expected_full_path_to_local_final_nc4_file':
+                            str(expected_full_path_to_local_final_nc4_file).strip()}
                     #
                     # Additional infos
-                    error_JSON['expected_full_path_to_local_working_nc4_file'] = str(
-                        expected_full_path_to_local_working_nc4_file).strip()
-                    error_JSON['expected_full_path_to_local_final_nc4_file'] = str(
-                        expected_full_path_to_local_final_nc4_file).strip()
                     #
 
                     # Update this Granule for Failure (store the error info in the granule also)
-                    Granule_UUID = expected_granules_object['Granule_UUID']
+                    granule_uuid = expected_granules_object['Granule_UUID']
                     new__granule_pipeline_state = Config_Setting.get_value(
                         setting_name="GRANULE_PIPELINE_STATE__FAILED", default_or_error_return_value="FAILED")  #
                     is_error = True
                     is_update_succeed = self.etl_parent_pipeline_instance.etl_granule__Update__granule_pipeline_state(
-                        granule_uuid=Granule_UUID, new__granule_pipeline_state=new__granule_pipeline_state,
+                        granule_uuid=granule_uuid, new__granule_pipeline_state=new__granule_pipeline_state,
                         is_error=is_error)
                     new_json_key_to_append = "execute__Step__Load"
                     is_update_succeed_2 = self.etl_parent_pipeline_instance.etl_granule__Append_JSON_To_Additional_JSON(
-                        granule_uuid=Granule_UUID, new_json_key_to_append=new_json_key_to_append,
-                        sub_jsonable_object=error_JSON)
+                        granule_uuid=granule_uuid, new_json_key_to_append=new_json_key_to_append,
+                        sub_jsonable_object=error_json)
 
             pass
         except:
-            sysErrorData = str(sys.exc_info())
-            error_JSON = {}
-            error_JSON[
-                'error'] = "Error: There was an uncaught error when processing the Load step on all of the expected " \
-                           "Granules.  See the additional data and system error message for details on what caused " \
-                           "this error.  System Error Message: " + str(
-                sysErrorData)
-            error_JSON['is_error'] = True
-            error_JSON['class_name'] = self.class_name
-            error_JSON['function_name'] = "execute__Step__Load"
+            sys_error_data = str(sys.exc_info())
+            error_json = {
+                'error': "Error: There was an uncaught error when processing the Load step on all of the expected " 
+                         "Granules.  See the additional data and system error message for details on what caused " 
+                         "this error.  System Error Message: " +
+                         str(sys_error_data),
+                'is_error': True,
+                'class_name': self.class_name,
+                'function_name': "execute__Step__Load"}
             # Exit Here With Error info loaded up
             ret__is_error = True
-            ret__error_description = error_JSON['error']
-            ret__detail_state_info = error_JSON
+            ret__error_description = error_json['error']
+            ret__detail_state_info = error_json
             return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                   is_error=ret__is_error, event_description=ret__event_description,
+                                                   error_description=ret__error_description,
+                                                   detail_state_info=ret__detail_state_info)
 
     def execute__Step__Post_ETL_Custom(self):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = ""
         ret__error_description = ""
@@ -556,12 +547,12 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             print(e)
 
         return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
+                                                   is_error=ret__is_error, event_description=ret__event_description,
+                                                   error_description=ret__error_description,
+                                                   detail_state_info=ret__detail_state_info)
 
     def execute__Step__Clean_Up(self):
-        ret__function_name = sys._getframe().f_code.co_name
+        ret__function_name = inspect.currentframe().f_code.co_name
         ret__is_error = False
         ret__event_description = "No Clean up needed"
         ret__error_description = "No Clean up needed"
