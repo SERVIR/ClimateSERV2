@@ -158,12 +158,11 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
-            return retObj
+            return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         # final_load_dir_path
         is_error_creating_directory = self.etl_parent_pipeline_instance.create_dir_if_not_exist(
@@ -183,12 +182,11 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
-            return retObj
+            return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         # Ended, now for reporting
         ret__detail_state_info['class_name'] = self.class_name
@@ -435,22 +433,20 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                         is_error=ret__is_error,
-                                                         event_description=ret__event_description,
-                                                         error_description=ret__error_description,
-                                                         detail_state_info=ret__detail_state_info)
-            return retObj
+            return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+                                                       is_error=ret__is_error,
+                                                       event_description=ret__event_description,
+                                                       error_description=ret__error_description,
+                                                       detail_state_info=ret__detail_state_info)
 
         ret__detail_state_info['class_name'] = self.class_name
         ret__detail_state_info['error_counter'] = error_counter
         ret__detail_state_info['detail_errors'] = detail_errors
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
-                                                     is_error=ret__is_error, event_description=ret__event_description,
-                                                     error_description=ret__error_description,
-                                                     detail_state_info=ret__detail_state_info)
-        return retObj
+        return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+                                                   is_error=ret__is_error, event_description=ret__event_description,
+                                                   error_description=ret__error_description,
+                                                   detail_state_info=ret__detail_state_info)
 
     def execute__Step__Load(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -536,18 +532,16 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
             ret__is_error = True
             ret__error_description = error_JSON['error']
             ret__detail_state_info = error_JSON
-            retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+            return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                          is_error=ret__is_error,
                                                          event_description=ret__event_description,
                                                          error_description=ret__error_description,
                                                          detail_state_info=ret__detail_state_info)
-            return retObj
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
 
     def execute__Step__Post_ETL_Custom(self):
         ret__function_name = sys._getframe().f_code.co_name
@@ -561,11 +555,10 @@ class ETL_Dataset_Subtype_africa_lis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         except Exception as e:
             print(e)
 
-        retObj = common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
+        return common.get_function_response_object(class_name=self.class_name, function_name=ret__function_name,
                                                      is_error=ret__is_error, event_description=ret__event_description,
                                                      error_description=ret__error_description,
                                                      detail_state_info=ret__detail_state_info)
-        return retObj
 
     def execute__Step__Clean_Up(self):
         ret__function_name = sys._getframe().f_code.co_name
