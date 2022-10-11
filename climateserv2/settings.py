@@ -19,6 +19,7 @@ CELERY_TASK_DEFAULT_PRIORITY = 5
 CELERY_ACKS_LATE = True
 CELERYD_PREFETCH_MULTIPLIER = 1
 CCELERY_BROKER_POOL_LIMIT = None
+CELERYD_NODES = 10
 
 # Opening JSON file
 f = open('/cserv2/django_app/ClimateSERV2/climateserv2/data.json', )
