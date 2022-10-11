@@ -18,6 +18,7 @@ import celery
 import numpy as np
 import pandas as pd
 import xarray as xr
+import billiard as multiprocessing
 from celery import shared_task
 from celery.utils.log import get_task_logger
 from django import db
@@ -51,6 +52,7 @@ def set_progress_to_100(uniqueid):
 
 @shared_task(time_limit=3000)
 def start_processing(statistical_query):
+    pool = multiprocessing.Pool(multiprocessing.cpu_count())
     merged_obj = None
     logger.debug("celery.current_task: " + str(celery.current_task.request.id))
     uniqueid = "Not assigned yet"
@@ -143,11 +145,14 @@ def start_processing(statistical_query):
         for job in jobs:
             job['job_length'] = len(jobs)
 
-            with ThreadPoolExecutor(max_workers=None) as executor:
-                my_results = {executor.submit(start_worker_process, job)}
-
-                for _ in concurrent.futures.as_completed(my_results):
-                    split_obj.append(_.result())
+            split_obj.append((pool.apply_async(start_worker_process, args=[job], )).get())
+            # To revert from multiprocessing, comment out line above and
+            # uncomment the below lines.
+            # with ThreadPoolExecutor(max_workers=None) as executor:
+            #     my_results = {executor.submit(start_worker_process, job)}
+            #
+            #     for _ in concurrent.futures.as_completed(my_results):
+            #         split_obj.append(_.result())
 
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
