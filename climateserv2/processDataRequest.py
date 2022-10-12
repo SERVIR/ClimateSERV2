@@ -145,14 +145,14 @@ def start_processing(statistical_query):
         for job in jobs:
             job['job_length'] = len(jobs)
 
-            split_obj.append((pool.apply_async(start_worker_process, args=[job], )).get())
+            # split_obj.append((pool.apply_async(start_worker_process, args=[job], )).get())
             # To revert from multiprocessing, comment out line above and
             # uncomment the below lines.
-            # with ThreadPoolExecutor(max_workers=None) as executor:
-            #     my_results = {executor.submit(start_worker_process, job)}
-            #
-            #     for _ in concurrent.futures.as_completed(my_results):
-            #         split_obj.append(_.result())
+            with ThreadPoolExecutor(max_workers=None) as executor:
+                my_results = {executor.submit(start_worker_process, job)}
+
+                for _ in concurrent.futures.as_completed(my_results):
+                    split_obj.append(_.result())
 
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
