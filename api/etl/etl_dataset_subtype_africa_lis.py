@@ -71,8 +71,8 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             dates = []
 
             # current_domain_path
-            for file in Path(current_domain_path).glob('LIS_HIST*'):
-                file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0][:-4], '%Y%m%d')
+            for file in Path(current_domain_path).glob('LIS_Africa_daily_*'):
+                file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
                 if start_date <= file_time <= end_date:
                     filenames.append(file)
                     dates.append(file_time)
@@ -259,7 +259,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         'Qsb_acc': 'Baseflow'
                     })
                     ds = ds.rename_dims({'north_south': 'latitude', 'east_west': 'longitude'})
-                    ds = ds.drop_vars(['lat', 'lon', 'PotEvap_acc'])
+                    ds = ds.drop_vars(['lat', 'lon', 'PotEvap_acc', 'start_time', 'end_time'])
                     ds = ds.assign_coords(latitude=lat_vals)  # something like this, may be dim not dims
                     ds = ds.assign_coords(longitude=lon_vals)
 
@@ -287,7 +287,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         [('long_name', 'time_bounds')])
                     ds["Evapotranspiration"].attrs = OrderedDict(
                         [('long_name', "Evapotranspiration"),
-                         ('units', 'mm'),
+                         ('units', 'mm day-1'),
                          ('accumulation_interval', temporal_resolution),
                          ('comment', str(mode_var__precip_attr_comment))])
 
@@ -312,7 +312,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     ds["Runoff"].attrs = OrderedDict(
                         [('long_name', "Surface runoff"),
-                         ('units', 'mm'),
+                         ('units', 'mm day-1'),
                          ('accumulation_interval', temporal_resolution),
                          ('comment', str(mode_var__precip_attr_comment))])
 
@@ -325,7 +325,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
                     ds["Baseflow"].attrs = OrderedDict(
                         [('long_name', "Subsurface runoff"),
-                         ('units', 'mm'),
+                         ('units', 'mm day-1'),
                          ('accumulation_interval', temporal_resolution),
                          ('comment', str(mode_var__precip_attr_comment))])
 
