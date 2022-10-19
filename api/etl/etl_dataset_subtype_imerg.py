@@ -85,8 +85,9 @@ class ETL_Dataset_Subtype_IMERG(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interfa
                     tif_filename = tif_filepath.split('/')[-1]
                     current_day = tif_filename.split('.')[4][6:8]
                     current_time = tif_filename.split('.')[4][-6:]
+                    current_date = datetime.datetime(int(current_year), int(current_month), int(current_day))
 
-                    if self.DD__Day__Start < int(current_day) > self.DD__Day__End:
+                    if start_date > current_date < end_date:
                         continue
 
                     # nasa-imerg-late.20200531T000000Z.global.0.1deg.1dy.nc4

@@ -624,6 +624,7 @@ def get_geometry(error, feature_ids_list, feature_list, layer_id, polygon_string
     else:
         try:
             polygon_string = request.POST.get("geometry", request.GET.get("geometry", None))
+            logger.warning("polygon_string########### " + polygon_string)
             geometry = decodeGeoJSON(polygon_string)
         except KeyError:
             logger.warning("Problem with geometry")

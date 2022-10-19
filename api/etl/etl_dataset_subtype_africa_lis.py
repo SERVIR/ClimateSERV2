@@ -71,6 +71,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             dates = []
 
             # current_domain_path
+            # traverse directories (YYYYMM) to get file paths
             for file in Path(current_domain_path).glob('LIS_Africa_daily_*'):
                 file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
                 if start_date <= file_time <= end_date:
