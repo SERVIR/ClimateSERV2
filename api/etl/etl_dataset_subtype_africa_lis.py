@@ -5,6 +5,7 @@ import shutil
 import sys
 from collections import OrderedDict
 from pathlib import Path
+from dateutil import rrule
 
 import numpy as np
 import pandas as pd
@@ -72,11 +73,14 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
             # current_domain_path
             # traverse directories (YYYYMM) to get file paths
-            for file in Path(current_domain_path).glob('LIS_Africa_daily_*'):
-                file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
-                if start_date <= file_time <= end_date:
-                    filenames.append(file)
-                    dates.append(file_time)
+            for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date.replace(day=1), until=end_date):
+                current_year = dt.strftime('%Y')
+                current_month = dt.strftime('%m')
+                for file in Path(os.path.join(current_domain_path, current_year + current_month)).glob('LIS_Africa_daily_*'):
+                    file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
+                    if start_date <= file_time <= end_date:
+                        filenames.append(file)
+                        dates.append(file_time)
 
             for filename, date in zip(filenames, dates):
                 current_year__yyyy_str = "{:0>4d}".format(date.year)
