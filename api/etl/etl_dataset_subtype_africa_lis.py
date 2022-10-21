@@ -76,7 +76,8 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
             for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date.replace(day=1), until=end_date):
                 current_year = dt.strftime('%Y')
                 current_month = dt.strftime('%m')
-                for file in Path(os.path.join(current_domain_path, current_year + current_month)).glob('LIS_Africa_daily_*'):
+                for file in Path(os.path.join(current_domain_path, current_year + current_month)).glob(
+                        'LIS_Africa_daily_*'):
                     file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
                     if start_date <= file_time <= end_date:
                         filenames.append(file)
@@ -257,17 +258,21 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     lat_vals = np.round(np.round(np.nanmin(ds.lat.values), 3) + 0.03 * np.arange(0, 2231), 3)
                     lon_vals = np.round(np.round(np.nanmin(ds.lon.values), 3) + 0.03 * np.arange(0, 2351), 3)
 
+                    ds = ds.rename_dims({'north_south': 'latitude', 'east_west': 'longitude'})
+
+                    ds = ds.assign_coords(latitude=lat_vals)  # something like this, may be dim not dims
+                    ds = ds.assign_coords(longitude=lon_vals)
+                    # ds = ds["Soil Moisture 0-10"] = ds["Soil Moisture"]["SoilMoist_profiles"][0]
+                    ds = ds.assign(Soil_Moisture_0_10=ds["SoilMoist_tavg"][0])
+                    ds = ds.assign(Soil_Moisture_10_40=(ds["SoilMoist_tavg"][1]))
+                    ds = ds.assign(Soil_Moisture_40_100=(ds["SoilMoist_tavg"][2]))
+                    ds = ds.assign(Soil_Moisture_100_200=(ds["SoilMoist_tavg"][3]))
+                    ds = ds.drop_vars(['lat', 'lon', 'PotEvap_acc', 'start_time', 'end_time', 'SoilMoist_tavg'])
                     ds = ds.rename({
                         'Evap_acc': 'Evapotranspiration',
-                        'SoilMoist_tavg': 'Soil Moisture',
                         'Qs_acc': 'Runoff',
                         'Qsb_acc': 'Baseflow'
                     })
-                    ds = ds.rename_dims({'north_south': 'latitude', 'east_west': 'longitude'})
-                    ds = ds.drop_vars(['lat', 'lon', 'PotEvap_acc', 'start_time', 'end_time'])
-                    ds = ds.assign_coords(latitude=lat_vals)  # something like this, may be dim not dims
-                    ds = ds.assign_coords(longitude=lon_vals)
-
                     year_str = expected_granules_object["date_year"]
                     month_str = expected_granules_object["date_month"]
                     day_str = expected_granules_object["date_day"]
@@ -303,12 +308,38 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                         'chunksizes': (1, 256, 256)
                     }
 
-                    ds["Soil Moisture"].attrs = OrderedDict(
-                        [('long_name', "Soil Moisture"),
-                         ('units', 'm^3 m-3'),
-                         ('comment', str(mode_var__precip_attr_comment) + ". Layers: 0-10, 10-40, 40-100, 100-200 cm")])
+                    ds["Soil_Moisture_0_10"].attrs = OrderedDict(
+                        [('long_name', "Soil Moisture 0 - 10"),
+                         ('units', 'm^3 m-3')])
+                    ds["Soil_Moisture_10_40"].attrs = OrderedDict(
+                        [('long_name', "Soil Moisture 10 - 40"),
+                         ('units', 'm^3 m-3')])
+                    ds["Soil_Moisture_40_100"].attrs = OrderedDict(
+                        [('long_name', "Soil Moisture 40 - 100"),
+                         ('units', 'm^3 m-3')])
+                    ds["Soil_Moisture_100_200"].attrs = OrderedDict(
+                        [('long_name', "Soil Moisture 100 - 200"),
+                         ('units', 'm^3 m-3')])
 
-                    ds["Soil Moisture"].encoding = {
+                    ds["Soil_Moisture_0_10"].encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32'),
+                        'chunksizes': (1, 256, 256)
+                    }
+                    ds["Soil_Moisture_10_40"].encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32'),
+                        'chunksizes': (1, 256, 256)
+                    }
+                    ds["Soil_Moisture_40_100"].encoding = {
+                        '_FillValue': np.float32(-9999.0),
+                        'missing_value': np.float32(-9999.0),
+                        'dtype': np.dtype('float32'),
+                        'chunksizes': (1, 256, 256)
+                    }
+                    ds["Soil_Moisture_100_200"].encoding = {
                         '_FillValue': np.float32(-9999.0),
                         'missing_value': np.float32(-9999.0),
                         'dtype': np.dtype('float32'),
@@ -421,8 +452,8 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
             sys_error_data = str(sys.exc_info())
             error_json = {
-                'error': "Error: There was an uncaught error when processing the Transform step on all of the " 
-                         "expected Granules.  See the additional data and system error message for details on what " 
+                'error': "Error: There was an uncaught error when processing the Transform step on all of the "
+                         "expected Granules.  See the additional data and system error message for details on what "
                          "caused this error.  System Error Message: " +
                          str(sys_error_data),
                 'is_error': True,
@@ -485,8 +516,8 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                 except:
                     sys_error_data = str(sys.exc_info())
                     error_json = {
-                        'error': "Error: There was an error when attempting to copy the current nc4 file to it's " 
-                                 "final directory location.  See the additional data and system error message for " 
+                        'error': "Error: There was an error when attempting to copy the current nc4 file to it's "
+                                 "final directory location.  See the additional data and system error message for "
                                  "details on what caused this error.  System Error Message: " +
                                  str(sys_error_data),
                         'is_error': True,
@@ -517,8 +548,8 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         except:
             sys_error_data = str(sys.exc_info())
             error_json = {
-                'error': "Error: There was an uncaught error when processing the Load step on all of the expected " 
-                         "Granules.  See the additional data and system error message for details on what caused " 
+                'error': "Error: There was an uncaught error when processing the Load step on all of the expected "
+                         "Granules.  See the additional data and system error message for details on what caused "
                          "this error.  System Error Message: " +
                          str(sys_error_data),
                 'is_error': True,
