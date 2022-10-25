@@ -45,7 +45,10 @@ def get_filelist(datatype, start_date, end_date):
     except Exception as e:
         print("failed to get name format in get_filelist" + str(e))
         raise e
-    dataset_nc4_variable_name = working_datalayer.layers
+    if working_dataset:
+        dataset_nc4_variable_name = working_datalayer.layers
+    else:
+        dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
