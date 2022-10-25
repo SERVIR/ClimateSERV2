@@ -45,7 +45,7 @@ def get_filelist(datatype, start_date, end_date):
     except Exception as e:
         print("failed to get name format in get_filelist" + str(e))
         raise e
-    if working_dataset:
+    if working_datalayer:
         dataset_nc4_variable_name = working_datalayer.layers
     else:
         dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
