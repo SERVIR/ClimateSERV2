@@ -579,8 +579,11 @@ def submit_data_request(request):
                 if DataLayer.objects.filter(api_id=int(datatype)).exists():
                     working_datalayer = DataLayer.objects.get(api_id=int(datatype))
                     working_dataset = working_datalayer.etl_dataset_id
-                else:
+                elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
                     working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
+                    working_dataset = working_datalayer.etl_dataset_id
+                else:
+                    working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype) + 1)
                     working_dataset = working_datalayer.etl_dataset_id
             except:
                 my_ds = "Ensemble Layer"
