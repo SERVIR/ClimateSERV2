@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import shutil
+import sys
 import time
 import uuid
 from ast import literal_eval
@@ -46,13 +47,12 @@ def set_progress_to_100(uniqueid):
             request_progress = Request_Progress.objects.get(request_id=uniqueid)
             request_progress.progress = 100
             request_progress.save()
-    except IntegrityError:
-        logger.error("Progress update issue")
+    except IntegrityError as e:
+        logger.error("Progress update issue, unable to set to 100%: " + str(e))
 
 
 @shared_task(time_limit=3000)
 def start_processing(statistical_query):
-    pool = multiprocessing.Pool(multiprocessing.cpu_count())
     merged_obj = None
     logger.debug("celery.current_task: " + str(celery.current_task.request.id))
     uniqueid = "Not assigned yet"
@@ -264,10 +264,11 @@ def start_processing(statistical_query):
             json.dump({"Error": "There was an error processing your request."}, f)
         f.close()
         logger.debug("Processes joined, file written, and setting progress to 100 for: " + uniqueid)
-
+        time.sleep(.5)
         set_progress_to_100(uniqueid)
-
+        logger.debug("uniqueid: " + uniqueid)
         track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+        logger.debug("got the object")
         track_usage.status = "Success"
         track_usage.save()
         if str(operationtype) == "6":
@@ -293,6 +294,7 @@ def start_processing(statistical_query):
             # maybe need to create the appropriate file for extraction with error message
             try:
                 track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+                logger.debug("creating the object here")
                 track_usage.update(
                     time_requested=timezone.now(),
                     AOI=statistical_query["geometry"],
@@ -346,8 +348,8 @@ def start_processing(statistical_query):
             logger.debug(str(e2))
             pass
 
-    # finally:
-    # sys.exit(1)
+    finally:
+        sys.exit(1)
 
 
 def start_worker_process(job_item):

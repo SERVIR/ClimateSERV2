@@ -21,6 +21,7 @@ from geoip2.errors import AddressNotFoundError
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage, ETL_Dataset
 from api.models import Parameters
+from frontend.models import DataLayer
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .file import TDSExtraction
@@ -512,7 +513,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
+                                  dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,
@@ -578,7 +579,7 @@ def submit_data_request(request):
             track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
-                                      dataset=ETL_Dataset.objects.filter(number=int(datatype))[0].dataset_name_format,
+                                      dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
                                       start_date=pd.Timestamp(begin_time, tz='UTC'),
                                       end_date=pd.Timestamp(end_time, tz='UTC'),
                                       calculation=calculation, request_type=request.method,
@@ -587,6 +588,7 @@ def submit_data_request(request):
 
             track_usage.save()
         except Exception as e:
+            logger.debug("Track_Usage creation error to follow:")
             logger.error(str(e))
 
         return process_callback(request, str(json.dumps([str(my_id)])), "application/json")
@@ -598,7 +600,7 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=ETL_Dataset.objects.get(number=int(datatype)).dataset_name_format,
+                                  dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   request_type=request.method, status="Fail", progress=0,
@@ -624,16 +626,16 @@ def get_geometry(error, feature_ids_list, feature_list, layer_id, polygon_string
     else:
         try:
             polygon_string = request.POST.get("geometry", request.GET.get("geometry", None))
-            logger.warning("polygon_string########### " + polygon_string)
+            # logger.warning("polygon_string########### " + polygon_string)
             geometry = decodeGeoJSON(polygon_string)
         except KeyError:
             logger.warning("Problem with geometry")
-            error.append("problem decoding geometry " + polygon_string)
+            # error.append("problem decoding geometry " + polygon_string)
 
         if geometry is None:
             logger.warning("Problem in that the geometry is a problem")
         else:
-            logger.warning(geometry)
+            logger.warning("geometry was fine")
     return feature_ids_list, feature_list, layer_id, polygon_string
 
 

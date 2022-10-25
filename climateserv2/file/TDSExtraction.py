@@ -15,6 +15,7 @@ from api.models import ETL_Dataset
 from api.models import Parameters
 from django.db import IntegrityError, transaction
 from api.models import Request_Progress
+from frontend.models import DataLayer
 
 try:
     import climateserv2.locallog.locallogging as llog
@@ -28,7 +29,8 @@ params = Parameters.objects.first()
 
 def get_filelist(datatype, start_date, end_date):
     try:
-        working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
+        working_datalayer = DataLayer.objects.get(api_id=int(datatype))
+        working_dataset = working_datalayer.etl_dataset_id
     except Exception as e:
         logger.info("failed to get dataset in get_filelist: " + str(e))
         print("failed to get dataset in get_filelist: " + str(e))
@@ -38,7 +40,7 @@ def get_filelist(datatype, start_date, end_date):
     except Exception as e:
         print("failed to get name format in get_filelist" + str(e))
         raise e
-    dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
+    dataset_nc4_variable_name = working_datalayer.layers
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
@@ -181,14 +183,28 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     # using xarray to open the temporary netcdf
     logger.debug("about to xarray open the data for: " + uniqueid)
     try:
-        nc_file = xr.open_mfdataset(file_list, parallel=True, chunks={'time': 32, 'longitude': 500, 'latitude': 500})
+        with xr.open_mfdataset(file_list,
+                               parallel=True,
+                               chunks={'time': 32, 'longitude': 500, 'latitude': 500},
+                               autoclose=True) as nc_file:
+            lat_slice, lon_slice = get_bounds_from_dataset(nc_file, lat1, lat2, lon1, lon2)
+
+            unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(
+                time=slice(start_date, end_date))
+            nc_file.close()
+
+        # nc_file = xr.open_mfdataset(file_list,
+        #                             parallel=True,
+        #                             chunks={'time': 32, 'longitude': 500, 'latitude': 500},
+        #                             autoclose=True)
     except Exception as e:
         logger.error("open_mfdataset error: " + str(e) + " for: " + uniqueid)
         return [], []
 
-    lat_slice, lon_slice = get_bounds_from_dataset(nc_file, lat1, lat2, lon1, lon2)
-
-    unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(time=slice(start_date, end_date))
+    # lat_slice, lon_slice = get_bounds_from_dataset(nc_file, lat1, lat2, lon1, lon2)
+    #
+    # unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(time=slice(start_date, end_date))
+    # nc_file.close()
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
     if jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
