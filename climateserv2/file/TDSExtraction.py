@@ -29,6 +29,7 @@ params = Parameters.objects.first()
 
 
 def get_filelist(datatype, start_date, end_date):
+    working_datalayer = None
     try:
         if DataLayer.objects.filter(api_id=int(datatype)).exists():
             working_datalayer = DataLayer.objects.get(api_id=int(datatype))
