@@ -1,4 +1,5 @@
 from django.db import models
+from api.models import ETL_Dataset
 
 
 class DatasetType(models.Model):
@@ -48,6 +49,7 @@ class DataLayer(models.Model):
     ui_id = models.CharField(max_length=200, help_text='ID for the UI to use and access in javascript')
     dataset_type = models.ForeignKey(DatasetType, on_delete=models.CASCADE, related_name="datatype")
     dataset_id = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="dataset")
+    etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="etl_dataset", blank=True, null=True)
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
     isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
