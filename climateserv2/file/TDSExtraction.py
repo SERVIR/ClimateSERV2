@@ -34,8 +34,8 @@ def get_filelist(datatype, start_date, end_date):
             working_datalayer = DataLayer.objects.get(api_id=int(datatype))
             working_dataset = working_datalayer.etl_dataset_id
         else:
-            working_datalayer = ETL_Dataset.objects.filter(number=int(datatype)).first()
-            working_dataset = working_datalayer.etl_dataset_id
+            working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
+            # working_dataset = working_datalayer.etl_dataset_id
     except Exception as e:
         logger.info("failed to get dataset in get_filelist: " + str(e))
         print("failed to get dataset in get_filelist: " + str(e))
