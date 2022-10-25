@@ -21,7 +21,7 @@ from geoip2.errors import AddressNotFoundError
 import climateserv2.requestLog as requestLog
 from api.models import Track_Usage, ETL_Dataset
 from api.models import Parameters
-from frontend.models import DataLayer
+from frontend.models import DataLayer, EnsembleLayer
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .file import TDSExtraction
@@ -575,11 +575,20 @@ def submit_data_request(request):
         request_progress.save()
         request_progress.refresh_from_db()
         try:
+            try:
+                if DataLayer.objects.filter(api_id=int(datatype)).exists():
+                    working_datalayer = DataLayer.objects.get(api_id=int(datatype))
+                    working_dataset = working_datalayer.etl_dataset_id
+                else:
+                    working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
+                    working_dataset = working_datalayer.etl_dataset_id
+            except:
+                my_ds = "Ensemble Layer"
 
             track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
-                                      dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
+                                      dataset=working_dataset.dataset_name_format,
                                       start_date=pd.Timestamp(begin_time, tz='UTC'),
                                       end_date=pd.Timestamp(end_time, tz='UTC'),
                                       calculation=calculation, request_type=request.method,
@@ -597,10 +606,22 @@ def submit_data_request(request):
         if aoi is None:
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
 
+        try:
+            if DataLayer.objects.filter(api_id=int(datatype)).exists():
+                working_datalayer = DataLayer.objects.get(api_id=int(datatype))
+                working_dataset = working_datalayer.etl_dataset_id
+            else:
+                working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
+                working_dataset = working_datalayer.etl_dataset_id
+            # my_ds = DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format
+
+        except:
+            my_ds = "Ensemble Layer"
+
         track_usage = Track_Usage(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
+                                  dataset=working_dataset.dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   request_type=request.method, status="Fail", progress=0,

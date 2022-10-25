@@ -16,6 +16,7 @@ from api.models import Parameters
 from django.db import IntegrityError, transaction
 from api.models import Request_Progress
 from frontend.models import DataLayer
+from frontend.models import EnsembleLayer
 
 try:
     import climateserv2.locallog.locallogging as llog
@@ -29,8 +30,12 @@ params = Parameters.objects.first()
 
 def get_filelist(datatype, start_date, end_date):
     try:
-        working_datalayer = DataLayer.objects.get(api_id=int(datatype))
-        working_dataset = working_datalayer.etl_dataset_id
+        if DataLayer.objects.filter(api_id=int(datatype)).exists():
+            working_datalayer = DataLayer.objects.get(api_id=int(datatype))
+            working_dataset = working_datalayer.etl_dataset_id
+        else:
+            working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
+            working_dataset = working_datalayer.etl_dataset_id
     except Exception as e:
         logger.info("failed to get dataset in get_filelist: " + str(e))
         print("failed to get dataset in get_filelist: " + str(e))

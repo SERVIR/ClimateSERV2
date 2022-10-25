@@ -79,6 +79,8 @@ class EnsembleLayer(models.Model):
                                                                      'display')
     ui_id = models.CharField(max_length=200, help_text='Please use lowercase master title + ens + number. IE: nmmeens1')
     master_layer = models.ForeignKey(DataLayer, on_delete=models.CASCADE, related_name="datalayer")
+    etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="ens_etl_dataset", blank=True,
+                                       null=True)
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
 
     def __str__(self):
