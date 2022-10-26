@@ -1,35 +1,54 @@
 {
-	"preformat_nc4_filename" : "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
-	"data" : {
-		"0": {
-			"preformat_filename": "chirps-v2.0.{YYYY}.{MM}.{DD}",
-			"extension": ".tif.gz",
-			"source": "https://data.chc.ucsb.edu/products/CHIRP/daily/{YYYY}/",
-			"contained_files": {
-				"0": {
-					"preformat_filename": "chirp.{YYYY}.{MM}.{DD}",
-					"extension": ".tif",
-					"variables": {
-						"0": "precipitation_amount"
-					},
-					"encodings": {
-						"precipitation_amount": {
-							"long_name": "precipitation_amount",
-							"units": "mm",
-							"accumulation_interval": "daily",
-							"comment": "Climate Hazards group InfraRed Precipitation"
-						}
-					}
-				}
-			}
-		}
-	},
-	"metadata" : {
-		"source": "University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/", 
-		"comment": "Climate Hazards group InfraRed Precipitation", 
-		"contact": "Lance Gilliland, lance.gilliland@nasa.gov", 
-		"version": "1.0", 
-		"reference": "Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.", 
-		"description": "Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution "
-	}
+  "data": {
+    "precipitation_amount": {
+      "source": "https://data.chc.ucsb.edu/products/CHIRP/daily/{YYYY}/",
+      "encodings": {
+        "precipitation_amount": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1,256,256}",
+          "missing_value": "{npfloat=-9999.0}"
+        }
+      },
+      "extension": ".tif.gz",
+      "variables": {
+        "0": "precipitation_amount"
+      },
+      "attributes": {
+        "precipitation_amount": {
+          "units": "mm",
+          "comment": "Climate Hazards group InfraRed Precipitation",
+          "long_name": "precipitation_amount",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "accumulation_interval",
+            "comment"
+          ],
+          "accumulation_interval": "daily"
+        }
+      },
+      "download_type": "https",
+      "preformat_filename": "chirp.{YYYY}.{MM}.{DD}"
+    }
+  },
+  "metadata": {
+    "source": "University of California at Santa Barbara; Climate Hazards Group; Pete Peterson, pete@geog.ucsb.edu; ftp://chg-ftpout.geog.ucsb.edu/pub/org/chg/products/CHIRP/daily/",
+    "comment": "Climate Hazards group InfraRed Precipitation",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "version": "1.0",
+    "reference": "Funk, C.C., Peterson, P.J., Landsfeld, M.F., Pedreros, D.H., Verdin, J.P., Rowland, J.D., Romero, B.E., Husak, G.J., Michaelsen, J.C., and Verdin, A.P., 2014, A quasi-global precipitation time series for drought monitoring: U.S. Geological Survey Data Series 832, 4 p., http://dx.doi.org/110.3133/ds832.",
+    "description": "Climate Hazards group InfraRed Precipitation at 0.05x0.05 degree resolution ",
+    "spatial_resolution": "0.05deg",
+    "temporal_resolution": "daily"
+  },
+  "timedelta_end": {
+    "hours": 23,
+    "minutes": 59,
+    "seconds": 59
+  },
+  "nc4_indexed_by": "start",
+  "timedelta_start": {},
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {}
 }

@@ -1,0 +1,131 @@
+{
+  "data": {
+    "smap": {
+      "source": "https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/",
+      "encodings": {
+        "smp": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-999.0}",
+          "missing_value": "{npfloat=-999.0}"
+        },
+        "ssm": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-999.0}",
+          "missing_value": "{npfloat=-999.0}"
+        },
+        "ssma": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-999.0}",
+          "missing_value": "{npfloat=-999.0}"
+        },
+        "susm": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-999.0}",
+          "missing_value": "{npfloat=-999.0}"
+        },
+        "susma": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-999.0}",
+          "missing_value": "{npfloat=-999.0}"
+        }
+      },
+      "extension": ".tif",
+      "variables": {
+        "0": "ssm",
+        "1": "susm",
+        "2": "smp",
+        "3": "ssma",
+        "4": "susma"
+      },
+      "attributes": {
+        "smp": {
+          "units": "%",
+          "comment": "3 day mean composite estimate",
+          "long_name": "soil_moisture_profile",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "3 day"
+        },
+        "ssm": {
+          "units": "mm",
+          "comment": "3 day mean composite estimate",
+          "long_name": "surface_soil_moisture",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "3 day"
+        },
+        "ssma": {
+          "units": "unitless",
+          "comment": "3 day mean composite estimate",
+          "long_name": "surface_soil_moisture_anomaly",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "3 day"
+        },
+        "susm": {
+          "units": "mm",
+          "comment": "3 day mean composite estimate",
+          "long_name": "sub_surface_soil_moisture",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "3 day"
+        },
+        "susma": {
+          "units": "unitless",
+          "comment": "3 day mean composite estimate",
+          "long_name": "sub_surface_soil_moisture_anomaly",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "3 day"
+        }
+      },
+      "download_type": "https",
+      "preformat_filename": "NASA_USDA_SMAP_SM{YYYYMMDD}_{YYYYMMDD+2}"
+    }
+  },
+  "metadata": {
+    "source": "NASA Goddard Space Flight Center; John D. Bolten. john.bolten@nasa.gov; https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "version": "1.0",
+    "reference": "Mladenova, I.E., Bolten, J.D., Crow, W., Sazib, N. and Reynolds, C., 2020. Agricultural drought monitoring via the assimilation of SMAP soil moisture retrievals into a global soil water balance model.",
+    "description": "The NASA-USDA Enhanced SMAP Global soil moisture data provides soil moisture information across the globe at 10-km spatial resolution.",
+    "spatial_resolution": "10kmx10km",
+    "temporal_resolution": "3 days"
+  },
+  "timedelta_end": {
+    "days": 2
+  },
+  "nc4_indexed_by": "start",
+  "timedelta_start": {},
+  "iterator_options": {
+    "search": "(?<=NASA_USDA_SMAP_SM)(.{8})",
+    "root_url": "https://gimms.gsfc.nasa.gov/SMOS/SMAP/SMAP_10KM_tiff/",
+    "indexedBy": "start",
+    "timedelta": 2
+  },
+  "is_lat_order_reversed": true,
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {
+    "hours": 36
+  }
+}

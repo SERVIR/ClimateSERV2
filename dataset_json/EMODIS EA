@@ -1,0 +1,74 @@
+{
+  "data": {
+    "emodis": {
+      "source": "https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/africa/east/dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/",
+      "extension": ".zip",
+      "download_type": "https",
+      "contained_files": {
+        "cta": {
+          "encodings": {
+            "ndvi": {
+              "dtype": "{npdtype=int8}",
+              "_FillValue": "{npint8=127}",
+              "add_offset": "{float=0.0",
+              "chunksizes": "{tuple=1,256,256}",
+              "scale_factor": "{float=0.01}",
+              "missing_value": "{npint8=127}"
+            }
+          },
+          "extension": ".tif",
+          "variables": {
+            "0": "ndvi"
+          },
+          "attributes": {
+            "ndvi": {
+              "units": "unitless",
+              "comment": "Maximum value composite over dekad defined by time_bnds",
+              "long_name": "ndvi",
+              "insertion_order": [
+                "long_name",
+                "units",
+                "comment"
+              ]
+            }
+          },
+          "backup_filename": [
+            "ea{YY}{DK}m"
+          ],
+          "preformat_filename": "ea{YY}{DK}"
+        }
+      },
+      "preformat_filename": "ea{YY}{DK}"
+    }
+  },
+  "metadata": {
+    "source": "EMODIS NDVI C6, https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/fews/web/africa/east/dekadal/emodis/ndvi_c6/temporallysmoothedndvi/downloads/dekadal/",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "version": "C6",
+    "reference": "",
+    "description": "EMODIS NDVI C6 at 250m resolution",
+    "spatial_resolution": "250m",
+    "temporal_resolution": "dekad"
+  },
+  "slice_roi": [
+    [
+      -12.45,
+      22.95
+    ],
+    [
+      21.05,
+      51.95
+    ]
+  ],
+  "timedelta_end": {
+    "hours": 23,
+    "minutes": 59,
+    "seconds": 59
+  },
+  "nc4_indexed_by": "dekad_start",
+  "convert_to_ndvi": true,
+  "timedelta_start": {},
+  "round_coords_lat_lon": true,
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {}
+}
