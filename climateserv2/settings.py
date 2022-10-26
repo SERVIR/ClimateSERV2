@@ -65,7 +65,7 @@ INSTALLED_APPS = [
     'etl_monitor',
     'frontend',
     'system_admin',
-
+    'django_json_widget',
 ]
 MIDDLEWARE = [
     'django.middleware.cache.UpdateCacheMiddleware',

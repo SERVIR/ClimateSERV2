@@ -9,6 +9,8 @@ from .models import ETL_Log
 from .models import ETL_PipelineRun
 from .models import Request_Progress, Request_Log, Track_Usage
 from .models import Parameters
+from django_json_widget.widgets import JSONEditorWidget
+from django.db import models
 
 admin.site.register(Parameters)
 admin.site.register(Config_Setting)
@@ -24,6 +26,9 @@ class ETLDatasetAdmin(admin.ModelAdmin):
 
 @admin.register(ETL_Dataset_V3)
 class ETLDatasetAdmin(admin.ModelAdmin):
+    formfield_overrides = {
+        models.JSONField: {'widget': JSONEditorWidget}
+    }
     list_display = ('dataset_name','dataset_subtype')
 
 @admin.register(Profile)

@@ -1,4 +1,5 @@
 import sys
+import os
 from django.core.management.base import BaseCommand
 from api.models.etl_dataset_model_v3 import ETL_Dataset_V3
 from api.etl.etl_pipeline_v3 import ETL_Pipeline
@@ -24,8 +25,10 @@ class Command(BaseCommand):
                             'If you would like the ETL pipeline to process this dataset, please modify the '
                             'is_pipeline_enabled option for this dataset.'.format(str(dataset), dataset.uuid)))
             except Exception as error:
+                exc_type, exc_obj, exc_tb = sys.exc_info()
+                fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
                 self.stdout.write(self.style.ERROR(
-                    'Uncaught exception. System error message: {}'.format(error)
+                    'Uncaught exception at line number {} in file {}. System error message: {}.'.format(exc_tb.tb_lineno, fname, error)
                 ))
             finally:
                 self.stdout.write(self.style.SUCCESS("ETL Pipeline step for dataset [{}] with uuid [{}] completed. "

@@ -110,7 +110,7 @@ class ETL_Dataset_V3(models.Model):
     dataset_information_help = """This field contains information pertinent to the ClimateSERV NC4 standard for this
                                   dataset."""
     # TODO Better descriptor for dataset_information
-    dataset_information =  models.JSONField("NC4 Attributes Data", help_text=dataset_information_help, default=dict, blank=True)
+    dataset_information = models.JSONField("NC4 Attributes Data", help_text=dataset_information_help, default=dict, blank=True)
 
 
     def __str__(self):
