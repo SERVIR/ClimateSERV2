@@ -355,7 +355,8 @@ class ETL_Pipeline():
                 'MM__Month__Start': self.START_MONTH_MM,
                 'MM__Month__End': self.END_MONTH_MM,
                 'DD__Day__Start': self.START_DAY_DD,
-                'DD__Day__End': self.END_DAY_DD
+                'DD__Day__End': self.END_DAY_DD,
+                'from_last_processed': self.from_last_processed
             })
 
         except etl_exceptions.UnableToReadDatasetException:

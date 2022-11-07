@@ -1,4 +1,6 @@
 import datetime
+from datetime import timedelta
+import glob
 import inspect
 import os
 import shutil
@@ -31,6 +33,7 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
         self.MM__Month__Start = None
         self.YYYY__Year__End = None
         self.YYYY__Year__Start = None
+        self.from_last_processed = False
         self.etl_parent_pipeline_instance = etl_parent_pipeline_instance
         self.class_name = self.__class__.__name__
         self._expected_remote_full_file_paths = []
@@ -45,12 +48,39 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
     def set_optional_parameters(self, params):
         super().set_optional_parameters(params)
         today = datetime.date.today()
-        self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
-        self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
-        self.MM__Month__Start = params.get('MM__Month__Start') or 1
-        self.MM__Month__End = params.get('MM__Month__End') or today.month
-        self.DD__Day__Start = params.get('DD__Day__Start') or 1
-        self.DD__Day__End = params.get('DD__Day__End') or today.day
+        self.from_last_processed = params.get('from_last_processed') or False
+        if self.from_last_processed:
+            forecast_dir = os.path.join(self.etl_parent_pipeline_instance.dataset.source_url, "forecasts")
+            print(str(forecast_dir))
+            list_of_files = sorted(filter(os.path.isfile, glob.glob(forecast_dir + '/*.nc', recursive=False)))
+            print("length of list_of_files: " + str(len(list_of_files)))
+            start_date = datetime.datetime(params.get('YYYY__Year__Start'),
+                                           params.get('MM__Month__Start'),
+                                           params.get('DD__Day__Start'))
+            forecast_adjusted_start = start_date - timedelta(days=len(list_of_files))
+            if len(list_of_files) != 0:
+                print(str(forecast_adjusted_start.year))
+                print(str(forecast_adjusted_start.month))
+                print(str(forecast_adjusted_start.day))
+                self.YYYY__Year__Start = forecast_adjusted_start.year
+                self.MM__Month__Start = forecast_adjusted_start.month
+                self.DD__Day__Start = forecast_adjusted_start.day
+
+                date = os.path.basename(list_of_files[-1]).split('_')[3].split('.')[0]
+                if len(date) > 0:
+                    print(date[:4])
+                    print(date[4:6])
+                    print(date[6:8])
+                    self.YYYY__Year__End = int(date[:4])
+                    self.MM__Month__End = int(date[4:6])
+                    self.DD__Day__End = int(date[6:8])
+        else:
+            self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
+            self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
+            self.MM__Month__Start = params.get('MM__Month__Start') or 1
+            self.MM__Month__End = params.get('MM__Month__End') or today.month
+            self.DD__Day__Start = params.get('DD__Day__Start') or 1
+            self.DD__Day__End = params.get('DD__Day__End') or today.day
 
     def execute__Step__Pre_ETL_Custom(self, uuid):
         print("execute__Step__Pre_ETL_Custom")
@@ -66,22 +96,37 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
 
         # (1) Generate Expected remote file paths
         try:
+            print("in try")
             start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
+            print("created start")
             end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
+            print("past dates")
             filenames = []
             dates = []
 
             # current_domain_path
             # traverse directories (YYYYMM) to get file paths
             for dt in rrule.rrule(rrule.MONTHLY, dtstart=start_date.replace(day=1), until=end_date):
+                print("rrule")
                 current_year = dt.strftime('%Y')
                 current_month = dt.strftime('%m')
                 for file in Path(os.path.join(current_domain_path, current_year + current_month)).glob(
                         'LIS_Africa_daily_*'):
                     file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
                     if start_date <= file_time <= end_date:
+                        print(file.name)
                         filenames.append(file)
                         dates.append(file_time)
+            print("&&&&&&&&&&&&&&&&&&&" + os.path.join(current_domain_path, "forecasts"))
+            for file in Path(os.path.join(current_domain_path, "forecasts")).glob(
+                    'LIS_Africa_daily_*'):
+                print("&&&&&&&&&&&&&&&&&&&")
+                file_time = datetime.datetime.strptime(file.stem.split('_')[-1].split(".")[0], '%Y%m%d')
+                print(file_time.date())
+                if start_date <= file_time <= end_date:
+                    filenames.append(file)
+                    print(file.name)
+                    dates.append(file_time)
 
             for filename, date in zip(filenames, dates):
                 current_year__yyyy_str = "{:0>4d}".format(date.year)
@@ -407,12 +452,17 @@ class ETLDatasetSubtypeAfricaLis(ETL_Dataset_Subtype, ETL_Dataset_Subtype_Interf
                     os.makedirs(os.path.dirname(self.final_load_dir_path), exist_ok=True)
                     ds.to_netcdf(self.final_load_dir_path + expected_granules_object["final_nc4_filename"],
                                  unlimited_dims='time')
+
                     duplicate_nc4_filepath = self.final_load_dir_path.replace(
                         "mnt/climateserv", "mnt/nvmeclimateserv") + expected_granules_object["final_nc4_filename"]
-                    os.makedirs(os.path.dirname(self.final_load_dir_path.replace(
-                        "mnt/climateserv", "mnt/nvmeclimateserv")), exist_ok=True)
-                    shutil.copyfile(self.final_load_dir_path + expected_granules_object["final_nc4_filename"],
-                                    duplicate_nc4_filepath)
+
+                    super()._copy_nc4_file(self.final_load_dir_path + expected_granules_object["final_nc4_filename"],
+                                           duplicate_nc4_filepath)
+
+                    # super._copy_nc4_file(self.final_load_dir_path + expected_granules_object["final_nc4_filename"],
+                    #                      self.final_load_dir_path + "current_run" + expected_granules_object[
+                    #                          "final_nc4_filename"])
+
 
                 except Exception as e:
                     print(e)
