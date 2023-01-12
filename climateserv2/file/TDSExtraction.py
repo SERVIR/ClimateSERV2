@@ -28,32 +28,66 @@ logger = llog.getNamedLogger("request_processor")
 params = Parameters.objects.first()
 
 
+def get_ensemble_dataset(datatype):
+    if EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
+        working_etl_dataset = EnsembleLayer.objects.filter(api_id=int(datatype)).first()
+    else:
+        working_etl_dataset = EnsembleLayer.objects.filter(api_id=int(datatype) - 1).first()
+
+    ensemble_definitions = working_etl_dataset.ensemble_definition["data"]  # should be a list of objects
+    # loop through ensemble definitions to find api_id == datatype
+    current_variable = None
+    for definition in ensemble_definitions:
+        if int(definition["api_id"]) == int(datatype):
+            current_variable = definition["variable"]
+            break
+
+    return {
+        "dataset_name_format": working_etl_dataset.dataset_name_format,
+        "dataset_nc4_variable_name": current_variable,
+        "fast_directory_path": working_etl_dataset.fast_directory_path
+    }
+
+
 def get_filelist(datatype, start_date, end_date):
     working_datalayer = None
+    logger.info("just entered get_filelist")
     try:
         if DataLayer.objects.filter(api_id=int(datatype)).exists():
             working_datalayer = DataLayer.objects.get(api_id=int(datatype))
             working_dataset = working_datalayer.etl_dataset_id
         else:
-            working_dataset = ETL_Dataset.objects.filter(number=int(datatype)).first()
+            working_dataset = get_ensemble_dataset(datatype)
+            logger.info("Got Ensemble Dataset " + str(working_dataset))
             # working_dataset = working_datalayer.etl_dataset_id
     except Exception as e:
-        logger.info("failed to get dataset in get_filelist: " + str(e))
-        print("failed to get dataset in get_filelist: " + str(e))
+        logger.info("******************failed to first get dataset in get_filelist: " + str(e))
+        print("failed first in get_filelist: " + str(e))
         raise e
     try:
-        dataset_name_format = working_dataset.dataset_name_format
+        logger.info("******************")
+        try:
+            dataset_name_format = working_dataset.dataset_name_format
+        except:
+            logger.info("failed in inner exception")
+            dataset_name_format = working_dataset["dataset_name_format"]
     except Exception as e:
-        print("failed to get name format in get_filelist" + str(e))
+        print("failed second in get_filelist" + str(e))
         raise e
     if working_datalayer:
         dataset_nc4_variable_name = working_datalayer.layers
     else:
-        dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
+        try:
+            dataset_nc4_variable_name = working_dataset.dataset_nc4_variable_name
+        except:
+            dataset_nc4_variable_name = working_dataset["dataset_nc4_variable_name"]
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
-    final_load_dir = working_dataset.fast_directory_path
+    try:
+        final_load_dir = working_dataset.fast_directory_path
+    except:
+        final_load_dir = working_dataset["fast_directory_path"]
 
     if not os.path.exists(final_load_dir):
         os.makedirs(final_load_dir)
@@ -137,6 +171,7 @@ def get_filelist(datatype, start_date, end_date):
                         1] + ".250m.10dy." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                     if os.path.exists(name):
                         filelist.append(name)
+    logger.info("heading back!")
     return filelist, dataset_nc4_variable_name
 
 

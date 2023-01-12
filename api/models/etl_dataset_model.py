@@ -1,6 +1,7 @@
 from django.db import models
 import uuid
 
+
 class ETL_Dataset(models.Model):
     uuid = models.CharField(default=uuid.uuid4, editable=True, max_length=40, primary_key=True, auto_created=True)
     #
@@ -99,11 +100,12 @@ class ETL_Dataset(models.Model):
                                                    "testing? (Used only for easy cleanup - DO NOT DEPEND ON FOR "
                                                    "VALIDATION)")
     late_after = models.IntegerField(default=0, help_text="Duration in days")
-    contact_info = models.CharField(blank=True,help_text="Data Source Contact Info", max_length=90)
+    contact_info = models.CharField(blank=True, help_text="Data Source Contact Info", max_length=90)
     ensemble = models.CharField(blank=True, help_text="Ensemble", max_length=90)
     number = models.IntegerField(blank=False, help_text="Datatype number")
-    dataset_name_format =  models.CharField(blank=True, help_text="Dataset file name", max_length=255)
+    dataset_name_format = models.CharField(blank=True, help_text="Dataset file name", max_length=255)
     fast_directory_path = models.TextField('Fast directory Path', default='/mnt/climateserv/process_tmp/fast_chirps/', )
+
     def __str__(self):
         return '{} - {}'.format(self.dataset_name, self.dataset_subtype)
 

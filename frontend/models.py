@@ -49,7 +49,8 @@ class DataLayer(models.Model):
     ui_id = models.CharField(max_length=200, help_text='ID for the UI to use and access in javascript')
     dataset_type = models.ForeignKey(DatasetType, on_delete=models.CASCADE, related_name="datatype")
     dataset_id = models.ForeignKey(DataSet, on_delete=models.CASCADE, related_name="dataset")
-    etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="etl_dataset", blank=True, null=True)
+    etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="etl_dataset", blank=True,
+                                       null=True)
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
     isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
@@ -68,8 +69,8 @@ class DataLayer(models.Model):
 
 class EnsembleLayer(models.Model):
     """Model representing an ensemble layer for the map"""
-    title = models.CharField(max_length=200, help_text='Enter a title which will display in the layer list on the map '
-                                                       'application')
+    title = models.CharField(max_length=200, help_text="""Enter a title which will display in the layer list on the map
+     application""")
     url = models.TextField(help_text="Enter url to the TDS WMS service")
     attribution = models.TextField(help_text="Enter data attribution to display in map UI")
     layers = models.CharField(max_length=200, help_text='Enter layer names from the WMS to display')
@@ -79,9 +80,20 @@ class EnsembleLayer(models.Model):
                                                                      'display')
     ui_id = models.CharField(max_length=200, help_text='Please use lowercase master title + ens + number. IE: nmmeens1')
     master_layer = models.ForeignKey(DataLayer, on_delete=models.CASCADE, related_name="datalayer")
-    etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="ens_etl_dataset", blank=True,
-                                       null=True)
-    api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
+    # remove etl_dataset_id
+    # add something to tie the id and variable information,
+    # models.JSONField?
+    fast_directory_path = models.TextField('Fast directory Path', default='/mnt/climateserv/process_tmp/fast_chirps/', )
+    dataset_name_format = models.CharField(blank=True, help_text="Dataset file name", max_length=255)
+    ensemble_ids_and_variables_help = """This json object must contain the key named data which must be 
+    an array.  Inside the array there must be a list of json objects which contain api_id,and variable"""
+    ensemble_definition = models.JSONField("Ensemble IDs and Variables",
+                                           help_text=ensemble_ids_and_variables_help,
+                                           default=dict,
+                                           blank=True)
+    api_id = models.CharField(max_length=200,
+                              help_text='Enter lowest variable API ID from the above json object',
+                              default="")
 
     def __str__(self):
         name = self.master_layer.title + "_" + self.title

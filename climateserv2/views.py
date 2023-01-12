@@ -551,7 +551,9 @@ def submit_data_request(request):
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
         if from_ui:
             try:
-                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=10)
+                my_id = start_processing.apply_async(args=(dictionary,),
+                                                     queue="tasks",
+                                                     priority=10)
                 logger.info("my_id" + str(my_id))
             except Exception as e:
                 my_id = str(uuid.uuid4())
@@ -564,7 +566,9 @@ def submit_data_request(request):
             logger.info("about to start celery")
             my_progress = 0
             try:
-                my_id = start_processing.apply_async(args=(dictionary,), queue="tasks", priority=1)
+                my_id = start_processing.apply_async(args=(dictionary,),
+                                                     queue="tasks",
+                                                     priority=1)
             except Exception as e:
                 my_id = str(uuid.uuid4())
                 status = "failed"
@@ -580,12 +584,11 @@ def submit_data_request(request):
                     working_datalayer = DataLayer.objects.get(api_id=int(datatype))
                     working_dataset = working_datalayer.etl_dataset_id
                 elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
-                    working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
-                    working_dataset = working_datalayer.etl_dataset_id
+                    working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype))
                 else:
-                    working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype) + 1)
-                    working_dataset = working_datalayer.etl_dataset_id
-            except:
+                    working_dataset = EnsembleLayer.objects.get(api_id=int(datatype) - 1)
+            except Exception as ens_except:
+                logger.error(str(ens_except))
                 my_ds = "Ensemble Layer"
 
             track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
@@ -613,9 +616,10 @@ def submit_data_request(request):
             if DataLayer.objects.filter(api_id=int(datatype)).exists():
                 working_datalayer = DataLayer.objects.get(api_id=int(datatype))
                 working_dataset = working_datalayer.etl_dataset_id
+            elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
+                working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype))
             else:
-                working_datalayer = EnsembleLayer.objects.get(api_id=int(datatype))
-                working_dataset = working_datalayer.etl_dataset_id
+                working_dataset = EnsembleLayer.objects.get(api_id=int(datatype) + 1)
             # my_ds = DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format
 
         except:

@@ -3,11 +3,41 @@ import shutil
 import subprocess
 import logging
 
+from datetime import datetime
 from django.core.management.base import BaseCommand
 from api.etl import etl_exceptions
 from api.models import ETL_Dataset
+from netCDF4 import Dataset
+from os import listdir
+from os.path import isfile, join
 
 logger = logging.getLogger("request_processor")
+
+
+def unix_time(dt):
+    return (dt - datetime.utcfromtimestamp(0)).total_seconds()
+
+
+def get_append_list(pattern_filepath, temp_aggregate_filepath):
+    ds = Dataset(
+        temp_aggregate_filepath,
+        "r", format="NETCDF4")
+    ts = ds.variables['time']
+
+    current_files = [f for f in listdir(pattern_filepath) if isfile(join(pattern_filepath, f))]
+    split_file = current_files[0].split(".")
+    test_files = []
+    for file in current_files:
+        test_files.append(unix_time(datetime.strptime(file.split(".")[1], '%Y%m%dT%H%M%SZ')))
+
+    new_file_dates = set(test_files)
+    filtered_timesteps = list(filter(lambda t: t not in ts[:], new_file_dates))
+    returnable_files = []
+    for tm in filtered_timesteps:
+        split_file[1] = datetime.fromtimestamp(tm).strftime('%Y%m%dT%H%M%SZ')
+        returnable_files.append(os.path.join(pattern_filepath, ".".join(split_file)))
+
+    return returnable_files
 
 
 class Command(BaseCommand):
@@ -42,6 +72,8 @@ class Command(BaseCommand):
         # temp_aggregate_path = etl_dataset.temp_working_dir
         temp_aggregate_filepath = etl_dataset.temp_working_dir
         pattern_filepath = etl_dataset.final_load_dir
+        # pattern_filepath = os.path.join(etl_dataset.final_load_dir, "current_run")
+        # current_run_path = os.path.join(etl_dataset.final_load_dir, "current_run")
         temp_fast_path = etl_dataset.fast_directory_path  # '/mnt/climateserv/process_tmp/'
 
         pattern_filename = ''
@@ -138,9 +170,14 @@ class Command(BaseCommand):
                 os.makedirs(temp_aggregate_path, mode=0o777, exist_ok=True)
             temp_aggregate_filepath = os.path.join(temp_aggregate_path, aggregate_filename.format(year_yyyy))
 
+
+            # temp_aggregate_filepath = os.path.join(temp_fast_path, aggregate_filename.format(year_yyyy))
+            # append_list = " ".join(get_append_list(current_run_path, temp_aggregate_filepath))
+
         if ncrcat_options == '':
             raise Exception()
         command_str = f'sudo ncrcat {ncrcat_options} -O {pattern_filepath} {temp_aggregate_filepath}'
+        # command_str = f'sudo ncrcat {ncrcat_options} --rec_apn {pattern_filepath} {temp_aggregate_filepath}'
         if os.name == 'nt':
             command_str = f'ncra -Y {command_str}'
 
