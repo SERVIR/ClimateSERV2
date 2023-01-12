@@ -2186,11 +2186,17 @@ function handleSourceSelected(which, edit, edit_init_id) {
             $("#forecasttomenu").find('option').remove();
             // load the ensemble selection tools
 
+            const input_elements = $("[id^=" + id + "]");
+            const vals = [];
 
-            $("[id^=" + id + "]").each(function (index, item) {
-                const temp = getLayer(item.id);
-                $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
-            });
+          // Populate the array
+          for(let i = 0, l = input_elements.length; i < l; i++)
+            vals.push(input_elements[i].outerHTML);
+          vals.sort();
+           for(let j = 0; j < vals.length;  j++) {
+               let temp = getLayer($(vals[j])[0].id);
+               $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
+           }
         }
         if (edit) {
             configure_nmme(climateModelInfo, true, edit_init_id);
