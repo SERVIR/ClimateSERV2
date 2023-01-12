@@ -9,17 +9,21 @@ from .models import Request_Progress, Request_Log, Track_Usage
 from .models import Parameters
 from .models import WMSUsage
 
-admin.site.register(WMSUsage)
+
 admin.site.register(Parameters)
 admin.site.register(Config_Setting)
 
 
-# admin.site.register(ETL_Dataset)
+@admin.register(WMSUsage)
+class EWMSUsageAdmin(admin.ModelAdmin):
+    list_display = (
+        'unique_id', 'ui_id', 'originating_IP', 'country_ISO', 'time_requested')
+
 
 @admin.register(ETL_Dataset)
 class ETLDatasetAdmin(admin.ModelAdmin):
     list_display = (
-    'dataset_name', 'final_load_dir', 'dataset_nc4_variable_name', 'late_after', 'contact_info', 'source_url')
+        'dataset_name', 'final_load_dir', 'dataset_nc4_variable_name', 'late_after', 'contact_info', 'source_url')
 
 
 @admin.register(Profile)
