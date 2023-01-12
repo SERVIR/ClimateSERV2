@@ -18,6 +18,9 @@ admin.site.register(Config_Setting)
 class EWMSUsageAdmin(admin.ModelAdmin):
     list_display = (
         'unique_id', 'ui_id', 'ip_location', 'country_ISO', 'time_requested')
+    list_filter = ('ui_id', 'originating_IP', 'country_ISO')
+    search_fields = ('unique_id', 'dataset', 'originating_IP')
+    date_hierarchy = "time_requested"
 
     def ip_location(self, obj):
         return format_html(
