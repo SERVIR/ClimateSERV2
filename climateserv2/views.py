@@ -28,6 +28,7 @@ from .file import TDSExtraction
 from django.contrib.gis.geoip2 import GeoIP2
 from django.forms.models import model_to_dict
 import climateserv2.geo.shapefile.readShapesfromFiles as sF
+from api.models import WMSUsage
 
 Request_Log = apps.get_model('api', 'Request_Log')
 Request_Progress = apps.get_model('api', 'Request_Progress')
@@ -141,7 +142,6 @@ def get_country_code(r):
 # To get a list of shapefile feature types supported by the system
 @csrf_exempt
 def get_feature_layers(request):
-
     logger.info("Getting Feature Layers")
     track_usage = Track_Usage(unique_id=request.POST.get("id", request.GET.get("id", None)),
                               originating_IP=get_client_ip(request),
@@ -476,7 +476,34 @@ def run_etl(request):
                  "--END_MONTH_MM", end_month, "--START_DAY_DD", start_day, "--END_DAY_DD", end_day])
             proc.wait()
 
-    return process_callback(request, str(json.dumps({"message" : "success", "unique_id": "internal"})), "application/json")
+    return process_callback(request, str(json.dumps({"message": "success", "unique_id": "internal"})),
+                            "application/json")
+
+
+@never_cache
+@csrf_exempt
+def track_wms(request):
+    logger.debug("Tracking WMS call")
+    layer_id = request.POST.get("layerID", "oops")
+    logger.debug("LayerID = " + layer_id)
+
+    track_wms_usage = WMSUsage(unique_id=str(uuid.uuid4()),
+                               originating_IP=get_client_ip(request),
+                               country_ISO=get_country_code(request),
+                               time_requested=timezone.now(),
+                               ui_id=layer_id
+                               )
+
+    track_wms_usage.save()
+
+    callback = request.POST.get("callback", request.GET.get("callback"))
+    if callback:
+        http_response = HttpResponse(callback + "(" + json.dumps({"success": True}) + ")",
+                                     content_type="application/json")
+    else:
+        http_response = HttpResponse(json.dumps({"success": True}))
+
+    return http_response
 
 
 # Submit a data request for processing
@@ -513,7 +540,8 @@ def submit_data_request(request):
         track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=DataLayer.objects.get(api_id=int(datatype)).etl_dataset_id.dataset_name_format,
+                                  dataset=DataLayer.objects.get(
+                                      api_id=int(datatype)).etl_dataset_id.dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   calculation=calculation, request_type=request.method,

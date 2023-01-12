@@ -9,3 +9,4 @@ from .storage_review_model import Storage_Review
 from .run_etl_model import Run_ETL
 from .profile_model import Profile
 from .parameters_model import Parameters
+from .wms_usage_model import WMSUsage

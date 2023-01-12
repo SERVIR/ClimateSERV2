@@ -7,18 +7,24 @@ from .models import ETL_Log
 from .models import ETL_PipelineRun
 from .models import Request_Progress, Request_Log, Track_Usage
 from .models import Parameters
+from .models import WMSUsage
 
+admin.site.register(WMSUsage)
 admin.site.register(Parameters)
 admin.site.register(Config_Setting)
-#admin.site.register(ETL_Dataset)
+
+
+# admin.site.register(ETL_Dataset)
 
 @admin.register(ETL_Dataset)
 class ETLDatasetAdmin(admin.ModelAdmin):
-    list_display = ('dataset_name','final_load_dir','dataset_nc4_variable_name','late_after', 'contact_info', 'source_url')
+    list_display = (
+    'dataset_name', 'final_load_dir', 'dataset_nc4_variable_name', 'late_after', 'contact_info', 'source_url')
+
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
-    list_display = ('user','etl_alerts','feedback_alerts','storage_alerts')
+    list_display = ('user', 'etl_alerts', 'feedback_alerts', 'storage_alerts')
 
 
 @admin.register(ETL_Granule)
@@ -62,7 +68,7 @@ class Track_UsageAdmin(admin.ModelAdmin):
         'end_date',
         'file_size',
         'ui_request')
-    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation','country_ISO')
+    list_filter = ('ui_request', 'metadata_request', 'dataset', 'calculation', 'country_ISO')
     search_fields = ('unique_id', 'dataset', 'originating_IP')
     date_hierarchy = "time_requested"
 
@@ -82,6 +88,7 @@ class Track_UsageAdmin(admin.ModelAdmin):
                 "<a href='javascript:open_aoi({})'>Display AOI</a>",
                 obj.id)
 
+
 @admin.register(Storage_Review)
 class Storage_ReviewAdmin(admin.ModelAdmin):
     list_display_links = None
@@ -92,14 +99,18 @@ class Storage_ReviewAdmin(admin.ModelAdmin):
         'free_space',
         'last_notified_time',
         'threshold')
+
     def changelist_view(self, request, extra_context=None):
         extra_context = {'title': 'Storage space statistics'}
         return super(Storage_ReviewAdmin, self).changelist_view(request, extra_context=extra_context)
 
+
 @admin.register(Run_ETL)
 class Run_ETLAdmin(admin.ModelAdmin):
     list_display = (
-        'etl','start_year','end_year', 'start_month','end_month','start_day','end_day','from_last_processed','merge_periodically')
+        'etl', 'start_year', 'end_year', 'start_month', 'end_month', 'start_day', 'end_day', 'from_last_processed',
+        'merge_periodically')
+
     def start_month(self, obj):
         if obj.from_last_processed == "true":
             return ""
@@ -110,6 +121,6 @@ class Run_ETLAdmin(admin.ModelAdmin):
             'show_save_and_continue': False,
             'show_save_and_add_another': False,
             'show_delete': False,
-            'from_etl':True
+            'from_etl': True
         })
         return super().render_change_form(request, context, add, change, form_url, obj)

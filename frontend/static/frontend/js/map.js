@@ -601,6 +601,21 @@ function toggleLayer(which) {
         map.removeLayer(overlayMaps[which]);
     } else {
         map.addLayer(overlayMaps[which]);
+        //ajax to track_wms with layerID
+        let formData = new FormData();
+        formData.append(
+            "layerID", which.replace("TimeLayer", "")
+        );
+        $.ajax({
+                url: "/api/track_wms/",
+                type: "POST",
+                headers: {'X-CSRFToken': csrftoken},
+                processData: false,
+                contentType: false,
+                async: true,
+                crossDomain: true,
+                data: formData,
+            }).fail(console.log("wms tracking failed"));
     }
     let hasLayer = false;
     let available_times = [];
