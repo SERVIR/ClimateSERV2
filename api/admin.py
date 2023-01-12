@@ -17,7 +17,23 @@ admin.site.register(Config_Setting)
 @admin.register(WMSUsage)
 class EWMSUsageAdmin(admin.ModelAdmin):
     list_display = (
-        'unique_id', 'ui_id', 'originating_IP', 'country_ISO', 'time_requested')
+        'unique_id', 'ui_id', 'ip_location', 'country_ISO', 'time_requested')
+
+    def ip_location(self, obj):
+        return format_html(
+            "<a href='https://www.ip2location.com/demo/{}' target='_blank'>{}</a>",
+            obj.originating_IP,
+            obj.originating_IP)
+
+    ip_location.admin_order_field = 'originating_IP'
+
+    def aoi_button(self, obj):
+        if obj.AOI == '{}':
+            return format_html("<span>No AOI</span>")
+        else:
+            return format_html(
+                "<a href='javascript:open_aoi({})'>Display AOI</a>",
+                obj.id)
 
 
 @admin.register(ETL_Dataset)
