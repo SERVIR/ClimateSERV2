@@ -219,7 +219,8 @@
                         {{ layer.yAxis_Special_Formatting | safe }}{% else %} null {% endif %},
                     point_format: {% if layer.graph_point_Special_Formatting %}
                         {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %},
-                    is_ensemble: false
+                    is_ensemble: false,
+
                 })
             {% endif %}
         {% endfor %}
@@ -738,6 +739,7 @@
                                 id="layer_filter"/>
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
+                                {% if layer.hasVisualization %}
                                 <li id="{{ layer.ui_id }}_node"
                                     style="display: {% if layer.hasVisualization %} block {% else %} none {% endif %}">
                                     <div class="rst__nodeContent" style="left: 44px">
@@ -823,6 +825,7 @@
                                         </div>
                                     </div>
                                 </li>
+                                {% endif %}
                             {% endfor %}
                         </ol>
                     </div>

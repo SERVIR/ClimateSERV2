@@ -33,6 +33,10 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         today = datetime.date.today()
         self.YYYY__Year__Start = params.get('YYYY__Year__Start') or today.year
         self.YYYY__Year__End = params.get('YYYY__Year__End') or today.year
+        self.MM__Month__Start = params.get('MM__Month__Start') or today.year
+        self.DD__Day__Start = params.get('DD__Day__Start') or today.year
+        self.MM__Month__End = params.get('MM__Month__End') or today.year
+        self.DD__Day__End = params.get('DD__Day__End') or today.year
 
     def execute__Step__Pre_ETL_Custom(self, uuid):
         ret__function_name = sys._getframe().f_code.co_name
@@ -49,24 +53,46 @@ class ETL_Dataset_Subtype_ESI_SERVIR(ETL_Dataset_Subtype, ETL_Dataset_Subtype_In
         try:
 
             start_year = self.YYYY__Year__Start
+            current_year = start_year
             end_year = self.YYYY__Year__End
+
+            start_date = datetime.datetime(self.YYYY__Year__Start, self.MM__Month__Start, self.DD__Day__Start)
+            end_date = datetime.datetime(self.YYYY__Year__End, self.MM__Month__End, self.DD__Day__End)
 
             filenames = []
             dates = []
 
-            for year in range(start_year, end_year + 1):
-                response = requests.get(current_root_http_path + '/' + str(year))
-                soup = BeautifulSoup(response.text, 'html.parser')
+            while current_year <= end_year:
                 expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
+                response = requests.get(
+                    "https://gis1.servirglobal.net/data/esi/" + expected_file_name_wk_number_string + "/" + str(
+                        current_year))
+                soup = BeautifulSoup(response.text, 'html.parser')
+
                 for _, link in enumerate(soup.findAll('a')):
-                    href = link.get('href').replace('_.tif', '.tif')
-                    if href.endswith('.tif'):
-                        _, wk, rest = href.split('_')
+                    if link.get('href').endswith('.tif'):
+                        _, wk, rest = link.get('href').split('_')
                         if wk == expected_file_name_wk_number_string:
-                            date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),'%j %Y')
-                            text = link.get_text().replace('_.tif', '.tif')
-                            filenames.append(text)
-                            dates.append(date)
+                            date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),
+                                                              '%j %Y')
+                            if start_date <= date <= end_date:
+                                filenames.append(link.get_text())
+                                dates.append(date)
+                current_year = current_year + 1
+
+            # for year in range(start_year, end_year + 1):
+            #     response = requests.get(current_root_http_path + '/' + str(year))
+            #     soup = BeautifulSoup(response.text, 'html.parser')
+            #     expected_file_name_wk_number_string = '4WK' if self.mode == '4week' else '12WK'
+            #     for _, link in enumerate(soup.findAll('a')):
+            #         href = link.get('href').replace('_.tif', '.tif')
+            #         if href.endswith('.tif'):
+            #             _, wk, rest = href.split('_')
+            #             if wk == expected_file_name_wk_number_string:
+            #                 date = datetime.datetime.strptime('{} {}'.format(rest[4:].replace('.tif', ''), rest[:4]),'%j %Y')
+            #                 text = link.get_text().replace('_.tif', '.tif')
+            #                 filenames.append(text)
+            #                 dates.append(date)
 
             for filename, date in zip(filenames, dates):
 
