@@ -607,15 +607,15 @@ function toggleLayer(which) {
             "layerID", which.replace("TimeLayer", "")
         );
         $.ajax({
-                url: "/api/track_wms/",
-                type: "POST",
-                headers: {'X-CSRFToken': csrftoken},
-                processData: false,
-                contentType: false,
-                async: true,
-                crossDomain: true,
-                data: formData,
-            }).fail(console.log("wms tracking failed"));
+            url: "/api/track_wms/",
+            type: "POST",
+            headers: {'X-CSRFToken': csrftoken},
+            processData: false,
+            contentType: false,
+            async: true,
+            crossDomain: true,
+            data: formData,
+        }).fail(console.log("wms tracking failed"));
     }
     let hasLayer = false;
     let available_times = [];
@@ -633,7 +633,7 @@ function toggleLayer(which) {
     if (hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
         let saved_range = false;
-        if ('range' in animation_range){
+        if ('range' in animation_range) {
             const startTime = animation_range.range.startTime;
             const endTime = animation_range.range.endTime;
             map.timeDimension.setLowerLimit(startTime);
@@ -642,13 +642,12 @@ function toggleLayer(which) {
             $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
                 " to " + moment(endTime).utc().format('MM/DD/YYYY'));
             saved_range = true;
-        }
-        else if (!map.timeDimension.getLowerLimit()) {
+        } else if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
         }
-        if (! saved_range) {
+        if (!saved_range) {
             $("#slider-range-txt").text(moment.utc(layer_limits.min).format('MM/DD/YYYY') +
                 " to " + moment.utc(layer_limits.max).format('MM/DD/YYYY'));
         }
@@ -1392,10 +1391,10 @@ function isComplete() {
     return isReady;
 }
 
-function get_aoi_area(active_layer){
+function get_aoi_area(active_layer) {
     let multi_area = 0;
     active_layer.getLayers().forEach(multi_layer => {
-        if( active_layer.getLayers()[0] instanceof L.Marker){
+        if (active_layer.getLayers()[0] instanceof L.Marker) {
             multi_area += 0;
         } else {
             multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
@@ -1429,28 +1428,28 @@ function verify_ready() {
                 console.info(data.errMsg);
             } else {
                 const full_area = (JSON.parse(data)).area;
-                if(full_area > 10000000) {
+                if (full_area > 10000000) {
                     is_aoi_too_large = true;
                     selectAOI('select');
                     verify_ready_end(true);
-                } else{
+                } else {
                     verify_ready_end(false);
                 }
             }
         });
         is_geometry = false;
-    } else if(drawnItems.getLayers().length > 0){
-        if(get_aoi_area(drawnItems) > 10000000){
+    } else if (drawnItems.getLayers().length > 0) {
+        if (get_aoi_area(drawnItems) > 10000000) {
             is_aoi_too_large = true;
         }
-    } else if(uploadLayer && uploadLayer.getLayers().length > 0){
-        if(get_aoi_area(uploadLayer) > 10000000){
+    } else if (uploadLayer && uploadLayer.getLayers().length > 0) {
+        if (get_aoi_area(uploadLayer) > 10000000) {
             is_aoi_too_large = true;
             selectAOI('upload');
         }
     }
 
-    if(is_geometry){
+    if (is_geometry) {
         verify_ready_end(is_aoi_too_large);
     }
 }
@@ -1478,7 +1477,7 @@ function verify_ready_end(is_aoi_too_large) {
     const geometry = $("#geometry");
     const download_aoi_holder = $("#download_aoi_holder");
     let disabled = !(geometry.text().trim() !== '{"type":"FeatureCollection","features":[]}' && ready);
-    if (is_aoi_too_large){
+    if (is_aoi_too_large) {
         disabled = true;
     }
     if (requestTypeSelect.val() === 'monthly_analysis' &&
@@ -1533,7 +1532,7 @@ function verify_ready_end(is_aoi_too_large) {
     } catch (e) {
         console.log(e);
     }
-    if (is_aoi_too_large){
+    if (is_aoi_too_large) {
         alert("The AOI you have created is too large, there is a limit of 10,000,000 km2.  \r\n " +
             "Please alter the AOI to proceed.");
     }
@@ -2204,14 +2203,14 @@ function handleSourceSelected(which, edit, edit_init_id) {
             const input_elements = $("[id^=" + id + "]");
             const vals = [];
 
-          // Populate the array
-          for(let i = 0, l = input_elements.length; i < l; i++)
-            vals.push(input_elements[i].outerHTML);
-          vals.sort();
-           for(let j = 0; j < vals.length;  j++) {
-               let temp = getLayer($(vals[j])[0].id);
-               $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
-           }
+            // Populate the array
+            for (let i = 0, l = input_elements.length; i < l; i++)
+                vals.push(input_elements[i].outerHTML);
+            vals.sort();
+            for (let j = 0; j < vals.length; j++) {
+                let temp = getLayer($(vals[j])[0].id);
+                $("#ensemblemenu").append('<option value="' + temp.app_id + '">' + temp.title + '</option>');
+            }
         }
         if (edit) {
             configure_nmme(climateModelInfo, true, edit_init_id);
@@ -2251,7 +2250,7 @@ function rebuildGraph() {
  */
 function inti_chart_dialog(conversion, isMonthly) {
     let default_selected = false;
-    if(!conversion){
+    if (!conversion) {
         conversion = "default";
         default_selected = "selected";
     }
@@ -2262,16 +2261,16 @@ function inti_chart_dialog(conversion, isMonthly) {
     let dialog_html = '<div style="height:calc(100% - 69px)"><div id="chart_holder"></div></div>';
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     let display_options = isMonthly ? "hidden" : "visible";
-    dialog_html += '<div id="graph-options" class="graph-options" style="visibility:'+ display_options +'">';
+    dialog_html += '<div id="graph-options" class="graph-options" style="visibility:' + display_options + '">';
     dialog_html += '<div id="interval-options" class="left-graph-options">'
-        dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
-    dialog_html += '<option value="" '+default_selected+'>Default</option>';
-    const is_monthly = conversion === "monthly" ? "selected": "";
+    dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
+    dialog_html += '<option value="" ' + default_selected + '>Default</option>';
+    const is_monthly = conversion === "monthly" ? "selected" : "";
     dialog_html += '<option value="monthly" ' + is_monthly + '>Monthly</option>';
-    const is_yearly = conversion === "yearly" ? "selected": "";
+    const is_yearly = conversion === "yearly" ? "selected" : "";
     dialog_html += '<option value="yearly" ' + is_yearly + '>Yearly</option>';
     dialog_html += '</select>';
-     dialog_html += '</div>';
+    dialog_html += '</div>';
     dialog_html += '<div id="multi-switch-panel" style="visibility: hidden; " class="right-graph-options">';
 
     dialog_html += 'Simple Axis <label class="switch">';
@@ -2395,9 +2394,9 @@ function configure_additional_chart(i, colors, conversion) {
     let build_yAxis = simpleAxis ? "simple" : "yaxis-" + i;
 
     let final_data;
-    if(conversion){
+    if (conversion) {
         final_data = convert_to_interval(multiQueryData[i].data, multiQueryData[0].operation, conversion);
-    } else{
+    } else {
         final_data = multiQueryData[i].data;
     }
 
@@ -2428,51 +2427,50 @@ function configure_additional_chart(i, colors, conversion) {
 
 //change this to take conversion parameter monthly or yearly
 // fix name of function add logic for yearly
-function convert_to_interval(data, calculation, interval){
-	const monthly_data = [];
-	const temp_data = {};
-	for(let i =0; i < data.length; i++)
-	{
+function convert_to_interval(data, calculation, interval) {
+    const monthly_data = [];
+    const temp_data = {};
+    for (let i = 0; i < data.length; i++) {
         let date_key;
-        if(interval === "monthly") {
+        if (interval === "monthly") {
             date_key = (moment.utc(data[i][0]).format('MMM')) + " " + moment.utc(data[i][0]).year();
-        } else if(interval === "yearly"){
+        } else if (interval === "yearly") {
             date_key = moment.utc(data[i][0]).year();
         }
-		if(date_key in temp_data){
-			temp_data[date_key].push(data[i][1]);
-		} else {
-			temp_data[date_key] = [data[i][1]];
-		}
-	}
-	for (let key in temp_data) {
+        if (date_key in temp_data) {
+            temp_data[date_key].push(data[i][1]);
+        } else {
+            temp_data[date_key] = [data[i][1]];
+        }
+    }
+    for (let key in temp_data) {
         if (temp_data.hasOwnProperty(key)) {
-			var max = temp_data[key][0];
-			var min = temp_data[key][0];
-			var sum = temp_data[key][0];
-			for (var i = 1; i < temp_data[key].length; i++) {
-				if (temp_data[key][i] > max) {
-					max = temp_data[key][i];
-				}
-				if (temp_data[key][i] < min) {
-					min = temp_data[key][i];
-				}
-				sum = sum + temp_data[key][i];
-			}
-			switch(calculation){
-				case "avg":
-					monthly_data.push([Date.parse(key), sum/temp_data[key].length]);
-					break;
-				case "min":
-					monthly_data.push([Date.parse(key), min]);
-					break;
-				case "max":
-					monthly_data.push([Date.parse(key), max]);
-					break;
-			}
-		}
-	}
-	return monthly_data;
+            var max = temp_data[key][0];
+            var min = temp_data[key][0];
+            var sum = temp_data[key][0];
+            for (var i = 1; i < temp_data[key].length; i++) {
+                if (temp_data[key][i] > max) {
+                    max = temp_data[key][i];
+                }
+                if (temp_data[key][i] < min) {
+                    min = temp_data[key][i];
+                }
+                sum = sum + temp_data[key][i];
+            }
+            switch (calculation) {
+                case "avg":
+                    monthly_data.push([Date.parse(key), sum / temp_data[key].length]);
+                    break;
+                case "min":
+                    monthly_data.push([Date.parse(key), min]);
+                    break;
+                case "max":
+                    monthly_data.push([Date.parse(key), max]);
+                    break;
+            }
+        }
+    }
+    return monthly_data;
 }
 
 /**
@@ -2510,9 +2508,9 @@ function multi_chart_builder(conversion) {
         verticalAlign: 'middle'
     };
     let final_data;
-    if(conversion){
+    if (conversion) {
         final_data = convert_to_interval(multiQueryData[0].data, multiQueryData[0].operation, conversion);
-    } else{
+    } else {
         final_data = multiQueryData[0].data;
     }
 
@@ -2528,7 +2526,7 @@ function multi_chart_builder(conversion) {
                 pointFormatter: function () {
                     return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
                 },
-                xDateFormat: conversion === "monthly" ? "%b - %Y": ""
+                xDateFormat: conversion === "monthly" ? "%b - %Y" : ""
             }
     }];
 
@@ -2590,7 +2588,7 @@ function multi_chart_builder(conversion) {
 
     if (multiQueryData.length > 1) {
         for (let i = 1; i < multiQueryData.length; i++) {
-            configure_additional_chart(i, colors, (conversion||null));
+            configure_additional_chart(i, colors, (conversion || null));
         }
         $('#multi-switch-panel').css('visibility', 'visible');
     }
@@ -3392,13 +3390,14 @@ function open_tour() {
     tour.start(true);
 }
 
+let started_tour;
 /**
  * Calls initMap
  *
  * @event map-ready
  */
 $(function () {
-    let started_tour = false;
+    started_tour = false;
     try {
         init_tour();
         tour.init();
@@ -3412,6 +3411,16 @@ $(function () {
     } catch (e) {
         console.log(e);
     }
+    map = L.map("servirmap", {
+        zoom: 3,
+        center: [38.0, 15.0],
+    });
+    baseLayers = getCommonBaseLayers(map); // use baselayers.js to add, remove, or edit
+    L.control.layers(baseLayers).addTo(map);
+});
+
+function complete_load() {
+    map.remove();
     initMap();
     if (started_tour) {
         try {
@@ -3487,7 +3496,7 @@ $(function () {
         $("#dialog").dialog('close');
     });
     verify_range();
-});
+}
 
 /**
  * load_queried_layers

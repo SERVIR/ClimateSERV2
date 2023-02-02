@@ -37,6 +37,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = data["SECRET_KEY"]
 
+reCAPTCHA_KEY = data["reCAPTCHA_KEY"]
+reCAPTCHA_V2_KEY = data["reCAPTCHA_V2_KEY"]
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = json.loads((data["DEBUG"]).lower())
 

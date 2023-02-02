@@ -36,10 +36,130 @@
     <link rel="stylesheet"
           href="{% static 'frontend/css/bootstrap-tour-standalone.min.css' %}"
     />
+    <script src="https://www.google.com/recaptcha/api.js?render=6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4"></script>
 
+    <script>
+
+        grecaptcha.ready(function () {
+            grecaptcha.execute('6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4', {action: 'page_load'}).then(function (token) {
+                send_verification(token);
+            });
+        });
+
+        function send_verification(token, version) {
+            let formData = new FormData();
+            formData.append(
+                "g-recaptcha-response", token
+            );
+            if (version === "V2") {
+                formData.append(
+                    "version", "V2"
+                );
+            }
+            $.ajax({
+                url: "/confirm-captcha",
+                type: "POST",
+                headers: {'X-CSRFToken': getCookie('csrftoken')},
+                processData: false,
+                contentType: false,
+                async: true,
+                crossDomain: true,
+                data: formData,
+                success: function (response) {
+                    // if score, check value < .5 then open v2 verification
+                    response = JSON.parse(response);
+                    temp = response;
+                    if (response.success && response.score) {
+                        if (response.score < .5) {
+                            $("#page-cover").show();
+                            $("#verifying_human").remove()
+                            grecaptcha.render('captcha_div', {
+                                'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
+                                'callback': verifyCallback
+                            });
+                        } else {
+                            console.log("Valid v3");
+                            $("#verifying_human").remove()
+                            complete_load();
+                        }
+                    } else {
+                        if (response.success) {
+                            console.log("V2 success");
+                            $("#page-cover").hide();
+                            $("#captcha_div").hide();
+                            $("#verifying_human").remove()
+                            complete_load();
+                        } else {
+                            console.log("Disable ClimateSERV");
+                        }
+                    }
+                    console.log(response);
+                },
+                fail: function (response) {
+                    console.log("captcha failed")
+                }
+            });
+        }
+
+        function verifyCallback(response) {
+            send_verification(response, "V2");
+        }
+
+        let temp;
+    </script>
+    <style>
+        .captcha_center {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2002;
+        }
+
+        #page-cover {
+            display: none;
+            position: fixed;
+            padding: 0;
+            margin: 0;
+
+            top: 0;
+            left: 0;
+
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.5);
+            z-index: 2001;
+        }
+
+        .climate-copy {
+            right: 80px;
+        }
+
+        .grecaptcha-badge {
+            transform: scale(0.80);
+            transform-origin: 0 0;
+            bottom: -12px !important;
+            right: -200px !important;
+        }
+
+        .grecaptcha-badge:hover {
+            width: 256px !important;
+            right: -50px !important;
+        }
+
+        #verifying_human{
+            border:2px solid #ffffff;
+            border-radius: 10px;
+            background-color: #ffffffED;
+            padding:100px;
+            font-size: 2em;
+        }
+    </style>
 {% endblock %}
 
 {% block content %}
+    <div id="captcha_div" class="captcha_center"></div>
+    <div id="page-cover"></div>
     <script>
         const help_link = "{% url 'ClimateSERV_UI:help' %}";
         const static_url = "{% static '' %}";
@@ -729,7 +849,7 @@
                     {#                    </div>#}
                 </div>
             </div>
-
+            <h1 class="captcha_center" id="verifying_human">Verifying Human</h1>
             <div id="servirmap" class="sidebar-map"></div>
         </div>
 
@@ -756,7 +876,7 @@
             integrity="sha512-37T7leoNS06R80c8Ulq7cdCDU5MNQBwlYoy1TX/WUsLFC2eYNqtKlV0QjH7r8JpG/S0GUMZwebnVFLPd6SU5yg=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery-validation@1.19.3/dist/additional-methods.min.js"></script>
-    <script src="{% static 'frontend/js/leaflet.js'%}"></script>
+    <script src="{% static 'frontend/js/leaflet.js' %}"></script>
     <script type="text/javascript" src="{% static 'frontend/js/leaflet.draw.js' %}"></script>
     <script
             type="text/javascript"
@@ -771,10 +891,10 @@
             type="text/javascript"
             src="https://cdn.jsdelivr.net/npm/iso8601-js-period@0.2.1/iso8601.min.js"
     ></script>
-    <script src="{% static 'frontend/js/highcharts.js'%}"></script>
-    <script src="{% static 'frontend/js/modules/exporting.js'%}"></script>
-    <script src="{% static 'frontend/js/modules/export-data.js'%}"></script>
-    <script src="{% static 'frontend/js/modules/accessibility.js'%}"></script>
+    <script src="{% static 'frontend/js/highcharts.js' %}"></script>
+    <script src="{% static 'frontend/js/modules/exporting.js' %}"></script>
+    <script src="{% static 'frontend/js/modules/export-data.js' %}"></script>
+    <script src="{% static 'frontend/js/modules/accessibility.js' %}"></script>
     <script src="{% static 'frontend/js/map-layers.js' %}"></script>
     <script src="{% static 'frontend/js/base-layers.js' %}"></script>
     <script
