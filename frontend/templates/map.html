@@ -52,7 +52,6 @@
                         });
                     });
                 } else {
-                    alert("got bot");
                     $("#page-cover").show();
                     $("#verifying_human").hide()
                     grecaptcha.ready(function () {
@@ -61,7 +60,6 @@
                             'callback': verifyCallback
                         });
                     });
-                    alert("opened clicker?");
                 }
             })
             .catch((error) => console.error(error))
