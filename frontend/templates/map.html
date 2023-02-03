@@ -55,9 +55,11 @@
                     alert("got bot");
                     $("#page-cover").show();
                     $("#verifying_human").hide()
-                    grecaptcha.render('captcha_div', {
-                        'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
-                        'callback': verifyCallback
+                    grecaptcha.ready(function () {
+                        grecaptcha.render('captcha_div', {
+                            'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
+                            'callback': verifyCallback
+                        });
                     });
                     alert("opened clicker?");
                 }
