@@ -46,6 +46,7 @@
             });
         });
 
+
         function send_verification(token, version) {
             let formData = new FormData();
             formData.append(
@@ -70,7 +71,7 @@
                     response = JSON.parse(response);
                     temp = response;
                     if (response.success && response.score) {
-                        if (response.score < .5) {
+                        if (response.score < .8) {
                             $("#page-cover").show();
                             $("#verifying_human").remove()
                             grecaptcha.render('captcha_div', {
@@ -78,6 +79,7 @@
                                 'callback': verifyCallback
                             });
                         } else {
+                            alert(response.score);
                             console.log("Valid v3");
                             $("#verifying_human").remove()
                             complete_load();
