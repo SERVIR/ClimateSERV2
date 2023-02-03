@@ -5,6 +5,7 @@ import requests
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 
 from climateserv2 import settings
 from climateserv2.views import get_nmme_info
@@ -55,7 +56,7 @@ def help_center(request):
         'datasets': DataSet.objects.all()
     })
 
-
+@csrf_exempt
 def confirm_captcha(request):
     version = request.POST.get('version', '')
     if version == '':
