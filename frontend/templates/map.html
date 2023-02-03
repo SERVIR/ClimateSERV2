@@ -53,7 +53,7 @@
                     });
                 } else {
                     $("#page-cover").show();
-                    $("#verifying_human").remove()
+                    $("#verifying_human").hide()
                     grecaptcha.render('captcha_div', {
                         'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
                         'callback': verifyCallback
@@ -89,14 +89,14 @@
                     if (response.success && response.score) {
                         if (response.score < .8) {
                             $("#page-cover").show();
-                            $("#verifying_human").remove()
+                            $("#verifying_human").hide()
                             grecaptcha.render('captcha_div', {
                                 'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
                                 'callback': verifyCallback
                             });
                         } else {
                             console.log("Valid v3");
-                            $("#verifying_human").remove()
+                            $("#verifying_human").hide()
                             complete_load();
                         }
                     } else {
@@ -104,9 +104,11 @@
                             console.log("V2 success");
                             $("#page-cover").hide();
                             $("#captcha_div").hide();
-                            $("#verifying_human").remove()
+                            $("#verifying_human").hide();
                             complete_load();
                         } else {
+                            $("#verifying_human").show();
+                            $("#verifying_human").html("Your browser identified as a bot.  Please contact us if this is an error <a href='https://www.servirglobal.net/contact-us'>Contact</a>")
                             console.log("Disable ClimateSERV");
                         }
                     }
