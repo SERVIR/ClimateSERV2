@@ -40,11 +40,27 @@
 
     <script>
 
-        grecaptcha.ready(function () {
-            grecaptcha.execute('6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4', {action: 'page_load'}).then(function (token) {
-                send_verification(token);
-            });
-        });
+        const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load())
+        // Get detection results when you need them.
+        botdPromise
+            .then((botd) => botd.detect())
+            .then((result) => {
+                if (!result.bot) {
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute('6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4', {action: 'page_load'}).then(function (token) {
+                            send_verification(token);
+                        });
+                    });
+                } else {
+                    $("#page-cover").show();
+                    $("#verifying_human").remove()
+                    grecaptcha.render('captcha_div', {
+                        'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
+                        'callback': verifyCallback
+                    });
+                }
+            })
+            .catch((error) => console.error(error))
 
 
         function send_verification(token, version) {
@@ -148,11 +164,11 @@
             right: -50px !important;
         }
 
-        #verifying_human{
-            border:2px solid #ffffff;
+        #verifying_human {
+            border: 2px solid #ffffff;
             border-radius: 10px;
             background-color: #ffffffED;
-            padding:100px;
+            padding: 100px;
             font-size: 2em;
         }
     </style>
@@ -741,17 +757,17 @@
                         <ol class="layers vertical" id="layer-list">
                             {% for layer in data_layers %}
                                 {% if layer.hasVisualization %}
-                                <li id="{{ layer.ui_id }}_node"
-                                    style="display: {% if layer.hasVisualization %} block {% else %} none {% endif %}">
-                                    <div class="rst__nodeContent" style="left: 44px">
-                                        <div style="height: 100%">
-                                            <div class="rst__rowWrapper">
-                                                <div class="rst__row" style="opacity: 1" draggable="true">
-                                                    <div class="rst__moveHandle"></div>
-                                                    <div class="rst__rowContents ignore-elements">
-                                                        <div class="rst__rowLabel">
-                                                            {% if layer.isMultiEnsemble %}
-                                                                <span class="rst__rowTitle">
+                                    <li id="{{ layer.ui_id }}_node"
+                                        style="display: {% if layer.hasVisualization %} block {% else %} none {% endif %}">
+                                        <div class="rst__nodeContent" style="left: 44px">
+                                            <div style="height: 100%">
+                                                <div class="rst__rowWrapper">
+                                                    <div class="rst__row" style="opacity: 1" draggable="true">
+                                                        <div class="rst__moveHandle"></div>
+                                                        <div class="rst__rowContents ignore-elements">
+                                                            <div class="rst__rowLabel">
+                                                                {% if layer.isMultiEnsemble %}
+                                                                    <span class="rst__rowTitle">
                                                                     <input type="checkbox"
                                                                            id="{{ layer.ui_id }}"
                                                                            name="{{ layer.ui_id }}"
@@ -763,16 +779,46 @@
                                                                       >{{ layer.title }}</label>
                                                                       <br/>
                                                                 </span>
-                                                                <div class="ens-holder" id="ens-{{ layer.ui_id }}">
-                                                                    {% for enslayer in layer.datalayer.all %}
-                                                                        <input type="checkbox"
-                                                                               id="{{ enslayer.ui_id }}"
-                                                                               name="{{ enslayer.ui_id }}"
-                                                                               onchange="toggleLayer('{{ enslayer.ui_id }}TimeLayer')"/>
-                                                                        <label for="{{ enslayer.ui_id }}"
-                                                                               title="{{ enslayer.title }}">{{ enslayer.title }}</label>
-                                                                        <br/>
-                                                                    {% endfor %}
+                                                                    <div class="ens-holder" id="ens-{{ layer.ui_id }}">
+                                                                        {% for enslayer in layer.datalayer.all %}
+                                                                            <input type="checkbox"
+                                                                                   id="{{ enslayer.ui_id }}"
+                                                                                   name="{{ enslayer.ui_id }}"
+                                                                                   onchange="toggleLayer('{{ enslayer.ui_id }}TimeLayer')"/>
+                                                                            <label for="{{ enslayer.ui_id }}"
+                                                                                   title="{{ enslayer.title }}">{{ enslayer.title }}</label>
+                                                                            <br/>
+                                                                        {% endfor %}
+                                                                        <div>
+                                                                            <i id="legend_{{ layer.ui_id }}TimeLayer "
+                                                                               class="fas fa-list legend-btn"
+                                                                               onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
+                                                                               style="float: left; margin: 0 0 15px 15px;">
+
+                                                                            </i>
+                                                                            <i class="fas fa-cog settings-btn"
+                                                                               onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
+                                                                               style="float: left; margin: 0 0 15px 15px;">
+
+                                                                            </i>
+                                                                        </div>
+                                                                    </div>
+
+
+                                                                {% else %}
+                                                                    <span
+                                                                            class="rst__rowTitle"
+                                                                            title="{{ layer.title }}"
+                                                                            data-toggle="tooltip"
+                                                                    >
+                                      <input type="checkbox"
+                                             id="{{ layer.ui_id }}"
+                                             name="{{ layer.ui_id }}"
+                                             onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
+                                      <label for="{{ layer.ui_id }}"
+                                             class="cblabel">{{ layer.title }}</label>
+                                      <br/>
+                                  </span>
                                                                     <div>
                                                                         <i id="legend_{{ layer.ui_id }}TimeLayer "
                                                                            class="fas fa-list legend-btn"
@@ -786,46 +832,16 @@
 
                                                                         </i>
                                                                     </div>
-                                                                </div>
+                                                                {% endif %}
 
-
-                                                            {% else %}
-                                                                <span
-                                                                        class="rst__rowTitle"
-                                                                        title="{{ layer.title }}"
-                                                                        data-toggle="tooltip"
-                                                                >
-                                      <input type="checkbox"
-                                             id="{{ layer.ui_id }}"
-                                             name="{{ layer.ui_id }}"
-                                             onchange="toggleLayer('{{ layer.ui_id }}TimeLayer')"/>
-                                      <label for="{{ layer.ui_id }}"
-                                             class="cblabel">{{ layer.title }}</label>
-                                      <br/>
-                                  </span>
-                                                                <div>
-                                                                    <i id="legend_{{ layer.ui_id }}TimeLayer "
-                                                                       class="fas fa-list legend-btn"
-                                                                       onclick="openLegend('{{ layer.ui_id }}TimeLayer')"
-                                                                       style="float: left; margin: 0 0 15px 15px;">
-
-                                                                    </i>
-                                                                    <i class="fas fa-cog settings-btn"
-                                                                       onclick="openSettings('{{ layer.ui_id }}TimeLayer')"
-                                                                       style="float: left; margin: 0 0 15px 15px;">
-
-                                                                    </i>
-                                                                </div>
-                                                            {% endif %}
-
+                                                            </div>
+                                                            <div class="rst__rowToolbar"></div>
                                                         </div>
-                                                        <div class="rst__rowToolbar"></div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </li>
+                                    </li>
                                 {% endif %}
                             {% endfor %}
                         </ol>
