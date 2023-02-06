@@ -52,6 +52,9 @@ def get_ensemble_dataset(datatype):
 def get_filelist(datatype, start_date, end_date):
     working_datalayer = None
     logger.info("just entered get_filelist")
+    logger.info(datatype)
+    logger.info(start_date)
+    logger.info(end_date)
     try:
         if DataLayer.objects.filter(api_id=int(datatype)).exists():
             working_datalayer = DataLayer.objects.get(api_id=int(datatype))

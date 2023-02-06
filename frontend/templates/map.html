@@ -39,7 +39,7 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4"></script>
 
     <script>
-
+    let current_widget;
         const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load())
         // Get detection results when you need them.
         botdPromise
@@ -92,7 +92,7 @@
                         if (response.score < .8) {
                             $("#page-cover").show();
                             $("#verifying_human").hide()
-                            grecaptcha.render('captcha_div', {
+                            current_widget = grecaptcha.render('captcha_div', {
                                 'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
                                 'callback': verifyCallback
                             });
@@ -123,7 +123,6 @@
         }
 
         function verifyCallback(response) {
-            alert(response);
             send_verification(response, "V2");
         }
 

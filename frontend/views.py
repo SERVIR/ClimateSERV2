@@ -29,9 +29,21 @@ def index(request):
 
 
 def map_app(request):
+    my_data_sets = DataLayer.objects.order_by('title').all()
+    for item in my_data_sets:
+        if item.isMultiEnsemble:
+            my_ensembles = item.datalayer.order_by('title').all()
+            for ens in my_ensembles:
+                print(ens.ui_id)
+                ens.ui_id = ens.ui_id + str(uuid.uuid4())
+            print(str(my_ensembles[0].ui_id))
+            item.datalayer.set(my_ensembles)
+        else:
+            item.ui_id = item.ui_id + str(uuid.uuid4())
+
     return render(request, 'map.html', context={
         'page': 'menu-map',
-        'data_layers': DataLayer.objects.order_by('title').all(),
+        'data_layers': my_data_sets,
         'climateModelInfo': json.dumps(get_nmme_info(str(uuid.uuid4()))),
     })
 
@@ -56,6 +68,7 @@ def help_center(request):
         'datasets': DataSet.objects.all()
     })
 
+
 @csrf_exempt
 def confirm_captcha(request):
     version = request.POST.get('version', '')
@@ -73,6 +86,8 @@ def confirm_captcha(request):
     # remember to comment back out before using in production.
     # if version == '':
     #     result_json["score"] = .4
+    if "score" in result_json.keys():
+        print(result_json["score"])
 
     return HttpResponse(json.dumps(result_json))
 

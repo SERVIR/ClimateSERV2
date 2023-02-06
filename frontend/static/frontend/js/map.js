@@ -86,6 +86,7 @@ function createLayer(item) {
  * @returns layer json object
  */
 function getLayer(which) {
+    console.log(which);
     return client_layers.find(
         (item) => item.id === which.replace("TimeLayer", "")
     );
@@ -595,7 +596,8 @@ function handleBaseMapSwitch(which) {
  * Closes any open dialog and either adds or removes the selected layer.
  * @param {string} which - The id of the layer to toggle
  */
-function toggleLayer(which) {
+
+function toggleLayer(which){
     close_dialog();
     if (map.hasLayer(overlayMaps[which])) {
         map.removeLayer(overlayMaps[which]);
@@ -603,6 +605,10 @@ function toggleLayer(which) {
         map.addLayer(overlayMaps[which]);
         //ajax to track_wms with layerID
         let formData = new FormData();
+        if(which.replace("TimeLayer", "").length > 36){
+            which = which.replace("TimeLayer", "");
+            which = which.substring(0, which.length - 36);
+        }
         formData.append(
             "layerID", which.replace("TimeLayer", "")
         );
@@ -615,7 +621,9 @@ function toggleLayer(which) {
             async: true,
             crossDomain: true,
             data: formData,
-        }).fail(console.log("wms tracking failed"));
+            success: function (response) {},
+            fail: function(){console.log("wms tracking failed");}
+        });
     }
     let hasLayer = false;
     let available_times = [];
@@ -977,7 +985,7 @@ function enableDrawing() {
                         alert("Maximum of 20 has been reached.  You may edit or remove shapes but you may not add more.");
                     }
                 } else {
-                    alert("Your total AOI must be under 10,000,000 Km2, Please edit the polygon and try again.")
+                    alert("Your total AOI must be under 10,000,000 Km2, Please edit the polygon and try again.");
                 }
             } else {
                 alert("You may not add this polygon because you have reached the limit of 20.");
@@ -2262,7 +2270,7 @@ function inti_chart_dialog(conversion, isMonthly) {
     const checked_text = $('input[name="axis_type"]:checked').val() === "simple" ? "" : "checked";
     let display_options = isMonthly ? "hidden" : "visible";
     dialog_html += '<div id="graph-options" class="graph-options" style="visibility:' + display_options + '">';
-    dialog_html += '<div id="interval-options" class="left-graph-options">'
+    dialog_html += '<div id="interval-options" class="left-graph-options">';
     dialog_html += 'Intervals <select onchange="multi_chart_builder(this.value)">';
     dialog_html += '<option value="" ' + default_selected + '>Default</option>';
     const is_monthly = conversion === "monthly" ? "selected" : "";
