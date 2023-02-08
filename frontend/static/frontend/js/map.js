@@ -104,6 +104,7 @@ function buildStyles() {
         async: true,
         crossDomain: true
     }).fail(function (jqXHR, textStatus, errorThrown) {
+        set_from_backup();
         console.warn(jqXHR + textStatus + errorThrown);
     }).done(function (data, _textStatus, _jqXHR) {
         if (data.errMsg) {
@@ -131,189 +132,193 @@ function buildStyles() {
                     });
                 }
             } catch (e) {
-                const backup = [
-                    {
-                        "Name": "boxfill/apcp_surface",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-spd10m-thresh50",
-                    },
-                    {
-                        "Name": "boxfill/avg_temp",
-                    },
-                    {
-                        "Name": "boxfill/ncview",
-                    },
-                    {
-                        "Name": "boxfill/rel_humid",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-uphlcy25-thresh100",
-                    },
-                    {
-                        "Name": "boxfill/tmp_2maboveground",
-                    },
-                    {
-                        "Name": "boxfill/evap",
-                    },
-                    {
-                        "Name": "boxfill/baseflow",
-                    },
-                    {
-                        "Name": "boxfill/crimsonyellowgreen",
-                    },
-                    {
-                        "Name": "boxfill/alg",
-                    },
-                    {
-                        "Name": "boxfill/dpt_2maboveground",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-lfa-max-thresh5",
-                    },
-                    {
-                        "Name": "boxfill/albedo",
-                    },
-                    {
-                        "Name": "boxfill/par",
-                    },
-                    {
-                        "Name": "boxfill/sst_36",
-                    },
-                    {
-                        "Name": "boxfill/prob_refc_thresh50",
-                    },
-                    {
-                        "Name": "boxfill/cdi",
-                    },
-                    {
-                        "Name": "boxfill/prob_spd10m_thresh40",
-                    },
-                    {
-                        "Name": "boxfill/prob_tcolg_thresh40",
-                    },
-                    {
-                        "Name": "boxfill/rainbow",
-                    },
-                    {
-                        "Name": "boxfill/occam",
-                    },
-                    {
-                        "Name": "boxfill/pm25_india_ramp",
-                    },
-                    {
-                        "Name": "boxfill/pm25",
-                    },
-                    {
-                        "Name": "boxfill/prob_lfa_thresh5",
-                    },
-                    {
-                        "Name": "boxfill/pm25_india",
-                    },
-                    {
-                        "Name": "boxfill/alg2",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-spd10m-thresh40",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-refc-thresh50",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-tcolg-thresh30",
-                    },
-                    {
-                        "Name": "boxfill/enspmm-prec1h",
-                    },
-                    {
-                        "Name": "boxfill/crimsonyellowred",
-                    },
-                    {
-                        "Name": "boxfill/occam_pastel-30"
-                    },
-                    {
-                        "Name": "boxfill/ensprob-uphlcy25-thresh200",
-                    },
-                    {
-                        "Name": "boxfill/prob_spd10m_thresh50",
-                    },
-                    {
-                        "Name": "boxfill/prob_tcolg_thresh30",
-                    },
-                    {
-                        "Name": "boxfill/cape_surface",
-                    },
-                    {
-                        "Name": "boxfill/grace",
-                    },
-                    {
-                        "Name": "boxfill/crimsonyellowblue",
-                    },
-                    {
-                        "Name": "boxfill/dryspells",
-                    },
-                    {
-                        "Name": "boxfill/temp",
-                    },
-                    {
-                        "Name": "boxfill/crimsonbluegreen",
-                    },
-                    {
-                        "Name": "boxfill/redblue",
-                    },
-                    {
-                        "Name": "boxfill/avg_temp_rev",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-tcolg-thresh40",
-                    },
-                    {
-                        "Name": "boxfill/blueyellowcrimson",
-                    },
-                    {
-                        "Name": "boxfill/greyscale",
-                    },
-                    {
-                        "Name": "boxfill/pm25ramp",
-                    },
-                    {
-                        "Name": "boxfill/net_short_long",
-                    },
-                    {
-                        "Name": "boxfill/cwg",
-                    },
-                    {
-                        "Name": "boxfill/enspmm-prectot",
-                    },
-                    {
-                        "Name": "boxfill/enspmm-refc",
-                    },
-                    {
-                        "Name": "boxfill/crimsonbluewhite",
-                    },
-                    {
-                        "Name": "boxfill/ensprob-lfa-max-thresh0.07",
-                    },
-                    {
-                        "Name": "boxfill/prec_rainf",
-                    },
-                    {
-                        "Name": "boxfill/ferret",
-                    }
-                ].sort(function (a, b) {
-                    const x = a.Name;
-                    const y = b.Name;
-                    return ((x < y) ? -1 : ((x > y) ? 1 : 0));
-                });
-                for (let i = 0; i < backup.length; i++) {
-                    styleOptions.push({
-                        val: backup[i].Name,
-                        text: backup[i].Name,
-                    });
-                }
+                set_from_backup();
             }
         }
     });
+}
+
+function set_from_backup() {
+    const backup = [
+        {
+            "Name": "boxfill/apcp_surface",
+        },
+        {
+            "Name": "boxfill/ensprob-spd10m-thresh50",
+        },
+        {
+            "Name": "boxfill/avg_temp",
+        },
+        {
+            "Name": "boxfill/ncview",
+        },
+        {
+            "Name": "boxfill/rel_humid",
+        },
+        {
+            "Name": "boxfill/ensprob-uphlcy25-thresh100",
+        },
+        {
+            "Name": "boxfill/tmp_2maboveground",
+        },
+        {
+            "Name": "boxfill/evap",
+        },
+        {
+            "Name": "boxfill/baseflow",
+        },
+        {
+            "Name": "boxfill/crimsonyellowgreen",
+        },
+        {
+            "Name": "boxfill/alg",
+        },
+        {
+            "Name": "boxfill/dpt_2maboveground",
+        },
+        {
+            "Name": "boxfill/ensprob-lfa-max-thresh5",
+        },
+        {
+            "Name": "boxfill/albedo",
+        },
+        {
+            "Name": "boxfill/par",
+        },
+        {
+            "Name": "boxfill/sst_36",
+        },
+        {
+            "Name": "boxfill/prob_refc_thresh50",
+        },
+        {
+            "Name": "boxfill/cdi",
+        },
+        {
+            "Name": "boxfill/prob_spd10m_thresh40",
+        },
+        {
+            "Name": "boxfill/prob_tcolg_thresh40",
+        },
+        {
+            "Name": "boxfill/rainbow",
+        },
+        {
+            "Name": "boxfill/occam",
+        },
+        {
+            "Name": "boxfill/pm25_india_ramp",
+        },
+        {
+            "Name": "boxfill/pm25",
+        },
+        {
+            "Name": "boxfill/prob_lfa_thresh5",
+        },
+        {
+            "Name": "boxfill/pm25_india",
+        },
+        {
+            "Name": "boxfill/alg2",
+        },
+        {
+            "Name": "boxfill/ensprob-spd10m-thresh40",
+        },
+        {
+            "Name": "boxfill/ensprob-refc-thresh50",
+        },
+        {
+            "Name": "boxfill/ensprob-tcolg-thresh30",
+        },
+        {
+            "Name": "boxfill/enspmm-prec1h",
+        },
+        {
+            "Name": "boxfill/crimsonyellowred",
+        },
+        {
+            "Name": "boxfill/occam_pastel-30"
+        },
+        {
+            "Name": "boxfill/ensprob-uphlcy25-thresh200",
+        },
+        {
+            "Name": "boxfill/prob_spd10m_thresh50",
+        },
+        {
+            "Name": "boxfill/prob_tcolg_thresh30",
+        },
+        {
+            "Name": "boxfill/cape_surface",
+        },
+        {
+            "Name": "boxfill/grace",
+        },
+        {
+            "Name": "boxfill/crimsonyellowblue",
+        },
+        {
+            "Name": "boxfill/dryspells",
+        },
+        {
+            "Name": "boxfill/temp",
+        },
+        {
+            "Name": "boxfill/crimsonbluegreen",
+        },
+        {
+            "Name": "boxfill/redblue",
+        },
+        {
+            "Name": "boxfill/avg_temp_rev",
+        },
+        {
+            "Name": "boxfill/ensprob-tcolg-thresh40",
+        },
+        {
+            "Name": "boxfill/blueyellowcrimson",
+        },
+        {
+            "Name": "boxfill/greyscale",
+        },
+        {
+            "Name": "boxfill/pm25ramp",
+        },
+        {
+            "Name": "boxfill/net_short_long",
+        },
+        {
+            "Name": "boxfill/cwg",
+        },
+        {
+            "Name": "boxfill/enspmm-prectot",
+        },
+        {
+            "Name": "boxfill/enspmm-refc",
+        },
+        {
+            "Name": "boxfill/crimsonbluewhite",
+        },
+        {
+            "Name": "boxfill/ensprob-lfa-max-thresh0.07",
+        },
+        {
+            "Name": "boxfill/prec_rainf",
+        },
+        {
+            "Name": "boxfill/ferret",
+        }
+    ].sort(function (a, b) {
+        const x = a.Name;
+        const y = b.Name;
+        return ((x < y) ? -1 : ((x > y) ? 1 : 0));
+    });
+    for (let i = 0; i < backup.length; i++) {
+        styleOptions.push({
+            val: backup[i].Name,
+            text: backup[i].Name,
+        });
+    }
 }
 
 /***
