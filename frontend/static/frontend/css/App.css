@@ -238,14 +238,16 @@ body {
     max-width: 100%;
     padding-top: 1.5rem;
     width: 75%;
-    margin: auto;
+    /*margin: auto;*/
     font-size: 3.19rem;
     font-family: Arial, serif;
     /* text-shadow: black 0.1em 0.1em 0.2em; */
     color: white;
     /*background: rgba(108, 100, 99, 0.5);*/
     top: 50%;
-    transform: translateY(-50%);
+    /*transform: translateY(-50%);*/
+    left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 .carousel-caption h3 {
