@@ -10,6 +10,10 @@ body {
     background-color: #f9f9f9;
 }
 
+.carousel-item1{
+    max-height: 60vh;
+}
+
 .App {
     text-align: center;
 }
@@ -74,7 +78,7 @@ body {
 
 .hero-subtitle {
     padding: 10px 20px;
-    background-color: #007db0bd;
+    /*background-color: #007db0bd;*/
     border-radius: 5px;
 }
 
@@ -220,14 +224,19 @@ body {
 
 .carousel-caption {
     max-width: 100%;
-    left: 0;
-    bottom: 40%;
-    width: 100%;
+    padding-top: 1.5rem;
+    width: 75%;
+    margin: auto;
+    font-size: 3.19rem;
+    font-family: Arial, serif;
+    /* text-shadow: black 0.1em 0.1em 0.2em; */
+    color: white;
+    background: rgba(108, 100, 99, 0.5);
 }
 
 .carousel-caption h3 {
-    font-size: 48px;
-    text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;
+    font-size: 3.19rem;
+    /*text-shadow: #000000 4px 4px 8px, 0 0 5px #0000ff;*/
     color: #FFFFFF;
     font-weight: 500;
     /*font-style: italic;*/
@@ -1256,7 +1265,6 @@ button[disabled] {
 @media only screen and (max-width: 1000px) {
     .carousel-caption {
         max-width: 100%;
-        left: 0;
         bottom: unset;
         top: 10px;
     }
@@ -1332,8 +1340,8 @@ button[disabled] {
 
     .carousel-caption {
         max-width: 100%;
-        left: 0;
-        bottom: 0;
+        /*left: 0;*/
+        /*bottom: 0;*/
     }
 
     .carousel-caption h3 {

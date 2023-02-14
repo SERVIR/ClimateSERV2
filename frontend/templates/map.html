@@ -39,7 +39,7 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4"></script>
 
     <script>
-    let current_widget;
+        let current_widget;
         const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load())
         // Get detection results when you need them.
         botdPromise
@@ -172,8 +172,16 @@
             border: 2px solid #ffffff;
             border-radius: 10px;
             background-color: #ffffffED;
-            padding: 100px;
-            font-size: 2em;
+            padding: 50px;
+            font-size: 1em;
+            white-space: nowrap;
+        }
+        .human_container {
+            position: absolute;
+            left: 100%;
+            top: 100%;
+            transform: translate(calc(-100% - 20px), calc(-100% - 60px));;
+            z-index: 2002;
         }
     </style>
 {% endblock %}
@@ -873,7 +881,7 @@
                     {#                    </div>#}
                 </div>
             </div>
-            <h1 class="captcha_center" id="verifying_human">Verifying Human</h1>
+            <h1 class="human_container" id="verifying_human">Welcome! Please give us a moment to set the system up.</h1>
             <div id="servirmap" class="sidebar-map"></div>
         </div>
 
