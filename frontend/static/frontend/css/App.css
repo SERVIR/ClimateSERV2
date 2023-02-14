@@ -10,7 +10,7 @@ body {
     background-color: #f9f9f9;
 }
 
-.carousel-item1{
+.carousel-item1 {
     max-height: 60vh;
 }
 
@@ -110,19 +110,19 @@ body {
     width: unset;
 }
 
-   .carousel-item{
-        align-items: flex-end;
-    }
+.carousel-item {
+    align-items: flex-end;
+}
 
-    .mbr-table-cell{
-        margin-bottom: 50px;
-    }
+.mbr-table-cell {
+    margin-bottom: 50px;
+}
 
 .carousel-item-next, .carousel-item-prev, .carousel-item.active {
     display: block;
     transition: -webkit-transform 1.5s ease;
     transition: transform 1.5s ease;
-    transition: transform 1.5 ease,-webkit-transform 1.5s ease;
+    transition: transform 1.5 ease, -webkit-transform 1.5s ease;
 }
 
 .card-button {
@@ -140,6 +140,18 @@ body {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+}
+
+.btn-secondary {
+    font-size: 1.25em;
+    max-width: 49%;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.btn-secondary:hover {
+    opacity: 0.8;
+    border-color: #6c757d;
 }
 
 .card-button:hover,
@@ -232,7 +244,7 @@ body {
     /* text-shadow: black 0.1em 0.1em 0.2em; */
     color: white;
     /*background: rgba(108, 100, 99, 0.5);*/
-        top: 50%;
+    top: 50%;
     transform: translateY(-50%);
 }
 
@@ -308,7 +320,7 @@ body {
     width: 100%;
 }
 
-.layer-opacity:focus, .form-control:focus{
+.layer-opacity:focus, .form-control:focus {
     border-color: #758055;
     box-shadow: 0 0 0 0.2rem rgba(117, 128, 85, 0.25)
 }
@@ -1270,7 +1282,8 @@ button[disabled] {
         bottom: unset;
         top: 10px;
     }
-    .btn-data-info{
+
+    .btn-data-info {
         font-size: 1em;
     }
 }
@@ -1279,10 +1292,12 @@ button[disabled] {
     .tl-open {
         left: 470px;
     }
-    .btn-data-info{
+
+    .btn-data-info {
         font-size: 1.25em;
     }
-    .btn-data-info.hero-subtitle{
+
+    .btn-data-info.hero-subtitle {
         font-size: 1em;
     }
 }
@@ -1367,8 +1382,9 @@ button[disabled] {
     .tab-holder {
         margin-top: 30px;
     }
-    .lg-br{
-        display:none;
+
+    .lg-br {
+        display: none;
     }
 }
 
@@ -1403,11 +1419,13 @@ button[disabled] {
 
 @media only screen and (max-width: 500px) {
     .hero-subtitle {
-    padding: 7px 5px;
+        padding: 7px 5px;
     }
-    .carousel-caption p{
+
+    .carousel-caption p {
         margin-top: 8px;
     }
+
     .todo-wrapper {
         display: block;
         position: relative;
@@ -1418,16 +1436,19 @@ button[disabled] {
         float: unset;
         margin-right: 15px;
     }
+
     span.right.carousel-control.site-link {
         width: 100%;
         display: inline-block;
     }
+
     #dataCarousel button.btn.btn-lg.btn-data-info {
         max-width: unset;
         width: 100%;
         margin-left: unset !important;
         margin-bottom: 3px;
     }
+
     #dataCarousel .col-md-12 {
         margin-right: 20px !important;
         margin-left: 20px !important;
