@@ -1280,7 +1280,6 @@ button[disabled] {
     .carousel-caption {
         max-width: 100%;
         bottom: unset;
-        top: 10px;
     }
 
     .btn-data-info {
