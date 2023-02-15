@@ -1284,7 +1284,7 @@ button[disabled] {
         bottom: unset;
     }
 
-    .btn-data-info {
+    .btn-data-info, .btn-secondary {
         font-size: 1em;
     }
 }
@@ -1294,7 +1294,7 @@ button[disabled] {
         left: 470px;
     }
 
-    .btn-data-info {
+    .btn-data-info, .btn-secondary {
         font-size: 1.25em;
     }
 
@@ -1443,7 +1443,7 @@ button[disabled] {
         display: inline-block;
     }
 
-    #dataCarousel button.btn.btn-lg.btn-data-info {
+    #dataCarousel button.btn.btn-lg.btn-data-info, .btn-secondary {
         max-width: unset;
         width: 100%;
         margin-left: unset !important;
