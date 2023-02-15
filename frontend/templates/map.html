@@ -39,6 +39,9 @@
     <script src="https://www.google.com/recaptcha/api.js?render=6LccNUUkAAAAAI0U2OtMZA71fJ-1CTfhDmpe9Tb4"></script>
 
     <script>
+        $(function () {
+            $('.toast').toast('show');
+        });
         let current_widget;
         const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load())
         // Get detection results when you need them.
@@ -53,7 +56,8 @@
                     });
                 } else {
                     $("#page-cover").show();
-                    $("#verifying_human").hide()
+                    $('.toast').toast('hide');
+                    {#$("#verifying_human").hide()#}
                     grecaptcha.ready(function () {
                         grecaptcha.render('captcha_div', {
                             'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
@@ -91,14 +95,16 @@
                     if (response.success && response.score) {
                         if (response.score < .8) {
                             $("#page-cover").show();
-                            $("#verifying_human").hide()
+                            $('.toast').toast('hide');
+                            {#$("#verifying_human").hide()#}
                             current_widget = grecaptcha.render('captcha_div', {
                                 'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
                                 'callback': verifyCallback
                             });
                         } else {
                             console.log("Valid v3");
-                            $("#verifying_human").hide()
+                            $('.toast').toast('hide');
+                            {#$("#verifying_human").hide()#}
                             complete_load();
                         }
                     } else {
@@ -106,10 +112,13 @@
                             console.log("V2 success");
                             $("#page-cover").hide();
                             $("#captcha_div").hide();
-                            $("#verifying_human").hide();
+                            $('.toast').toast('hide');
+                            {#$("#verifying_human").hide();#}
                             complete_load();
                         } else {
-                            $("#verifying_human").show();
+                            $('.toast').toast('show');
+                            $('#toast_button').toast('show');
+
                             $("#verifying_human_body").html("Your browser identified as a bot.  Please contact us if this is an error <a href='https://www.servirglobal.net/contact-us'>Contact</a>")
                             console.log("Disable ClimateSERV");
                         }
@@ -877,9 +886,14 @@
                 </div>
             </div>
             {#            <h1 class="human_container" id="verifying_human">Welcome! Please give us a moment to set the system up.</h1>#}
-            <div class="toast show human_container" id="verifying_human">
+            <div class="toast human_container" data-autohide="false" id="verifying_human">
                 <div class="toast-header">
-                    Welcome to ClimateSERV
+                    <span class="mr-auto  bread-crumb bold">Welcome to ClimateSERV</span>
+                    <button id="toast_button"
+                            type="button"
+                            class="ml-2 mb-1 close"
+                            data-dismiss="toast" style="display: none;">&times;
+                    </button>
                 </div>
                 <div class="toast-body" id="verifying_human_body">
                     Please give us a moment to set the system up.
