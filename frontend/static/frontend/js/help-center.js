@@ -23,9 +23,12 @@ function adjustCards() {
             $(".help-card").width(maxHeight);
             $(".help-image").width(maxHeight);
         });
+    } else if(window.innerWidth < 991 && window.innerWidth > 768){
+        $(".help-card").width("calc(100vw - 130px)");
+        $(".help-image").width("calc(100vw - 130px)");
     } else{
-        $(".help-card").width("calc(100vw - 40px)");
-        $(".help-image").width("calc(100vw - 40px)");
+        $(".help-card").width("calc(100vw - 45px)");
+        $(".help-image").width("calc(100vw - 45px)");
     }
 
     $(".help-card").animate({height: "auto"}, 0,function () {
