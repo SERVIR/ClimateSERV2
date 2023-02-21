@@ -8,7 +8,27 @@ $(document).ready(function () {
 });
 
 function adjustCards() {
-    $(".help-card").animate({height: "auto"}, function () {
+    if(window.innerWidth > 991)
+    {
+        $(".help-card").animate({width: "auto"},0, function () {
+            $(".help-card").width("auto");
+            var maxHeight = Math.max.apply(
+                null,
+                $(".help-card.text-card")
+                    .map(function () {
+                        return $(this).width();
+                    })
+                    .get()
+            );
+            $(".help-card").width(maxHeight);
+            $(".help-image").width(maxHeight);
+        });
+    } else{
+        $(".help-card").width("calc(100vw - 40px)");
+        $(".help-image").width("calc(100vw - 40px)");
+    }
+
+    $(".help-card").animate({height: "auto"}, 0,function () {
         $(".help-card").height("auto");
         var maxHeight = Math.max.apply(
             null,
@@ -90,8 +110,8 @@ console.log("in callback")
                 height: $(window).height() - 140,
                 width: $(window).width() - 100
               }, 1000 , "swing", function(){
-console.log("in callback")
-               fix_dialog()
+console.log("in callback");
+               fix_dialog();
             });
 
 
