@@ -618,11 +618,17 @@ def submit_data_request(request):
             except Exception as ens_except:
                 logger.error(str(ens_except))
                 my_ds = "Ensemble Layer"
-            if type(working_dataset) is EnsembleLayer or "dataset_name_format" in working_dataset:
-                logger.info("dataset_name_format is good")
-                dataset_name_format = working_dataset.dataset_name_format
-            else:
-                dataset_name_format = "ENS"
+            try:
+                if type(working_dataset) is EnsembleLayer or "dataset_name_format" in working_dataset:
+                    logger.info("dataset_name_format is good")
+                    dataset_name_format = working_dataset.dataset_name_format
+                else:
+                    dataset_name_format = "ENS"
+            except:
+                try:
+                    dataset_name_format = working_dataset.dataset_name_format
+                except:
+                    dataset_name_format = "ENS"
 
             track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
