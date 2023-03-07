@@ -6,7 +6,7 @@ import uuid
 from ast import literal_eval
 from datetime import datetime
 from json import JSONDecodeError
-
+import traceback
 import pandas as pd
 import xarray as xr
 from django.apps import apps
@@ -618,11 +618,16 @@ def submit_data_request(request):
             except Exception as ens_except:
                 logger.error(str(ens_except))
                 my_ds = "Ensemble Layer"
+            if type(working_dataset) is EnsembleLayer or "dataset_name_format" in working_dataset:
+                logger.info("dataset_name_format is good")
+                dataset_name_format = working_dataset.dataset_name_format
+            else:
+                dataset_name_format = "ENS"
 
             track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
-                                      dataset=working_dataset.dataset_name_format,
+                                      dataset=dataset_name_format,
                                       start_date=pd.Timestamp(begin_time, tz='UTC'),
                                       end_date=pd.Timestamp(end_time, tz='UTC'),
                                       calculation=calculation, request_type=request.method,
@@ -633,6 +638,7 @@ def submit_data_request(request):
         except Exception as e:
             logger.debug("Track_Usage creation error to follow:")
             logger.error(str(e))
+            logger.error(traceback.print_exc())
 
         return process_callback(request, str(json.dumps([str(my_id)])), "application/json")
     else:
@@ -653,10 +659,15 @@ def submit_data_request(request):
         except:
             my_ds = "Ensemble Layer"
 
+        if "dataset_name_format" in working_dataset:
+            dataset_name_format = working_dataset["dataset_name_format"]
+        else:
+            dataset_name_format = "ENS"
+
         track_usage = Track_Usage(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
-                                  dataset=working_dataset.dataset_name_format,
+                                  dataset=dataset_name_format,
                                   start_date=pd.Timestamp(begin_time, tz='UTC'),
                                   end_date=pd.Timestamp(end_time, tz='UTC'),
                                   request_type=request.method, status="Fail", progress=0,

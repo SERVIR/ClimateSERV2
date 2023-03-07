@@ -67,7 +67,7 @@ def start_processing(statistical_query):
             logger.error("I had geometry in query")
         elif 'layerid' in statistical_query:
             polygon_string = sF.get_polygons(statistical_query['layerid'], statistical_query['featureids'])
-
+            # logger.debug("poly string from feature(s) selected")
         else:
             raise Exception("Missing polygon_string")
 
@@ -267,7 +267,8 @@ def start_processing(statistical_query):
         time.sleep(.5)
         set_progress_to_100(uniqueid)
         logger.debug("uniqueid: " + uniqueid)
-        track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+        # if this
+        track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid)
         logger.debug("got the object")
         track_usage.status = "Success"
         track_usage.save()

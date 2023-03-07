@@ -37,11 +37,13 @@ def get_ensemble_dataset(datatype):
     ensemble_definitions = working_etl_dataset.ensemble_definition["data"]  # should be a list of objects
     # loop through ensemble definitions to find api_id == datatype
     current_variable = None
+    logger.debug("Getting Ens variable to use")
     for definition in ensemble_definitions:
         if int(definition["api_id"]) == int(datatype):
             current_variable = definition["variable"]
+            logger.debug("found ens variable: " + current_variable)
             break
-
+    logger.debug("setting processing ens variable: " + current_variable)
     return {
         "dataset_name_format": working_etl_dataset.dataset_name_format,
         "dataset_nc4_variable_name": current_variable,
@@ -54,9 +56,11 @@ def get_filelist(datatype, start_date, end_date):
     logger.info("just entered get_filelist")
     try:
         if DataLayer.objects.filter(api_id=int(datatype)).exists():
+            logger.info("Regular dataset")
             working_datalayer = DataLayer.objects.get(api_id=int(datatype))
             working_dataset = working_datalayer.etl_dataset_id
         else:
+            logger.info("ensemble dataset")
             working_dataset = get_ensemble_dataset(datatype)
             logger.info("Got Ensemble Dataset " + str(working_dataset))
             # working_dataset = working_datalayer.etl_dataset_id

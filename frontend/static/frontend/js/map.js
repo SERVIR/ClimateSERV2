@@ -98,6 +98,9 @@ function getLayer(which) {
  * styleOptions array, which will be used to load the styles' dropdown box
  */
 function buildStyles() {
+    // when thredds is updated to V5 I will
+    // have to update this to find the palettes in
+    // the abstract tag https://github.com/Unidata/tds/issues/173
     $.ajax({
         url: client_layers[0].url + "&request=GetCapabilities",
         type: "GET",
