@@ -1,0 +1,54 @@
+{
+  "data": {
+    "esi": {
+      "source": "https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/",
+      "encodings": {
+        "esi": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        }
+      },
+      "extension": ".tif.gz",
+      "variables": {
+        "0": "esi"
+      },
+      "attributes": {
+        "esi": {
+          "units": "unitless",
+          "comment": "12-week mean composite estimate of evaporative stress index",
+          "long_name": "evaporative_stress_index",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "composite_interval",
+            "comment"
+          ],
+          "composite_interval": "12 week"
+        }
+      },
+      "download_type": "https"
+    }
+  },
+  "metadata": {
+    "source": "NASA/MSFC SPORT; C. Hain, christopher.hain@nasa.gov; https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "version": "1.0",
+    "reference": "Hain, C. R. and M.C. Anderson, 2017: Estimating morning change in land surface temperature from MODIS day/night observations: Applications for surface energy balance modeling., Geophys. Res. Letts., 44, 9723-9733, doi:10.1002/2017GL074952.",
+    "description": "The Evaporative Stress Index (ESI) at ~5-kilometer resolution for the entire globe reveals regions of drought where vegetation is stressed due to lack of water, enabling agriculture ministries to provide farmers with actionable advice about irrigation.  The 4 week composite responds to fast-changing conditions, while the 12-week composite integrates data over a longer period and responds to slower evolving conditions.",
+    "spatial_resolution": "0.05deg",
+    "temporal_resolution": "12-week"
+  },
+  "timedelta_end": {
+    "days": 84
+  },
+  "nc4_indexed_by": "start",
+  "timedelta_start": {},
+  "iterator_options": {
+    "root_url": "https://geo.nsstc.nasa.gov/SPoRT/outgoing/crh/4servir/",
+    "week_type": "12WK"
+  },
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {}
+}

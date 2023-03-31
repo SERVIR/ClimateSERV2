@@ -6,7 +6,7 @@
         "precipitation_amount": {
           "dtype": "{npdtype=float32}",
           "_FillValue": "{npfloat=-9999.0}",
-          "chunksizes": "{tuple=1,256,256}",
+          "chunksizes": "{tuple=1, 256, 256}",
           "missing_value": "{npfloat=-9999.0}"
         }
       },

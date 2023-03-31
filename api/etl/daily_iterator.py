@@ -14,6 +14,7 @@ class Daily_Iterator():
     def get_range(self):
         delta = self.end_date - self.start_date
         date_range = [self.start_date + datetime.timedelta(days=x) for x in range(delta.days + 1)]
-        date_range_string = [date.strftime('%Y%m%d') for date in date_range]
 
-        return date_range_string
+        return_obj = [{'date': date.strftime('%Y%m%d')} for date in date_range]
+
+        return return_obj

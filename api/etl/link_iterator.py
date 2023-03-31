@@ -21,6 +21,7 @@ class Link_Iterator:
         self.timedelta = options['timedelta']
 
     def get_range(self):
+        return_obj = []
         dates = []
         response = requests.get(self.root_url)
         soup = BeautifulSoup(response.text, 'html.parser')
@@ -29,12 +30,11 @@ class Link_Iterator:
             match = re.search(self.search, link_text)
             if match:
                 date = datetime.datetime.strptime(match.group(0), '%Y%m%d')
-
                 if self.indexedBy == 'start':
                     e_date = date + datetime.timedelta(days=self.timedelta)
                     if date.date() >= self.start_date and e_date.date() <= self.end_date:
                         dates.append(date)
 
-        date_range_string = [date.strftime('%Y%m%d') for date in dates]
+        return_obj = [{'date': date.strftime('%Y%m%d')} for date in dates]
 
-        return date_range_string
+        return return_obj

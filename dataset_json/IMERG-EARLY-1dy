@@ -1,0 +1,69 @@
+{
+  "data": {
+    "precipitation_amount": {
+      "source": "https://jsimpsonhttps.pps.eosdis.nasa.gov/text/imerg/gis/early/{}/{}/3B*-S233000-*1day.tif",
+      "encodings": {
+        "precipitation_amount": {
+          "zlib": "{bool=True}",
+          "dtype": "{npdtype=uint16}",
+          "complevel": "{int=7}",
+          "_FillValue": "{npuint16=29999}",
+          "add_offset": "{float=0.0}",
+          "chunksizes": "{tuple=1,256,256}",
+          "scale_factor": "{float=0.1}",
+          "missing_value": "{npuint16=29999}"
+        }
+      },
+      "extension": ".tif",
+      "variables": {
+        "0": "precipitation_amount"
+      },
+      "attributes": {
+        "precipitation_amount": {
+          "units": "mm",
+          "comment": "IMERG 1-day accumulated rainfall, Early Run",
+          "long_name": "precipitation_amount",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "accumulation_interval",
+            "comment"
+          ],
+          "accumulation_interval": "1 day"
+        }
+      },
+      "download_type": "imerg_session"
+    }
+  },
+  "metadata": {
+    "source": "NASA GPM Precipitation Processing System; https://jsimpsonhttps.pps.eosdis.nasa.gov/imerg/gis/early/",
+    "comment": "IMERG 1-day accumulated rainfall, Early Run",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "reference": "G. Huffman, D. Bolvin, D. Braithwaite, K. Hsu, R. Joyce, P. Xie, 2014: Integrated Multi-satellitE Retrievals for GPM (IMERG), version 4.4. NASAs Precipitation Processing Center.",
+    "description": "NASA Integrated Multi-satellitE Retrievals for GPM (IMERG) data product, Early Run.",
+    "spatial_resolution": "0.1deg",
+    "temporal_resolution": "1-day"
+  },
+  "add_hhmmss": true,
+  "session_pass": "billy.ashmall@nasa.gov",
+  "session_user": "billy.ashmall@nasa.gov",
+  "timedelta_end": {
+    "hours": 23,
+    "minutes": 59,
+    "seconds": 59
+  },
+  "nc4_indexed_by": "start",
+  "timedelta_start": {},
+  "iterator_options": {
+    "root_url": "https://jsimpsonhttps.pps.eosdis.nasa.gov/imerg/gis/early/",
+    "session_pass": "billy.ashmall@nasa.gov",
+    "session_user": "billy.ashmall@nasa.gov",
+    "root_search_url": "https://jsimpsonhttps.pps.eosdis.nasa.gov/text/imerg/gis/early/{}/{}/3B*-S233000-*1day.tif"
+  },
+  "add_version_imerg": true,
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {
+    "hours": 12
+  },
+  "rescale_accumulated_precip": true
+}

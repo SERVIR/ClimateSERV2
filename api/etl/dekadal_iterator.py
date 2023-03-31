@@ -32,7 +32,8 @@ class Dekadal_Iterator():
         for year in range(start_year, end_year + 1):
             for dekad in range(start_dekad if year == start_year else 1, end_dekad + 1 if year == end_year else 36):
                 date_range.append(self.get_begin_date(dekad, year))
-                date_range_string = [date.strftime('%Y%m%d') for date in date_range]
 
-        return date_range_string
+        return_obj = [{'date': date.strftime('%Y%m%d')} for date in date_range]
+
+        return return_obj
 

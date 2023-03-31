@@ -1,0 +1,195 @@
+{
+  "data": {
+    "lis": {
+      "source": "/mnt/bigafrica/",
+      "encodings": {
+        "Runoff": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Baseflow": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Evapotranspiration": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Soil_Moisture_0_10": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Soil_Moisture_10_40": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Soil_Moisture_40_100": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        },
+        "Soil_Moisture_100_200": {
+          "dtype": "{npdtype=float32}",
+          "_FillValue": "{npfloat=-9999.0}",
+          "chunksizes": "{tuple=1, 256, 256}",
+          "missing_value": "{npfloat=-9999.0}"
+        }
+      },
+      "extension": ".nc",
+      "variables": {
+        "Runoff": {
+          "original_variable": "Qs_acc"
+        },
+        "Baseflow": {
+          "original_variable": "Qsb_acc"
+        },
+        "Evapotranspiration": {
+          "original_variable": "Evap_acc"
+        },
+        "Soil_Moisture_0_10": {
+          "profile": 0,
+          "original_variable": "SoilMoist_tavg"
+        },
+        "Soil_Moisture_10_40": {
+          "profile": 1,
+          "original_variable": "SoilMoist_tavg"
+        },
+        "Soil_Moisture_40_100": {
+          "profile": 2,
+          "original_variable": "SoilMoist_tavg"
+        },
+        "Soil_Moisture_100_200": {
+          "profile": 3,
+          "original_variable": "SoilMoist_tavg"
+        }
+      },
+      "attributes": {
+        "Runoff": {
+          "units": "mm day-1",
+          "comment": "LIS model output",
+          "long_name": "Surface runoff",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "accumulation_interval",
+            "comment"
+          ],
+          "accumulation_interval": "daily"
+        },
+        "Baseflow": {
+          "units": "mm day-1",
+          "comment": "LIS model output",
+          "long_name": "Subsurface runoff",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "accumulation_interval",
+            "comment"
+          ],
+          "accumulation_interval": "daily"
+        },
+        "Evapotranspiration": {
+          "units": "mm day-1",
+          "comment": "LIS model output",
+          "long_name": "Evapotranspiration",
+          "insertion_order": [
+            "long_name",
+            "units",
+            "accumulation_interval",
+            "comment"
+          ],
+          "accumulation_interval": "daily"
+        },
+        "Soil_Moisture_0_10": {
+          "units": "m^3 m-3",
+          "long_name": "Soil Moisture 0 - 10",
+          "insertion_order": [
+            "long_name",
+            "units"
+          ]
+        },
+        "Soil_Moisture_10_40": {
+          "units": "m^3 m-3",
+          "long_name": "Soil Moisture 10 - 40",
+          "insertion_order": [
+            "long_name",
+            "units"
+          ]
+        },
+        "Soil_Moisture_40_100": {
+          "units": "m^3 m-3",
+          "long_name": "Soil Moisture 40 - 100",
+          "insertion_order": [
+            "long_name",
+            "units"
+          ]
+        },
+        "Soil_Moisture_100_200": {
+          "units": "m^3 m-3",
+          "long_name": "Soil Moisture 100 - 200",
+          "insertion_order": [
+            "long_name",
+            "units"
+          ]
+        }
+      },
+      "vars_to_drop": [
+        "PotEvap_acc",
+        "start_time",
+        "end_time",
+        "SoilMoist_tavg",
+        "Evap_acc",
+        "Qs_acc",
+        "Qsb_acc"
+      ],
+      "download_type": "filesystem",
+      "preformat_filename": "LIS_Africa_daily_{YYYYMMDD}.nc"
+    }
+  },
+  "metadata": {
+    "source": "NASA Short-Term Prediction Research and Transition (SPoRT) Center; Clay Blankenship, clay.blankenship@nasa.gov",
+    "contact": "Lance Gilliland, lance.gilliland@nasa.gov",
+    "version": "1.0",
+    "reference": "Ellenburg, W. L., V. Mishra, J. Roberts, A. Limaye, J. L. Case, C. B. Blankenship, and K. Cressman, 2021:  Detecting desert locust breeding grounds:  A satellite assisted modeling approach.  Remote Sensing, 13(7), 1276. https://doi.org/10.3390/rs13071276",
+    "description": "Land Information System output from the Noah land surface model.",
+    "spatial_resolution": "0.03deg",
+    "temporal_resolution": "daily"
+  },
+  "timedelta_end": {
+    "hours": 23,
+    "minutes": 59,
+    "seconds": 59
+  },
+  "nc4_indexed_by": "start",
+  "timedelta_start": {},
+  "iterator_options": {
+    "source_dir": "/mnt/bigafrica/"
+  },
+  "modify_file_attr": {
+    "Reference": {
+      "attrs_to_insert": {
+        "NUM_SOIL_LAYERS": "{npint32=4}",
+        "SOIL_LAYER_THICKNESSES": "{npfloat32array=[10.0,30.0,60.0,100.0]}"
+      },
+      "insertion_order": [
+        "NUM_SOIL_LAYERS",
+        "SOIL_LAYER_THICKNESSES"
+      ]
+    }
+  },
+  "adjust_start_date": "lis",
+  "lis_manual_lat_lon": true,
+  "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
+  "timedelta_ds_time_index": {}
+}

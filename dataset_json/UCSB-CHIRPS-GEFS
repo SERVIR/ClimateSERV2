@@ -6,7 +6,7 @@
         "precipitation_amount": {
           "dtype": "{npdtype=float32}",
           "_FillValue": "{npfloat=-9999.0}",
-          "chunksizes": "{tuple=1,256,256}",
+          "chunksizes": "{tuple=1, 256, 256}",
           "missing_value": "{npfloat=-9999.0}"
         }
       },
@@ -37,7 +37,7 @@
         "precipitation_anomaly": {
           "dtype": "{npdtype=float32}",
           "_FillValue": "{npfloat=-9999.0}",
-          "chunksizes": "{tuple=1,256,256}",
+          "chunksizes": "{tuple=1, 256, 256}",
           "missing_value": "{npfloat=-9999.0}"
         }
       },
@@ -79,7 +79,11 @@
     "seconds": 59
   },
   "nc4_indexed_by": "start",
-  "timedelta_start": {},
+  "timedelta_start": {
+    "days": -9
+  },
   "preformat_nc4_filename": "{product}.{YYYYMMDD}T000000Z.{region}.{spatial_resolution}.{temporal_resolution}.nc4",
-  "timedelta_ds_time_index": {}
+  "timedelta_ds_time_index": {
+    "days": -9
+  }
 }

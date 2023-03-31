@@ -29,7 +29,7 @@ class ETLDatasetAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {'widget': JSONEditorWidget}
     }
-    list_display = ('dataset_name','dataset_subtype')
+    list_display = ('dataset_name','dataset_subtype', 'is_pipeline_enabled', 'dataset_availability')
 
 @admin.register(Profile)
 class ProfileAdmin(admin.ModelAdmin):
