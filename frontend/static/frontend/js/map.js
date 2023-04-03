@@ -102,6 +102,63 @@ function buildStyles() {
     // have to update this to find the palettes in
     // the abstract tag https://github.com/Unidata/tds/issues/173
     $.ajax({
+        url: "http://thredds5.socrates.work:8080/thredds/wms/Agg/emodis-ndvi_eastafrica_250m_10dy.nc4?service=WMS&version=1.3.0&request=GetCapabilities",  //client_layers[0].url + "&request=GetCapabilities",
+        type: "GET",
+        async: true,
+        crossDomain: true
+    }).fail(function (jqXHR, textStatus, errorThrown) {
+        set_from_backup();
+        console.warn(jqXHR + textStatus + errorThrown);
+    }).done(function (data, _textStatus, _jqXHR) {
+        if (data.errMsg) {
+            console.info(data.errMsg);
+        } else {
+            try {
+                const jsonObj = ($.xml2json(data))["#document"];
+                const style_link = "http" + jsonObj
+                    .WMS_Capabilities
+                    .Capability
+                    .Layer
+                    .Layer
+                    .Layer
+                    .Style[0]
+                    .Abstract.split("http")[1].trim();
+
+                $.ajax({
+                    url: style_link,
+                    type: "GET",
+                    async: true,
+                    crossDomain: true
+                }).fail(function (jqXHR, textStatus, errorThrown) {
+                    alert("failed");
+                    console.warn(jqXHR + textStatus + errorThrown);
+                }).done(function (data, _textStatus, _jqXHR) {
+                    if (data.errMsg) {
+                        console.info(data.errMsg);
+                    } else {
+                        styles = data.palettes.sort(function (a, b) {
+                            return a.toLowerCase().localeCompare(b.toLowerCase());
+                        });
+                        for (let i = 0; i < styles.length; i++) {
+                            styleOptions.push({
+                                val: styles[i],
+                                text: styles[i],
+                            });
+                        }
+                    }
+                });
+            } catch (e) {
+                set_from_backup();
+            }
+        }
+    });
+}
+
+function buildStylesOld() {
+    // when thredds is updated to V5 I will
+    // have to update this to find the palettes in
+    // the abstract tag https://github.com/Unidata/tds/issues/173
+    $.ajax({
         url: client_layers[0].url + "&request=GetCapabilities",
         type: "GET",
         async: true,
@@ -350,7 +407,8 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             abovemaxcolor: document.getElementById("above_max").value,
             belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
-            styles: style_table.val(),
+            //styles: style_table.val(),
+            styles: "default-scalar/" + style_table.val(),
         }),
         {
             updateTimeDimension: true,
@@ -609,7 +667,9 @@ function toggleLayer(which){
     close_dialog();
     if (map.hasLayer(overlayMaps[which])) {
         map.removeLayer(overlayMaps[which]);
+        console.log("removed");
     } else {
+        console.log("added");
         map.addLayer(overlayMaps[which]);
         //ajax to track_wms with layerID
         let formData = new FormData();
@@ -643,8 +703,9 @@ function toggleLayer(which){
             }
         }
     }
-    layer_limits.min = available_times[0];
-    layer_limits.max = available_times[available_times.length - 1];
+    available_times = available_times.sort((a, b) => a - b);
+    layer_limits.min = Math.min(...available_times);
+    layer_limits.max = Math.max(...available_times);
 
     if (hasLayer) {
         map.timeDimension.setAvailableTimes(available_times, 'replace');
@@ -658,7 +719,8 @@ function toggleLayer(which){
             $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
                 " to " + moment(endTime).utc().format('MM/DD/YYYY'));
             saved_range = true;
-        } else if (!map.timeDimension.getLowerLimit()) {
+        // } else if (!map.timeDimension.getLowerLimit()) {
+             } else if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
@@ -885,7 +947,6 @@ function addDataToMap(data) {
 function file_upload_complete() {
     return (data) => {
         addDataToMap(data);
-        console.log("just added:");
         collect_review_data();
         verify_ready();
     };
@@ -909,8 +970,6 @@ function handleFiles(e) {
     };
     const files = e.target.files || e.dataTransfer.files || this.files;
     for (let i = 0, file; (file = files[i]); i++) {
-        console.log(i);
-        console.log(file.name);
         if (file.type === "application/json") {
             reader.readAsText(file);
         } else if (file.name.indexOf(".geojson") > -1) {
@@ -975,17 +1034,13 @@ function enableDrawing() {
             if (drawnItems.getLayers().length < 20) {
 
                 const area = L.GeometryUtil.geodesicArea(layer.getLatLngs()[0]);
-                // console.log("area " + area);
                 let multi_area = 0;
                 let sq_kilos = 0;
                 drawnItems.getLayers().forEach(multi_layer => {
                     // This is square meters
                     multi_area += L.GeometryUtil.geodesicArea(multi_layer.getLatLngs()[0]);
                 });
-                // console.log('multi_area: ' + multi_area);
                 sq_kilos += (multi_area + area) / 1000000;
-                // if sq_kilos > 10000000 we should not let them continue
-                // console.log("sq_kilos for all: " + sq_kilos);
 
                 if (sq_kilos < 10000000) {
                     drawnItems.addLayer(layer);
