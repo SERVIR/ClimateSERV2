@@ -300,12 +300,25 @@ alias crestart='cstop; cstart;'
 
 ## Contact
 
-### Authors
+### Software Developers
 
-- [Billy Ashmall (NASA)](https://github.com/billyz313)
-- [Roberto Fontanarosa (Former NASA)](https://github.com/rfontanarosa)
-- [Alexandre Goberna (NASA)](https://github.com/agoberna)
-- [Githika Tondapu (NASA)](https://github.com/gtondapu)
+- [Billy Ashmall (NASA/USRA)](https://github.com/billyz313)
+- [Roberto Fontanarosa (Former NASA/USRA)](https://github.com/rfontanarosa)
+- [Alexandre Goberna (NASA/USRA)](https://github.com/agoberna)
+- [Githika Tondapu (NASA/USRA)](https://github.com/gtondapu)
+
+### Systems Engineering
+
+- Lance Gilliland (NASA/Jacobs)
+- Francisco Delgado (NASA/USRA)
+
+### Science Team
+
+- Brent Roberst (NASA)
+- Ashutosh Limaye (NASA)
+- Eric Anderson (NASA)
+
+
 
 ## License and Distribution
 
