@@ -176,6 +176,13 @@ def get_data_from_request(request):
         track_usage.data_retrieved = False
         track_usage.save()
         return process_callback(request, "need to send id", "application/json")
+    except Exception as e:
+        logger.warning("New get data from request error: " + str(e))
+        try:
+             return process_callback(request, json.dumps(json_results), "application/json")
+        except:
+             return process_callback(request, json.dumps({"error":"we have a new issue"}), "application/json")
+
 
 
 # To parse an int from a string
