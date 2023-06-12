@@ -159,7 +159,7 @@ function buildStylesOld() {
     // have to update this to find the palettes in
     // the abstract tag https://github.com/Unidata/tds/issues/173
     $.ajax({
-        url: client_layers[0].url + "&request=GetCapabilities",
+        url: "https://csthredds.servirglobal.net/thredds/wms/Agg/sport-lis_africa_0.03deg_daily.nc4?service=WMS&amp;version=1.3.0&request=GetCapabilities", //client_layers[0].url + "&request=GetCapabilities",
         type: "GET",
         async: true,
         crossDomain: true
@@ -408,7 +408,7 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
             belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
             //styles: style_table.val(),
-            styles: "default-scalar/" + style_table.val(),
+            styles: style_table.val(),
         }),
         {
             updateTimeDimension: true,
@@ -507,9 +507,15 @@ function openSettings(which) {
     });
     $(".ui-dialog-title").attr("title", "Settings");
     $(styleOptions).each(function () {
-        $("#style_table").append(
-            $("<option>").attr("value", this.val).text(this.text)
+        if(active_layer.url.includes("threddsx")){
+            $("#style_table").append(
+            $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
         );
+        } else {
+            $("#style_table").append(
+                $("<option>").attr("value", this.val).text(this.text)
+            );
+        }
     });
 
     if (multi) {
@@ -1290,7 +1296,8 @@ function initMap() {
     client_layers.forEach(createLayer);
     sortableLayerSetup();
     try {
-        buildStyles();
+        // buildStyles();
+        buildStylesOld();
     } catch (e) {
     }
     adjustLayerIndex();
