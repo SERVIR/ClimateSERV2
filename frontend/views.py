@@ -15,9 +15,10 @@ from api.models import Track_Usage
 from django import template
 from django.template.defaultfilters import stringfilter
 from django.views.decorators.cache import cache_page
-
+import logging
 register = template.Library()
 
+logger = logging.getLogger("request_processor")
 
 @cache_page(60 * 15)
 def index(request):
@@ -29,12 +30,23 @@ def index(request):
 
 
 def map_app(request):
-    my_data_sets = get_datasets()
+    try:
+        logger.error("loading map")
+        my_data_sets = get_datasets()
+    except Exception as e:
+        logger.error(str(e))
+
+    try:
+        nmme_info = json.dumps(get_nmme_info(str(uuid.uuid4())))
+    except Exception as e:
+        logger.error(str(e))
+        nmme_info = json.dumps({})
 
     return render(request, 'map.html', context={
         'page': 'menu-map',
         'data_layers': my_data_sets,
-        'climateModelInfo': json.dumps(get_nmme_info(str(uuid.uuid4()))),
+
+        'climateModelInfo': nmme_info,
     })
 
 
@@ -114,3 +126,4 @@ def confirm_captcha(request):
 @stringfilter
 def trim(value):
     return value.strip()
+ 
