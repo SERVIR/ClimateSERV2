@@ -22,7 +22,7 @@ pytz==2021.1
 rasterio==1.2.6
 requests==2.31.0
 rioxarray==0.6.1
-scipy==1.7.0
+scipy==1.10.0
 shapely==1.7.1
 snuggs==1.4.7
 urllib3==1.26.6
