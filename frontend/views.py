@@ -6,7 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-
+from django.core import serializers
 from climateserv2 import settings
 from climateserv2.views import get_nmme_info
 from .models import *
@@ -29,6 +29,29 @@ def index(request):
 
 
 def map_app(request):
+    my_data_sets = get_datasets()
+
+    return render(request, 'map.html', context={
+        'page': 'menu-map',
+        'data_layers': my_data_sets,
+        'climateModelInfo': json.dumps(get_nmme_info(str(uuid.uuid4()))),
+    })
+
+
+@csrf_exempt
+def get_map_layers(request):
+    my_data_sets = get_datasets()
+
+    callback = request.POST.get("callback", request.GET.get("callback"))
+    if callback:
+        http_response = HttpResponse(callback + "(" + str(serializers.serialize('json', my_data_sets)) + ")", content_type="application/json")
+    else:
+        http_response = HttpResponse(str(serializers.serialize('json', my_data_sets)))
+
+    return http_response
+
+
+def get_datasets():
     my_data_sets = DataLayer.objects.order_by('title').all()
     for item in my_data_sets:
         if item.isMultiEnsemble:
@@ -40,12 +63,7 @@ def map_app(request):
             item.datalayer.set(my_ensembles)
         else:
             item.ui_id = item.ui_id + str(uuid.uuid4())
-
-    return render(request, 'map.html', context={
-        'page': 'menu-map',
-        'data_layers': my_data_sets,
-        'climateModelInfo': json.dumps(get_nmme_info(str(uuid.uuid4()))),
-    })
+    return my_data_sets
 
 
 @staff_member_required
