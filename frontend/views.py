@@ -16,9 +16,11 @@ from django import template
 from django.template.defaultfilters import stringfilter
 from django.views.decorators.cache import cache_page
 import logging
+
 register = template.Library()
 
 logger = logging.getLogger("request_processor")
+
 
 @cache_page(60 * 15)
 def index(request):
@@ -35,6 +37,7 @@ def map_app(request):
         my_data_sets = get_datasets()
     except Exception as e:
         logger.error(str(e))
+        my_data_sets = None
 
     try:
         nmme_info = json.dumps(get_nmme_info(str(uuid.uuid4())))
@@ -56,7 +59,9 @@ def get_map_layers(request):
 
     callback = request.POST.get("callback", request.GET.get("callback"))
     if callback:
-        http_response = HttpResponse(callback + "(" + str(serializers.serialize('json', my_data_sets)) + ")", content_type="application/json")
+        http_response = HttpResponse(
+            callback + "(" + str(serializers.serialize('json', my_data_sets)) + ")",
+            content_type="application/json")
     else:
         http_response = HttpResponse(str(serializers.serialize('json', my_data_sets)))
 
@@ -126,4 +131,3 @@ def confirm_captcha(request):
 @stringfilter
 def trim(value):
     return value.strip()
- 
