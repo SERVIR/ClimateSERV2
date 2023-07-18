@@ -58,7 +58,8 @@ function createLayer(item) {
             belowmincolor: "extend",
             numcolorbands: 100,
             styles: item.styles,
-            tileSize: 1024,
+            tileSize: 256,
+            version: "1.3.0"
         }),
         {
             updateTimeDimension: true,
@@ -102,7 +103,7 @@ function buildStyles() {
     // have to update this to find the palettes in
     // the abstract tag https://github.com/Unidata/tds/issues/173
     $.ajax({
-        url: "http://thredds5.socrates.work:8080/thredds/wms/Agg/emodis-ndvi_eastafrica_250m_10dy.nc4?service=WMS&version=1.3.0&request=GetCapabilities",  //client_layers[0].url + "&request=GetCapabilities",
+        url: "https://threddsx.servirglobal.net/thredds/wms/Agg/emodis-ndvi_eastafrica_250m_10dy.nc4?service=WMS&version=1.3.0&request=GetCapabilities",  //client_layers[0].url + "&request=GetCapabilities",
         type: "GET",
         async: true,
         crossDomain: true
@@ -3283,7 +3284,8 @@ function get_stat_body(which) {
                 "  <div class='servir_tooltip_header'>GEFS</div>" +
                 "  <div class='servir_tooltip_body'>Global Ensemble Forecast System (GEFS) a weather " +
                 "forecast model made up of 21 separate forecasts, or ensemble members. Availability: " +
-                "January 1, 1985, to present.</div>" +
+                "January 1, 1985, to present. The layer shows average value for next 10-day rainfall " +
+                "forecasts.  </div>" +
                 "    <br>" +
                 "    <div class='servir_tooltip_header'>Evaporative Stress Index  (ESI)</div>" +
                 "    <div class='servir_tooltip_body'>ESI is a global dataset produced weekly at 5-kilometer " +
