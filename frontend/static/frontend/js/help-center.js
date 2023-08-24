@@ -5,6 +5,9 @@ $(document).ready(function () {
         getMetaData(metaid);
     }
     adjustCards();
+    if(dev_api){
+        activate('api');
+    }
 });
 
 function adjustCards() {
@@ -261,7 +264,7 @@ function getMetaData(which) {
 function activate(which) {
     $(".help-tabs").removeClass("active");
     $("#" + which).addClass("active");
-    $("[id$=help-section]").hide()
+    $("[id$=help-section]").hide();
     $("#" + which + "-help-section").show();
 }
 

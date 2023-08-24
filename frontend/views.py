@@ -104,6 +104,15 @@ def help_center(request):
     })
 
 
+@cache_page(60 * 15)
+def dev_api(request):
+    return render(request, 'help.html', context={
+        'page': 'menu-help',
+        'datasets': DataSet.objects.all(),
+        'dev_api': True
+    })
+
+
 @csrf_exempt
 def confirm_captcha(request):
     version = request.POST.get('version', '')
