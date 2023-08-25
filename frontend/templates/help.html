@@ -18,6 +18,8 @@
     <script>
         const static_url = "{% static '' %}";
         const dev_api = "{{ dev_api }}";
+
+        let adjust_needed = dev_api ? true : false;
     </script>
     <div style="background-color: #f6f6f6;" class="p50">
         <div class="row mx-auto my-auto">
@@ -36,7 +38,7 @@
             </div>
         </div>
     </div>
-    <div id="metadata-help-section" class="data-cards p50">
+    <div id="metadata-help-section" class="data-cards p50" {% if dev_api is True %}style="display: none;"{% endif %}>
 
         {% for dataset in datasets %}
 
@@ -302,7 +304,7 @@
 {#        </div>#}
     </div>
 
-    <div id="api-help-section" style="display: none;" class="p50">
+    <div id="api-help-section" {% if dev_api is True %} style="" {% else %}style="display: none;"{% endif %}  class="p50">
         {#        <div class="row mx-auto my-auto">#}
         {#            <h2 class="underline-header" id="api">#}
         {#                API#}

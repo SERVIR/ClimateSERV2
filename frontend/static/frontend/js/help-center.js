@@ -105,7 +105,6 @@ function openDialog(metaData) {
                 height: $(window).height() - 140,
                 width: $(window).width() - 100
               }, 1000 , "linear", function(){
-console.log("in callback")
 
                fix_dialog();
                 $(".ui-dialog-titlebar-close")[0].addEventListener("click", function(){
@@ -116,7 +115,6 @@ console.log("in callback")
                 height: $(window).height() - 140,
                 width: $(window).width() - 100
               }, 1000 , "swing", function(){
-console.log("in callback");
                fix_dialog();
             });
 
@@ -262,10 +260,15 @@ function getMetaData(which) {
 }
 
 function activate(which) {
+
     $(".help-tabs").removeClass("active");
     $("#" + which).addClass("active");
     $("[id$=help-section]").hide();
     $("#" + which + "-help-section").show();
+    if(which == "metadata" && adjust_needed){
+        adjustCards();
+        adjust_needed = false;
+    }
 }
 
 
