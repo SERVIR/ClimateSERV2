@@ -268,7 +268,7 @@ def start_processing(statistical_query):
         set_progress_to_100(uniqueid)
         logger.debug("uniqueid: " + uniqueid)
         # if this
-        track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid)
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=uniqueid)
         logger.debug("got the object")
         track_usage.status = "Success"
         track_usage.save()

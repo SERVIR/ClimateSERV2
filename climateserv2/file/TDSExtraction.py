@@ -54,6 +54,8 @@ def get_ensemble_dataset(datatype):
 def get_filelist(datatype, start_date, end_date):
     working_datalayer = None
     logger.info("just entered get_filelist")
+
+    logger.info(str(datatype) + ", " + str(start_date) + "," + str(end_date))
     try:
         if DataLayer.objects.filter(api_id=int(datatype)).exists():
             logger.info("Regular dataset")
@@ -72,8 +74,8 @@ def get_filelist(datatype, start_date, end_date):
         logger.info("******************")
         try:
             dataset_name_format = working_dataset.dataset_name_format
-        except:
-            logger.info("failed in inner exception")
+        except Exception as name_error:
+            logger.info("failed in inner exception: " + str(name_error))
             dataset_name_format = working_dataset["dataset_name_format"]
     except Exception as e:
         print("failed second in get_filelist" + str(e))
@@ -88,6 +90,7 @@ def get_filelist(datatype, start_date, end_date):
     year_nums = range(datetime.strptime(start_date, '%Y-%m-%d').year, datetime.strptime(end_date, '%Y-%m-%d').year + 1)
     filelist = []
     dataset_name = dataset_name_format.split('_')
+    logger.info("dataset_name: " + str(dataset_name))
     try:
         final_load_dir = working_dataset.fast_directory_path
     except:
@@ -111,7 +114,14 @@ def get_filelist(datatype, start_date, end_date):
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-
+    elif "usda-nsidc-smap" == dataset_name[0]:
+        for year in year_nums:
+            name = final_load_dir + "usda-nsidc-smap" + ".global." + dataset_name[
+                2] + ".daily." + str(year) + ".nc4"
+            if os.path.exists(name):
+                filelist.append(name)
+            else:
+                logger.info("Was looking for: " + str(name))
     elif "ucsb-chirp" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
@@ -268,8 +278,24 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
             bool_mask = None
         if bool_mask is None:
             data = unmasked_data
+            # unfiltered_data = unmasked_data
+            # threshold = 0.25 * len(unfiltered_data.latitude) * len(unfiltered_data.longitude)
+            #
+            # # Count the number of non-NaN values along the time dimension
+            # count_non_nan = unfiltered_data.count(dim=['latitude', 'longitude'])
+            #
+            # # Filter data to keep only the time steps with less than 25% missing data
+            # data = unfiltered_data.where(count_non_nan > threshold)
         else:
-            data = unmasked_data.where(bool_mask)
+            data = (unmasked_data.where(bool_mask))
+            # unfiltered_data = (unmasked_data.where(bool_mask))
+            # threshold = 0.25 * len(unfiltered_data.latitude) * len(unfiltered_data.longitude)
+            #
+            # # Count the number of non-NaN values along the time dimension
+            # count_non_nan = unfiltered_data.count(dim=['latitude', 'longitude'])
+            #
+            # # Filter data to keep only the time steps with less than 25% missing data
+            # data = unfiltered_data.where(count_non_nan > threshold)
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
