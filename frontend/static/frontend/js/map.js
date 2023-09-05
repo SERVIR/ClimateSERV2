@@ -2610,7 +2610,8 @@ function multi_chart_builder(conversion) {
                     const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
                     // maybe set current time for layers to this date
 
-                    map.timeDimension.setCurrentTime(new Date(date));
+                    map.timeDimension.setCurrentTime(Date.UTC(full.getFullYear(), full.getMonth(), full.getDate()));
+                    console.log("holle");
                     console.log(date);
                 }
             }
