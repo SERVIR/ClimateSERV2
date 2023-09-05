@@ -508,10 +508,10 @@ function openSettings(which) {
     });
     $(".ui-dialog-title").attr("title", "Settings");
     $(styleOptions).each(function () {
-        if(active_layer.url.includes("threddsx")){
+        if (active_layer.url.includes("threddsx")) {
             $("#style_table").append(
-            $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
-        );
+                $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
+            );
         } else {
             $("#style_table").append(
                 $("<option>").attr("value", this.val).text(this.text)
@@ -670,7 +670,7 @@ function handleBaseMapSwitch(which) {
  * @param {string} which - The id of the layer to toggle
  */
 
-function toggleLayer(which){
+function toggleLayer(which) {
     close_dialog();
     if (map.hasLayer(overlayMaps[which])) {
         map.removeLayer(overlayMaps[which]);
@@ -680,7 +680,7 @@ function toggleLayer(which){
         map.addLayer(overlayMaps[which]);
         //ajax to track_wms with layerID
         let formData = new FormData();
-        if(which.replace("TimeLayer", "").length > 36){
+        if (which.replace("TimeLayer", "").length > 36) {
             which = which.replace("TimeLayer", "");
             which = which.substring(0, which.length - 36);
         }
@@ -696,8 +696,11 @@ function toggleLayer(which){
             async: true,
             crossDomain: true,
             data: formData,
-            success: function (response) {},
-            fail: function(){console.log("wms tracking failed");}
+            success: function (response) {
+            },
+            fail: function () {
+                console.log("wms tracking failed");
+            }
         });
     }
     let hasLayer = false;
@@ -726,8 +729,8 @@ function toggleLayer(which){
             $("#slider-range-txt").text(moment(startTime).utc().format('MM/DD/YYYY') +
                 " to " + moment(endTime).utc().format('MM/DD/YYYY'));
             saved_range = true;
-        // } else if (!map.timeDimension.getLowerLimit()) {
-             } else if (!map.timeDimension.getLowerLimit()) {
+            // } else if (!map.timeDimension.getLowerLimit()) {
+        } else if (!map.timeDimension.getLowerLimit()) {
             map.timeDimension.setLowerLimit(moment.utc(layer_limits.min));
             map.timeDimension.setUpperLimit(moment.utc(layer_limits.max));
             map.timeDimension.setCurrentTime(moment.utc(layer_limits.max));
@@ -2599,13 +2602,26 @@ function multi_chart_builder(conversion) {
         type: "line",
         name: multiQueryData[0].label,
         data: final_data.sort((a, b) => a[0] - b[0]),
+        allowPointSelect: true,
+        point: {
+            events: {
+                select: function (e) {
+                    const full = new Date(e.target.x);
+                    const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                    // maybe set current time for layers to this date
+
+                    map.timeDimension.setCurrentTime(new Date(date));
+                    console.log(date);
+                }
+            }
+        },
         tooltip: multiQueryData[0].point_format ?
             multiQueryData[0].point_format :
             {
                 pointFormatter: function () {
                     return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
                 },
-                xDateFormat: conversion === "monthly" ? "%b - %Y" : ""
+                xDateFormat: conversion === "monthly" ? "%b - %Y" : "%Y-%m-%d"
             }
     }];
 
@@ -3576,6 +3592,12 @@ function complete_load() {
         $("#dialog").dialog('close');
     });
     verify_range();
+
+    Highcharts.setOptions({
+        global: {
+            useUTC: false
+        }
+    });
 }
 
 /**
