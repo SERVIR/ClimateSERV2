@@ -2603,6 +2603,10 @@ function multi_chart_builder(conversion) {
         name: multiQueryData[0].label,
         data: final_data.sort((a, b) => a[0] - b[0]),
         allowPointSelect: true,
+        marker: {
+                enabled: true,
+                 radius: 4
+        },
         point: {
             events: {
                 select: function (e) {
