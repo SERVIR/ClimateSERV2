@@ -2554,7 +2554,7 @@ function convert_to_interval(data, calculation, interval) {
     }
     return monthly_data;
 }
-
+var mydate;
 /**
  * multi_chart_builder
  * This will build the chart with the data that has been stored
@@ -2606,13 +2606,18 @@ function multi_chart_builder(conversion) {
         point: {
             events: {
                 select: function (e) {
+                    mydate = e.target.x;
                     const full = new Date(e.target.x);
-                    const date = full.getFullYear() + "-" + (full.getMonth() + 1) + "-" + full.getDate();
+                    const enhanced = new Date(full.setTime(full.getTime() + 43200000));
+                    const date = new Date();
+                    const offset = date.getTimezoneOffset();
                     // maybe set current time for layers to this date
 
-                    map.timeDimension.setCurrentTime(Date.UTC(full.getFullYear(), full.getMonth(), full.getDate()));
+                    const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
+
+                    map.timeDimension.setCurrentTime(adjustedDate);
                     console.log("holle");
-                    console.log(date);
+                    console.log(adjustedDate);
                 }
             }
         },
@@ -2859,7 +2864,10 @@ function getDataFromRequest(id, isClimate, query_index) {
 
                         if (val > -9000) {
                             const darray = [];
-                            darray.push(parseInt(d.epochTime) * 1000);
+
+
+                            // darray.push(parseInt(d.epochTime) * 1000);
+                            darray.push(Date.UTC(d.year, d.month - 1, d.day));
                             //fix this
                             if (val < min) {
                                 min = val;
@@ -2871,7 +2879,8 @@ function getDataFromRequest(id, isClimate, query_index) {
                             compiledData.push(darray); // I can likely store min and max here
                         } else {
                             const null_array = [];
-                            null_array.push(parseInt(d.epochTime) * 1000);
+                            // null_array.push(parseInt(d.epochTime) * 1000);
+                            null_array.push(Date.UTC(d.year, d.month - 1, d.day));
                             null_array.push(null);
                             compiledData.push(null_array); // I can likely store min and max here
                         }
@@ -3596,7 +3605,7 @@ function complete_load() {
 
     Highcharts.setOptions({
         global: {
-            useUTC: false
+            useUTC: true
         }
     });
 }
