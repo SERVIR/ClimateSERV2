@@ -180,10 +180,12 @@ def start_processing(statistical_query):
             try:
                 dates = []
                 values = []
+                nan = []
                 for obj in split_obj:
                     try:
                         dates.extend(obj["dates"])
                         values.extend(obj["values"])
+                        nan.extend(obj["NaN"])
                     except Exception as e:
                         logger.error("making result list failed: " + str(e))
                 datatype = statistical_query['datatype']
@@ -205,7 +207,9 @@ def start_processing(statistical_query):
                                  "day": int(dates[dateIndex][8:10]),
                                  "date": str(dates[dateIndex][5:7]) + "/" + str(dates[dateIndex][8:10]) + "/" + str(
                                      dates[dateIndex][0:4]), "epochTime": gmt_midnight,
-                                 "value": {opn: np.float64(values[dateIndex])}}
+                                 "value": {opn: np.float64(values[dateIndex])},
+                                 "raw_value": np.float64(values[dateIndex]),
+                                 "NaN": np.float64(nan[dateIndex])}
                     if intervaltype == 0:
                         date_object = dateutils.createDateFromYearMonthDay(work_dict["year"], work_dict["month"],
                                                                            work_dict["day"])
@@ -360,6 +364,7 @@ def start_worker_process(job_item):
     values = None
     logger.debug("start_worker_process for: " + uniqueid)
     long_term_average = []
+    nan_percentage = []
     if job_item["subtype"] == "chirps":
         dates = job_item["dates"]
         values, long_term_average = GetTDSData.get_chirps_climatology(job_item["months"],
@@ -389,8 +394,9 @@ def start_worker_process(job_item):
             }
         else:
             logger.debug("about to get_data_values for: " + uniqueid)
+            logger.debug("Immmmmmmm dooooing it!!!")
             try:
-                dates, values = GetTDSData.get_data_values(job_item["uniqueid"],
+                dates, values, nan_percentage = GetTDSData.get_data_values(job_item["uniqueid"],
                                                            job_item['start_date'],
                                                            job_item['end_date'],
                                                            job_item['variable'],
@@ -398,7 +404,10 @@ def start_worker_process(job_item):
                                                            job_item['operation'],
                                                            job_item['file_list'],
                                                            job_item["job_length"])
+                logger.debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!nan_percentage*******************")
+                logger.debug(str(nan_percentage))
             except Exception as err:
+                logger.debug("fail, fail, fail")
                 logger.error(str(err))
                 logger.error("We have an error getting NetCDF values for: " + uniqueid)
 
@@ -430,6 +439,7 @@ def start_worker_process(job_item):
         'id': str(uuid.uuid4()),
         'dates': dates,
         'values': values,
+        'NaN': nan_percentage,
         'LTA': long_term_average,
         'subtype': job_item["subtype"],
         'zipfilepath': "",

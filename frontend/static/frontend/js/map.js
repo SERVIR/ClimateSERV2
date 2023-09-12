@@ -2504,8 +2504,39 @@ function configure_additional_chart(i, colors, conversion) {
         tooltip: point_format,
         name: multiQueryData[i].label,
         data: final_data.sort((a, b) => a[0] - b[0]),
+        // This only works in the cases where data date ranges are inclusive
+        // if one dataset exapnds beyond the other and a date is picked in that range
+        // The correct date will be loaded for the one that expands there, however
+        // the dataset that ends prior will load the last available in it's range.
+        // Currently there is no request to add this feature, however if needed
+        // we may need to extend the original js lib
+        // allowPointSelect: true,
+        // marker: {
+        //         enabled: true,
+        //          radius: 4
+        // },
+        // point: {
+        //     events: {
+        //         select: doSelect
+        //     }
+        // },
     });
 }
+
+function doSelect(e) {
+                    mydate = e.target.x;
+                    const full = new Date(e.target.x);
+                    const enhanced = new Date(full.setTime(full.getTime() + 43200000));
+                    const date = new Date();
+                    const offset = date.getTimezoneOffset();
+                    // maybe set current time for layers to this date
+
+                    const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
+
+                    map.timeDimension.setCurrentTime(adjustedDate);
+                    console.log("holle");
+                    console.log(adjustedDate);
+                }
 
 //change this to take conversion parameter monthly or yearly
 // fix name of function add logic for yearly
@@ -2596,6 +2627,8 @@ function multi_chart_builder(conversion) {
         final_data = multiQueryData[0].data;
     }
 
+    let final_nan = multiQueryData[0].nan.sort((a, b) => a[0] - b[0]);
+
 
     chart_object.series = [{
         color: "#758055",
@@ -2609,27 +2642,15 @@ function multi_chart_builder(conversion) {
         },
         point: {
             events: {
-                select: function (e) {
-                    mydate = e.target.x;
-                    const full = new Date(e.target.x);
-                    const enhanced = new Date(full.setTime(full.getTime() + 43200000));
-                    const date = new Date();
-                    const offset = date.getTimezoneOffset();
-                    // maybe set current time for layers to this date
-
-                    const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
-
-                    map.timeDimension.setCurrentTime(adjustedDate);
-                    console.log("holle");
-                    console.log(adjustedDate);
-                }
+                select: doSelect
             }
         },
         tooltip: multiQueryData[0].point_format ?
             multiQueryData[0].point_format :
             {
                 pointFormatter: function () {
-                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>";
+
+                    return Highcharts.numberFormat(this.y, 2) + " " + first_unit + "<br>" + (100 - final_nan.find(x => x[0] === this.x)[1]).toFixed(2) + " % coverage";
                 },
                 xDateFormat: conversion === "monthly" ? "%b - %Y" : "%Y-%m-%d"
             }
@@ -2693,11 +2714,131 @@ function multi_chart_builder(conversion) {
 
     if (multiQueryData.length > 1) {
         for (let i = 1; i < multiQueryData.length; i++) {
+            // fix point click here as well please
             configure_additional_chart(i, colors, (conversion || null));
         }
         $('#multi-switch-panel').css('visibility', 'visible');
     }
 }
+
+
+ (function(H) {
+    const pick = H.pick;
+    H.wrap(H.Chart.prototype, 'getCSV', function(p, useLocalDecimalPoint) {
+
+      let csv = '';
+      const rows = this.getDataRows();
+      const csvOptions = this.options.exporting.csv;
+      const decimalPoint = pick(csvOptions.decimalPoint, csvOptions.itemDelimiter !== ',' && useLocalDecimalPoint ?
+        (1.1).toLocaleString()[1] :
+        '.');
+      // use ';' for direct to Excel
+      const itemDelimiter = pick(csvOptions.itemDelimiter, decimalPoint === ',' ? ';' : ',');
+      // '\n' isn't working with the js csv data extraction
+      const lineDelimiter = csvOptions.lineDelimiter;
+      // Transform the rows to CSV
+        let counter = 0;
+        console.log("start row looping");
+      // rows.forEach(function(row, i) {
+      //   let val = '';
+      //  let j = row.length + 1;
+      //   // let j = multiQueryData.length + 2;
+      //
+      //
+      //   while (j--) {
+      //     val = row[j];
+      //     if (typeof val === 'string') {
+      //         console.log(val);
+      //       val = '"' + val + '"';
+      //
+      //     }else if (typeof val === 'number') {
+      //       if (decimalPoint !== '.') {
+      //         val = val.toString().replace('.', decimalPoint); // + " : "  + (100 - multiQueryData[0].nan[i - 1][1]) + "%";
+      //       }else{
+      //           val = val.toString(); // + " : "  + (100 - multiQueryData[0].nan[i - 1][1]) + "%";
+      //       }
+      //     // } else if (typeof val === 'undefined' && i !== 0 && j == multiQueryData.length + 1) {
+      //         } else if (typeof val === 'undefined' && i !== 0 && j == row.length ) {
+      //
+      //     console.log("Columns: " + j);
+      //
+      //     console.log("i: " + i);
+      //
+      //         const sorted = multiQueryData[0].nan.sort((a, b) => a[0] - b[0]);
+      //
+      //         try {
+      //             val = 100 - sorted[i - 1][1];
+      //
+      //         } catch(e) {
+      //             val = 0;
+      //         }
+      //         counter++;
+      //
+      //     } else if(typeof val === 'undefined' && i ==  0){
+      //        val = "Percent Coverage";
+      //     } else{
+      //         console.log(val + (typeof val));
+      //     }
+      //
+      //
+      //     row[j] = val;
+      //   }
+      //   // Add the values
+      //   csv += row.join(itemDelimiter);
+      //   // Add the line delimiter
+      //   if (i < rows.length - 1) {
+      //     csv += lineDelimiter;
+      //   }
+      // });
+        const uniqueDates = new Set();
+
+        multiQueryData.forEach((item) => {
+          item.data.forEach((dataItem) => {
+            uniqueDates.add(dataItem[0]);
+          });
+          item.nan.forEach((nanItem) => {
+            uniqueDates.add(nanItem[0]);
+          });
+        });
+
+        // Convert unique dates to an array and sort them
+        const sortedUniqueDates = Array.from(uniqueDates).sort();
+
+        // Create the CSV content
+        let csvContent = "Date";
+
+        // Add columns for each dataset and corresponding nan coverage
+        multiQueryData.forEach((item) => {
+          csvContent += `,${item.label}, ${item.label} Percent of AOI with data`;
+        });
+
+        csvContent += "\n";
+
+        sortedUniqueDates.forEach((epochDate) => {
+
+          const date = new Date(epochDate); // Convert epoch date to a readable date
+
+            const offset = date.getTimezoneOffset();
+                    // maybe set current time for layers to this date
+
+            const adjustedDate = new Date(date.getTime() + offset * 60000);
+            // date.setHours(date.getHours()+12);
+            const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+            csvContent += `${date_string},`;
+          multiQueryData.forEach((item) => {
+            const dataItem = item.data.find((d) => d[0] === epochDate);
+            const nanItem = item.nan.find((n) => n[0] === epochDate);
+            const datasetValue = dataItem ? dataItem[1] : "";
+            const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
+            const datasetLabel = item.label;
+            const nanCoverageColumn = `${datasetLabel} Coverage`;
+            csvContent += `${datasetValue},${datasetPercentValue},`;
+          });
+           csvContent += "\n";
+        });
+      return csvContent;
+    });
+  }(Highcharts));
 
 let passes = 0;
 
@@ -2853,6 +2994,7 @@ function getDataFromRequest(id, isClimate, query_index) {
                 } else {
                     previous_chart = null;
                     const compiledData = [];
+                    nanArray = [];
                     let min = 9999;
                     let max = -9999;
                     debug_data.push(data);
@@ -2868,10 +3010,16 @@ function getDataFromRequest(id, isClimate, query_index) {
 
                         if (val > -9000) {
                             const darray = [];
+                            const narray = [];
+
 
 
                             // darray.push(parseInt(d.epochTime) * 1000);
                             darray.push(Date.UTC(d.year, d.month - 1, d.day));
+
+                            narray.push(Date.UTC(d.year, d.month - 1, d.day));
+                            narray.push(d.NaN);
+                            nanArray.push(narray);
                             //fix this
                             if (val < min) {
                                 min = val;
@@ -2887,6 +3035,13 @@ function getDataFromRequest(id, isClimate, query_index) {
                             null_array.push(Date.UTC(d.year, d.month - 1, d.day));
                             null_array.push(null);
                             compiledData.push(null_array); // I can likely store min and max here
+
+                            const narray = [];
+
+
+                            narray.push(Date.UTC(d.year, d.month - 1, d.day));
+                            narray.push(100);
+                            nanArray.push(narray);
                         }
                     });
                     from_compiled = compiledData; // if this is empty, I need to let the user know there was no data
@@ -2902,6 +3057,7 @@ function getDataFromRequest(id, isClimate, query_index) {
 
                     multiQueryData[query_index] = {
                         data: compiledData,
+                        nan: nanArray,
                         units: units,
                         yAxis_format: layer.yAxis_format || null,
                         point_format: layer.point_format || null,

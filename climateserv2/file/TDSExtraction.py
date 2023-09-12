@@ -205,6 +205,8 @@ def update_progress(job_variables):
             logger.debug(str(uniqueid) + "***************************** " + str(request_progress.progress))
     except IntegrityError:
         logger.error("Progress update issue")
+    except Exception as e:
+        logger.error("Progress update issue: " + str(e))
 
 
 # To get the dates and values corresponding to the dataset, variable, dates, operation and geometry
@@ -240,6 +242,8 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     lon1, lat1, lon2, lat2 = geo_data_frame.total_bounds
     # using xarray to open the temporary netcdf
     logger.debug("about to xarray open the data for: " + uniqueid)
+
+    logger.debug("file_list: " + str(file_list))
     try:
         with xr.open_mfdataset(file_list,
                                parallel=True,
@@ -300,6 +304,9 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
+    nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
+    nan_percentage[np.isnan(nan_percentage)] = -9999
+
     if operation == "min":
         ds_vals = data.min(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
@@ -307,7 +314,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     elif operation == "avg":
         ds_vals = data.mean(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
-        return dates, ds_vals
+        return dates, ds_vals, nan_percentage
     elif operation == "max":
         ds_vals = data.max(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
