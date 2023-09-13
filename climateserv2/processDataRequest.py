@@ -404,8 +404,7 @@ def start_worker_process(job_item):
                                                            job_item['operation'],
                                                            job_item['file_list'],
                                                            job_item["job_length"])
-                logger.debug("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!nan_percentage*******************")
-                logger.debug(str(nan_percentage))
+
             except Exception as err:
                 logger.debug("fail, fail, fail")
                 logger.error(str(err))

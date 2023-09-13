@@ -282,35 +282,26 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
             bool_mask = None
         if bool_mask is None:
             data = unmasked_data
-            # unfiltered_data = unmasked_data
-            # threshold = 0.25 * len(unfiltered_data.latitude) * len(unfiltered_data.longitude)
-            #
-            # # Count the number of non-NaN values along the time dimension
-            # count_non_nan = unfiltered_data.count(dim=['latitude', 'longitude'])
-            #
-            # # Filter data to keep only the time steps with less than 25% missing data
-            # data = unfiltered_data.where(count_non_nan > threshold)
+
         else:
-            data = (unmasked_data.where(bool_mask))
-            # unfiltered_data = (unmasked_data.where(bool_mask))
-            # threshold = 0.25 * len(unfiltered_data.latitude) * len(unfiltered_data.longitude)
-            #
-            # # Count the number of non-NaN values along the time dimension
-            # count_non_nan = unfiltered_data.count(dim=['latitude', 'longitude'])
-            #
-            # # Filter data to keep only the time steps with less than 25% missing data
-            # data = unfiltered_data.where(count_non_nan > threshold)
+            data = unmasked_data.where(bool_mask)
+
 
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
-    nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
-    nan_percentage[np.isnan(nan_percentage)] = -9999
+
+    number_of_nan_values = np.logical_and(bool_mask, np.isnan(data)).sum(dim=['latitude', 'longitude']).values
+
+    number_points_in_mask = bool_mask.sum(dim=['latitude', 'longitude']).values
+
+    nan_percentage = number_of_nan_values/number_points_in_mask * 100
+
 
     if operation == "min":
         ds_vals = data.min(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
-        return dates, ds_vals
+        return dates, ds_vals, nan_percentage
     elif operation == "avg":
         ds_vals = data.mean(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
@@ -318,7 +309,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     elif operation == "max":
         ds_vals = data.max(dim=['latitude', 'longitude']).values
         ds_vals[np.isnan(ds_vals)] = -9999
-        return dates, ds_vals
+        return dates, ds_vals, nan_percentage
     elif operation == "netcdf":
         logger.debug("*********************NetCDF*******************************")
         try:
