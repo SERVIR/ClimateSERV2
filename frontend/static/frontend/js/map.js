@@ -2753,7 +2753,7 @@ function multi_chart_builder(conversion) {
 
         sortedUniqueDates.forEach((epochDate) => {
 
-            if(epochDate) {
+            if (epochDate) {
 
                 const date = new Date(epochDate); // Convert epoch date to a readable date
 
@@ -2814,44 +2814,58 @@ function multi_chart_builder(conversion) {
 
             const colStartIndex = 1 + index * 2; // Adjust the column index based on the dataset
             datasetColumnMap[item.label] = colStartIndex;
-            XLSX.utils.sheet_add_aoa(worksheet, [[item.label, `${item.label} Percent of AOI with data`]], { origin: { r: 0, c: colStartIndex } });
+            XLSX.utils.sheet_add_aoa(worksheet, [[item.label, `${item.label} Percent of AOI with data`]], {
+                origin: {
+                    r: 0,
+                    c: colStartIndex
+                }
+            });
 
 
         });
         sortedUniqueDates.forEach((epochDate, index) => {
-            const date = new Date(epochDate); // Convert epoch date to a readable date
+            if (epochDate) {
+                const date = new Date(epochDate); // Convert epoch date to a readable date
 
-            const offset = date.getTimezoneOffset();
-            // maybe set current time for layers to this date
+                const offset = date.getTimezoneOffset();
+                // maybe set current time for layers to this date
 
-            const adjustedDate = new Date(date.getTime() + offset * 60000);
-            const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                const adjustedDate = new Date(date.getTime() + offset * 60000);
+                const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
 
-            const row = [date_string];
+                const row = [date_string];
 
-            multiQueryData.forEach((item) => {
-                const dataItem = item.data.find((d) => d[0] === epochDate);
-                const nanItem = item.nan.find((n) => n[0] === epochDate);
-                let datasetValue_raw = dataItem ? dataItem[1] : "";
+                multiQueryData.forEach((item) => {
+                    const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
+                    const nanItem = item.nan.find((n) => n[0] === epochDate);
+                    let datasetValue_raw = "";
+                    if (dataItem) {
+                        if (dataItem.y) {
+                            datasetValue_raw = dataItem.y;
+                        } else {
+                            datasetValue_raw = dataItem[1];
+                        }
+                    }
 
-                const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
-                const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
+                    const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
+                    const datasetPercentValue = nanItem ? (100 - nanItem[1]).toFixed(2) : "";
 
-                const colIndex = datasetColumnMap[item.label];
-              row[colIndex] = datasetValue;
-              row[colIndex + 1] = datasetPercentValue;
+                    const colIndex = datasetColumnMap[item.label];
+                    row[colIndex] = datasetValue;
+                    row[colIndex + 1] = datasetPercentValue;
 
-            });
+                });
 
-            XLSX.utils.sheet_add_aoa(worksheet, [row], {origin: `A${index + 2}`});
+                XLSX.utils.sheet_add_aoa(worksheet, [row], {origin: `A${index + 2}`});
+            }
         });
 
         // Create workbook and download the XLS file
         const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "multiQueryData");
+        XLSX.utils.book_append_sheet(workbook, worksheet, "ClimateSERV_Statistical_Query");
 
         // Generate the XLS file
-         XLSX.writeFile(workbook, "multiQueryData.xlsx");
+        XLSX.writeFile(workbook, "climateserv_" + new Date().getTime() + ".xlsx");
 
     });
 
