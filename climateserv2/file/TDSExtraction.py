@@ -295,7 +295,7 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
 
     number_points_in_mask = bool_mask.sum(dim=['latitude', 'longitude']).values
 
-    nan_percentage = number_of_nan_values/number_points_in_mask * 100
+    nan_percentage = np.round(number_of_nan_values/number_points_in_mask * 100, 2)
 
 
     if operation == "min":

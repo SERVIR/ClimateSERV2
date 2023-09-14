@@ -2524,19 +2524,19 @@ function configure_additional_chart(i, colors, conversion) {
 }
 
 function doSelect(e) {
-                    mydate = e.target.x;
-                    const full = new Date(e.target.x);
-                    const enhanced = new Date(full.setTime(full.getTime() + 43200000));
-                    const date = new Date();
-                    const offset = date.getTimezoneOffset();
-                    // maybe set current time for layers to this date
+    mydate = e.target.x;
+    const full = new Date(e.target.x);
+    const enhanced = new Date(full.setTime(full.getTime() + 43200000));
+    const date = new Date();
+    const offset = date.getTimezoneOffset();
+    // maybe set current time for layers to this date
 
-                    const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
+    const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
 
-                    map.timeDimension.setCurrentTime(adjustedDate);
-                    console.log("holle");
-                    console.log(adjustedDate);
-                }
+    map.timeDimension.setCurrentTime(adjustedDate);
+    console.log("holle");
+    console.log(adjustedDate);
+}
 
 //change this to take conversion parameter monthly or yearly
 // fix name of function add logic for yearly
@@ -2585,7 +2585,9 @@ function convert_to_interval(data, calculation, interval) {
     }
     return monthly_data;
 }
+
 var mydate;
+
 /**
  * multi_chart_builder
  * This will build the chart with the data that has been stored
@@ -2637,8 +2639,8 @@ function multi_chart_builder(conversion) {
         data: final_data.sort((a, b) => a[0] - b[0]),
         allowPointSelect: true,
         marker: {
-                enabled: true,
-                 radius: 4
+            enabled: true,
+            radius: 4
         },
         point: {
             events: {
@@ -2722,83 +2724,18 @@ function multi_chart_builder(conversion) {
 }
 
 
- (function(H) {
+(function (H) {
     const pick = H.pick;
-    H.wrap(H.Chart.prototype, 'getCSV', function(p, useLocalDecimalPoint) {
-
-      let csv = '';
-      const rows = this.getDataRows();
-      const csvOptions = this.options.exporting.csv;
-      const decimalPoint = pick(csvOptions.decimalPoint, csvOptions.itemDelimiter !== ',' && useLocalDecimalPoint ?
-        (1.1).toLocaleString()[1] :
-        '.');
-      // use ';' for direct to Excel
-      const itemDelimiter = pick(csvOptions.itemDelimiter, decimalPoint === ',' ? ';' : ',');
-      // '\n' isn't working with the js csv data extraction
-      const lineDelimiter = csvOptions.lineDelimiter;
-      // Transform the rows to CSV
-        let counter = 0;
-        console.log("start row looping");
-      // rows.forEach(function(row, i) {
-      //   let val = '';
-      //  let j = row.length + 1;
-      //   // let j = multiQueryData.length + 2;
-      //
-      //
-      //   while (j--) {
-      //     val = row[j];
-      //     if (typeof val === 'string') {
-      //         console.log(val);
-      //       val = '"' + val + '"';
-      //
-      //     }else if (typeof val === 'number') {
-      //       if (decimalPoint !== '.') {
-      //         val = val.toString().replace('.', decimalPoint); // + " : "  + (100 - multiQueryData[0].nan[i - 1][1]) + "%";
-      //       }else{
-      //           val = val.toString(); // + " : "  + (100 - multiQueryData[0].nan[i - 1][1]) + "%";
-      //       }
-      //     // } else if (typeof val === 'undefined' && i !== 0 && j == multiQueryData.length + 1) {
-      //         } else if (typeof val === 'undefined' && i !== 0 && j == row.length ) {
-      //
-      //     console.log("Columns: " + j);
-      //
-      //     console.log("i: " + i);
-      //
-      //         const sorted = multiQueryData[0].nan.sort((a, b) => a[0] - b[0]);
-      //
-      //         try {
-      //             val = 100 - sorted[i - 1][1];
-      //
-      //         } catch(e) {
-      //             val = 0;
-      //         }
-      //         counter++;
-      //
-      //     } else if(typeof val === 'undefined' && i ==  0){
-      //        val = "Percent Coverage";
-      //     } else{
-      //         console.log(val + (typeof val));
-      //     }
-      //
-      //
-      //     row[j] = val;
-      //   }
-      //   // Add the values
-      //   csv += row.join(itemDelimiter);
-      //   // Add the line delimiter
-      //   if (i < rows.length - 1) {
-      //     csv += lineDelimiter;
-      //   }
-      // });
+    H.wrap(H.Chart.prototype, 'getCSV', function (p, useLocalDecimalPoint) {
         const uniqueDates = new Set();
 
         multiQueryData.forEach((item) => {
-          item.data.forEach((dataItem) => {
-            uniqueDates.add(dataItem[0]);
-          });
-          item.nan.forEach((nanItem) => {
-            uniqueDates.add(nanItem[0]);
-          });
+            item.data.forEach((dataItem) => {
+                uniqueDates.add(dataItem[0]);
+            });
+            item.nan.forEach((nanItem) => {
+                uniqueDates.add(nanItem[0]);
+            });
         });
 
         // Convert unique dates to an array and sort them
@@ -2809,36 +2746,103 @@ function multi_chart_builder(conversion) {
 
         // Add columns for each dataset and corresponding nan coverage
         multiQueryData.forEach((item) => {
-          csvContent += `,${item.label}, ${item.label} Percent of AOI with data`;
+            csvContent += `,${item.label}, ${item.label} Percent of AOI with data`;
         });
 
         csvContent += "\n";
 
         sortedUniqueDates.forEach((epochDate) => {
 
-          const date = new Date(epochDate); // Convert epoch date to a readable date
+            const date = new Date(epochDate); // Convert epoch date to a readable date
 
             const offset = date.getTimezoneOffset();
-                    // maybe set current time for layers to this date
+            // maybe set current time for layers to this date
 
             const adjustedDate = new Date(date.getTime() + offset * 60000);
-            // date.setHours(date.getHours()+12);
             const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
             csvContent += `${date_string},`;
-          multiQueryData.forEach((item) => {
-            const dataItem = item.data.find((d) => d[0] === epochDate);
-            const nanItem = item.nan.find((n) => n[0] === epochDate);
-            const datasetValue = dataItem ? dataItem[1] : "";
-            const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
-            const datasetLabel = item.label;
-            const nanCoverageColumn = `${datasetLabel} Coverage`;
-            csvContent += `${datasetValue},${datasetPercentValue},`;
-          });
-           csvContent += "\n";
+            multiQueryData.forEach((item) => {
+                const dataItem = item.data.find((d) => d[0] === epochDate);
+                const nanItem = item.nan.find((n) => n[0] === epochDate);
+                let datasetValue_raw = dataItem ? dataItem[1] : "";
+
+                const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
+                const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
+                const datasetLabel = item.label;
+                const nanCoverageColumn = `${datasetLabel} Coverage`;
+                csvContent += `${datasetValue},${datasetPercentValue},`;
+            });
+            csvContent += "\n";
         });
-      return csvContent;
+        return csvContent;
     });
-  }(Highcharts));
+
+    H.wrap(H.Chart.prototype, 'downloadXLS', function (p, useLocalDecimalPoint) {
+        const uniqueDates = new Set();
+
+        multiQueryData.forEach((item) => {
+            item.data.forEach((dataItem) => {
+                uniqueDates.add(dataItem[0]);
+            });
+            item.nan.forEach((nanItem) => {
+                uniqueDates.add(nanItem[0]);
+            });
+        });
+
+        // Convert unique dates to an array and sort them
+        const sortedUniqueDates = Array.from(uniqueDates).sort();
+
+        const worksheet = XLSX.utils.aoa_to_sheet([["Date"]]);
+
+        const datasetColumnMap = {};
+
+        // Add columns for each dataset and corresponding nan coverage
+        multiQueryData.forEach((item, index) => {
+
+            const colStartIndex = 1 + index * 2; // Adjust the column index based on the dataset
+            datasetColumnMap[item.label] = colStartIndex;
+            XLSX.utils.sheet_add_aoa(worksheet, [[item.label, `${item.label} Percent of AOI with data`]], { origin: { r: 0, c: colStartIndex } });
+
+
+        });
+        sortedUniqueDates.forEach((epochDate, index) => {
+            const date = new Date(epochDate); // Convert epoch date to a readable date
+
+            const offset = date.getTimezoneOffset();
+            // maybe set current time for layers to this date
+
+            const adjustedDate = new Date(date.getTime() + offset * 60000);
+            const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+
+            const row = [date_string];
+
+            multiQueryData.forEach((item) => {
+                const dataItem = item.data.find((d) => d[0] === epochDate);
+                const nanItem = item.nan.find((n) => n[0] === epochDate);
+                let datasetValue_raw = dataItem ? dataItem[1] : "";
+
+                const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
+                const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
+
+                const colIndex = datasetColumnMap[item.label];
+              row[colIndex] = datasetValue;
+              row[colIndex + 1] = datasetPercentValue;
+
+            });
+
+            XLSX.utils.sheet_add_aoa(worksheet, [row], {origin: `A${index + 2}`});
+        });
+
+        // Create workbook and download the XLS file
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "multiQueryData");
+
+        // Generate the XLS file
+         XLSX.writeFile(workbook, "multiQueryData.xlsx");
+
+    });
+
+}(Highcharts));
 
 let passes = 0;
 
@@ -3011,7 +3015,6 @@ function getDataFromRequest(id, isClimate, query_index) {
                         if (val > -9000) {
                             const darray = [];
                             const narray = [];
-
 
 
                             // darray.push(parseInt(d.epochTime) * 1000);
