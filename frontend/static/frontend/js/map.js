@@ -2753,26 +2753,39 @@ function multi_chart_builder(conversion) {
 
         sortedUniqueDates.forEach((epochDate) => {
 
-            const date = new Date(epochDate); // Convert epoch date to a readable date
+            if(epochDate) {
 
-            const offset = date.getTimezoneOffset();
-            // maybe set current time for layers to this date
+                const date = new Date(epochDate); // Convert epoch date to a readable date
 
-            const adjustedDate = new Date(date.getTime() + offset * 60000);
-            const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
-            csvContent += `${date_string},`;
-            multiQueryData.forEach((item) => {
-                const dataItem = item.data.find((d) => d[0] === epochDate);
-                const nanItem = item.nan.find((n) => n[0] === epochDate);
-                let datasetValue_raw = dataItem ? dataItem[1] : "";
+                const offset = date.getTimezoneOffset();
+                // maybe set current time for layers to this date
 
-                const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
-                const datasetPercentValue = nanItem ? 100 - nanItem[1] : "";
-                const datasetLabel = item.label;
-                const nanCoverageColumn = `${datasetLabel} Coverage`;
-                csvContent += `${datasetValue},${datasetPercentValue},`;
-            });
-            csvContent += "\n";
+                const adjustedDate = new Date(date.getTime() + offset * 60000);
+                const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                console.log(date_string);
+                csvContent += `${date_string},`;
+                multiQueryData.forEach((item) => {
+                    const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
+                    const nanItem = item.nan.find((n) => n[0] === epochDate);
+                    // let datasetValue_raw = dataItem ? dataItem[1] : "";
+
+                    let datasetValue_raw = "";
+                    if (dataItem) {
+                        if (dataItem.y) {
+                            datasetValue_raw = dataItem.y;
+                        } else {
+                            datasetValue_raw = dataItem[1];
+                        }
+                    }
+
+                    const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
+                    const datasetPercentValue = nanItem ? (100 - nanItem[1]).toFixed(2) : "";
+                    const datasetLabel = item.label;
+                    const nanCoverageColumn = `${datasetLabel} Coverage`;
+                    csvContent += `${datasetValue},${datasetPercentValue},`;
+                });
+                csvContent += "\n";
+            }
         });
         return csvContent;
     });
