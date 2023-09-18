@@ -500,7 +500,7 @@
                                                 aria-hidden="true"
                                                 style="float: right;"></i>
                                         <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
-                                                onchange="filter_datasets_by()">
+                                                onchange="filter_datasets_by(); verify_ready();">
                                             <option value="observation">Observation</option>
                                             <option value="model-forecast">Model Forecast</option>
 
@@ -514,7 +514,7 @@
                                                 aria-hidden="true"
                                                 style="float: right;"></i>
                                         <select name="sourcemenu" class="form-control" id="sourcemenu"
-                                                onchange="handleSourceSelected(this.value)">
+                                                onchange="handleSourceSelected(this.value); verify_ready();">
                                             {% for layer in data_layers %}
                                                 {% if layer.isMultiEnsemble %}
 
