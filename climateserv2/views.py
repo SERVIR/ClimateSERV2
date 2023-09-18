@@ -513,6 +513,21 @@ def track_wms(request):
     return http_response
 
 
+def is_date_range_greater_than_max_years(start_date_str, end_date_str, max):
+    # Convert date strings to datetime objects
+    start_date = datetime.strptime(start_date_str, "%m/%d/%Y")
+    end_date = datetime.strptime(end_date_str, "%m/%d/%Y")
+
+    # Calculate the difference between end_date and start_date in days
+    date_difference = (end_date - start_date).days
+
+    # Calculate the number of years in the difference
+    years_difference = date_difference / 365.25  # Approximate number of days in a year
+
+    # Check if the difference is greater than 20 years
+    return years_difference > max
+
+
 # Submit a data request for processing
 @never_cache
 @csrf_exempt
@@ -528,12 +543,52 @@ def submit_data_request(request):
     operation_type = None
 
     datatype, begin_time, end_time, interval_type, error = validate_vars(request, error)
+
+
+
     calculation_string = request.POST.get("operationtype", request.GET.get("operationtype"))
     ps = literal_eval(params.parameters)
     calculation = ps[int(calculation_string)][2]
     # Get geometry from parameter or from shapefile
     feature_ids_list, feature_list, layer_id, polygon_string = get_geometry(error, feature_ids_list, feature_list,
                                                                             layer_id, polygon_string, request)
+    if is_date_range_greater_than_max_years(begin_time, end_time, 20):
+        unique_id = str(uuid.uuid4())
+        dictionary = {'datatype': datatype, 'begintime': begin_time, 'endtime': end_time,
+                      'intervaltype': interval_type, 'operationtype': operation_type,
+                      'originating_IP': get_client_ip(request), 'request_type': request.method}
+        if feature_list:
+            dictionary['layerid'] = layer_id
+            dictionary['featureids'] = feature_ids_list
+        else:
+            dictionary['geometry'] = polygon_string
+            try:
+                if dictionary['geometry'].index('FeatureCollection') > -1:
+                    print("all is well")
+            except ValueError:
+                dictionary['geometry'] = json.dumps({"type": "FeatureCollection",
+                                                     "features": [
+                                                         {"type": "Feature", "properties": {},
+                                                          "geometry": json.loads(polygon_string)}]})
+        if "geometry" in dictionary:
+            aoi = dictionary['geometry']
+        else:
+            status = "In Progress"
+            aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
+        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
+                                  time_requested=timezone.now(), AOI=aoi,
+                                  dataset=DataLayer.objects.get(
+                                      api_id=int(datatype)).etl_dataset_id.dataset_name_format,
+                                  start_date=pd.Timestamp(begin_time, tz='UTC'),
+                                  end_date=pd.Timestamp(end_time, tz='UTC'),
+                                  calculation=calculation, request_type=request.method,
+                                  status="Complete", progress=-1, API_call="submitDataRequest",
+                                  data_retrieved=False, ui_request=from_ui)
+
+        track_usage.save()
+        return process_callback(request, json.dumps([unique_id, "Max date range is: 20 years"]), "application/json")
+
     try:
         operation_type = int(request.POST.get("operationtype", request.GET.get("operationtype", None)))
     except KeyError:
