@@ -268,11 +268,11 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     # unmasked_data = nc_file[variable].sel(longitude=lon_slice, latitude=lat_slice).sel(time=slice(start_date, end_date))
     # nc_file.close()
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
-    bool_mask = None
+
     if jsonn['features'][0]['geometry']['type'] == "Point":
         data = unmasked_data
     else:
-
+        bool_mask = None
         try:
             aoi_combined = geo_data_frame.assign(combine=1).dissolve(by='combine', aggfunc='sum')
             bool_mask = rm.mask_3D_geopandas(aoi_combined, unmasked_data, lon_name='longitude',
@@ -291,15 +291,15 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     dates = data.time.dt.strftime("%Y-%m-%d").values.tolist()
     logger.debug('operation: ' + operation)
     update_progress({'progress': job_length, 'uniqueid': uniqueid})
-    if bool_mask:
+    if jsonn['features'][0]['geometry']['type'] == "Point":
+        nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
+    else:
 
         number_of_nan_values = np.logical_and(bool_mask, np.isnan(data)).sum(dim=['latitude', 'longitude']).values
 
         number_points_in_mask = bool_mask.sum(dim=['latitude', 'longitude']).values
 
         nan_percentage = np.round(number_of_nan_values/number_points_in_mask * 100, 2)
-    else:
-        nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
 
 
     if operation == "min":
