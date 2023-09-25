@@ -142,8 +142,10 @@ def start_processing(statistical_query):
                     })
 
         split_obj = []
+        rest_time = len(jobs)
         for job in jobs:
             job['job_length'] = len(jobs)
+
 
             # split_obj.append((pool.apply_async(start_worker_process, args=[job], )).get())
             # To revert from multiprocessing, comment out line above and
@@ -153,6 +155,10 @@ def start_processing(statistical_query):
 
                 for _ in concurrent.futures.as_completed(my_results):
                     split_obj.append(_.result())
+            rest_time = rest_time - 1
+            if rest_time > 0:
+                logger.debug("Sleeping for: " + str(rest_time))
+                time.sleep(rest_time)
 
         if ('custom_job_type' in statistical_query.keys() and
                 statistical_query['custom_job_type'] == 'MonthlyRainfallAnalysis'):
