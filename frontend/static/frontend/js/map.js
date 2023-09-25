@@ -1454,13 +1454,23 @@ function isComplete() {
             }
         }) && $(eDate_new_cooked).valid({rules: {field: {required: true, dateISO: true}}});
         if (isReady) {
+
             // Also, should confirm s < e;
             $("#invalid-error").hide();
-            if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
+
+            if(moment(eDate_new_cooked.value).diff(moment(sDate_new_cooked.value), 'years') > 20){
                 isReady = false;
-                $("#compare-error").show();
-            } else {
-                $("#compare-error").hide();
+                $("#range-limit-error").show();
+            }else{
+                $("#range-limit-error").hide();
+            }
+            if (isReady) {
+                if (moment(sDate_new_cooked.value) > moment(eDate_new_cooked.value)) {
+                    isReady = false;
+                    $("#compare-error").show();
+                } else {
+                    $("#compare-error").hide();
+                }
             }
         } else {
             $("#invalid-error").show();
