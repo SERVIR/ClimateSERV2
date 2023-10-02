@@ -294,12 +294,16 @@ def get_data_values(uniqueid, start_date, end_date, variable, geom, operation, f
     if jsonn['features'][0]['geometry']['type'] == "Point":
         nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
     else:
+        try:
 
-        number_of_nan_values = np.logical_and(bool_mask, np.isnan(data)).sum(dim=['latitude', 'longitude']).values
+            number_of_nan_values = np.logical_and(bool_mask, np.isnan(data)).sum(dim=['latitude', 'longitude']).values
 
-        number_points_in_mask = bool_mask.sum(dim=['latitude', 'longitude']).values
+            number_points_in_mask = bool_mask.sum(dim=['latitude', 'longitude']).values
 
-        nan_percentage = np.round(number_of_nan_values/number_points_in_mask * 100, 2)
+            nan_percentage = np.round(number_of_nan_values/number_points_in_mask * 100, 2)
+        except Exception as e:
+            nan_percentage = np.isnan(data).mean(dim=['latitude', 'longitude']).values * 100
+
 
 
     if operation == "min":
