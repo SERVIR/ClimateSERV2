@@ -2770,8 +2770,9 @@ function multi_chart_builder(conversion) {
                 const offset = date.getTimezoneOffset();
                 // maybe set current time for layers to this date
 
-                const adjustedDate = new Date(date.getTime() + offset * 60000);
-                const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                // const adjustedDate = new Date(date.getTime() + offset * 60000);
+                // const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                const date_string = date.getUTCMonth() + 1 + "/" + date.getUTCDate() + "/" + date.getUTCFullYear();
                 console.log(date_string);
                 csvContent += `${date_string},`;
                 multiQueryData.forEach((item) => {
@@ -2840,8 +2841,9 @@ function multi_chart_builder(conversion) {
                 const offset = date.getTimezoneOffset();
                 // maybe set current time for layers to this date
 
-                const adjustedDate = new Date(date.getTime() + offset * 60000);
-                const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                // const adjustedDate = new Date(date.getTime() + offset * 60000);
+                // const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
+                const date_string = date.getUTCMonth() + 1 + "/" + date.getUTCDate() + "/" + date.getUTCFullYear();
 
                 const row = [date_string];
 
