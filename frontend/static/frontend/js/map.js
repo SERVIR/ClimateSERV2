@@ -2543,7 +2543,8 @@ function doSelect(e) {
 
     const adjustedDate = new Date(enhanced.getTime() + offset * 60000);
 
-    map.timeDimension.setCurrentTime(adjustedDate);
+    // map.timeDimension.setCurrentTime(adjustedDate);
+    map.timeDimension.setCurrentTime(full);
     console.log("holle");
     console.log(adjustedDate);
 }
