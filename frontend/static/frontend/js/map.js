@@ -3708,7 +3708,6 @@ let started_tour;
  * @event map-ready
  */
 $(function () {
-    alert("We are experiencing technical issues, queries will currently not work, please check back soon.");
     started_tour = false;
     try {
         init_tour();
