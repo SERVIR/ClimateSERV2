@@ -40,7 +40,8 @@ def map_app(request):
         my_data_sets = None
 
     try:
-        nmme_info = json.dumps(get_nmme_info(str(uuid.uuid4())))
+        # nmme_info = json.dumps(get_nmme_info(str(uuid.uuid4())))
+        nmme_info = json.dumps({})
     except Exception as e:
         logger.error(str(e))
         nmme_info = json.dumps({})
