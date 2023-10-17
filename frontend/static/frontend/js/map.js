@@ -2750,7 +2750,7 @@ function multi_chart_builder(conversion) {
         });
 
         // Convert unique dates to an array and sort them
-        const sortedUniqueDates = Array.from(uniqueDates).sort();
+        const sortedUniqueDates = Array.from(uniqueDates).sort(function(a, b) { return a - b; });
 
         // Create the CSV content
         let csvContent = "Date";
@@ -2816,7 +2816,7 @@ function multi_chart_builder(conversion) {
         });
 
         // Convert unique dates to an array and sort them
-        const sortedUniqueDates = Array.from(uniqueDates).sort();
+        const sortedUniqueDates = Array.from(uniqueDates).sort(function(a, b) { return a - b; });
 
         const worksheet = XLSX.utils.aoa_to_sheet([["Date"]]);
 
