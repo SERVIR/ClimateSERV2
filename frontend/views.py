@@ -3,10 +3,12 @@ import uuid
 
 import requests
 from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import CharField
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.core import serializers
+from django.db.models.functions import Cast
 from climateserv2 import settings
 from climateserv2.views import get_nmme_info
 from .models import *
@@ -99,9 +101,18 @@ def about(request):
 
 @cache_page(60 * 15)
 def help_center(request):
+    # data_layers = DataLayer.objects.all()
+    # data_layers = sorted(
+    #     data_layers,
+    #     key=lambda x: (1 if not x.api_id.isdigit() else 0, int(x.api_id) if x.api_id.isdigit() else -666)
+    # )
+
+    data_layers = DataLayer.objects.filter(api_id__regex=r'^[0-9]+$').order_by('api_id')
+
     return render(request, 'help.html', context={
         'page': 'menu-help',
-        'datasets': DataSet.objects.all()
+        'datasets': DataSet.objects.all(),
+        'data_layers': data_layers
     })
 
 

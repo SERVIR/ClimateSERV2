@@ -52,6 +52,7 @@ class DataLayer(models.Model):
     etl_dataset_id = models.ForeignKey(ETL_Dataset, on_delete=models.CASCADE, related_name="etl_dataset", blank=True,
                                        null=True)
     api_id = models.CharField(max_length=200, help_text='Enter API ID used to identify this data layer', default="")
+    availability = models.CharField(max_length=512, help_text='String field Interval from X to Z', default="")
     isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
     yAxis_Special_Formatting = models.TextField(
