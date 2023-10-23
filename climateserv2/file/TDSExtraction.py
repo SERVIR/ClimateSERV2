@@ -122,6 +122,16 @@ def get_filelist(datatype, start_date, end_date):
                 filelist.append(name)
             else:
                 logger.info("Was looking for: " + str(name))
+    elif "usda-nsidc-smap-15" == dataset_name[0]:
+        logger.info("Hello from nsidc 15 day")
+        for year in year_nums:
+            name = final_load_dir + "usda-nsidc-smap.global.1km.15dy." + str(year) + ".nc4"
+            if os.path.exists(name):
+                logger.info("found file: " + str(name))
+                logger.info("found file: " + str(name))
+                filelist.append(name)
+            else:
+                logger.info("Was looking for: " + str(name))
     elif "ucsb-chirp" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
