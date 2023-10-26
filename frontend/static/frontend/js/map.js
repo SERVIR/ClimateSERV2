@@ -3529,12 +3529,12 @@ function get_stat_body(which) {
                 "    <div class='servir_tooltip_body'>The NASA-USDA Enhanced SMAP Global soil moisture data " +
                 "provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
                 "<br>" +
-                "    <div class='servir_tooltip_header'>SMAP-Sentinel-1 Daily Soil Moisture at 1km Resolution</div>" +
+                "    <div class='servir_tooltip_header'>NSDIC SMAP-Sentinel-1 Daily Soil Moisture at 1km Resolution</div>" +
                 "    <div class='servir_tooltip_body'>The dataset is only generated for the land surface " +
                 "where SMAP and Sentinel-1 overpasses intersect for a given day. Note that a given point on Earth’s" +
                 " land surface will be revisited by this dataset at least once in approximately 15 days. </div>" +
                 "<br>" +
-                "    <div class='servir_tooltip_header'>SMAP-Sentinel-1 15-day composite Soil Moisture at 1km Resolution</div>" +
+                "    <div class='servir_tooltip_header'>NSIDC SMAP-Sentinel-1 15-day composite Soil Moisture at 1km Resolution</div>" +
                 "    <div class='servir_tooltip_body'>The dataset is generated using the daily SMAP-Sentinel 1km data. " +
                 "</div>" +
                 "<br>" +
