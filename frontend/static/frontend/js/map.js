@@ -102,57 +102,70 @@ function buildStyles() {
     // when thredds is updated to V5 I will
     // have to update this to find the palettes in
     // the abstract tag https://github.com/Unidata/tds/issues/173
+
     $.ajax({
         url: "https://threddsx.servirglobal.net/thredds/wms/Agg/emodis-ndvi_eastafrica_250m_10dy.nc4?service=WMS&version=1.3.0&request=GetCapabilities",  //client_layers[0].url + "&request=GetCapabilities",
         type: "GET",
         async: true,
         crossDomain: true
-    }).fail(function (jqXHR, textStatus, errorThrown) {
-        set_from_backup();
-        console.warn(jqXHR + textStatus + errorThrown);
-    }).done(function (data, _textStatus, _jqXHR) {
-        if (data.errMsg) {
-            console.info(data.errMsg);
-        } else {
-            try {
-                const jsonObj = ($.xml2json(data))["#document"];
-                const style_link = "http" + jsonObj
-                    .WMS_Capabilities
-                    .Capability
-                    .Layer
-                    .Layer
-                    .Layer
-                    .Style[0]
-                    .Abstract.split("http")[1].trim();
+    }).fail(
+        /**
+         * @param jqXHR
+         * @param textStatus
+         * @param errorThrown
+         */
+        function (jqXHR, textStatus, errorThrown) {
+            set_from_backup();
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(
+        /**
+         * @param {{errMsg:string}} data
+         * @param _textStatus
+         * @param _jqXHR
+         */
+        function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                try {
+                    const jsonObj = ($.xml2json(data))["#document"];
+                    const style_link = "http" + jsonObj
+                        .WMS_Capabilities
+                        .Capability
+                        .Layer
+                        .Layer
+                        .Layer
+                        .Style[0]
+                        .Abstract.split("http")[1].trim();
 
-                $.ajax({
-                    url: style_link,
-                    type: "GET",
-                    async: true,
-                    crossDomain: true
-                }).fail(function (jqXHR, textStatus, errorThrown) {
-                    alert("failed");
-                    console.warn(jqXHR + textStatus + errorThrown);
-                }).done(function (data, _textStatus, _jqXHR) {
-                    if (data.errMsg) {
-                        console.info(data.errMsg);
-                    } else {
-                        styles = data.palettes.sort(function (a, b) {
-                            return a.toLowerCase().localeCompare(b.toLowerCase());
-                        });
-                        for (let i = 0; i < styles.length; i++) {
-                            styleOptions.push({
-                                val: styles[i],
-                                text: styles[i],
+                    $.ajax({
+                        url: style_link,
+                        type: "GET",
+                        async: true,
+                        crossDomain: true
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        alert("failed");
+                        console.warn(jqXHR + textStatus + errorThrown);
+                    }).done(function (data, _textStatus, _jqXHR) {
+                        if (data.errMsg) {
+                            console.info(data.errMsg);
+                        } else {
+                            styles = data.palettes.sort(function (a, b) {
+                                return a.toLowerCase().localeCompare(b.toLowerCase());
                             });
+                            for (let i = 0; i < styles.length; i++) {
+                                styleOptions.push({
+                                    val: styles[i],
+                                    text: styles[i],
+                                });
+                            }
                         }
-                    }
-                });
-            } catch (e) {
-                set_from_backup();
+                    });
+                } catch (e) {
+                    set_from_backup();
+                }
             }
-        }
-    });
+        });
 }
 
 function buildStylesOld() {
@@ -1458,10 +1471,10 @@ function isComplete() {
             // Also, should confirm s < e;
             $("#invalid-error").hide();
 
-            if(moment(eDate_new_cooked.value).diff(moment(sDate_new_cooked.value), 'years') > 20){
+            if (moment(eDate_new_cooked.value).diff(moment(sDate_new_cooked.value), 'years') > 20) {
                 isReady = false;
                 $("#range-limit-error").show();
-            }else{
+            } else {
                 $("#range-limit-error").hide();
             }
             if (isReady) {
@@ -2750,7 +2763,9 @@ function multi_chart_builder(conversion) {
         });
 
         // Convert unique dates to an array and sort them
-        const sortedUniqueDates = Array.from(uniqueDates).sort(function(a, b) { return a - b; });
+        const sortedUniqueDates = Array.from(uniqueDates).sort(function (a, b) {
+            return a - b;
+        });
 
         // Create the CSV content
         let csvContent = "Date";
@@ -2767,15 +2782,8 @@ function multi_chart_builder(conversion) {
             if (epochDate) {
 
                 const date = new Date(epochDate); // Convert epoch date to a readable date
-
-                const offset = date.getTimezoneOffset();
-                // maybe set current time for layers to this date
-
-                // const adjustedDate = new Date(date.getTime() + offset * 60000);
-                // const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
-                // const date_string = date.getUTCMonth() + 1 + "/" + date.getUTCDate() + "/" + date.getUTCFullYear();
                 const date_string = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + " 00:00:00";
-                console.log(date_string);
+
                 csvContent += `${date_string},`;
                 multiQueryData.forEach((item) => {
                     const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
@@ -2816,7 +2824,9 @@ function multi_chart_builder(conversion) {
         });
 
         // Convert unique dates to an array and sort them
-        const sortedUniqueDates = Array.from(uniqueDates).sort(function(a, b) { return a - b; });
+        const sortedUniqueDates = Array.from(uniqueDates).sort(function (a, b) {
+            return a - b;
+        });
 
         const worksheet = XLSX.utils.aoa_to_sheet([["Date"]]);
 
@@ -2839,13 +2849,6 @@ function multi_chart_builder(conversion) {
         sortedUniqueDates.forEach((epochDate, index) => {
             if (epochDate) {
                 const date = new Date(epochDate); // Convert epoch date to a readable date
-
-                const offset = date.getTimezoneOffset();
-                // maybe set current time for layers to this date
-
-                // const adjustedDate = new Date(date.getTime() + offset * 60000);
-                // const date_string = adjustedDate.getUTCMonth() + 1 + "/" + adjustedDate.getDate() + "/" + adjustedDate.getUTCFullYear();
-                // const date_string = date.getUTCMonth() + 1 + "/" + date.getUTCDate() + "/" + date.getUTCFullYear();
                 const date_string = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + " 00:00:00";
 
                 const row = [date_string];
@@ -3525,6 +3528,15 @@ function get_stat_body(which) {
                 "    <div class='servir_tooltip_header'>NASA-USDA SMAP</div>" +
                 "    <div class='servir_tooltip_body'>The NASA-USDA Enhanced SMAP Global soil moisture data " +
                 "provides soil moisture information across the globe at 10-km spatial resolution.</div>" +
+                "<br>" +
+                "    <div class='servir_tooltip_header'>SMAP-Sentinel-1 Daily Soil Moisture at 1km Resolution</div>" +
+                "    <div class='servir_tooltip_body'>The dataset is only generated for the land surface " +
+                "where SMAP and Sentinel-1 overpasses intersect for a given day. Note that a given point on Earth’s" +
+                " land surface will be revisited by this dataset at least once in approximately 15 days. </div>" +
+                "<br>" +
+                "    <div class='servir_tooltip_header'>SMAP-Sentinel-1 15-day composite Soil Moisture at 1km Resolution</div>" +
+                "    <div class='servir_tooltip_body'>The dataset is generated using the daily SMAP-Sentinel 1km data. " +
+                "</div>" +
                 "<br>" +
                 "<div class='servir_tooltip_header'>For more information please visit the " +
                 "<a href='" + help_link + "' style='color:#3b6e22;'>Help Center</a><br><br></div>" +
