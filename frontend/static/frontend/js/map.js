@@ -521,7 +521,7 @@ function openSettings(which) {
     });
     $(".ui-dialog-title").attr("title", "Settings");
     $(styleOptions).each(function () {
-        if (active_layer.url.includes("threddsx")) {
+        if (active_layer && active_layer.url.includes("threddsx")) {
             $("#style_table").append(
                 $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
             );
