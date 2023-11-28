@@ -164,8 +164,8 @@ class Command(BaseCommand):
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype.lower() == 'nsidc-smap-1k':
                 # temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_lis')
-                pattern_filename = 'nsidc_smap_sentinel.{}*.nc4'
-                aggregate_filename = 'usda-nsidc-smap.global.1km.daily.{}.nc4'
+                pattern_filename = 'nsidc-smap-sentinel.{}*.nc4'
+                aggregate_filename = 'nsidc-smap-sentinel.global.1km.daily.{}.nc4'
                 ncrcat_options = '-4 -h -L 1 --cnk_dmn time,31 --cnk_dmn longitude,256 --cnk_dmn latitude,256'
             elif etl_dataset.dataset_subtype.lower() == 'nsidc-smap-1k-15':
                 # temp_fast_path = os.path.join(temp_fast_path, 'fast_sport_lis')
