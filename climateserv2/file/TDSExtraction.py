@@ -407,7 +407,7 @@ def get_nmme_data(total_bounds, uniqueid):
     lta = []
     for ens in np.arange(num_ens):
         lon1, lat1, lon2, lat2 = total_bounds
-    base_path = '/mnt/climateserv/process_tmp/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
+    base_path = '/mnt/climateserv/fast_access/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4'
     ds = xr.open_dataset(base_path, chunks={'time': 7, 'longitude': 256, 'latitude': 256})
     update_progress({'progress': 2, 'uniqueid': uniqueid})
     lat_slice, lon_slice = get_bounds_from_dataset(ds, lat1, lat2, lon1, lon2)
