@@ -388,7 +388,7 @@ def get_nmme_info(unique_id):
     try:
         if os.path.ismount("/mnt/climateserv"):
             nc_file = xr.open_dataset(
-                'mnt/climateserv/fast_access/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
+                '/mnt/climateserv/fast_access/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
                 chunks={'time': 16, 'longitude': 128,
                         'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
 
