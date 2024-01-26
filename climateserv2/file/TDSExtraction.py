@@ -114,9 +114,9 @@ def get_filelist(datatype, start_date, end_date):
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
-    elif "usda-nsidc-smap" == dataset_name[0]:
+    elif "nsidc-smap-sentinel" == dataset_name[0]:
         for year in year_nums:
-            name = final_load_dir + "usda-nsidc-smap" + ".global." + dataset_name[
+            name = final_load_dir + "nsidc-smap-sentinel" + ".global." + dataset_name[
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
