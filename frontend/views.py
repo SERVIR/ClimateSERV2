@@ -100,6 +100,11 @@ def about(request):
 
 
 @cache_page(60 * 15)
+def feedback(request):
+    return render(request, 'feedback.html', context={'page': 'menu-feedback'})
+
+
+@cache_page(60 * 15)
 def help_center(request):
     data_layers = DataLayer.objects.filter(api_id__regex=r'^[0-9]+$')
     data_layers = sorted(

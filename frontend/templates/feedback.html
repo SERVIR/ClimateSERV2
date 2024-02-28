@@ -1,0 +1,63 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - Feedback{% endblock %}
+{% block script %}
+    <!-- Custom styles-->
+    <style>
+        html, body {
+            height: 100vh;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        #wrapper {
+            min-height: calc(100vh - 50px);
+            display: flex;
+        }
+
+        #wrapper #content-wrapper {
+            background-color: #f8f9fc;
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        {#    Override default content styles to format iframed form   #}
+        #content {
+            flex: 1 0 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .second-row {
+            flex-grow: 1;
+            border: none;
+            margin: 0;
+            padding: 0;
+        }
+
+    </style>
+    <!-- Custom scripts-->
+
+{% endblock %}
+
+{% block feedback_fromat %}
+    <div id="wrapper">
+    <div id="content-wrapper" class="d-flex flex-column">
+
+    <!-- Main Content -->
+    <div id="content" class="bg-gray-300">
+
+{% endblock %}
+
+{% block content %}
+
+    <!-- Feedback page -->
+    <!-- The link in the src of <iframe> tag is a Google Forms link. Please create a form link and replace the src below to update the feedback form -->
+    <iframe src="https://docs.google.com/forms/d/1sVIUSHGv5BAy5gWYYy-MWo2YUy7gJBJy_gx2mGwjo7M/viewform?embedded=true"
+            class="second-row">Loading…
+    </iframe>
+    </div>
+    </div>
+    </div>
+
+{% endblock %}

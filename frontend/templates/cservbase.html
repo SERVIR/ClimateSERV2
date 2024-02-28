@@ -66,6 +66,8 @@
 
 </head>
 <body>
+{% block feedback_fromat %}
+{% endblock %}
 <header>
     <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
         <a href="{% if page == 'menu-home' %}#home {% else %} / {% endif %}" class="navbar-brand">
@@ -99,6 +101,7 @@
                 {% if request.user.is_staff %}
                 <a class="nav-link" id="menu-help" href="{% url 'admin:index' %}">Admin</a>
                 {% endif %}
+            <a class="nav-link" id="menu-feedback" href="{% url 'ClimateSERV_UI:feedback' %}">FEEDBACK</a>
                 <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">HELP CENTER</a>
             </div>
         </div>
