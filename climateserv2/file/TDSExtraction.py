@@ -110,7 +110,7 @@ def get_filelist(datatype, start_date, end_date):
 
     if "ucsb-chirps" == dataset_name[0]:
         for year in year_nums:
-            name = final_load_dir + "ucsb_chirps" + ".global." + dataset_name[
+            name = final_load_dir + "ucsb-chirps" + ".global." + dataset_name[
                 2] + ".daily." + str(year) + ".nc4"
             if os.path.exists(name):
                 filelist.append(name)
@@ -135,7 +135,7 @@ def get_filelist(datatype, start_date, end_date):
     elif "ucsb-chirp" == dataset_name[0]:
         for year in year_nums:
             for month in range(12):
-                name = final_load_dir + "ucsb_chirp" + ".global." + dataset_name[
+                name = final_load_dir + "ucsb-chirp" + ".global." + dataset_name[
                     2] + ".daily." + str(year) + str('{:02d}'.format(month + 1)) + ".nc4"
                 if os.path.exists(name):
                     filelist.append(name)
