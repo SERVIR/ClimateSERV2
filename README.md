@@ -3,6 +3,7 @@
 [![Django: 3.x](https://img.shields.io/badge/Django-3.x-blue)](https://www.djangoproject.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![SERVIR: Global](https://img.shields.io/badge/SERVIR-Global-green)](https://servirglobal.net)
+[![DOI](https://zenodo.org/badge/377942629.svg)](https://zenodo.org/doi/10.5281/zenodo.11550664)
 
 This tool allows development practitioners, scientists/researchers, and government decision-makers to visualize and
 download historical rainfall data, vegetation condition data, and 180-day forecasts of rainfall and temperature to
