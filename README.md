@@ -332,4 +332,4 @@ ClimateSERV abides to all of SERVIR's privacy and terms of use as described
 at [https://servirglobal.net/Privacy-Terms-of-Use](https://servirglobal.net/Privacy-Terms-of-Use).
 
 ## Funding
-Funding for this work was provided through SERVIR, a joint NASA- and USAID-led program, particularly through the Earth Science Branch at NASA Marshall Space Flight Center and the cooperative agreement 80MSFC17M0022 between NASA and USRA. 
+Funding for this work was provided through SERVIR, a joint NASA- and USAID-led program, particularly through the Earth Science Branch at NASA Marshall Space Flight Center and the [cooperative agreement 80MSFC17M0022](https://govtribe.com/award/federal-contract-award/cooperative-agreement-80msfc17m0022) between NASA and USRA. 
