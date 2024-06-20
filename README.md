@@ -324,7 +324,7 @@ alias crestart='cstop; cstart;'
 ## License and Distribution
 
 ClimateSERV 2.0 is distributed by SERVIR under the terms of the MIT License. See
-[LICENSE](https://github.com/SERVIR/ClimateSERV2/blob/master/LICENSE) in this directory for more information.
+[LICENSE](LICENSE) in this directory for more information.
 
 ## Privacy & Terms of Use
 
