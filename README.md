@@ -3,6 +3,7 @@
 [![Django: 3.x](https://img.shields.io/badge/Django-3.x-blue)](https://www.djangoproject.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![SERVIR: Global](https://img.shields.io/badge/SERVIR-Global-green)](https://servirglobal.net)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.11550665.svg)](https://doi.org/10.5281/zenodo.11550665)
 
 This tool allows development practitioners, scientists/researchers, and government decision-makers to visualize and
 download historical rainfall data, vegetation condition data, and 180-day forecasts of rainfall and temperature to
@@ -323,7 +324,7 @@ alias crestart='cstop; cstart;'
 ## License and Distribution
 
 ClimateSERV 2.0 is distributed by SERVIR under the terms of the MIT License. See
-[LICENSE](https://github.com/SERVIR/ClimateSERV2/blob/master/LICENSE) in this directory for more information.
+[LICENSE](LICENSE) in this directory for more information.
 
 ## Privacy & Terms of Use
 
@@ -331,4 +332,4 @@ ClimateSERV abides to all of SERVIR's privacy and terms of use as described
 at [https://servirglobal.net/Privacy-Terms-of-Use](https://servirglobal.net/Privacy-Terms-of-Use).
 
 ## Funding
-Funding for this work was provided through SERVIR, a joint NASA- and USAID-led program, particularly through the Earth Science Branch at NASA Marshall Space Flight Center and the cooperative agreement 80MSFC17M0022 between NASA and USRA. 
+Funding for this work was provided through SERVIR, a joint NASA- and USAID-led program, particularly through the Earth Science Branch at NASA Marshall Space Flight Center and the [cooperative agreement 80MSFC17M0022](https://govtribe.com/award/federal-contract-award/cooperative-agreement-80msfc17m0022) between NASA and USRA. 
