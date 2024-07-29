@@ -2629,10 +2629,17 @@ function multi_chart_builder(conversion) {
     };
     chart_object.tooltip = {shared: true,};
     chart_object.xAxis = {type: "datetime"};
+
     chart_object.yAxis = {
         id: "simple",
         title: {
-            text: multiQueryData[0].units ? multiQueryData[0].units : "values"
+            text: (multiQueryData.length === 1 && multiQueryData[0].units) ?
+                multiQueryData[0].units
+                : simpleAxis ?
+                    "values"
+                    : multiQueryData[0].units ?
+                        multiQueryData[0].units
+                        : "values"
         },
     };
     if (multiQueryData[0].yAxis_format) {

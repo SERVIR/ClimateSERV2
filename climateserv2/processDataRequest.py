@@ -308,7 +308,7 @@ def start_processing(statistical_query):
         try:
             # maybe need to create the appropriate file for extraction with error message
             try:
-                track_usage = Track_Usage.objects.get(unique_id=uniqueid)
+                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid)
                 logger.debug("creating the object here")
                 track_usage.update(
                     time_requested=timezone.now(),
