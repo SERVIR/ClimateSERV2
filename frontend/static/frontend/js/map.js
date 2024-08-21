@@ -2759,6 +2759,7 @@ function multi_chart_builder(conversion) {
 (function (H) {
     const pick = H.pick;
     H.wrap(H.Chart.prototype, 'getCSV', function (p, useLocalDecimalPoint) {
+        const intervalValue = $("#interval-options select").val();
         const uniqueDates = new Set();
 
         multiQueryData.forEach((item) => {
@@ -2785,78 +2786,196 @@ function multi_chart_builder(conversion) {
 
         csvContent += "\n";
 
-        sortedUniqueDates.forEach((epochDate) => {
+        const aggregateData = (dateFormat) => {
+            const aggregatedData = {};
 
-            if (epochDate) {
+            sortedUniqueDates.forEach((epochDate) => {
+                const date = new Date(epochDate);
+                const dateKey = dateFormat === 'monthly'
+                    ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00`
+                    : `${date.getUTCFullYear()}-01-01 00:00:00`;
 
-                const date = new Date(epochDate); // Convert epoch date to a readable date
-                const date_string = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + " 00:00:00";
+                if (!aggregatedData[dateKey]) {
+                    aggregatedData[dateKey] = {};
+                    multiQueryData.forEach((item) => {
+                        aggregatedData[dateKey][item.label] = [];
+                        aggregatedData[dateKey][`${item.label}_nan`] = [];
+                    });
+                }
 
-                csvContent += `${date_string},`;
                 multiQueryData.forEach((item) => {
                     const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
                     const nanItem = item.nan.find((n) => n[0] === epochDate);
-                    // let datasetValue_raw = dataItem ? dataItem[1] : "";
 
-                    let datasetValue_raw = "";
                     if (dataItem) {
-                        if (dataItem.y) {
-                            datasetValue_raw = dataItem.y;
-                        } else {
-                            datasetValue_raw = dataItem[1];
-                        }
+                        const value = dataItem.y || dataItem[1];
+                        aggregatedData[dateKey][item.label].push(value);
                     }
 
-                    const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
-                    const datasetPercentValue = nanItem ? (100 - nanItem[1]).toFixed(2) : "";
-                    const datasetLabel = item.label;
-                    const nanCoverageColumn = `${datasetLabel} Coverage`;
-                    csvContent += `${datasetValue},${datasetPercentValue},`;
+                    if (nanItem) {
+                        aggregatedData[dateKey][`${item.label}_nan`].push(100 - nanItem[1]);
+                    }
+                });
+            });
+
+            return aggregatedData;
+        };
+
+        if (intervalValue === 'monthly' || intervalValue === 'yearly') {
+            const dateFormat = intervalValue;
+            const aggregatedData = aggregateData(dateFormat);
+
+            Object.keys(aggregatedData).forEach((dateKey) => {
+                csvContent += `${dateKey},`;
+                multiQueryData.forEach((item) => {
+                    const values = aggregatedData[dateKey][item.label];
+                    const nanValues = aggregatedData[dateKey][`${item.label}_nan`];
+
+                    let result = '';
+                    if (item.operation === 'avg') {
+                        result = values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(3) : '';
+                    } else if (item.operation === 'min') {
+                        result = values.length ? Math.min(...values).toFixed(3) : '';
+                    } else if (item.operation === 'max') {
+                        result = values.length ? Math.max(...values).toFixed(3) : '';
+                    }
+
+                    const percentResult = nanValues.length ? (nanValues.reduce((a, b) => a + b, 0) / nanValues.length).toFixed(2) : '';
+                    csvContent += `${result},${percentResult},`;
                 });
                 csvContent += "\n";
-            }
-        });
+            });
+
+        } else {
+            // Original behavior
+            sortedUniqueDates.forEach((epochDate) => {
+                if (epochDate) {
+                    const date = new Date(epochDate);
+                    const date_string = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + " 00:00:00";
+
+                    csvContent += `${date_string},`;
+                    multiQueryData.forEach((item) => {
+                        const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
+                        const nanItem = item.nan.find((n) => n[0] === epochDate);
+
+                        let datasetValue_raw = "";
+                        if (dataItem) {
+                            datasetValue_raw = dataItem.y || dataItem[1];
+                        }
+
+                        const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
+                        const datasetPercentValue = nanItem ? (100 - nanItem[1]).toFixed(2) : "";
+                        csvContent += `${datasetValue},${datasetPercentValue},`;
+                    });
+                    csvContent += "\n";
+                }
+            });
+        }
+
         return csvContent;
     });
 
     H.wrap(H.Chart.prototype, 'downloadXLS', function (p, useLocalDecimalPoint) {
-        const uniqueDates = new Set();
+    const intervalValue = $("#interval-options select").val();
+    const uniqueDates = new Set();
 
-        multiQueryData.forEach((item) => {
-            item.data.forEach((dataItem) => {
-                uniqueDates.add(dataItem[0]);
-            });
-            item.nan.forEach((nanItem) => {
-                uniqueDates.add(nanItem[0]);
-            });
+    multiQueryData.forEach((item) => {
+        item.data.forEach((dataItem) => {
+            uniqueDates.add(dataItem[0]);
         });
-
-        // Convert unique dates to an array and sort them
-        const sortedUniqueDates = Array.from(uniqueDates).sort(function (a, b) {
-            return a - b;
+        item.nan.forEach((nanItem) => {
+            uniqueDates.add(nanItem[0]);
         });
+    });
 
-        const worksheet = XLSX.utils.aoa_to_sheet([["Date"]]);
+    // Convert unique dates to an array and sort them
+    const sortedUniqueDates = Array.from(uniqueDates).sort((a, b) => a - b);
 
-        const datasetColumnMap = {};
+    const worksheet = XLSX.utils.aoa_to_sheet([["Date"]]);
 
-        // Add columns for each dataset and corresponding nan coverage
-        multiQueryData.forEach((item, index) => {
+    const datasetColumnMap = {};
 
-            const colStartIndex = 1 + index * 2; // Adjust the column index based on the dataset
-            datasetColumnMap[item.label] = colStartIndex;
-            XLSX.utils.sheet_add_aoa(worksheet, [[item.label, `${item.label} Percent of AOI with data`]], {
-                origin: {
-                    r: 0,
-                    c: colStartIndex
+    // Add columns for each dataset and corresponding nan coverage
+    multiQueryData.forEach((item, index) => {
+        const colStartIndex = 1 + index * 2; // Adjust the column index based on the dataset
+        datasetColumnMap[item.label] = colStartIndex;
+        XLSX.utils.sheet_add_aoa(worksheet, [[item.label, `${item.label} Percent of AOI with data`]], {
+            origin: {
+                r: 0,
+                c: colStartIndex
+            }
+        });
+    });
+
+    const aggregateData = (dateFormat) => {
+        const aggregatedData = {};
+
+        sortedUniqueDates.forEach((epochDate) => {
+            const date = new Date(epochDate);
+            const dateKey = dateFormat === 'monthly'
+                ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00`
+                : `${date.getUTCFullYear()}-01-01 00:00:00`;
+
+            if (!aggregatedData[dateKey]) {
+                aggregatedData[dateKey] = {};
+                multiQueryData.forEach((item) => {
+                    aggregatedData[dateKey][item.label] = [];
+                    aggregatedData[dateKey][`${item.label}_nan`] = [];
+                });
+            }
+
+            multiQueryData.forEach((item) => {
+                const dataItem = item.data.find((d) => d.x ? d.x === epochDate : d[0] === epochDate);
+                const nanItem = item.nan.find((n) => n[0] === epochDate);
+
+                if (dataItem) {
+                    const value = dataItem.y || dataItem[1];
+                    aggregatedData[dateKey][item.label].push(value);
+                }
+
+                if (nanItem) {
+                    aggregatedData[dateKey][`${item.label}_nan`].push(100 - nanItem[1]);
                 }
             });
-
-
         });
+
+        return aggregatedData;
+    };
+
+    if (intervalValue === 'monthly' || intervalValue === 'yearly') {
+        const dateFormat = intervalValue;
+        const aggregatedData = aggregateData(dateFormat);
+
+        let rowIndex = 1;
+        Object.keys(aggregatedData).forEach((dateKey) => {
+            const row = [dateKey];
+            multiQueryData.forEach((item) => {
+                const values = aggregatedData[dateKey][item.label];
+                const nanValues = aggregatedData[dateKey][`${item.label}_nan`];
+
+                let result = '';
+                if (item.operation === 'avg') {
+                    result = values.length ? (values.reduce((a, b) => a + b, 0) / values.length).toFixed(3) : '';
+                } else if (item.operation === 'min') {
+                    result = values.length ? Math.min(...values).toFixed(3) : '';
+                } else if (item.operation === 'max') {
+                    result = values.length ? Math.max(...values).toFixed(3) : '';
+                }
+
+                const percentResult = nanValues.length ? (nanValues.reduce((a, b) => a + b, 0) / nanValues.length).toFixed(2) : '';
+                const colIndex = datasetColumnMap[item.label];
+                row[colIndex] = result;
+                row[colIndex + 1] = percentResult;
+            });
+
+            XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: `A${rowIndex + 1}` });
+            rowIndex++;
+        });
+    } else {
+        // Original behavior
         sortedUniqueDates.forEach((epochDate, index) => {
             if (epochDate) {
-                const date = new Date(epochDate); // Convert epoch date to a readable date
+                const date = new Date(epochDate);
                 const date_string = date.getUTCFullYear() + "-" + (date.getUTCMonth() + 1) + "-" + date.getUTCDate() + " 00:00:00";
 
                 const row = [date_string];
@@ -2866,11 +2985,7 @@ function multi_chart_builder(conversion) {
                     const nanItem = item.nan.find((n) => n[0] === epochDate);
                     let datasetValue_raw = "";
                     if (dataItem) {
-                        if (dataItem.y) {
-                            datasetValue_raw = dataItem.y;
-                        } else {
-                            datasetValue_raw = dataItem[1];
-                        }
+                        datasetValue_raw = dataItem.y || dataItem[1];
                     }
 
                     const datasetValue = datasetValue_raw ? datasetValue_raw.toFixed(3) : datasetValue_raw;
@@ -2879,21 +2994,21 @@ function multi_chart_builder(conversion) {
                     const colIndex = datasetColumnMap[item.label];
                     row[colIndex] = datasetValue;
                     row[colIndex + 1] = datasetPercentValue;
-
                 });
 
-                XLSX.utils.sheet_add_aoa(worksheet, [row], {origin: `A${index + 2}`});
+                XLSX.utils.sheet_add_aoa(worksheet, [row], { origin: `A${index + 2}` });
             }
         });
+    }
 
-        // Create workbook and download the XLS file
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "ClimateSERV_Statistical_Query");
+    // Create workbook and download the XLS file
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "ClimateSERV_Statistical_Query");
 
-        // Generate the XLS file
-        XLSX.writeFile(workbook, "climateserv_" + new Date().getTime() + ".xlsx");
+    // Generate the XLS file
+    XLSX.writeFile(workbook, "climateserv_" + new Date().getTime() + ".xlsx");
+});
 
-    });
 
 }(Highcharts));
 
