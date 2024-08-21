@@ -2570,7 +2570,8 @@ function convert_to_interval(data, calculation, interval) {
     for (let i = 0; i < data.length; i++) {
         let date_key;
         if (interval === "monthly") {
-            date_key = (moment.utc(data[i][0]).format('MMM')) + " " + moment.utc(data[i][0]).year();
+            // date_key = (moment.utc(data[i][0]).format('MMM')) + " " + moment.utc(data[i][0]).year();
+            date_key = moment.utc(data[i][0]).format('YYYY-MM');
         } else if (interval === "yearly") {
             date_key = moment.utc(data[i][0]).year();
         }
