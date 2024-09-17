@@ -143,7 +143,7 @@ def get_country_code(r):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage(unique_id=request.POST.get("id", request.GET.get("id", None)),
+    track_usage = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", None)),
                               originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
@@ -375,7 +375,7 @@ def get_climate_scenario_info(request):
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
     unique_id = str(uuid.uuid4())
     try:
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   dataset="climateScenarioInfo",
                                   time_requested=timezone.now(), request_type=request.method, status="Submitted",
@@ -584,7 +584,7 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=DataLayer.objects.get(
@@ -608,7 +608,7 @@ def submit_data_request(request):
         unique_id = str(uuid.uuid4())
         logger.info("Submitting " + unique_id)
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=DataLayer.objects.get(
@@ -701,7 +701,7 @@ def submit_data_request(request):
                 except:
                     dataset_name_format = "ENS"
 
-            track_usage = Track_Usage(unique_id=str(my_id), originating_IP=get_client_ip(request),
+            track_usage = Track_Usage.objects.get_or_create(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
                                       dataset=dataset_name_format,
@@ -741,7 +741,7 @@ def submit_data_request(request):
         else:
             dataset_name_format = "ENS"
 
-        track_usage = Track_Usage(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
+        track_usage = Track_Usage.objects.get_or_create(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=dataset_name_format,
@@ -854,7 +854,7 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
     aoi = request.POST.get("geometry", request.GET.get("geometry", None))
     if aoi is None:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
-    track_usage = Track_Usage(unique_id=uniqueid, originating_IP=get_client_ip(request),
+    track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",

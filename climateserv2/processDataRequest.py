@@ -323,7 +323,7 @@ def start_processing(statistical_query):
                 )
             #
             except Track_Usage.DoesNotExist:
-                track_usage = Track_Usage(
+                track_usage = Track_Usage.objects.get_or_create(
                     time_requested=timezone.now(),
                     AOI=statistical_query["geometry"],
                     dataset="unknown",
@@ -459,34 +459,29 @@ def start_worker_process(job_item):
 def get_output_for_monthly_rainfall_analysis_from(raw_items_list):
     avg_percentiles_data_lines = []
     month_avg = []
-    chirps_25 = []
-    chirps_50 = []  # LTA
-    chirps_75 = []
+    chirps_25th = []
+    chirps_50th = []  # LTA (Long-Term Average)
+    chirps_75th = []
     months = []
     for item in raw_items_list:
         if item["sub_type_name"] == 'chirps':
-            chirps25 = item['value']['avg'][0][0]
-            chirps50 = item['value']['avg'][1]
-            chirps75 = item['value']['avg'][0][2]
-            chirps_25.append(chirps25)
-            chirps_50.append(chirps50)
-            chirps_75.append(chirps75)
+            chirps_25th.append(item['value']['avg'][0][0])
+            chirps_50th.append(item['value']['avg'][1])
+            chirps_75th.append(item['value']['avg'][0][2])
         if item["sub_type_name"] == 'nmme':
-            current_full_date = item['date']
-            months.append(current_full_date.split('-')[1])
+            months.append(item['date'].split('-')[1])
             month_avg.append(item['value']['avg'])
     # Organize the values as key value pairs in a JSON object avg_percentiles_dataLine
-    for i in range(len(chirps_25)):
+    for i in range(len(chirps_25th)):
         avg_percentiles_data_line = {
             'col01_Month': (months[i]),
             'col02_MonthlyAverage': (month_avg[i]),
-            'col03_25thPercentile': np.float64(chirps_25[i]),
-            'col04_75thPercentile': np.float64(chirps_75[i]),
-            'col05_50thPercentile': np.float64(chirps_50[i])
+            'col03_25thPercentile': np.float64(chirps_25th[i]),
+            'col04_75thPercentile': np.float64(chirps_75th[i]),
+            'col05_50thPercentile': np.float64(chirps_50th[i])
         }
         # This is the object that has the processed monthly analysis values for both CHIRPS and NMME
         avg_percentiles_data_lines.append(avg_percentiles_data_line)
-    final_output = {
+    return {
         'avg_percentiles_dataLines': avg_percentiles_data_lines,
     }
-    return final_output
