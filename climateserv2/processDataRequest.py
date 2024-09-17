@@ -367,10 +367,10 @@ def start_processing(statistical_query):
                     logger.debug("created: " + str(created))
                     request_progress.progress = 100
                     request_progress.save()
-            except IntegrityError:
-                logger.error("Progress update issue")
+            except IntegrityError as e:
+                logger.error(f"Progress update issue: {e}")
         except Exception as e2:
-            logger.debug("Failed updating progress")
+            logger.debug(f"Failed updating progress: {e2}")
             logger.debug(str(e2))
             pass
 
