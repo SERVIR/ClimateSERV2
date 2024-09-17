@@ -244,9 +244,12 @@ def get_file_for_job_id(request):
         progress = read_progress(request_id)
         # Validate that progress is at 100%
         if float(progress) >= 100.0:
-            track_usage = Track_Usage.objects.get(unique_id=request_id)
-            track_usage.data_retrieved = True
-            track_usage.save()
+            try:
+                track_usage = Track_Usage.objects.get_or_create(unique_id=request_id, originating_IP=get_client_ip(request))
+                track_usage.data_retrieved = True
+                track_usage.save()
+            except Exception as e:
+                pass
             expected_file_location = ""
             expected_file_name = ""
             ext = ""
