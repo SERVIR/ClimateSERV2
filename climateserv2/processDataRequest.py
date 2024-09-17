@@ -282,7 +282,7 @@ def start_processing(statistical_query):
         set_progress_to_100(uniqueid)
         logger.debug("uniqueid: " + uniqueid)
         # if this
-        track_usage, created = Track_Usage.objects.get_or_create(unique_id=uniqueid)
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=statistical_query["originating_IP"])
         logger.debug("got the object")
         track_usage.status = "Success"
         track_usage.save()
@@ -308,7 +308,7 @@ def start_processing(statistical_query):
         try:
             # maybe need to create the appropriate file for extraction with error message
             try:
-                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid)
+                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=statistical_query["originating_IP"])
                 logger.debug("creating the object here")
                 track_usage.update(
                     time_requested=timezone.now(),
