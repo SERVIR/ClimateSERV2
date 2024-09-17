@@ -293,7 +293,11 @@ def start_processing(statistical_query):
         logger.debug("uniqueid: " + uniqueid)
         # if this
 
-        track_usage, created =  Track_Usage.objects.get_or_create(unique_id=statistical_query["uniqueid"], originating_IP=get_originating_ip(statistical_query))
+        track_usage, created =  Track_Usage.objects.get_or_create(
+            unique_id=statistical_query["uniqueid"],
+            originating_IP=get_originating_ip(statistical_query),
+            AOI=statistical_query["geom"]
+        )
 
         logger.debug("got the object")
         track_usage.status = "Success"
@@ -320,10 +324,7 @@ def start_processing(statistical_query):
         try:
             # maybe need to create the appropriate file for extraction with error message
             try:
-                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=get_originating_ip(statistical_query))
-                logger.debug("creating the object here")
-                track_usage.update(
-                    time_requested=timezone.now(),
+                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, time_requested=timezone.now(),
                     AOI=statistical_query["geometry"],
                     dataset="unknown",
                     calculation=statistical_query["operationtype"],
@@ -333,22 +334,12 @@ def start_processing(statistical_query):
                     API_call="submitDataRequest",
                     originating_IP=get_originating_ip(statistical_query)
                 )
+                track_usage.save()
             #
             except Track_Usage.DoesNotExist:
-                track_usage = Track_Usage.objects.get_or_create(
-                    time_requested=timezone.now(),
-                    AOI=statistical_query["geometry"],
-                    dataset="unknown",
-                    calculation=statistical_query["operationtype"],
-                    request_type=statistical_query["request_type"],
-                    status="failed",
-                    unique_id=uniqueid,
-                    progress=100,
-                    API_call="submitDataRequest",
-                    originating_IP=get_originating_ip(statistical_query)
-                )
+                pass
 
-                track_usage.save()
+
 
             if str(operationtype) in "6_7_8":
                 zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
