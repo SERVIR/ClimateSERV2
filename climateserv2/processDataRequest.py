@@ -293,7 +293,7 @@ def start_processing(statistical_query):
         logger.debug("uniqueid: " + uniqueid)
         # if this
 
-        track_usage, created =  Track_Usage.objects.get(
+        track_usage =  Track_Usage.objects.get(
             unique_id=uniqueid
         )
 
@@ -344,7 +344,7 @@ def start_processing(statistical_query):
                         print(e)
             try:
                 with transaction.atomic():
-                    request_progress, created = Request_Progress.objects.get_or_create(request_id=uniqueid)
+                    request_progress, created = Request_Progress.objects.get(request_id=uniqueid)
                     logger.debug("created: " + str(created))
                     request_progress.progress = 100
                     request_progress.save()
