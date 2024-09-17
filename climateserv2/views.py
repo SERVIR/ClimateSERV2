@@ -844,7 +844,7 @@ def submit_monthly_rainfall_analysis_request(request):
             log_usage(request, layer_id, feature_ids_list, unique_id, seasonal_start_date, seasonal_end_date, status)
             logger.info("Logged initial usage (getMonthlyRainfallAnalysis) " + unique_id)
         except Exception as e:
-            logger.info("Logger failed (getMonthlyRainfallAnalysis) " + unique_id)
+            logger.info(f"Logger failed (getMonthlyRainfallAnalysis) {unique_id} with error: {e}" )
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"
