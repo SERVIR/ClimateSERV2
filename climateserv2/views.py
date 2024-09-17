@@ -858,7 +858,7 @@ def log_usage(request, layer_id, featureids, uniqueid, seasonal_start_date, seas
     aoi = request.POST.get("geometry", request.GET.get("geometry", None))
     if aoi is None:
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": featureids})
-    track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=get_client_ip(request),
+    track_usage, created = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(),
                               AOI=aoi, dataset="MonthlyRainfallAnalysis",
