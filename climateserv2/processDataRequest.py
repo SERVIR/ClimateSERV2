@@ -296,7 +296,7 @@ def start_processing(statistical_query):
         track_usage, created =  Track_Usage.objects.get_or_create(
             unique_id=statistical_query["uniqueid"],
             originating_IP=get_originating_ip(statistical_query),
-            AOI=statistical_query["geom"]
+            AOI=statistical_query["geometry"]
         )
 
         logger.debug("got the object")
