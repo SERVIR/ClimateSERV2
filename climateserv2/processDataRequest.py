@@ -294,9 +294,15 @@ def start_processing(statistical_query):
         # if this
 
         track_usage, created =  Track_Usage.objects.get_or_create(
-            unique_id=statistical_query["uniqueid"],
-            originating_IP=get_originating_ip(statistical_query),
-            AOI=statistical_query["geometry"]
+            unique_id=uniqueid, time_requested=timezone.now(),
+            AOI=statistical_query["geometry"],
+            dataset="unknown",
+            calculation=statistical_query["operationtype"],
+            request_type=statistical_query["request_type"],
+            status="failed",
+            progress=100,
+            API_call="submitDataRequest",
+            originating_IP=get_originating_ip(statistical_query)
         )
 
         logger.debug("got the object")
