@@ -268,9 +268,12 @@ def get_file_for_job_id(request):
                 does_file_exist = False
 
             if does_file_exist:
-                track_usage = Track_Usage.objects.get(unique_id=request_id)
-                track_usage.file_size = os.stat(expected_file_location).st_size
-                track_usage.save()
+                try:
+                    track_usage = Track_Usage.objects.get(unique_id=request_id)
+                    track_usage.file_size = os.stat(expected_file_location).st_size
+                    track_usage.save()
+                except Exception as e:
+                    pass
                 the_file_to_send = open(expected_file_location, 'rb')
                 if ext == "csv":
                     response = HttpResponse(the_file_to_send, content_type='text/csv')
