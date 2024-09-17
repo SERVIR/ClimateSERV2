@@ -51,6 +51,15 @@ def set_progress_to_100(uniqueid):
         logger.error("Progress update issue, unable to set to 100%: " + str(e))
 
 
+def get_originating_ip(statistical_query):
+    try:
+        originating_IP = statistical_query["originating_IP"]
+    except Exception as ex2:
+        originating_IP = "0.0.0.0"
+    return originating_IP
+
+
+
 @shared_task(time_limit=3000)
 def start_processing(statistical_query):
     merged_obj = None
@@ -60,6 +69,7 @@ def start_processing(statistical_query):
     try:
         date_range_list = []
         uniqueid = str(celery.current_task.request.id)
+        statistical_query["uniqueid"] = uniqueid
         logger.info("start_processing has begun for: " + uniqueid)
         operationtype = ""
         if 'geometry' in statistical_query:
@@ -282,7 +292,9 @@ def start_processing(statistical_query):
         set_progress_to_100(uniqueid)
         logger.debug("uniqueid: " + uniqueid)
         # if this
-        track_usage, created = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=statistical_query["originating_IP"])
+
+        track_usage, created =  Track_Usage.objects.get_or_create(unique_id=statistical_query["uniqueid"], originating_IP=get_originating_ip(statistical_query))
+
         logger.debug("got the object")
         track_usage.status = "Success"
         track_usage.save()
@@ -308,7 +320,7 @@ def start_processing(statistical_query):
         try:
             # maybe need to create the appropriate file for extraction with error message
             try:
-                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=statistical_query["originating_IP"])
+                track_usage = Track_Usage.objects.get_or_create(unique_id=uniqueid, originating_IP=get_originating_ip(statistical_query))
                 logger.debug("creating the object here")
                 track_usage.update(
                     time_requested=timezone.now(),
@@ -319,7 +331,7 @@ def start_processing(statistical_query):
                     status="failed",
                     progress=100,
                     API_call="submitDataRequest",
-                    originating_IP=statistical_query["originating_IP"]
+                    originating_IP=get_originating_ip(statistical_query)
                 )
             #
             except Track_Usage.DoesNotExist:
@@ -333,7 +345,7 @@ def start_processing(statistical_query):
                     unique_id=uniqueid,
                     progress=100,
                     API_call="submitDataRequest",
-                    originating_IP=statistical_query["originating_IP"]
+                    originating_IP=get_originating_ip(statistical_query)
                 )
 
                 track_usage.save()
