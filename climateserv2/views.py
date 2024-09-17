@@ -841,6 +841,7 @@ def submit_monthly_rainfall_analysis_request(request):
         else:
             status = "In Progress"
         log_usage(request, layer_id, feature_ids_list, unique_id, seasonal_start_date, seasonal_end_date, status)
+        logger.info("Logged initial usage (getMonthlyRainfallAnalysis) " + unique_id)
         return process_callback(request, json.dumps([unique_id]), "application/json")
     else:
         status = "Fail"

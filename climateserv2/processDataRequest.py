@@ -196,6 +196,8 @@ def start_processing(statistical_query):
                     result_list.append(work_dict)
             merged_obj = {"MonthlyAnalysisOutput": get_output_for_monthly_rainfall_analysis_from(result_list)}
 
+            logger.debug("created merged_obj for monthly analysis")
+
         else:
             try:
                 dates = []
