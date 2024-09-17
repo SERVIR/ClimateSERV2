@@ -302,6 +302,7 @@ def start_processing(statistical_query):
             status="failed",
             progress=100,
             API_call="submitDataRequest",
+            operationtype="unknown",
             originating_IP=get_originating_ip(statistical_query)
         )
 
@@ -338,6 +339,7 @@ def start_processing(statistical_query):
                     status="failed",
                     progress=100,
                     API_call="submitDataRequest",
+                    operationtype="unknown",
                     originating_IP=get_originating_ip(statistical_query)
                 )
                 track_usage.save()
