@@ -3636,7 +3636,10 @@ function get_stat_body(which) {
                 "  <br>" +
                 "  <div class='servir_tooltip_header'>IMERG 1 Day</div>" +
                 "  <div class='servir_tooltip_body'>1 Day rainfall accumulations product from the " +
-                "Integrated Multi-satellitE Retrievals (IMERG) for Global Precipitation Mission (GPM).</div>" +
+                "Integrated Multi-satellitE Retrievals (IMERG) for Global Precipitation Mission (GPM). " +
+                "Current data is V06 until July 8 when v07 takes over.  We are in the process of " +
+                 "finalizing v06 as its own dataset and creating a v07 version backfilled to 2000. "+
+                "We plan maintain both for a period  of time.</div>" +
                 "  <br>" +
                 "  <div class='servir_tooltip_header'>GEFS</div>" +
                 "  <div class='servir_tooltip_body'>Global Ensemble Forecast System (GEFS) a weather " +
