@@ -177,15 +177,11 @@
             right: -50px !important;
         }
 
-        #verifying_human {
-        {#border: 2px solid #ffffff;#}{#border-radius: 10px;#}{#background-color: #ffffffED;#}{#padding: 50px;#}{#font-size: 1em;#}{#white-space: nowrap;#}
-        }
-
         .human_container {
             position: absolute;
             right: 10px;
             bottom: 60px;
-        {#transform: translate(calc(-100% - 20px), calc(-100% - 60px));;#} z-index: 2002;
+            z-index: 2002;
         }
     </style>
 {% endblock %}
@@ -877,20 +873,9 @@
                             </span>
                         </h1>
                     </div>
-
-                    {#                    <div class="sidebar-pane" id="settings">#}
-                    {#                        <h1 class="sidebar-header">#}
-                    {#                            Settings#}
-                    {#                            <span class="sidebar-close">#}
-                    {#                              <i class="fas fa-caret-left"></i>#}
-                    {#                            </span>#}
-                    {#                        </h1>#}
-                    {#                        <p>Currently no settings here, likely will remove as#}
-                    {#                            settings have been moved to each layer</p>#}
-                    {#                    </div>#}
                 </div>
             </div>
-            {#            <h1 class="human_container" id="verifying_human">Welcome! Please give us a moment to set the system up.</h1>#}
+
             <div class="toast human_container" data-autohide="false" id="verifying_human">
                 <div class="toast-header">
                     <span class="mr-auto  bread-crumb bold">Welcome to ClimateSERV</span>

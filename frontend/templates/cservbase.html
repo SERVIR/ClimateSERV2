@@ -48,7 +48,14 @@
 
         $(document).ready(function () {
             setActive("{{ page }}");
+                    // JavaScript to dismiss the container
+            {% if banner_text %}
+            document.getElementById('dismiss-btn').addEventListener('click', function() {
+                document.getElementById('floating-container').style.display = 'none';
+            });
+            {% endif %}
         });
+
     </script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-27020636-4"></script>
@@ -107,6 +114,15 @@
         </div>
     </nav>
 </header>
+{% if banner_text %}
+<!-- Floating container -->
+<div id="floating-container" class="floating-container">
+    <div class="container-content">
+        <p>{{ banner_text }}</p>
+        <button id="dismiss-btn" class="dismiss-btn">Dismiss</button>
+    </div>
+</div>
+{% endif %}
 {% block content %}{% endblock %}
 <div class="d-flex flex-column">
     <footer id="footer">

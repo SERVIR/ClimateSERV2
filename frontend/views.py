@@ -22,14 +22,15 @@ import logging
 register = template.Library()
 
 logger = logging.getLogger("request_processor")
-
+banner_text = "We are planning a 4 to 8 hour maintenance shutdown for starting Monday 10/7 at 2:00 PM CDT"
 
 @cache_page(60 * 15)
 def index(request):
     return render(request, 'index.html', context={
         'page': 'menu-home',
         'datasets': DataSet.objects.exclude(featured=False).all(),
-        'page_elements': HomePage.objects.first()
+        'page_elements': HomePage.objects.first(),
+        'banner_text': banner_text
     })
 
 
@@ -43,7 +44,6 @@ def map_app(request):
 
     try:
         nmme_info = json.dumps(get_nmme_info(str(uuid.uuid4())))
-        # nmme_info = json.dumps({})
     except Exception as e:
         logger.error(str(e))
         nmme_info = json.dumps({})
@@ -51,8 +51,8 @@ def map_app(request):
     return render(request, 'map.html', context={
         'page': 'menu-map',
         'data_layers': my_data_sets,
-
         'climateModelInfo': nmme_info,
+        'banner_text': banner_text
     })
 
 
@@ -96,12 +96,18 @@ def display_aoi(request, usage_id):
 
 @cache_page(60 * 15)
 def about(request):
-    return render(request, 'about.html', context={'page': 'menu-about'})
+    return render(request, 'about.html', context={
+        'page': 'menu-about',
+        'banner_text': banner_text
+    })
 
 
 @cache_page(60 * 15)
 def feedback(request):
-    return render(request, 'feedback.html', context={'page': 'menu-feedback'})
+    return render(request, 'feedback.html', context={
+        'page': 'menu-feedback',
+        'banner_text': banner_text
+    })
 
 
 @cache_page(60 * 15)
@@ -117,7 +123,8 @@ def help_center(request):
     return render(request, 'help.html', context={
         'page': 'menu-help',
         'datasets': DataSet.objects.all(),
-        'data_layers': data_layers
+        'data_layers': data_layers,
+        'banner_text': banner_text
     })
 
 
@@ -126,7 +133,8 @@ def dev_api(request):
     return render(request, 'help.html', context={
         'page': 'menu-help',
         'datasets': DataSet.objects.all(),
-        'dev_api': True
+        'dev_api': True,
+        'banner_text': banner_text
     })
 
 
@@ -143,10 +151,7 @@ def confirm_captcha(request):
     }
     resp = requests.post('https://www.google.com/recaptcha/api/siteverify', data=verify_data)
     result_json = resp.json()
-    # this is only to test a low first captcha score.  uncomment to use for testing
-    # remember to comment back out before using in production.
-    # if version == '':
-    #     result_json["score"] = .4
+
     if "score" in result_json.keys():
         print(result_json["score"])
 
