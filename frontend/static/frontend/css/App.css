@@ -16,7 +16,7 @@ body {
     top: 100px; /* Adjust this depending on header height */
     left: 50%;
     transform: translateX(-50%);
-    z-index: 1000; /* Ensure it's above other content */
+    z-index: 3000; /* Ensure it's above other content */
     width: 80%;
     max-width: 600px;
     padding: 20px;
