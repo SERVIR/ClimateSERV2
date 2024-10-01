@@ -391,14 +391,18 @@ def get_climate_scenario_info(request):
 
 
 def get_nmme_info(unique_id):
+    logger.debug("get_nmme_info")
     try:
         if os.path.ismount("/mnt/climateserv"):
+            logger.debug("is mount")
             nc_file = xr.open_dataset(
                 '/mnt/climateserv/fast_access/fast_nmme_monthly/nmme-mme_bcsd.latest.global.0.5deg.daily.nc4',
                 chunks={'time': 16, 'longitude': 128,
                         'latitude': 128})  # /mnt/climateserv/nmme-ccsm4_bcsd/global/0.5deg/daily/latest/
 
+            logger.debug("nc file opened")
             start_date, end_date = TDSExtraction.get_date_range_from_nc_file(nc_file)
+            logger.debug("got range")
             is_error = False
             climate_model_datatype_capabilities_list = [
                 {
@@ -409,6 +413,7 @@ def get_nmme_info(unique_id):
                 }
             ]
             climate_datatype_map = get_climate_datatype_map()
+            logger.debug("got climate_datatype_map")
             api_return_object = {
                 "unique_id": unique_id,
                 "RequestName": "getClimateScenarioInfo",
@@ -419,6 +424,7 @@ def get_nmme_info(unique_id):
         else:
             raise FileNotFoundError
     except FileNotFoundError:
+        logger.debug("in file not found")
         with open('/cserv2/django_app/ClimateSERV2/climateserv2/sample_climate_scenario.json', 'r') as climate_scenario:
             api_return_object = json.loads(climate_scenario.read())
             api_return_object["unique_id"] = unique_id
