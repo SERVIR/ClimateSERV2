@@ -377,7 +377,7 @@ def get_climate_scenario_info(request):
         from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
         unique_id = str(uuid.uuid4())
         try:
-            track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
+            track_usage, created = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       dataset="climateScenarioInfo",
                                       time_requested=timezone.now(), request_type=request.method, status="Submitted",
