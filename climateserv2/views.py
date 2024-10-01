@@ -373,23 +373,28 @@ def get_climate_datatype_map():
 @csrf_exempt
 def get_climate_scenario_info(request):
     logger.error("get_climate_scenario_info")
-    from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
-    unique_id = str(uuid.uuid4())
     try:
-        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
-                                  country_ISO=get_country_code(request),
-                                  dataset="climateScenarioInfo",
-                                  time_requested=timezone.now(), request_type=request.method, status="Submitted",
-                                  progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
-                                  AOI=json.dumps({}), metadata_request=True, ui_request=from_ui
-                                  )
-        track_usage.save()
-    except MultiValueDictKeyError:
-        error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
-        logger.error(error_msg)
-    logger.error("about to get_nmme_info")
-    api_return_object = get_nmme_info(unique_id)
-    logger.error("back from get_nmme_info")
+        from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
+        unique_id = str(uuid.uuid4())
+        try:
+            track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
+                                      country_ISO=get_country_code(request),
+                                      dataset="climateScenarioInfo",
+                                      time_requested=timezone.now(), request_type=request.method, status="Submitted",
+                                      progress=100, API_call="getClimateScenarioInfo", data_retrieved=False,
+                                      AOI=json.dumps({}), metadata_request=True, ui_request=from_ui
+                                      )
+            track_usage.save()
+        except MultiValueDictKeyError:
+            error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
+            logger.error(error_msg)
+        logger.error("about to get_nmme_info")
+        api_return_object = get_nmme_info(unique_id)
+        logger.error("back from get_nmme_info")
+    except Exception as e:
+        logger.error(str(e))
+    finally:
+        api_return_object = {}
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
