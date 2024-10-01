@@ -372,6 +372,7 @@ def get_climate_datatype_map():
 @never_cache
 @csrf_exempt
 def get_climate_scenario_info(request):
+    logger.error("get_climate_scenario_info")
     from_ui = bool(request.POST.get("is_from_ui", request.GET.get("is_from_ui", False)))
     unique_id = str(uuid.uuid4())
     try:
@@ -386,7 +387,9 @@ def get_climate_scenario_info(request):
     except MultiValueDictKeyError:
         error_msg = "ERROR get_climate_scenario_info: There was an error trying to get the logs."
         logger.error(error_msg)
+    logger.error("about to get_nmme_info")
     api_return_object = get_nmme_info(unique_id)
+    logger.error("back from get_nmme_info")
     return process_callback(request, json.dumps(api_return_object), "application/javascript")
 
 
