@@ -22,7 +22,7 @@ import logging
 register = template.Library()
 
 logger = logging.getLogger("request_processor")
-banner_text = "We are planning a 4 to 8 hour maintenance shutdown affecting access to this system beginning Monday 10/7 at 2:00 PM CDT"
+banner_text = None
 
 @cache_page(60 * 15)
 def index(request):
