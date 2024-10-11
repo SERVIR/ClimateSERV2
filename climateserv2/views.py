@@ -79,7 +79,7 @@ def get_id_from_output(output):
 # Creates the HTTP response loaded with the callback to allow javascript callback
 def process_callback(request, output, content_type):
     db.connections.close_all()
-    request_id = request.POST.get("id", request.GET.get("id", None))
+    request_id = request.POST.get("id", request.GET.get("id", str(uuid.uuid4())))
 
     if request_id is None:
         request_id = get_id_from_output(output)
@@ -143,7 +143,7 @@ def get_country_code(r):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage, created = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", None)),
+    track_usage, created = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))),
                               originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
@@ -152,7 +152,13 @@ def get_feature_layers(request):
 
     track_usage.save()
     output = []
-    for value in params.shapefileName:
+    # Replace single quotes with double quotes
+    shapefile_data_str = params.shapefileName.replace("'", '"')
+
+    # Convert the corrected string to a dictionary (or list) using json.loads
+    shapefile_data = json.loads(shapefile_data_str)
+    for value in shapefile_data:
+
         output.append({'id': value['id'], 'displayName': value['displayName'], 'visible': value['visible']})
     return process_callback(request, json.dumps(output), "application/javascript")
 
@@ -163,16 +169,16 @@ def get_feature_layers(request):
 def get_data_from_request(request):
     logger.debug("Getting Data from Request")
     try:
-        request_id = request.POST.get("id", request.GET.get("id", None))
+        request_id = request.POST.get("id", request.GET.get("id", str(uuid.uuid4())))
         logger.debug("Getting Data from Request " + request_id)
         json_results = read_results(request_id)
-        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", None)))
+        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))))
         track_usage.data_retrieved = True
         track_usage.save()
         return process_callback(request, json.dumps(json_results), "application/json")
     except DatabaseError:
         logger.warning("problem getting request data for id: " + str(request))
-        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", None)))
+        track_usage = Track_Usage.objects.get(unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))))
         track_usage.data_retrieved = False
         track_usage.save()
         return process_callback(request, "need to send id", "application/json")
@@ -197,9 +203,9 @@ def int_try_parse(value):
 @never_cache
 @csrf_exempt
 def get_data_request_progress(request):
-    logger.debug("Getting Data Request Progress for: " + request.POST.get("id", request.GET.get("id", None)))
+    logger.debug("Getting Data Request Progress for: " + request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))))
     progress = 0
-    request_id = request.POST.get("id", request.GET.get("id", None))
+    request_id = request.POST.get("id", request.GET.get("id", str(uuid.uuid4())))
     try:
         progress = read_progress(request_id)
         if float(progress) > 0:
@@ -209,7 +215,7 @@ def get_data_request_progress(request):
     except (Exception, OSError) as e:
         logger.warning("Problem with getDataRequestProgress: initial part" + str(request) + " " + str(e))
     try:
-        logger.debug("Progress =" + str(progress) + " for " + request.POST.get("id", request.GET.get("id", None)))
+        logger.debug("Progress =" + str(progress) + " for " + request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))))
         if progress == -5:
             request_progress = Request_Progress.objects.get(request_id=str(request_id))
             request_progress.progress = 100
@@ -240,7 +246,7 @@ def get_data_request_progress(request):
 def get_file_for_job_id(request):
     logger.debug("Getting File to download.")
     try:
-        request_id = request.POST.get("id", request.GET.get("id", None))
+        request_id = request.POST.get("id", request.GET.get("id", str(uuid.uuid4())))
         progress = read_progress(request_id)
         # Validate that progress is at 100%
         if float(progress) >= 100.0:
