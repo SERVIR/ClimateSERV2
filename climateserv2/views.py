@@ -143,7 +143,7 @@ def get_country_code(r):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", None)),
+    track_usage, created = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", None)),
                               originating_IP=get_client_ip(request),
                               country_ISO=get_country_code(request),
                               time_requested=timezone.now(), request_type=request.method, status="Submitted",
@@ -245,7 +245,7 @@ def get_file_for_job_id(request):
         # Validate that progress is at 100%
         if float(progress) >= 100.0:
             try:
-                track_usage = Track_Usage.objects.get_or_create(unique_id=request_id, originating_IP=get_client_ip(request))
+                track_usage, created = Track_Usage.objects.get_or_create(unique_id=request_id, originating_IP=get_client_ip(request))
                 track_usage.data_retrieved = True
                 track_usage.save()
             except Exception as e:
@@ -599,7 +599,7 @@ def submit_data_request(request):
         else:
             status = "In Progress"
             aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=DataLayer.objects.get(
@@ -623,7 +623,7 @@ def submit_data_request(request):
         unique_id = str(uuid.uuid4())
         logger.info("Submitting " + unique_id)
         aoi = json.dumps({"Admin Boundary": layer_id, "FeatureIds": feature_ids_list})
-        track_usage = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=unique_id, originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=DataLayer.objects.get(
@@ -716,7 +716,7 @@ def submit_data_request(request):
                 except:
                     dataset_name_format = "ENS"
 
-            track_usage = Track_Usage.objects.get_or_create(unique_id=str(my_id), originating_IP=get_client_ip(request),
+            track_usage, created = Track_Usage.objects.get_or_create(unique_id=str(my_id), originating_IP=get_client_ip(request),
                                       country_ISO=get_country_code(request),
                                       time_requested=timezone.now(), AOI=aoi,
                                       dataset=dataset_name_format,
@@ -756,7 +756,7 @@ def submit_data_request(request):
         else:
             dataset_name_format = "ENS"
 
-        track_usage = Track_Usage.objects.get_or_create(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
                                   time_requested=timezone.now(), AOI=aoi,
                                   dataset=dataset_name_format,
