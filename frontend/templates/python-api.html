@@ -182,7 +182,73 @@ ul li a:hover {
 
         <h2>How to Use the ClimateSERV API</h2>
 
+
+        <div class="api-method">
+            <h3>request_data method</h3>
+  <h3>Parameters</h3>
+
+  <div class="parameter">
+    <strong>DatasetType (int):</strong>
+    <p>The type of dataset to be requested.</p>
+    <p><strong>Example:</strong> <code>28</code> (represents a specific climate dataset).</p>
+  </div>
+
+  <div class="parameter">
+    <strong>OperationType (str):</strong>
+    <p>The operation to be performed on the dataset. Common options include 'Average', 'Sum', etc.</p>
+    <p><strong>Example:</strong> <code>'Average'</code>.</p>
+  </div>
+
+  <div class="parameter">
+    <strong>EarliestDate (str):</strong>
+    <p>The start date for the data request in <code>MM/DD/YYYY</code> format.</p>
+    <p><strong>Example:</strong> <code>'01/03/2018'</code>.</p>
+  </div>
+
+  <div class="parameter">
+    <strong>LatestDate (str):</strong>
+    <p>The end date for the data request in <code>MM/DD/YYYY</code> format.</p>
+    <p><strong>Example:</strong> <code>'03/16/2018'</code>.</p>
+  </div>
+
+  <div class="parameter">
+    <strong>GeometryCoords (list of lists of float):</strong>
+    <p>A list of coordinates that defines a polygon around the area of interest. Each coordinate pair represents a point (longitude, latitude) in decimal degrees. The polygon is closed by repeating the first point at the end of the list.</p>
+    <p><strong>Example:</strong> <code>[[81.26, 29.20], [81.28, 29.20], [81.28, 29.18], [81.26, 29.18], [81.26, 29.20]]</code>.</p>
+  </div>
+
+  <div class="parameter">
+    <strong>SeasonalEnsemble (str) (optional, legacy variable that will be removed in the future):</strong>
+    <p>An optional parameter for requesting data from seasonal ensembles. When using the new integer dataset IDs, leave this field as an empty string.</p>
+    <p><strong>Example:</strong> <code>''</code> (empty string).</p>
+  </div>
+
+  <div class="parameter">
+    <strong>SeasonalVariable (str) (optional, legacy variable that will be removed in the future):</strong>
+    <p>An optional parameter for specifying the seasonal variable. Leave empty when using the new integer dataset IDs.</p>
+    <p><strong>Example:</strong> <code>''</code> (empty string).</p>
+  </div>
+
+  <div class="parameter">
+    <strong>Outfile (str):</strong>
+    <p>The path and filename where the output data will be saved or memory_object if you want the request to return a memory object that you can work with.</p>
+    <p><strong>If you request a CSV - Example:</strong> <code>'out.csv'</code>.</p>
+      <p><strong>If you request a NetCDF or tif download - Example:</strong> <code>'out.zip'</code>.</p>
+      <p><strong>If you would like a memory object set Outfile = 'memory_object' and assign the request to a variable - Example:</strong>
+          <pre><code>
+Outfile = 'memory_object'
+memory_obj = climateserv.request_data(DatasetType, OperationType,
+     EarliestDate, LatestDate,GeometryCoords,
+     SeasonalEnsemble, SeasonalVariable,Outfile)</code></pre>
+
+
+
+
+  </div>
+</div>
+
         <p>Here’s a simple example of using the <code>climateserv</code> Python package to query data securely:</p>
+
         <pre><code>
 import climateserv
 
