@@ -1,0 +1,200 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - About{% endblock %}
+{% block script %}
+    <link href="{% static 'frontend/css/about.css' %}" rel="stylesheet"/>
+    <style>
+    /* General styling for the API section */
+.api-section {
+    background-color: #f9f9f9;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: #758055;
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+p {
+    line-height: 1.7;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+ul {
+    margin-left: 20px;
+    list-style-type: disc;
+}
+
+ul li {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+/* Code block styling */
+pre, code {
+    background-color: #f5f5f5;
+    color: #d63384;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', Courier, monospace;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+pre {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Links styling */
+a {
+    color: #75805594;
+    text-decoration: none;
+}
+
+a:hover {
+    color:#758055;
+}
+
+a:active {
+    color: #758055;
+}
+
+/* Learn More section */
+ul li a {
+    color: #75805594;
+    font-weight: bold;
+}
+
+/* Flexbox for Learn More links */
+ul {
+    padding: 0;
+}
+
+ul li {
+    margin-bottom: 10px;
+}
+
+ul li a:hover {
+    color: #758055;
+    text-decoration: none;
+}
+    .git-conduct{
+        padding: 20px;
+    }
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 10px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+
+}
+
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+<section class="climateserv-api">
+    <div class="container">
+  <h1>Contribute to ClimateSERV</h1>
+
+  <p>
+    ClimateSERV is an open-source project, and we welcome contributions from the community! Whether you're fixing bugs, adding new features, or improving documentation, your help is greatly appreciated. The ClimateSERV repository is hosted on GitHub at
+    <a href="https://github.com/SERVIR/ClimateSERV2" target="_blank">https://github.com/SERVIR/ClimateSERV2</a>.
+  </p>
+
+  <h2>Why Contribute?</h2>
+  <p>
+    By contributing to ClimateSERV, you're helping advance an important tool that assists in climate resilience, food and water security, forest management, and more. Your efforts will be part of a broader global mission, and we encourage developers of all experience levels to get involved.
+  </p>
+
+  <h2>How to Contribute</h2>
+  <ol class="git-conduct">
+    <li><strong>Fork the Repository:</strong> Start by forking the repository on GitHub. This will create your own copy of the ClimateSERV code to work on.</li>
+    <li><strong>Clone Your Fork:</strong> Use Git to clone your fork locally:
+      <pre><code>git clone https://github.com/YOUR_USERNAME/ClimateSERV2.git</code></pre>
+    </li>
+    <li><strong>Create a New Branch:</strong> Create a branch for your feature or bugfix:
+      <pre><code>git checkout -b feature-branch-name</code></pre>
+    </li>
+    <li><strong>Make Your Changes:</strong> Work on your feature, bugfix, or documentation improvement.</li>
+    <li><strong>Test Your Changes:</strong> Ensure that your changes do not break existing functionality. Follow the testing guidelines outlined in the repository.</li>
+    <li><strong>Commit Your Changes:</strong> Commit your code with a descriptive message:
+      <pre><code>git commit -m "Describe the changes you made"</code></pre>
+    </li>
+    <li><strong>Push to GitHub:</strong> Push your changes to your fork:
+      <pre><code>git push origin feature-branch-name</code></pre>
+    </li>
+    <li><strong>Create a Pull Request:</strong> Open a pull request (PR) from your fork back to the main repository. Include a clear description of your changes and link any related issues.</li>
+  </ol>
+
+  <h2>Basic Contribution Standards</h2>
+  <p>
+    To keep the ClimateSERV project organized and ensure the highest quality code, we ask all contributors to follow these basic standards:
+  </p>
+  <ul>
+    <li><strong>Code Style:</strong> Follow the repository’s coding style. Ensure your code is well-formatted and easy to read.</li>
+    <li><strong>Commit Messages:</strong> Write clear and concise commit messages. Each commit should focus on a single topic.</li>
+    <li><strong>Testing:</strong> All new features and bugfixes should include tests. Make sure your changes pass existing tests and don't introduce new issues.</li>
+    <li><strong>Documentation:</strong> Update or add documentation for any new features or changes you introduce.</li>
+    <li><strong>Be Respectful:</strong> Engage in a respectful and professional manner with other contributors and maintainers.</li>
+  </ul>
+
+  <h2>Getting Help</h2>
+  <p>
+    If you’re unsure about anything, feel free to ask questions! You can open an issue on the GitHub repository or reach out to the maintainers through the project’s communication channels.
+  </p>
+
+  <h2>Start Contributing!</h2>
+  <p>
+    Head over to the <a href="https://github.com/SERVIR/ClimateSERV2" target="_blank">ClimateSERV GitHub repository</a> to explore the project, view open issues, and start contributing today!
+  </p>
+</div>
+
+</section>
+
+{% endblock %}

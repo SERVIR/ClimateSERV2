@@ -365,6 +365,93 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     max-width: 900px;
 }
 
+#developers-api{
+    padding:0;
+}
+
+.app-hero-banner {
+    position: relative;
+    width: 100%;
+    height: 400px; /* Set the desired height for the banner */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.banner-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image covers the area without distortion */
+    z-index: 1; /* Ensure the image stays behind the content */
+}
+
+.banner-content {
+    position: relative;
+    z-index: 2; /* Content stays above the image */
+    text-align: left; /* Align text to the left */
+    padding: 20px;
+    color: white;
+}
+
+.banner-content {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: white;
+    padding: 20px; /* Adjust as necessary */
+}
+
+.app-hero-banner .banner-overlay {
+    background: -webkit-radial-gradient(circle farthest-corner at top left, #030819 0%, transparent 65%);
+    background: -moz-radial-gradient(circle farthest-corner at top left, #030819 0%, transparent 65%);
+    background: radial-gradient(circle farthest-corner at top left, #030819 0%, transparent 65%);
+}
+
+.rectangle-section {
+    display: flex;
+    justify-content: space-between; /* Ensures even spacing between rectangles */
+    margin-top: 20px; /* Adds space below the hero image */
+}
+
+.rectangle {
+    background-color: #f0f0f0; /* Light grey background for the boxes */
+    flex: 1; /* Makes each rectangle take up equal space */
+    margin: 10px; /* Adds spacing around each rectangle */
+    padding: 20px;
+    display: flex;
+    flex-direction: column; /* Stack elements vertically */
+    justify-content: space-between; /* Evenly space content inside the rectangle */
+    text-align: left;
+    height: 250px; /* Adjust to the desired height */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Adds a subtle shadow */
+}
+
+.rectangle h1 {
+    font-size: 1.5em;
+    margin-bottom: 10px;
+}
+
+.rectangle p {
+    flex-grow: 1; /* Ensures the paragraph takes up available space */
+    margin: 10px 0;
+}
+
+.rectangle .learn-more {
+    align-self: flex-end; /* Aligns the link to the bottom-right */
+    color: #75805594; /* Change link color */
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.rectangle .learn-more:hover {
+    color:#758055; /* Adds underline on hover */
+}
+
+
 @media only screen and (max-width: 768px) {
     .image-200 {
         width:100%;

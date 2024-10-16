@@ -1,0 +1,762 @@
+{% extends "cservbase.html" %}
+{% load static %}
+{% block title %}ClimateSERV - About{% endblock %}
+{% block script %}
+    <link href="{% static 'frontend/css/about.css' %}" rel="stylesheet"/>
+    <style>
+    /* General styling for the API section */
+.api-section {
+    background-color: #f9f9f9;
+    padding: 40px 20px;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3 {
+    color: #758055;
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+h1 {
+    font-size: 2.5rem;
+}
+
+h2 {
+    font-size: 2rem;
+}
+
+h3 {
+    font-size: 1.5rem;
+}
+
+p {
+    line-height: 1.7;
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    color: #333;
+    font-family: 'Arial', sans-serif;
+}
+
+ul {
+    margin-left: 20px;
+    list-style-type: disc;
+}
+
+ul li {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+/* Code block styling */
+pre, code {
+    background-color: #f5f5f5;
+    color: #d63384;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Courier New', Courier, monospace;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+
+pre {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Links styling */
+a {
+    color: #75805594;
+    text-decoration: none;
+}
+
+a:hover {
+    color:#758055;
+}
+
+a:active {
+    color: #758055;
+}
+
+/* Learn More section */
+ul li a {
+    color: #75805594;
+    font-weight: bold;
+}
+
+/* Flexbox for Learn More links */
+ul {
+    padding: 0;
+}
+
+ul li {
+    margin-bottom: 10px;
+}
+
+ul li a:hover {
+    color: #758055;
+    text-decoration: none;
+}
+
+td, th {
+    padding: 10px;
+}
+
+thead {
+    background-color: #758055;
+    color: #ffffff;
+}
+
+table th{
+    color:#ffffff;
+}
+
+tr.row-even {
+    background-color: #7580552e;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .container {
+        padding: 20px 10px;
+    }
+
+    h1 {
+        font-size: 2rem;
+    }
+
+    h2 {
+        font-size: 1.75rem;
+    }
+
+    h3 {
+        font-size: 1.25rem;
+    }
+
+    p {
+        font-size: 1rem;
+    }
+}
+
+    </style>
+{% endblock %}
+
+{% block content %}
+
+
+<section class="climateserv-api">
+    <div class="container">
+         <header>
+        <h1>Develop Your Own Interface for ClimateSERV API</h1>
+    </header>
+
+    <section class="intro">
+        <p>You may also write your own interface to access the API directly in any language you choose. The following should help define everything you will need to do so.</p>
+    </section>
+
+    <section class="api-methods">
+        <h2>API Methods</h2>
+        <p>All API methods must be called using the following pattern:</p>
+        <code>{ base api url }/[MethodName]/?param1=value1&amp;param2=value2&amp;...paramN=valueN</code>
+    </section>
+
+    <section class="base-url">
+        <h2>Base API URL</h2>
+        <p>The API allows access to the ClimateSERV processing engine and resulting data so that developers can implement their own UI or extract needed data directly from the back-end.</p>
+        <p class="highlight">The base URL for all API access is: <a href="https://climateserv.servirglobal.net/api/" target="_blank">https://climateserv.servirglobal.net/api/</a></p>
+    </section>
+
+    <section class="callback-support">
+        <h2>Call-back Support</h2>
+        <p>All API functions support passing in the parameter:</p>
+        <code>?callback=callBackFunctionName</code>
+        <p>The return data/object resulting from the API function call will be wrapped into a JavaScript function as named. For instance, including <code>?callback=ProcessResults</code> would require you to define a function <code>ProcessResults(returnObject)</code>, where <code>returnObject</code> is the object passed back as output from the API.</p>
+    </section>
+
+    <section class="api-examples">
+        <h2>API Examples</h2>
+
+        <div class="api-method">
+            <h3>getParameterTypes</h3>
+            <p><strong>Purpose:</strong> Get a list of the current supported statistical operation types and their code values.</p>
+            <p><strong>URL:</strong> <a href="https://climateserv.servirglobal.net/api/getParameterTypes/" target="_blank">https://climateserv.servirglobal.net/api/getParameterTypes/</a></p>
+            <p><strong>Supported Methods:</strong> GET</p>
+            <p><strong>Returns:</strong> Array of supported statistical operation types.</p>
+            <pre><code>
+[
+  [0, "max", "Max"],
+  [1, "min", "Min"],
+  [2, "median", "Median"],
+  [3, "range", "Range"],
+  [4, "sum", "Sum"],
+  [5, "avg", "Average"]
+]
+            </code></pre>
+        </div>
+
+        <div class="api-method">
+            <h3>getFeatureLayers</h3>
+            <p><strong>Purpose:</strong> Get a list of the current feature layers included in the map for processing.</p>
+            <p><strong>URL:</strong> <a href="https://climateserv.servirglobal.net/api/getFeatureLayers/" target="_blank">https://climateserv.servirglobal.net/api/getFeatureLayers/</a></p>
+            <p><strong>Supported Methods:</strong> GET</p>
+            <p><strong>Returns:</strong> Array of feature layer info, including visibility, display name, and ID.</p>
+            <pre><code>
+[
+  {"visible": "true", "displayName": "Countries", "id": "country"},
+  {"visible": "false", "displayName": "Admin #1", "id": "admin_1_earth"},
+  {"visible": "false", "displayName": "Admin #2", "id": "admin_2_af"}
+]
+            </code></pre>
+        </div>
+
+       <div class="api-method">
+            <h3>getClimateScenarioInfo</h3>
+            <p><strong>Purpose:</strong> Get information about the data structure of currently supported climate
+                scenario datatypes. At this time there are a total of 10 ‘Climate_Ensembles’.
+                Each ‘Climate_Ensemble’ can have 1, 2, or n ‘Climate_Variables’. The combination of ‘Climate_Ensemble’
+                and ‘Climate_Variable’ is unique and matches up to an individual dataset. (so 1 list of images
+                per ‘Climate_Ensemble’ + ‘Climate_Variable’ combination.)</p>
+            <p><strong>URL:</strong> <a href="https://climateserv.servirglobal.net/api/getClimateScenarioInfo/" target="_blank">https://climateserv.servirglobal.net/api/getClimateScenarioInfo/</a></p>
+            <p><strong>Supported Methods:</strong> GET</p>
+            <p><strong>Returns:</strong> JSON object.</p>
+            <pre><code>
+{
+  "unique_id": "87264db4-7297-4b99-aa22-a87fbd0e8a84",
+  "RequestName": "getClimateScenarioInfo",
+  "climate_DatatypeMap": [
+    {
+      "climate_Ensemble": "cfsv2_ens18",
+      "climate_DataTypes": [
+        {
+          "dataType_Number": 76,
+          "climate_Variable": "air_temperature"
+        },
+        {
+          "dataType_Number": 77,
+          "climate_Variable": "precipitation"
+        }
+      ]
+    },
+    {
+      "climate_Ensemble": "ccsm4_ens01",
+      "climate_DataTypes": [
+        {
+          "dataType_Number": 6,
+          "climate_Variable": "air_temperature"
+        },
+        {
+          "dataType_Number": 7,
+          "climate_Variable": "precipitation"
+        }
+      ]
+    }
+   // Additional climate ensembles and data types...
+  ],
+  "climate_DataTypeCapabilities": [
+    {
+      "current_Capabilities": {
+        "startDateTime": "2024-08-01",
+        "endDateTime": "2025-01-28"
+      }
+    }
+  ],
+  "isError": false
+}
+            </code></pre>
+        </div>
+
+        <div class="api-method">
+  <h2>submitDataRequest</h2>
+  <p><a href="https://climateserv.servirglobal.net/api/submitDataRequest/">API Documentation</a></p>
+
+  <h3>Purpose</h3>
+  <p>Submit a new asynchronous processing request to the server.</p>
+
+  <h3>Supported Methods</h3>
+  <ul>
+    <li>GET</li>
+    <li>POST</li>
+  </ul>
+
+  <h3>Parameters (input)</h3>
+  <p>Due to increased demand in ClimateSERV services, a limit of 20 years of data per request has been implemented.</p>
+  <ul>
+    <li><strong>datatype</strong>: (int), the unique datatype number for the dataset which this request operates on</li>
+    <li><strong>begintime</strong>: (string), start date for processing interval, format ("MM/DD/YYYY")</li>
+    <li><strong>endtime</strong>: (string), end date for processing interval, format ("MM/DD/YYYY")</li>
+    <li><strong>intervaltype</strong>: (int), enumerated value that represents which type of time interval to process (daily, monthly, etc)</li>
+    <li><strong>operationtype</strong>: (int), enumerated value representing the statistical operation to perform on the dataset</li>
+    <li><strong>geometry</strong>: (optional, object), the geometry defined by the user on the current client</li>
+    <li><strong>layerid</strong>: (optional), the layer ID selected by the user on the current client</li>
+    <li><strong>featureids</strong>: (optional), the feature IDs selected by the user on the current client</li>
+    <li><strong>isZip_CurrentDataType</strong>: (optional, string), blank defaults to 'False'. Sending anything through equates to 'True'. This lets the server know the job should zip up and return a full dataset.</li>
+  </ul>
+
+  <h3>Returns (output)</h3>
+  <p><strong>string</strong>: returns either the job ID (‘uniqueid’) as a UUID or an error message</p>
+
+  <h4>Output Details</h4>
+  <p>Submit the new data request and receive a job ID as a response. The returned job ID can then be used to retrieve results (see <code>getDataFromRequest</code>).</p>
+
+  <div class="warning">
+    <strong>Warning:</strong> Ensure that the polygon and GeoJSON coordinates are in the EPSG:4326 projection.
+  </div>
+
+  <h3>Example Request</h3>
+  <p>If you are interested in retrieving CHIRPS data for a polygon and a time period, use the following request:</p>
+
+  <code>
+    https://climateserv.servirglobal.net/api/submitDataRequest/?datatype=0&begintime=04/01/2018&endtime=04/30/2018&intervaltype=0&operationtype=5&callback=successCallback&dateType_Category=default&isZip_CurrentDataType=false&geometry={"type":"Polygon","coordinates":[[[21.533203124999996,-3.1624555302378496],[21.533203124999996,-6.489983332670647],[26.279296874999986,-5.441022303717986],[26.10351562499999,-2.635788574166625],[21.533203124999996,-3.1624555302378496]]]}
+  </code>
+
+  <div class="tip">
+    <strong>Tip:</strong> The above request can be modified to include a GeoJSON with a multi-polygon. Replace the geometry parameter with the respective GeoJSON geometry.
+  </div>
+
+  <h3>Example Output</h3>
+  <pre>
+    ["7e917e63-600d-4a1e-a069-ab8f73c9fcaf"]
+  </pre>
+</div>
+<div class="api-method">
+  <h2>getDataRequestProgress</h2>
+  <p><a href="https://climateserv.servirglobal.net/api/getDataRequestProgress/">API Documentation</a></p>
+
+  <h3>Purpose</h3>
+  <p>Get the current progress the server has made on processing the given request job ID.</p>
+
+  <h3>Supported Methods</h3>
+  <ul>
+    <li>GET</li>
+  </ul>
+
+  <h3>Parameters (input)</h3>
+  <ul>
+    <li><strong>id</strong>: (string/UUID), the unique job ID (UUID format) of the job to check</li>
+  </ul>
+
+  <h3>Returns (output)</h3>
+  <p><strong>Array containing single float</strong>: returns the progress value as a float between 0.0 and 100.0 encapsulated in an array. If there is an error, a value of <code>[-1]</code> is returned.</p>
+
+  <h4>Output Details</h4>
+  <p>Request the server for the progress on processing the current job ID. The server returns a number that can be used to update the client progress bar. Repeat the request periodically to get updated progress.</p>
+
+  <h3>Example Output</h3>
+  <pre>
+    [27.0]
+  </pre>
+</div>
+
+        <div class="api-method">
+  <h2>getDataFromRequest</h2>
+  <p><a href="https://climateserv.servirglobal.net/api/getDataFromRequest/">API Documentation</a></p>
+
+  <h3>Purpose</h3>
+  <p>Get the data from a job that has completed its processing.</p>
+
+  <h3>Supported Methods</h3>
+  <ul>
+    <li>GET</li>
+  </ul>
+
+  <h3>Parameters (input)</h3>
+  <ul>
+    <li><strong>id</strong>: (string/UUID), the unique job ID of the completed job</li>
+  </ul>
+
+  <h3>Returns (output)</h3>
+  <p><strong>object{}</strong>: Returns the data generated from the request, typically a list of numbers and dates. See the example below.</p>
+
+  <h4>Output Details</h4>
+  <p>Ask the server for the data related to a completed job by passing the job ID (UUID string). The response contains a list of data granules, each associated with a date and value.</p>
+
+  <h3>Example Output</h3>
+  <pre>
+retObj.data                     // (Array[]) list of data granules that the processing job output created.
+
+granule = retObj.data[n]         // (object), single data granule
+
+granule.date                    // (string), readable date for current data granule. Format "d/m/y" (not fixed length)
+granule.workid                  // (string), unique ID for the process item (used internally by the server).
+granule.epochTime               // (string), Epoch time format for the date.
+granule.value                   // (object), the key matches the statistical operation performed, and the value is the result of the operation for that data granule.
+  </pre>
+
+  <h4>Example</h4>
+  <pre>
+{
+    "data": [
+        {
+            "date": "1/1/2015",
+            "workid": "01f4839f-7b9c-447f-b50f-0ca257c0a339",
+            "epochTime": "1420092000",
+            "value": {"max": 0.3055223822593689}
+        },
+        {
+            "date": "1/2/2015",
+            "workid": "58b6f7ea-5490-4ccd-a715-5e028407ad16",
+            "epochTime": "1420178400",
+            "value": {"max": 0.15552784502506256}
+        },
+        {
+            // Additional granules can be listed here
+            ....,
+            ....,
+        },
+        {
+            "date": "1/31/2015",
+            "workid": "e021a12c-7346-4b7b-a273-bd39c7fde99b",
+            "epochTime": "1422684000",
+            "value": {"max": 4.206714630126953}
+        }
+    ]
+}
+  </pre>
+</div>
+<div class="section" id="list-of-datatypes">
+                <h2>List of Datatypes
+                </h2>
+                <div class="section" id="regular-datasets">
+                    <h3>Regular Datasets</h3>
+                    <div class="wy-table-responsive">
+                        <table border="1" class="docutils">
+                            <colgroup>
+                                <col width="38%">
+                                <col width="20%">
+                                <col width="42%">
+                            </colgroup>
+                            <thead valign="bottom">
+                            <tr class="row-odd">
+                                <th class="head">Dataset Name</th>
+                                <th class="head">Datatype Number</th>
+                                <th class="head">Availability</th>
+                            </tr>
+                            </thead>
+                            <tbody valign="top">
+
+                            {% for datalayer in data_layers %}
+                             {% if forloop.counter|divisibleby:"2" %}
+                                    <tr class="row-even">
+                             {% else %}
+                                <tr class="row-odd">
+                             {% endif %}
+                                 <td>{{ datalayer.title }}</td>
+                                    <td>{{ datalayer.api_id }}</td>
+                                    <td>{{ datalayer.availability }}</td>
+                                </tr>
+
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="section" id="seasonal-forecast-datasets">
+                    <h3>Seasonal Forecast Datasets</h3>
+                    <p>The seasonal forecasts are generated from a NMME model ensemble run.</p>
+                    <div class="wy-table-responsive">
+                        <table border="1" class="docutils">
+                            <colgroup>
+                                <col width="66%">
+                                <col width="34%">
+                            </colgroup>
+                            <thead valign="bottom">
+                            <tr class="row-odd">
+                                <th class="head">Dataset Name</th>
+                                <th class="head">Datatype Number</th>
+                            </tr>
+                            </thead>
+                            <tbody valign="top">
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 1, Temperature</td>
+                                <td>6</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 1, Precipitation</td>
+                                <td>7</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 2, Temperature</td>
+                                <td>8</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 2, Precipitation</td>
+                                <td>9</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 3, Temperature</td>
+                                <td>10</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 3, Precipitation</td>
+                                <td>11</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 4, Temperature</td>
+                                <td>12</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 4, Precipitation</td>
+                                <td>13</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 5, Temperature</td>
+                                <td>14</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 5, Precipitation</td>
+                                <td>15</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 6, Temperature</td>
+                                <td>16</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 6, Precipitation</td>
+                                <td>17</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 7, Temperature</td>
+                                <td>18</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 7, Precipitation</td>
+                                <td>19</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 8, Temperature</td>
+                                <td>20</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 8, Precipitation</td>
+                                <td>21</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 9, Temperature</td>
+                                <td>22</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 9, Precipitation</td>
+                                <td>23</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CCSM Ensemble 10, Temperature</td>
+                                <td>24</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CCSM Ensemble 10, Precipitation</td>
+                                <td>25</td>
+                            </tr>
+
+
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 1, Temperature</td>
+                                <td>42</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 1, Precipitation</td>
+                                <td>43</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 2, Temperature</td>
+                                <td>44</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 2, Precipitation</td>
+                                <td>45</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 3, Temperature</td>
+                                <td>46</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 3, Precipitation</td>
+                                <td>47</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 4, Temperature</td>
+                                <td>48</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 4, Precipitation</td>
+                                <td>49</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 5, Temperature</td>
+                                <td>50</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 5, Precipitation</td>
+                                <td>51</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 6, Temperature</td>
+                                <td>52</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 6, Precipitation</td>
+                                <td>53</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 7, Temperature</td>
+                                <td>54</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 7, Precipitation</td>
+                                <td>55</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 8, Temperature</td>
+                                <td>56</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 8, Precipitation</td>
+                                <td>57</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 9, Temperature</td>
+                                <td>58</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 9, Precipitation</td>
+                                <td>59</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 10, Temperature</td>
+                                <td>60</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 10, Precipitation</td>
+                                <td>61</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 11, Temperature</td>
+                                <td>62</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 11, Precipitation</td>
+                                <td>63</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 12, Temperature</td>
+                                <td>64</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 12, Precipitation</td>
+                                <td>65</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 13, Temperature</td>
+                                <td>66</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 13, Precipitation</td>
+                                <td>67</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 14, Temperature</td>
+                                <td>68</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 14, Precipitation</td>
+                                <td>69</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 15, Temperature</td>
+                                <td>70</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 15, Precipitation</td>
+                                <td>71</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 16, Temperature</td>
+                                <td>72</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 16, Precipitation</td>
+                                <td>73</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 17, Temperature</td>
+                                <td>74</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 17, Precipitation</td>
+                                <td>75</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 18, Temperature</td>
+                                <td>76</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 18, Precipitation</td>
+                                <td>77</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 19, Temperature</td>
+                                <td>78</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 19, Precipitation</td>
+                                <td>79</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 20, Temperature</td>
+                                <td>80</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 20, Precipitation</td>
+                                <td>81</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 21, Temperature</td>
+                                <td>82</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 21, Precipitation</td>
+                                <td>83</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 22, Temperature</td>
+                                <td>84</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 22, Precipitation</td>
+                                <td>85</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 23, Temperature</td>
+                                <td>86</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 23, Precipitation</td>
+                                <td>87</td>
+                            </tr>
+                            <tr class="row-even">
+                                <td>CFSv2 Ensemble 24, Temperature</td>
+                                <td>88</td>
+                            </tr>
+                            <tr class="row-odd">
+                                <td>CFSv2 Ensemble 24, Precipitation</td>
+                                <td>89</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+    </section>
+    </div>
+</section>
+
+
+{% endblock %}
