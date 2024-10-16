@@ -476,3 +476,14 @@ span.ui-button-icon.ui-icon.ui-icon-closethick {
     }
 
 }
+
+@media only screen and (max-width: 599px) {
+    .rectangle-section{
+        display:block;
+    }
+    .rectangle {
+        height:auto;
+        width:100%;
+    }
+
+}
