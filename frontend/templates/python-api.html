@@ -4,129 +4,132 @@
 {% block script %}
     <link href="{% static 'frontend/css/about.css' %}" rel="stylesheet"/>
     <style>
-    /* General styling for the API section */
-.api-section {
-    background-color: #f9f9f9;
-    padding: 40px 20px;
-}
+        /* General styling for the API section */
+        .api-section {
+            background-color: #f9f9f9;
+            padding: 40px 20px;
+        }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
 
-h1, h2, h3 {
-    color: #758055;
-    margin-bottom: 20px;
-    font-family: 'Arial', sans-serif;
-}
+        h1, h2, h3 {
+            color: #758055;
+            margin-bottom: 20px;
+            font-family: 'Arial', sans-serif;
+        }
 
-h1 {
-    font-size: 2.5rem;
-}
+        h1 {
+            font-size: 2.5rem;
+        }
 
-h2 {
-    font-size: 2rem;
-}
+        h2 {
+            font-size: 2rem;
+        }
 
-h3 {
-    font-size: 1.5rem;
-}
+        h3 {
+            font-size: 1.5rem;
+        }
 
-p {
-    line-height: 1.7;
-    font-size: 1.1rem;
-    margin-bottom: 20px;
-    color: #333;
-    font-family: 'Arial', sans-serif;
-}
+        p {
+            line-height: 1.7;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: #333;
+            font-family: 'Arial', sans-serif;
+        }
 
-ul {
-    margin-left: 20px;
-    list-style-type: disc;
-}
+        ul {
+            margin-left: 20px;
+            list-style-type: disc;
+        }
 
-ul li {
-    margin-bottom: 10px;
-    font-size: 1.1rem;
-}
+        ul li {
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
 
-/* Code block styling */
-pre, code {
-    background-color: #f5f5f5;
-    color: #d63384;
-    padding: 15px;
-    border-radius: 5px;
-    font-family: 'Courier New', Courier, monospace;
-    overflow-x: auto;
-    margin-bottom: 20px;
-}
+        /* Code block styling */
+        pre, code {
+            background-color: #f5f5f5;
+            color: #d63384;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
 
-pre {
-    font-size: 1rem;
-    line-height: 1.5;
-}
+        pre {
+            font-size: 1rem;
+            line-height: 1.5;
+        }
 
-/* Links styling */
-a {
-    color: #75805594;
-    text-decoration: none;
-}
+        /* Links styling */
+        a {
+            color: #75805594;
+            text-decoration: none;
+        }
 
-a:hover {
-    color:#758055;
-}
+        a:hover {
+            color: #758055;
+        }
 
-a:active {
-    color: #758055;
-}
+        a:active {
+            color: #758055;
+        }
 
-/* Learn More section */
-ul li a {
-    color: #75805594;
-    font-weight: bold;
-}
+        /* Learn More section */
+        ul li a {
+            color: #75805594;
+            font-weight: bold;
+        }
 
-/* Flexbox for Learn More links */
-ul {
-    padding: 0;
-}
+        /* Flexbox for Learn More links */
+        ul {
+            padding: 0;
+        }
 
-ul li {
-    margin-bottom: 10px;
-}
+        ul li {
+            margin-bottom: 10px;
+        }
 
-ul li a:hover {
-    color: #758055;
-    text-decoration: none;
-}
+        ul li a:hover {
+            color: #758055;
+            text-decoration: none;
+        }
+        .parameter{
+            margin-left: 40px;
+        }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .container {
-        padding: 20px 10px;
-    }
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 10px;
+            }
 
-    h1 {
-        font-size: 2rem;
-    }
+            h1 {
+                font-size: 2rem;
+            }
 
-    h2 {
-        font-size: 1.75rem;
-    }
+            h2 {
+                font-size: 1.75rem;
+            }
 
-    h3 {
-        font-size: 1.25rem;
-    }
+            h3 {
+                font-size: 1.25rem;
+            }
 
-    p {
-        font-size: 1rem;
-    }
-}
+            p {
+                font-size: 1rem;
+            }
+        }
 
     </style>
 {% endblock %}
@@ -134,122 +137,136 @@ ul li a:hover {
 {% block content %}
 
 
-<section class="climateserv-api">
-    <div class="container">
-        <h1>ClimateSERV Python API: Easy Integration for Climate Data Access</h1>
+    <section class="climateserv-api">
+        <div class="container">
+            <h1>ClimateSERV Python API: Easy Integration for Climate Data Access</h1>
 
-        <h2>Overview</h2>
-        <p>One of the easiest ways to access ClimateSERV's vast climate data is through our Python API using the
-           <code>climateserv</code> package. This Python library simplifies working with climate data by providing a direct interface
-           to download and process information in formats ready for immediate analysis or integration into custom applications.</p>
+            <h2>Overview</h2>
+            <p>One of the easiest ways to access ClimateSERV's vast climate data is through our Python API using the
+                <code>climateserv</code> package. This Python library simplifies working with climate data by providing
+                a direct interface
+                to download and process information in formats ready for immediate analysis or integration into custom
+                applications.</p>
 
-        <p>The package can be easily installed using either <code>pip</code> or <code>conda</code> and offers flexible data output formats.</p>
-
-
-        <h2>Key Features</h2>
-
-        <h3>1. Simple Installation</h3>
-        <p>The <code>climateserv</code> package can be installed in seconds:</p>
-        <pre><code>pip install climateserv</code></pre>
-        <pre><code>conda install -c SERVIR climateserv</code></pre>
-
-        <h3>2. Variety of Data Formats</h3>
-        <p>Climate data from ClimateSERV can be retrieved in multiple formats to suit different use cases:</p>
-        <ul>
-            <li><strong>CSV:</strong> for simple tabular data analysis in tools like Excel, Pandas, or R.</li>
-            <li><strong>GeoTIFF:</strong> for integration into GIS applications such as QGIS or ArcGIS for geospatial analysis.</li>
-            <li><strong>NetCDF:</strong> for working with climate models or performing advanced data manipulation using libraries like xarray.</li>
-            <li><strong>In-Memory Objects:</strong> for high-performance applications where data needs to be directly manipulated in Python without being written to disk.</li>
-        </ul>
-
-        <h3>3. Intuitive API Design</h3>
-        <p>The API is designed to be user-friendly and integrates easily into both simple and complex Python applications. It abstracts the complexities
-           of querying climate data, allowing developers to focus on integrating climate insights directly into their projects.</p>
-
-        <h2>Example Use Cases</h2>
-
-        <h3>1. Agriculture Monitoring</h3>
-        <p>A farming application can use the API to download historical rainfall data for specific regions. By analyzing the data, the application can generate
-           insights for crop health monitoring, irrigation planning, or early drought warnings.</p>
-
-        <h3>2. Disaster Risk Management</h3>
-        <p>An emergency response tool can tap into the API to monitor weather patterns and flood risks. By incorporating climate data into a mapping interface,
-           users can visualize areas vulnerable to extreme weather events and plan accordingly.</p>
-
-        <h3>3. Climate Research</h3>
-        <p>Researchers and students can use the <code>climateserv</code> API to study long-term climate patterns, access historical temperature, precipitation,
-           or vegetation indices, and integrate that data into machine learning models for predictive analysis.</p>
-
-        <h2>How to Use the ClimateSERV API</h2>
+            <p>The package can be easily installed using either <code>pip</code> or <code>conda</code> and offers
+                flexible data output formats.</p>
 
 
-        <div class="api-method">
-            <h3>request_data method</h3>
-  <h3>Parameters</h3>
+            <h2>Key Features</h2>
 
-  <div class="parameter">
-    <strong>DatasetType (int):</strong>
-    <p>The type of dataset to be requested.</p>
-    <p><strong>Example:</strong> <code>28</code> (represents a specific climate dataset).</p>
-  </div>
+            <h3>1. Simple Installation</h3>
+            <p>The <code>climateserv</code> package can be installed in seconds:</p>
+            <pre><code>pip install climateserv</code></pre>
+            <pre><code>conda install -c SERVIR climateserv</code></pre>
 
-  <div class="parameter">
-    <strong>OperationType (str):</strong>
-    <p>The operation to be performed on the dataset. Common options include 'Average', 'Sum', etc.</p>
-    <p><strong>Example:</strong> <code>'Average'</code>.</p>
-  </div>
+            <h3>2. Variety of Data Formats</h3>
+            <p>Climate data from ClimateSERV can be retrieved in multiple formats to suit different use cases:</p>
+            <ul>
+                <li><strong>CSV:</strong> for simple tabular data analysis in tools like Excel, Pandas, or R.</li>
+                <li><strong>GeoTIFF:</strong> for integration into GIS applications such as QGIS or ArcGIS for
+                    geospatial analysis.
+                </li>
+                <li><strong>NetCDF:</strong> for working with climate models or performing advanced data manipulation
+                    using libraries like xarray.
+                </li>
+                <li><strong>In-Memory Objects:</strong> for high-performance applications where data needs to be
+                    directly manipulated in Python without being written to disk.
+                </li>
+            </ul>
 
-  <div class="parameter">
-    <strong>EarliestDate (str):</strong>
-    <p>The start date for the data request in <code>MM/DD/YYYY</code> format.</p>
-    <p><strong>Example:</strong> <code>'01/03/2018'</code>.</p>
-  </div>
+            <h3>3. Intuitive API Design</h3>
+            <p>The API is designed to be user-friendly and integrates easily into both simple and complex Python
+                applications. It abstracts the complexities
+                of querying climate data, allowing developers to focus on integrating climate insights directly into
+                their projects.</p>
 
-  <div class="parameter">
-    <strong>LatestDate (str):</strong>
-    <p>The end date for the data request in <code>MM/DD/YYYY</code> format.</p>
-    <p><strong>Example:</strong> <code>'03/16/2018'</code>.</p>
-  </div>
+            <h2>Example Use Cases</h2>
 
-  <div class="parameter">
-    <strong>GeometryCoords (list of lists of float):</strong>
-    <p>A list of coordinates that defines a polygon around the area of interest. Each coordinate pair represents a point (longitude, latitude) in decimal degrees. The polygon is closed by repeating the first point at the end of the list.</p>
-    <p><strong>Example:</strong> <code>[[81.26, 29.20], [81.28, 29.20], [81.28, 29.18], [81.26, 29.18], [81.26, 29.20]]</code>.</p>
-  </div>
+            <h3>1. Agriculture Monitoring</h3>
+            <p>A farming application can use the API to download historical rainfall data for specific regions. By
+                analyzing the data, the application can generate
+                insights for crop health monitoring, irrigation planning, or early drought warnings.</p>
 
-  <div class="parameter">
-    <strong>SeasonalEnsemble (str) (optional, legacy variable that will be removed in the future):</strong>
-    <p>An optional parameter for requesting data from seasonal ensembles. When using the new integer dataset IDs, leave this field as an empty string.</p>
-    <p><strong>Example:</strong> <code>''</code> (empty string).</p>
-  </div>
+            <h3>2. Disaster Risk Management</h3>
+            <p>An emergency response tool can tap into the API to monitor weather patterns and flood risks. By
+                incorporating climate data into a mapping interface,
+                users can visualize areas vulnerable to extreme weather events and plan accordingly.</p>
 
-  <div class="parameter">
-    <strong>SeasonalVariable (str) (optional, legacy variable that will be removed in the future):</strong>
-    <p>An optional parameter for specifying the seasonal variable. Leave empty when using the new integer dataset IDs.</p>
-    <p><strong>Example:</strong> <code>''</code> (empty string).</p>
-  </div>
+            <h3>3. Climate Research</h3>
+            <p>Researchers and students can use the <code>climateserv</code> API to study long-term climate patterns,
+                access historical temperature, precipitation,
+                or vegetation indices, and integrate that data into machine learning models for predictive analysis.</p>
 
-  <div class="parameter">
-    <strong>Outfile (str):</strong>
-    <p>The path and filename where the output data will be saved or memory_object if you want the request to return a memory object that you can work with.</p>
-    <p><strong>If you request a CSV - Example:</strong> <code>'out.csv'</code>.</p>
-      <p><strong>If you request a NetCDF or tif download - Example:</strong> <code>'out.zip'</code>.</p>
-      <p><strong>If you would like a memory object set Outfile = 'memory_object' and assign the request to a variable - Example:</strong>
-          <pre><code>
-Outfile = 'memory_object'
-memory_obj = climateserv.request_data(DatasetType, OperationType,
-     EarliestDate, LatestDate,GeometryCoords,
-     SeasonalEnsemble, SeasonalVariable,Outfile)</code></pre>
+            <h2>How to Use the ClimateSERV API</h2>
+            <p>The ClimateSERV API offers a simple, user-friendly function: request_data. By passing the parameters
+                outlined below, you can easily request and retrieve the specific data you need.</p>
 
 
+            <div class="api-method">
 
+    <pre><code>
+"""
+request_data(DatasetType, OperationType, EarliestDate, LatestDate, GeometryCoords, SeasonalEnsemble, SeasonalVariable, Outfile)
 
-  </div>
+Submit a request for climate data processing.
+
+Parameters:
+    DatasetType (int):
+        The type of dataset to be requested.
+        Example: 28 (represents a specific climate dataset).
+
+    OperationType (str):
+        The operation to be performed on the dataset. Common options include 'Average', 'Sum', etc.
+        Example: 'Average'.
+
+    EarliestDate (str):
+        The start date for the data request in 'MM/DD/YYYY' format.
+        Example: '01/03/2018'.
+
+    LatestDate (str):
+        The end date for the data request in 'MM/DD/YYYY' format.
+        Example: '03/16/2018'.
+
+    GeometryCoords (list of lists of float):
+        A list of coordinates that defines a polygon around the area of interest. Each coordinate pair
+        represents a point (longitude, latitude) in decimal degrees. The polygon is closed by repeating
+        the first point at the end of the list.
+        Example: [[81.26, 29.20], [81.28, 29.20], [81.28, 29.18], [81.26, 29.18], [81.26, 29.20]].
+
+    SeasonalEnsemble (str, optional):
+        An optional parameter for requesting data from seasonal ensembles. When using new integer dataset IDs,
+        leave this field as an empty string.
+        This is a legacy variable that will be removed in the future.
+        Example: '' (empty string).
+
+    SeasonalVariable (str, optional):
+        An optional parameter for specifying the seasonal variable. Leave empty when using the new
+        integer dataset IDs.
+        This is a legacy variable that will be removed in the future.
+        Example: '' (empty string).
+
+    Outfile (str):
+        The path and filename where the output data will be saved or 'memory_object' if you want the
+        request to return a memory object for further processing.
+
+        - For CSV: 'out.csv'
+        - For NetCDF or TIF: 'out.zip'
+
+        If you would like a memory object, set Outfile to 'memory_object' and assign the request to
+        a variable.
+        Example:
+            Outfile = 'memory_object'
+            memory_obj = climateserv.request_data(DatasetType, OperationType,
+                             EarliestDate, LatestDate, GeometryCoords,
+                             SeasonalEnsemble, SeasonalVariable, Outfile)
+"""
+</code></pre>
 </div>
 
-        <p>Here’s a simple example of using the <code>climateserv</code> Python package to query data securely:</p>
 
-        <pre><code>
+            <p>Here’s a simple example of using the <code>climateserv</code> Python package to query data securely:</p>
+
+            <pre><code>
 import climateserv
 
 x = 81.27
@@ -271,22 +288,30 @@ climateserv.request_data(DatasetType, OperationType,
              SeasonalEnsemble, SeasonalVariable,Outfile)
         </code></pre>
 
-        <h2>Why Choose ClimateSERV?</h2>
-        <p>ClimateSERV’s Python API stands out because of:</p>
-        <ul>
-            <li><strong>Flexibility:</strong> Whether you’re building a small script or a large-scale data pipeline, the <code>climateserv</code> package can adapt to your needs with minimal setup.</li>
-            <li><strong>Extensive Data:</strong> Gain access to a wealth of climate and environmental data for regions worldwide, all updated in near real-time.</li>
-            <li><strong>Seamless Integration:</strong> The API’s simplicity means that whether you’re a researcher, developer, or analyst, you can start working with climate data in minutes.</li>
-        </ul>
+            <h2>Why Choose ClimateSERV?</h2>
+            <p>ClimateSERV’s Python API stands out because of:</p>
+            <ul>
+                <li><strong>Flexibility:</strong> Whether you’re building a small script or a large-scale data pipeline,
+                    the <code>climateserv</code> package can adapt to your needs with minimal setup.
+                </li>
+                <li><strong>Extensive Data:</strong> Gain access to a wealth of climate and environmental data for
+                    regions worldwide, all updated in near real-time.
+                </li>
+                <li><strong>Seamless Integration:</strong> The API’s simplicity means that whether you’re a researcher,
+                    developer, or analyst, you can start working with climate data in minutes.
+                </li>
+            </ul>
 
-        <h2>Learn More</h2>
-        <p>For more details and full documentation, visit:</p>
-        <ul>
-            <li><a href="https://pypi.org/project/climateserv/" target="_blank" rel="noopener noreferrer">ClimateSERV on PyPI</a></li>
-            <li><a href="https://anaconda.org/SERVIR/climateserv" target="_blank" rel="noopener noreferrer">ClimateSERV on Anaconda</a></li>
-        </ul>
-    </div>
-</section>
+            <h2>Learn More</h2>
+            <p>For more details and full documentation, visit:</p>
+            <ul>
+                <li><a href="https://pypi.org/project/climateserv/" target="_blank" rel="noopener noreferrer">ClimateSERV
+                    on PyPI</a></li>
+                <li><a href="https://anaconda.org/SERVIR/climateserv" target="_blank" rel="noopener noreferrer">ClimateSERV
+                    on Anaconda</a></li>
+            </ul>
+        </div>
+    </section>
 
 
 {% endblock %}
