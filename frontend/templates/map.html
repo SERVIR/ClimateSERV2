@@ -68,7 +68,6 @@
             })
             .catch((error) => console.error(error))
 
-
         function send_verification(token, version) {
             let formData = new FormData();
             formData.append(
@@ -96,7 +95,6 @@
                         if (response.score < .8) {
                             $("#page-cover").show();
                             $('.toast').toast('hide');
-                            {#$("#verifying_human").hide()#}
                             current_widget = grecaptcha.render('captcha_div', {
                                 'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
                                 'callback': verifyCallback
@@ -104,7 +102,6 @@
                         } else {
                             console.log("Valid v3");
                             $('.toast').toast('hide');
-                            {#$("#verifying_human").hide()#}
                             complete_load();
                         }
                     } else {
@@ -113,7 +110,6 @@
                             $("#page-cover").hide();
                             $("#captcha_div").hide();
                             $('.toast').toast('hide');
-                            {#$("#verifying_human").hide();#}
                             complete_load();
                         } else {
                             $('.toast').toast('show');
@@ -123,7 +119,6 @@
                             console.log("Disable ClimateSERV");
                         }
                     }
-                    console.log(response);
                 },
                 fail: function (response) {
                     console.log("captcha failed")
@@ -193,13 +188,11 @@
         const help_link = "{% url 'ClimateSERV_UI:help' %}";
         const static_url = "{% static '' %}";
         let client_layers = [];
-
         let temp_info = $("<div/>").html("{{ climateModelInfo }}").text();
         let climateModelInfo = JSON.parse(temp_info);
         let unparsed_units;
         let units;
         {% for layer in data_layers %}
-
             {% if layer.isMultiEnsemble %}
                 {% for enslayer in layer.datalayer.all %}
                     unparsed_units = "{{ enslayer.units }}";
@@ -249,11 +242,9 @@
                     point_format: {% if layer.graph_point_Special_Formatting %}
                         {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %},
                     is_ensemble: false,
-
                 })
             {% endif %}
         {% endfor %}
-
     </script>
     {#    rework query order#}
     <div id="root">
@@ -283,7 +274,6 @@
                         </li>
                     </ul>
                 </div>
-
                 <!-- Tab panes -->
                 <div id="sidebar-content" class="sidebar-content">
                     <div class="sidebar-pane" id="chart">
@@ -296,14 +286,14 @@
                             </h1>
                             <h2 class="step-marker">Set Area of Interest</h2>
                             <button
-                                    type="button"
-                                    class="bread-crumb"
-                                    data-toggle="collapse"
-                                    href="#aoiOptions"
-                                    role="button"
-                                    aria-expanded="false"
-                                    aria-controls="aoiOptions"
-                                    onclick="toggleUpDownIcon('aoiOptionToggle')"
+                                type="button"
+                                class="bread-crumb"
+                                data-toggle="collapse"
+                                href="#aoiOptions"
+                                role="button"
+                                aria-expanded="false"
+                                aria-controls="aoiOptions"
+                                onclick="toggleUpDownIcon('aoiOptionToggle')"
                             >
                                 About AOI options <i id="aoiOptionToggle" class="fa fa-angle-down"></i>
                             </button>
@@ -331,24 +321,24 @@
                             </div>
                             <div class="btn-group d-flex">
                                 <button
-                                        id="btnAOIDraw"
-                                        class="tablinks w-100"
-                                        title="Draw AOI on map"
-                                        onclick="selectAOI('draw')">
+                                    id="btnAOIDraw"
+                                    class="tablinks w-100"
+                                    title="Draw AOI on map"
+                                    onclick="selectAOI('draw')">
                                     Draw
                                 </button>
                                 <button
-                                        id="btnAOIupload"
-                                        class="tablinks w-100"
-                                        title="Upload geojson or .shp file containing AOI"
-                                        onclick="selectAOI('upload')">
+                                    id="btnAOIupload"
+                                    class="tablinks w-100"
+                                    title="Upload geojson or .shp file containing AOI"
+                                    onclick="selectAOI('upload')">
                                     Upload
                                 </button>
                                 <button
-                                        id="btnAOIselect"
-                                        class="tablinks w-100"
-                                        title="Select Admin feature from map"
-                                        onclick="selectAOI('select')">
+                                    id="btnAOIselect"
+                                    class="tablinks w-100"
+                                    title="Select Admin feature from map"
+                                    onclick="selectAOI('select')">
                                     Select
                                 </button>
                             </div>
@@ -365,7 +355,6 @@
                                         <label for="point_lat">Point Lat</label>
                                         <input type="text" id="point_lat" placeholder="Point Lat" class="form-control"/>
                                     </div>
-
                                     <div class="form-group panel-buffer">
                                         <label for="point_lon">Point Lon</label>
                                         <input type="text" id="point_lon" placeholder="Point Lon" class="form-control"/>
@@ -376,19 +365,17 @@
                                             180.
                                         </label>
                                     </div>
-
                                     <div class="form-group panel-buffer" style="text-align: right;">
                                         <button
-                                                id="btnSetPoint"
-                                                onclick="setPointAOI(); verify_ready();"
-                                                class="bread-crumb"
+                                            id="btnSetPoint"
+                                            onclick="setPointAOI(); verify_ready();"
+                                            class="bread-crumb"
                                         >
                                             Set Point
                                         </button>
                                     </div>
                                 </div>
                             </div>
-
                             <div class="tab-content selectAOI"
                                  id="uploadAOI"
                                  style="display: none"
@@ -406,7 +393,6 @@
                                     <div class="file-display-container"></div>
                                 </div>
                                 <div class="errors" id="upload_error" style="display:none;">
-
                                 </div>
                                 <div class="modal">
                                     <div class="overlay"></div>
@@ -424,7 +410,6 @@
                                     </div>
                                 </div>
                             </div>
-
                             <div class="selectAOI" id="selectAOI" style="display: none">
                                 <label for="adminLayerOptions" style="font-weight: 900; padding: 20px 0 10px">
                                     Select features by:
@@ -438,14 +423,14 @@
                             </div>
                             <div class="form-group panel-buffer">
                                 <button
-                                        type="button"
-                                        class="bread-crumb"
-                                        data-toggle="collapse"
-                                        href="#selectedGeometry"
-                                        role="button"
-                                        aria-expanded="false"
-                                        aria-controls="selectedGeometry"
-                                        onclick="toggleUpDownIcon('selectedGeometryToggle')"
+                                    type="button"
+                                    class="bread-crumb"
+                                    data-toggle="collapse"
+                                    href="#selectedGeometry"
+                                    role="button"
+                                    aria-expanded="false"
+                                    aria-controls="selectedGeometry"
+                                    onclick="toggleUpDownIcon('selectedGeometryToggle')"
                                 >
                                     Show Current AOI <i id="selectedGeometryToggle" class="fa fa-angle-down"></i>
                                 </button>
@@ -455,31 +440,29 @@
                                     {"type":"FeatureCollection","features":[]}
                                 </span>
                                     <div
-                                            class="form-group panel-buffer"
-                                            id="download_aoi_holder"
-                                            style="display: none; text-align:right;">
+                                        class="form-group panel-buffer"
+                                        id="download_aoi_holder"
+                                        style="display: none; text-align:right;">
                                         <button
-                                                id="btn_download_aoi"
-                                                onclick="download_aoi()"
-                                                title="Download AOI as geojson"
-                                                class="bread-crumb"
+                                            id="btn_download_aoi"
+                                            onclick="download_aoi()"
+                                            title="Download AOI as geojson"
+                                            class="bread-crumb"
                                         >
                                             Download AOI
                                         </button>
-
                                     </div>
                                 </div>
                             </div>
-
                             <form id="query-form" onsubmit="return false;">
                                 <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
                                     <label for="requestTypeSelect">Type of Request</label>
                                     <i
-                                            onclick="stats_info('type')"
-                                            class="fas fa-question-circle"
-                                            aria-hidden="true"
-                                            style="float: right;"></i>
+                                        onclick="stats_info('type')"
+                                        class="fas fa-question-circle"
+                                        aria-hidden="true"
+                                        style="float: right;"></i>
                                     <select name="requestTypeSelect" class="form-control" id="requestTypeSelect"
                                             onchange="openDataTypePanel(this)" onfocus="check_query_status(this)">
                                         <option value="datasets">Time-series Analysis</option>
@@ -491,29 +474,27 @@
                                     <div class="form-group panel-buffer">
                                         <label for="dataset-type-menu">Dataset Type</label>
                                         <i
-                                                onclick="stats_info('dataset-type')"
-                                                class="fas fa-question-circle"
-                                                aria-hidden="true"
-                                                style="float: right;"></i>
+                                            onclick="stats_info('dataset-type')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
                                         <select name="dataset-type-menu" class="form-control" id="dataset-type-menu"
                                                 onchange="filter_datasets_by(); verify_ready();">
                                             <option value="observation">Observation</option>
                                             <option value="model-forecast">Model Forecast</option>
-
                                         </select>
                                     </div>
                                     <div class="form-group panel-buffer">
                                         <label for="sourcemenu">Data Source</label>
                                         <i
-                                                onclick="stats_info('source')"
-                                                class="fas fa-question-circle"
-                                                aria-hidden="true"
-                                                style="float: right;"></i>
+                                            onclick="stats_info('source')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
                                         <select name="sourcemenu" class="form-control" id="sourcemenu"
                                                 onchange="handleSourceSelected(this.value); verify_ready();">
                                             {% for layer in data_layers %}
                                                 {% if layer.isMultiEnsemble %}
-
                                                     <option
                                                             class="{% if "Observation" in layer.dataset_type|stringformat:'s' %}layer-on{% else %}layer-off{% endif %}"
                                                             value="{{ layer.ui_id }}">{{ layer.title }}</option>
@@ -549,7 +530,6 @@
                                         </div>
                                         <h2 class="text-center">Select Forecast Range</h2>
                                         <div class="form-group panel-buffer">
-
                                             <label for="forecastfrommenu">From date</label>
                                             <select name="forecastfrommenu"
                                                     id="forecastfrommenu"
@@ -559,7 +539,6 @@
                                             </select>
                                         </div>
                                         <div class="form-group panel-buffer">
-
                                             <label for="forecasttomenu">To date</label>
                                             <select name="forecasttomenu"
                                                     id="forecasttomenu"
@@ -568,20 +547,19 @@
                                             >
                                             </select>
                                         </div>
-
                                     </div>
                                     <div class="form-group panel-buffer" id="panel_timeseries">
                                         <label for="operationmenu">Calculation</label>
                                         <i
-                                                onclick="stats_info('calculation')"
-                                                class="fas fa-question-circle"
-                                                aria-hidden="true"
-                                                style="float: right;"></i>
+                                            onclick="stats_info('calculation')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
                                         <select
-                                                name="operationmenu"
-                                                id="operationmenu"
-                                                onchange="verify_ready()"
-                                                class="form-control">
+                                            name="operationmenu"
+                                            id="operationmenu"
+                                            onchange="verify_ready()"
+                                            class="form-control">
                                             <option value="5" id="operation_average">Average</option>
                                             <option value="1" id="operation_min">Minimum</option>
                                             <option value="0" id="operation_max">Maximum</option>
@@ -590,15 +568,15 @@
                                     <div class="form-group panel-buffer" id="panel_download" style="display: none;">
                                         <label for="format-menu">Download Format</label>
                                         <i
-                                                onclick="stats_info('format')"
-                                                class="fas fa-question-circle"
-                                                aria-hidden="true"
-                                                style="float: right;"></i>
+                                            onclick="stats_info('format')"
+                                            class="fas fa-question-circle"
+                                            aria-hidden="true"
+                                            style="float: right;"></i>
                                         <select
-                                                name="format-menu"
-                                                id="format-menu"
-                                                onchange="verify_ready()"
-                                                class="form-control">
+                                            name="format-menu"
+                                            id="format-menu"
+                                            onchange="verify_ready()"
+                                            class="form-control">
                                             <option value="7" id="netcdf">NetCDF</option>
                                             <option value="6" id="tif">TIF</option>
                                             <option value="8" id="csv">Timeseries</option>
@@ -634,7 +612,6 @@
                                         <p style="text-align: justify; font-weight: 500; margin-top: 20px;">
                                             Monthly Rainfall Analysis is derived from a combination of CHIRPS historical
                                             data and current NMME Seasonal Forecast data.
-
                                         </p>
                                     </div>
                                 </div>
@@ -659,7 +636,6 @@
                                         id="lblCartCount"> 0 </span>
                                 </div>
                                 <div class="just-buttons">
-
                                     <button
                                             id="btnAddToQuery"
                                             disabled
@@ -674,7 +650,6 @@
                                             onclick="sendRequest()">
                                         Submit <span id="query_button_number">(0) Queries</span>
                                     </button>
-
                                 </div>
                                 <div class="just-buttons">
                                     <button
@@ -694,7 +669,6 @@
                                         View API Call
                                     </button>
                                 </div>
-
                                 <div class="form-group panel-buffer collapse" id="api_panel">
                                     <label for="api_query">API Query</label>
                                     <span
@@ -702,18 +676,15 @@
                                             style="word-wrap: break-word; height: fit-content;"
                                             id="api_query"
                                     >
-                                            </span>
+                                    </span>
                                 </div>
                             </form>
                         </div>
                         <div id="query_list_checkout" style="display:none;">
-
                             <h1 style="text-align: center;">You currently have <span
                                     id="checkout_number">0 Queries</span></h1>
                             <div id="checkout_list">
-
                             </div>
-
                             <div class="just-buttons">
                                 <button id="btnMultiQuerySubmit" class="button-50" disabled onclick="sendRequest()">
                                     Submit Query
@@ -732,7 +703,6 @@
                             </span>
                         </h1>
                         <div id="step1">
-
                             <form id="query-form2" onsubmit="return false;">
                                 <h2 class="step-marker">Select Data</h2>
                                 <div class="form-group panel-buffer">
@@ -748,11 +718,7 @@
                                         <option value="monthly_analysis">Monthly Rainfall Analysis</option>
                                     </select>
                                 </div>
-
-
                             </form>
-
-
                         </div>
                     </div>
                     <div class="sidebar-pane" id="layers">
@@ -850,7 +816,6 @@
                                                                         </i>
                                                                     </div>
                                                                 {% endif %}
-
                                                             </div>
                                                             <div class="rst__rowToolbar"></div>
                                                         </div>
@@ -863,8 +828,6 @@
                             {% endfor %}
                         </ol>
                     </div>
-
-
                     <div class="sidebar-pane" id="basemap">
                         <h1 class="sidebar-header" style="margin-bottom: 8px;">
                             Basemaps
@@ -875,7 +838,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="toast human_container" data-autohide="false" id="verifying_human">
                 <div class="toast-header">
                     <span class="mr-auto  bread-crumb bold">Welcome to ClimateSERV</span>
@@ -891,7 +853,6 @@
             </div>
             <div id="servirmap" class="sidebar-map"></div>
         </div>
-
         <div id="dialog" style="display: none" class="ui-widget-content dialog-max-height">
             <p>
                 This is the default dialog which is useful for displaying information.
@@ -905,7 +866,6 @@
             integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
             crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.3.3/proj4.js"></script>
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script src="{% static 'frontend/js/xml2json.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
@@ -956,13 +916,11 @@
     <script src="{% static 'frontend/js/map.js' %}?v=1.17"></script>
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.5/xlsx.full.min.js"></script>
-
     <script>
         $(document).ready(function () {
             setActive("mnmap");
         });
     </script>
-
     <script id="style_template" style="display: none" type="text/template">
         <div style="padding-bottom:15px;">
             <br>
@@ -1034,7 +992,6 @@
             </div>
             <h2 class="text-center">Select Forecast Range</h2>
             <div class="form-group panel-buffer">
-
                 <label for="forecastfrommenu_edit">From date</label>
                 <select name="forecastfrommenu_edit"
                         id="forecastfrommenu_edit"
@@ -1044,7 +1001,6 @@
                 </select>
             </div>
             <div class="form-group panel-buffer">
-
                 <label for="forecasttomenu_edit">To date</label>
                 <select name="forecasttomenu_edit"
                         id="forecasttomenu_edit"
@@ -1055,5 +1011,4 @@
             </div>
         </div>
     </script>
-
 {% endblock %}

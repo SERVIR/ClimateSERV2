@@ -7,6 +7,9 @@
             name="viewport"
             content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no"
     />
+    <meta name="msapplication-TileColor" content="#da532c">
+    <meta name="msapplication-config" content="/static/frontend/img/browserconfig.xml">
+    <meta name="theme-color" content="#ffffff">
     <title>{% block title %}ClimateSERV{% endblock %}</title>
     <link href='https://fonts.googleapis.com/css?family=Work Sans' rel='stylesheet' type='text/css'>
     <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
@@ -16,9 +19,6 @@
     <link rel="icon" type="image/png" sizes="16x16" href="{% static 'frontend/img/favicon-16x16.png' %}">
     <link rel="manifest" href="{% static 'frontend/img/site.webmanifest' %}">
     <link rel="mask-icon" href="{% static 'frontend/img/safari-pinned-tab.svg' %}" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="msapplication-config" content="/static/frontend/img/browserconfig.xml">
-    <meta name="theme-color" content="#ffffff">
     <link
             rel="stylesheet"
             href="//cdnjs.cloudflare.com/ajax/libs/normalize/8.0.1/normalize.min.css"
@@ -43,19 +43,16 @@
     ></script>
     <script src="{% static 'frontend/js/navloader.js' %}"></script>
     {% block script %}{% endblock %}
-
     <script>
-
         $(document).ready(function () {
             setActive("{{ page }}");
-                    // JavaScript to dismiss the container
+            // JavaScript to dismiss the container
             {% if banner_text %}
-            document.getElementById('dismiss-btn').addEventListener('click', function() {
-                document.getElementById('floating-container').style.display = 'none';
-            });
+                document.getElementById('dismiss-btn').addEventListener('click', function () {
+                    document.getElementById('floating-container').style.display = 'none';
+                });
             {% endif %}
         });
-
     </script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-27020636-4"></script>
@@ -67,13 +64,11 @@
         }
 
         gtag('js', new Date());
-
         gtag('config', 'UA-27020636-4');
     </script>
-
 </head>
 <body>
-{% block feedback_fromat %}
+{% block feedback_format %}
 {% endblock %}
 <header>
     <nav id="nav" class="navbar navbar-expand-lg navbar-dark">
@@ -106,32 +101,30 @@
             </ul>
             <div class="navbar-nav">
                 {% if request.user.is_staff %}
-                <a class="nav-link" id="menu-help" href="{% url 'admin:index' %}">Admin</a>
+                    <a class="nav-link" id="menu-help" href="{% url 'admin:index' %}">Admin</a>
                 {% endif %}
-            <a class="nav-link" id="menu-feedback" href="{% url 'ClimateSERV_UI:feedback' %}">FEEDBACK</a>
+                <a class="nav-link" id="menu-feedback" href="{% url 'ClimateSERV_UI:feedback' %}">FEEDBACK</a>
                 <a class="nav-link" id="menu-help" href="{% url 'ClimateSERV_UI:help' %}">HELP CENTER</a>
             </div>
         </div>
     </nav>
 </header>
 {% if banner_text %}
-<!-- Floating container -->
-<div id="floating-container" class="floating-container">
-    <div class="container-content">
-        <p>{{ banner_text }}</p>
-        <button id="dismiss-btn" class="dismiss-btn">Dismiss</button>
+    <!-- Floating container -->
+    <div id="floating-container" class="floating-container">
+        <div class="container-content">
+            <p>{{ banner_text }}</p>
+            <button id="dismiss-btn" class="dismiss-btn">Dismiss</button>
+        </div>
     </div>
-</div>
 {% endif %}
 {% block content %}{% endblock %}
 <div class="d-flex flex-column">
     <footer id="footer">
         <div class="climate-copy">
             <a href="https://climateserv.servirglobal.net">ClimateSERV</a>
-            {#            <span>© SERVIR Global</span>#}
         </div>
         <div class="ml-auto climate-power">
-            {#            <span>Powered by </span>#}
             <a href="https://servirglobal.net">
                 <img
                         src="{% static 'frontend/img/servir_global_full_logo_white.png' %}"
@@ -140,7 +133,6 @@
                 />
             </a>
         </div>
-
     </footer>
 </div>
 {% block item-template %}{% endblock %}

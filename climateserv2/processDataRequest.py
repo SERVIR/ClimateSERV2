@@ -293,7 +293,6 @@ def start_processing(statistical_query):
         time.sleep(.5)
         set_progress_to_100(uniqueid)
         logger.debug("uniqueid: " + uniqueid)
-        # if this
 
         track_usage =  Track_Usage.objects.get(
             unique_id=uniqueid
@@ -318,7 +317,7 @@ def start_processing(statistical_query):
                 print("Error: %s : %s" % (params.zipFile_ScratchWorkspace_Path + uniqueid, e.strerror))
 
         jobs.clear()
-        # sys.exit(0)
+
     except Exception as e:
         logger.error("NEW ERROR ISSUE: " + str(e))
         try:
@@ -326,11 +325,8 @@ def start_processing(statistical_query):
             try:
                 track_usage = Track_Usage.objects.get(unique_id=uniqueid)
                 track_usage.save()
-            #
             except Track_Usage.DoesNotExist:
                 pass
-
-
 
             if str(operationtype) in "6_7_8":
                 zip_file_path = params.zipFile_ScratchWorkspace_Path + uniqueid + '.zip'
@@ -346,8 +342,7 @@ def start_processing(statistical_query):
                         print(e)
             try:
                 with transaction.atomic():
-                    request_progress, created = Request_Progress.objects.get(request_id=uniqueid)
-                    logger.debug("created: " + str(created))
+                    request_progress = Request_Progress.objects.get(request_id=uniqueid)
                     request_progress.progress = 100
                     request_progress.save()
             except IntegrityError as e:

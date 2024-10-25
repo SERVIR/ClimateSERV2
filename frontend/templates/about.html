@@ -6,8 +6,6 @@
 {% endblock %}
 
 {% block content %}
-
-
     <div style="background-color: #f6f6f6; border-bottom: solid 2px #939b7a17;" class="p50">
         <div class="row mx-auto my-auto">
             <div class="col-12 tab-holder">
@@ -20,28 +18,25 @@
                     vegetation condition data, and 180-day forecasts of rainfall and
                     temperature to improve understanding of, and make improved decisions for,
                     issues related to agriculture and water availability.
-
                 </p>
             </div>
         </div>
     </div>
     <div class="p50">
         <div class="row" style="display: flex; -ms-flex-wrap: wrap; flex-wrap: wrap;">
-
             <div class="col-md-4 ">
-                <img src="{% static 'frontend/img/home_screen.jpg' %}" class="help-image"/>
+                <img src="{% static 'frontend/img/home_screen.jpg' %}" class="help-image" alt="ClimateSERV home page"/>
             </div>
             <div class="col-md-8 order-me">
                 <p style="padding: 0 50px 50px 50px;">
-                    In SERVIR regions, where long-term ground observations of rainfall are sparse, there is a critical
-                    need for satellite and model-derived rainfall data for predicting droughts, estimating crop yields,
-                    and more. Decision-makers need a way to accurately assess how severe a drought will be, how it
-                    compares to past droughts, and its potential effect on crop yields. Such assessments require
-                    accurate estimations of rainfall variations in space and time. It is important to place an evolving
-                    dryer-than-normal season into historical context in order to analyze the severity of rainfall
-                    deficits. Until now, such analyses used rainfall data from specific points on the Earth's surface.
-                    However, that data fails to show the region-wide variability that reveals comprehensive rainfall
-                    patterns.
+                    In SERVIR regions, where long-term ground-based rainfall observations are limited, the need for
+                    satellite and model-derived rainfall data is critical for predicting droughts, estimating crop
+                    yields, and more. Decision-makers require precise tools to assess drought severity, compare it
+                    to past events, and gauge its potential impact on agriculture. These assessments hinge on accurate
+                    measurements of rainfall variations over both space and time. To properly evaluate how an
+                    unusually dry season fits into historical patterns, it is essential to analyze rainfall deficits
+                    in context. Previously, rainfall data was often limited to specific points on the Earth's surface,
+                    which failed to capture the full regional variability needed to understand overall rainfall trends.
                 </p>
             </div>
         </div>
@@ -49,108 +44,98 @@
             <div class="col-md-8 ">
                 <h1 class="section-heading">Application Purpose</h1>
                 <p class="p50b0">
-                    SERVIR has created a user-friendly, web-based tool -- ClimateSERV -- that provides three important
-                    datasets together in one system to help decision-makers in SERVIR's data-sparse regions assess the
-                    evolving situation via holistic analysis of water and agriculture. Using ClimateSERV, development
-                    practitioners, scientists/researchers, and government decision-makers can readily analyze historical
-                    rainfall for the past 30 years and compare it with the best available forecasts for the next 180
-                    days for their defined area of interest to improve the understanding of, and make improved decisions
-                    for, issues related to agriculture and water availability. The three key datasets that ClimateSERV
-                    provides to make this possible are as follows:
+                    SERVIR has developed a user-friendly, web-based tool called ClimateSERV, designed to bring together
+                    several key datasets in one platform, enabling decision-makers in data-scarce regions to perform
+                    comprehensive analyses of climate, water, and agriculture trends. With ClimateSERV, development
+                    practitioners, scientists, and government officials can easily examine 30 years of historical
+                    rainfall data and compare it to the best available forecasts for the next 180 days within their
+                    area of interest. This holistic approach improves their understanding of critical issues related
+                    to agriculture and water availability, allowing for more informed decision-making. The tool's
+                    three essential datasets are:
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_data.jpg' %}" class="help-image" style="margin-top: 50px;"/>
-
+                <img src="{% static 'frontend/img/display_data.jpg' %}" alt="Image of ClimateSERV, showing data displayed on the map as well as a query result displayed on a graph" class="help-image" style="margin-top: 50px;"/>
             </div>
-
         </div>
         <div class="row">
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_chirps.jpg' %}" class="help-image"
+                <img src="{% static 'frontend/img/display_chirps.jpg' %}" alt="Image of rain falling depicting an example of rainfall data provided by CHIRPS" class="help-image"
                      style="margin-top: 50px;"/>
-
             </div>
             <div class="col-md-8 order-me">
                 <h1 class="section-heading">(1) Climate Hazards group IR Precipitation with Stations (CHIRPS)</h1>
                 <p class="p50b0">
-                    Scientists at Famine and Early Warning System (FEWS NET) who are members of the SERVIR Applied
-                    Sciences Team used 30 years' (1982- present) worth of multiple satellite data sources and ground
-                    observations to produce an unprecedented, global, spatially and temporally consistent and continuous
-                    30-year record of satellite-derived rainfall data. This CHIRPS global dataset makes it possible to
-                    accurately assess and monitor large-scale rainfall patterns and analyze how they may be affected by
-                    climate change. The data are updated to the latest available rainfall estimates.
-
+                    Scientists from the Famine Early Warning Systems Network (FEWS NET), as part of the SERVIR Applied
+                    Sciences Team, have compiled an unparalleled 30-year (1982-present) global record of
+                    satellite-derived rainfall data by integrating multiple satellite sources and ground observations.
+                    This dataset, known as CHIRPS, offers a spatially and temporally consistent view of global
+                    rainfall patterns, enabling accurate monitoring and assessment of large-scale trends. With CHIRPS,
+                    researchers can analyze how rainfall patterns may be impacted by climate change. The data is
+                    regularly updated with the latest available rainfall estimates, ensuring up-to-date insights.
                 </p>
             </div>
-
-
         </div>
         <div class="row">
             <div class="col-md-8 ">
                 <h1 class="section-heading">(2) North American Multi-Model Ensemble (NMME) dataset</h1>
                 <p class="p50b0">
-                    Forecasts of future precipitation are also critical to decision-makers. The NMME dataset, a
-                    compliation by National Oceanic and Atmospheric Administration (NOAA), reflects cutting edge work on
-                    seasonal forecasting. A SERVIR AST project has taken the NMME data and performed bias correction and
-                    spatial disaggregation using standard, well-accepted techniques to generate daily, 180-day
-                    temperature and precipitation forecasts for the entire globe. These seasonal forecasts, along with
-                    the CHIRPS historical rainfall data, provide an overall perspective to connect rainfall patterns
-                    from the past to future rainfall (up to 180 days out) as projected by NMME.
+                    Accurate precipitation forecasts are crucial for decision-makers. The NMME dataset, compiled by the
+                    National Oceanic and Atmospheric Administration (NOAA), represents state-of-the-art work in
+                    seasonal forecasting. A SERVIR AST project has enhanced the NMME data by applying bias correction
+                    and spatial disaggregation using widely accepted techniques. This process generates daily
+                    temperature and precipitation forecasts for up to 180 days, covering the entire globe. When
+                    combined with CHIRPS historical rainfall data, these seasonal forecasts offer a comprehensive view,
+                    linking past rainfall patterns to future projections, providing a valuable tool for anticipating
+                    weather trends and planning accordingly.
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_nmme.jpg' %}" class="help-image" style="margin-top: 50px;"/>
-
+                <img src="{% static 'frontend/img/display_nmme.jpg' %}" alt="Image of NMME data displayed on a map" class="help-image" style="margin-top: 50px;"/>
             </div>
-
         </div>
         <div class="row">
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_ndvi.jpg' %}" class="help-image" style="margin-top: 50px;"/>
-
+                <img src="{% static 'frontend/img/display_ndvi.jpg' %}" alt="Image os a lush area depicting great vegetation index" class="help-image" style="margin-top: 50px;"/>
             </div>
             <div class="col-md-8 order-me">
                 <h1 class="section-heading">(3) MODIS-derived Normalized Difference Vegetation Index (eMODIS NDVI)</h1>
                 <p class="p50b0">
-                    SERVIR is also piloting the USGS pentadal eMODIS NDVI dataset at 250m spatial resolution over West
-                    Africa. NDVI, a measure of vegetation condition, provides a proxy for agricultural productivity by
-                    showing photosynthetic activity. By providing this 15 year dataset, SERVIR is enabling Ministries of
-                    Agriculure and the international donor community to explore how CHIRPS and NMME data link to
-                    vegetation growth and health. (The NDVI dataset is being expanded to other parts of Africa and
-                    beyond.) ClimateSERV enables decision-makers to link historical precipitation trends (CHIRPS) to
-                    past vegetation trends (NDVI) to gain insight into potential vegetation growth and health based on
-                    seasonal (up to 180 days) precipitation and temperature forecasts (NMME).
+                    SERVIR is also piloting the USGS pentadal eMODIS NDVI dataset, which provides 250m spatial
+                    resolution data over West Africa. NDVI, an indicator of vegetation health, serves as a proxy
+                    for agricultural productivity by measuring photosynthetic activity. By offering a 15-year NDVI
+                    dataset, SERVIR empowers Ministries of Agriculture and international donors to explore how CHIRPS
+                    rainfall data and NMME forecasts relate to vegetation growth and health. This dataset is also
+                    being expanded to other regions of Africa and beyond. Through ClimateSERV, decision-makers can
+                    link historical precipitation trends (CHIRPS) with past vegetation conditions (NDVI) to predict
+                    potential vegetation growth and health using seasonal precipitation and temperature forecasts (NMME)
+                    for up to 180 days.
                 </p>
             </div>
-
-
         </div>
         <div class="row">
             <div class="col-md-8 ">
                 <h1 class="section-heading">Application Uses</h1>
                 <p class="p50b0">
-                    With this tool, decision-makers can download, view, graph, and interpret the CHIRPS, eMODIS NDVI,
-                    and NMME seasonal forecast data in a web-based user interface. ClimateSERV can help decision-makers
-                    assess and monitor large-scale rainfall patterns, analyze how those patterns may be affected by
-                    climate change, determine likelihood of drought, and infer crop condition. Kenya Meteorological
-                    Service field offices are already using the data to provide climate resilience guidance to farmers.
-                    For example, KMS's Kericho office is using the CHIRPS dataset to downscale seasonal climate outlooks
-                    for farmers' use in planning crop cultivars and planting times. SERVIR hubs plan to train end-users
-                    in their regions to use and analyze the CHIRPS, NMME, and NDVI data through ClimateSERV. Use of
-                    seasonal forecasts by end-users has been increasing. ClimateSERV will assist in the conversion of
-                    these large datasets into actionable information. For more information check out the
-                    <a href="https://climateserv2.servirglobal.net/help" alt="Help Center" title="Help Center">
-                        Help Center</a>
-                    and <a href="https://servirglobal.net/Multimedia/use-cases" alt="Use cases" title="Use Cases">
-                    use cases</a>.
+                    With ClimateSERV, decision-makers can easily download, view, graph, and interpret CHIRPS,
+                    eMODIS NDVI, and NMME seasonal forecast data through a web-based interface. This tool helps users
+                    assess large-scale rainfall patterns, analyze the potential impacts of climate change, evaluate
+                    drought likelihood, and infer crop conditions. For instance, Kenya Meteorological Service (KMS)
+                    field offices are already using CHIRPS data to guide farmers on climate resilience strategies.
+                    The KMS Kericho office leverages CHIRPS to downscale seasonal climate outlooks, aiding farmers
+                    in choosing crop varieties and determining planting times. SERVIR hubs plan to train end-users
+                    across their regions to utilize and analyze CHIRPS, NMME, and NDVI data via ClimateSERV. As the
+                    use of seasonal forecasts continues to rise, ClimateSERV helps convert complex datasets into
+                    actionable insights. For more information, visit the
+                    <a href="{% url 'ClimateSERV_UI:help' %}" title="Help Center">Help Center</a> or explore
+                    <a href="https://servirglobal.net/Multimedia/use-cases" title="Use Cases">use cases</a>.
                 </p>
             </div>
             <div class="col-md-4">
-                <img src="{% static 'frontend/img/display_graph.jpg' %}" class="help-image" style="margin-top: 50px;"/>
-
+                <img src="{% static 'frontend/img/display_graph.jpg' %}"
+                     alt="ClimateSERV example displaying a graph"
+                     class="help-image" style="margin-top: 50px;"/>
             </div>
-
         </div>
         <div class="row">
             <div class="col-12">
@@ -164,24 +149,24 @@
                     <a href="https://servirglobal.net" title="SERVIR Global">
                     https://servirglobal.net</a><br/><br/>
                 <a
-                        href="//usaid.gov/"
-                        target="_blank"
-                        title="USAID_seal_fullname_surrounding_USAID_shield_with_handclasp_USAID_blue_red_on_right_with_FromTheAmericanPeople_tagline">
+                    href="//usaid.gov/"
+                    target="_blank"
+                    title="USAID_seal_fullname_surrounding_USAID_shield_with_handclasp_USAID_blue_red_on_right_with_FromTheAmericanPeople_tagline">
                     <img src="{% static 'frontend/img/usaid.png' %}"
                          alt="USAID_seal_fullname_surrounding_USAID_shield_with_handclasp_USAID_blue_red_on_right_with_FromTheAmericanPeople_tagline"></a>
 
-                    <a
-                            href="//nasa.gov/"
-                            target="_blank"
-                            title="NASA_blue_circle_with_stars_red_vector_upward_right_white_NASA_with_orbitcircle">
-                        <img src="{% static 'frontend/img/nasa.png' %}"
-                             alt="NASA_blue_circle_with_stars_red_vector_upward_right_white_NASA_with_orbitcircle"></a>
-                    <a
-                            href="//servirglobal.net/"
-                            target="_blank"
-                            title="SERVIR Global">
-                        <img src="{% static 'frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png' %}"
-                             alt="SERVIR Global"></a>
+                <a
+                    href="//nasa.gov/"
+                    target="_blank"
+                    title="NASA_blue_circle_with_stars_red_vector_upward_right_white_NASA_with_orbitcircle">
+                    <img src="{% static 'frontend/img/nasa.png' %}"
+                         alt="NASA_blue_circle_with_stars_red_vector_upward_right_white_NASA_with_orbitcircle"></a>
+                <a
+                    href="//servirglobal.net/"
+                    target="_blank"
+                    title="SERVIR Global">
+                    <img src="{% static 'frontend/img/Servir_Logo_Flat_Color_Stacked_Small.png' %}"
+                         alt="SERVIR Global"></a>
                 </p>
             </div>
         </div>
@@ -196,5 +181,4 @@
             </div>
         </div>
     </div>
-
 {% endblock %}
