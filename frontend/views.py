@@ -22,7 +22,7 @@ import logging
 register = template.Library()
 
 logger = logging.getLogger("request_processor")
-banner_text = "We are conducting system maintenance which will make queries unavailable for a short period of time."
+banner_text = None
 
 @cache_page(60 * 15)
 def index(request):
