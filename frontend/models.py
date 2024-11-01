@@ -23,7 +23,6 @@ class DataSet(models.Model):
     button_variable = models.CharField(max_length=200, help_text='Enter variable to pass to map application which '
                                                                  'will enable the selected data type on the map')
     button_text = models.CharField(max_length=200, help_text='Enter text of button to access data on map')
-    # button_color = models.CharField(max_length=200, help_text='Valid hex, RGB, or RGBA color')
     metadata_id = models.CharField(max_length=200, help_text='Enter metadata id from GeoNetwork')
     featured = models.BooleanField(default=False)
 
@@ -81,9 +80,6 @@ class EnsembleLayer(models.Model):
                                                                      'display')
     ui_id = models.CharField(max_length=200, help_text='Please use lowercase master title + ens + number. IE: nmmeens1')
     master_layer = models.ForeignKey(DataLayer, on_delete=models.CASCADE, related_name="datalayer")
-    # remove etl_dataset_id
-    # add something to tie the id and variable information,
-    # models.JSONField?
     fast_directory_path = models.TextField('Fast directory Path', default='/mnt/climateserv/process_tmp/fast_chirps/', )
     dataset_name_format = models.CharField(blank=True, help_text="Dataset file name", max_length=255)
     ensemble_ids_and_variables_help = """This json object must contain the key named data which must be 

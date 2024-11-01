@@ -7,9 +7,7 @@ from .models import *
 # Register your models here.
 @admin.register(EnsembleLayer)
 class EnsembleLayerAdmin(admin.ModelAdmin):
-    formfield_overrides = {
-        models.JSONField: {'widget': JSONEditorWidget}
-    }
+    formfield_overrides = {models.JSONField: {'widget': JSONEditorWidget}}
     list_display = ('title', 'url')
 
 

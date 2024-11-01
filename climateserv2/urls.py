@@ -3,7 +3,6 @@ from django.conf.urls import url
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include
-
 from climateserv2.views import *
 
 urlpatterns = [
@@ -28,7 +27,6 @@ urlpatterns = [
     url('api/getClimateScenarioInfo/', get_climate_scenario_info),
     url('api/getFileForJobID/', get_file_for_job_id),
     url(r'api/submitMonthlyRainfallAnalysisRequest/', submit_monthly_rainfall_analysis_request),
-    url(r'api/restartClimateSERV/', restart_climateserv),
     url(r'api/run_etl/', run_etl),
     url(r'api/track_wms/', track_wms),
     url(r'api/get_aoi_area', get_area_from_admin_selection, name='get_aoi_area'),

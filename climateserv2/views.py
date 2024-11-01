@@ -129,6 +129,18 @@ def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_
 def get_parameter_types(request):
     print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
+    try:
+        track_usage, created = Track_Usage.objects.get_or_create(
+            unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))),
+            originating_IP=get_client_ip(request),
+            country_ISO=get_country_code(request),
+            time_requested=timezone.now(), request_type=request.method, status="Submitted",
+            progress=100, API_call="getParameterTypes", data_retrieved=False
+            )
+
+        track_usage.save()
+    except:
+        logger.info("Recording Getting Parameter Types API call usage failed")
     return process_callback(request, json.dumps(params.parameters), "application/javascript")
 
 
@@ -143,14 +155,17 @@ def get_country_code(r):
 @csrf_exempt
 def get_feature_layers(request):
     logger.info("Getting Feature Layers")
-    track_usage, created = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))),
-                              originating_IP=get_client_ip(request),
-                              country_ISO=get_country_code(request),
-                              time_requested=timezone.now(), request_type=request.method, status="Submitted",
-                              progress=100, API_call="getFeatureLayers", data_retrieved=False
-                              )
+    try:
+        track_usage, created = Track_Usage.objects.get_or_create(unique_id=request.POST.get("id", request.GET.get("id", str(uuid.uuid4()))),
+                                  originating_IP=get_client_ip(request),
+                                  country_ISO=get_country_code(request),
+                                  time_requested=timezone.now(), request_type=request.method, status="Submitted",
+                                  progress=100, API_call="getFeatureLayers", data_retrieved=False
+                                  )
 
-    track_usage.save()
+        track_usage.save()
+    except:
+        logger.error("Recording Get Feature Layer API call failed")
     output = []
     # Replace single quotes with double quotes
     shapefile_data_str = params.shapefileName.replace("'", '"')
@@ -939,9 +954,3 @@ def get_feature_ids_list(request):
             feature_ids_list.append(value)
     return feature_ids_list
 
-
-def restart_climateserv(request):
-    try:
-        subprocess.call(['/bin/bash', '-i', '-c', "crestart"])
-    except Exception as e:
-        print(e)
