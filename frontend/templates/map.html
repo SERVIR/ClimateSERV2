@@ -43,9 +43,19 @@
             $('.toast').toast('show');
         });
         let current_widget;
-        const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load()).catch((error) => console.error(error));
+        const botdPromise = import('https://openfpcdn.io/botd/v1').then((Botd) => Botd.load()).catch((error) => {
+            $("#page-cover").show();
+                    $('.toast').toast('hide');
+                    {#$("#verifying_human").hide()#}
+                    grecaptcha.ready(function () {
+                        grecaptcha.render('captcha_div', {
+                            'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
+                            'callback': verifyCallback
+                        });
+                    });
+        });
 
-        if(botdPromise){
+
         // Get detection results when you need them.
         botdPromise
             .then((botd) => botd.detect())
@@ -69,17 +79,6 @@
                 }
             })
             .catch((error) => console.error(error));
-        }else{
-            $("#page-cover").show();
-                    $('.toast').toast('hide');
-                    {#$("#verifying_human").hide()#}
-                    grecaptcha.ready(function () {
-                        grecaptcha.render('captcha_div', {
-                            'sitekey': '6LdZ8kgkAAAAAB_PmuD0ZD7rVMDEom0gvP3LBrk0',
-                            'callback': verifyCallback
-                        });
-                    });
-        }
 
         function send_verification(token, version) {
             let formData = new FormData();
