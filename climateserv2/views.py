@@ -713,7 +713,7 @@ def submit_data_request(request):
             try:
                 if DataLayer.objects.filter(api_id=int(datatype)).exists():
                     working_datalayer = DataLayer.objects.get(api_id=int(datatype))
-                    working_dataset = working_datalayer.etl_dataset_id
+                    working_dataset = working_datalayer # working_datalayer.etl_dataset_id
                 elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
                     working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype)).first()
                 else:
@@ -732,7 +732,7 @@ def submit_data_request(request):
                             break
                     dataset_name_format = working_dataset.title + " - " + current_variable
                 else:
-                    dataset_name_format = working_dataset["dataset_name_format"]
+                    dataset_name_format = working_dataset.title
             except Exception as e:
                 logger.error("Error getting dataset name from - " + str(e))
                 try:
@@ -765,7 +765,7 @@ def submit_data_request(request):
         try:
             if DataLayer.objects.filter(api_id=int(datatype)).exists():
                 working_datalayer = DataLayer.objects.get(api_id=int(datatype))
-                working_dataset = working_datalayer.etl_dataset_id
+                working_dataset = working_datalayer # working_datalayer.etl_dataset_id
             elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
                 working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype))
             else:
@@ -784,7 +784,7 @@ def submit_data_request(request):
                     break
             dataset_name_format = working_dataset.title + " - " + current_variable
         else:
-            dataset_name_format = working_dataset["dataset_name_format"]
+            dataset_name_format = working_dataset.title
 
 
 
