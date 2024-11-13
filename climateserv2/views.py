@@ -22,6 +22,7 @@ import climateserv2.requestLog as requestLog
 from api.models import Track_Usage, ETL_Dataset
 from api.models import Parameters
 from frontend.models import DataLayer, EnsembleLayer
+from .file.TDSExtraction import get_ensemble_dataset
 from .geoutils import decodeGeoJSON as decodeGeoJSON
 from .processDataRequest import start_processing
 from .file import TDSExtraction
@@ -91,7 +92,6 @@ def process_callback(request, output, content_type):
         http_response = HttpResponse(output)
     try:
         if request_id:
-            print("request_id: " + str(request_id))
             if request_id == "internal":
                 return http_response
             if http_response.status_code == 200:
@@ -127,7 +127,6 @@ def get_log_requests_by_range(start_year, start_month, start_day, end_year, end_
 # To get a list of all the parameter types
 @csrf_exempt
 def get_parameter_types(request):
-    print("Getting Parameter Types")
     logger.info("Getting Parameter Types")
     try:
         track_usage, created = Track_Usage.objects.get_or_create(
@@ -362,7 +361,6 @@ def get_climate_datatype_map():
     # Iterate through each ensemble
     for current_ensemble in ensemble_list:
         current_ensemble_datatype_numbers = get_data_type_number_list_by_property("ensemble", current_ensemble)
-        print(current_ensemble_datatype_numbers)
         current_ensemble_object_list = []
         for current_ensemble_datatype_number in current_ensemble_datatype_numbers:
             ds = ETL_Dataset.objects.filter(number=int(current_ensemble_datatype_number))[0]
@@ -491,13 +489,11 @@ def run_etl(request):
                 merge_option = "yearly"
         if from_last_processed == "true":
             if merge_option == "monthly":
-                print("chirp should be here!")
                 p = subprocess.Popen(
                     [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                      "--etl_dataset_uuid", str(request_uuid), "--from_last_processed", "--merge_monthly"])
                 p.wait()
             elif merge_option == "yearly":
-                print("processing yearly merge loop")
                 p = subprocess.Popen(
                     [params.pythonPath, "/cserv2/django_app/ClimateSERV2/manage.py", "start_etl_pipeline",
                      "--etl_dataset_uuid", str(request_uuid), "--from_last_processed", "--merge_yearly"])
@@ -719,19 +715,26 @@ def submit_data_request(request):
                     working_datalayer = DataLayer.objects.get(api_id=int(datatype))
                     working_dataset = working_datalayer.etl_dataset_id
                 elif EnsembleLayer.objects.filter(api_id=int(datatype)).exists():
-                    working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype))
+                    working_dataset = EnsembleLayer.objects.filter(api_id=int(datatype)).first()
                 else:
                     working_dataset = EnsembleLayer.objects.get(api_id=int(datatype) - 1)
             except Exception as ens_except:
                 logger.error(str(ens_except))
                 my_ds = "Ensemble Layer"
             try:
-                if type(working_dataset) is EnsembleLayer or "dataset_name_format" in working_dataset:
-                    logger.info("dataset_name_format is good")
-                    dataset_name_format = working_dataset.dataset_name_format
+                if type(working_dataset) is EnsembleLayer:
+                    current_variable = "unknown"
+                    ensemble_definitions = working_dataset.ensemble_definition["data"]
+                    for definition in ensemble_definitions:
+                        if int(definition["api_id"]) == int(datatype):
+                            current_variable = definition["variable"]
+                            logger.debug("found ens variable: " + current_variable)
+                            break
+                    dataset_name_format = working_dataset.title + " - " + current_variable
                 else:
-                    dataset_name_format = "ENS"
-            except:
+                    dataset_name_format = working_dataset["dataset_name_format"]
+            except Exception as e:
+                logger.error("Error getting dataset name from - " + str(e))
                 try:
                     dataset_name_format = working_dataset.dataset_name_format
                 except:
@@ -771,11 +774,19 @@ def submit_data_request(request):
 
         except:
             my_ds = "Ensemble Layer"
-
-        if "dataset_name_format" in working_dataset:
-            dataset_name_format = working_dataset["dataset_name_format"]
+        if type(working_dataset) is EnsembleLayer :
+            current_variable = "unknown"
+            ensemble_definitions = working_dataset.ensemble_definition["data"]
+            for definition in ensemble_definitions:
+                if int(definition["api_id"]) == int(datatype):
+                    current_variable = definition["variable"]
+                    logger.debug("found ens variable: " + current_variable)
+                    break
+            dataset_name_format = working_dataset.title + " - " + current_variable
         else:
-            dataset_name_format = "ENS"
+            dataset_name_format = working_dataset["dataset_name_format"]
+
+
 
         track_usage, created = Track_Usage.objects.get_or_create(unique_id=str(uuid.uuid4()), originating_IP=get_client_ip(request),
                                   country_ISO=get_country_code(request),
