@@ -107,7 +107,7 @@ DATABASES = {
         'USER': data["USER"],
         'PASSWORD': data["PASSWORD"],
         'HOST': data["HOST"],
-        'POST': '',
+        'PORT': data["PORT"],
         'TEST': {
             'NAME': 'mytestdatabase',
         },
