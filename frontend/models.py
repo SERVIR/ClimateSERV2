@@ -54,6 +54,7 @@ class DataLayer(models.Model):
     availability = models.CharField(max_length=512, help_text='String field Interval from X to Z', default="")
     isMultiEnsemble = models.BooleanField(default=False, help_text='This is the main entry to the model ensembles')
     hasVisualization = models.BooleanField(default=True, help_text='Indicates if the layer has wms capabilities.')
+    isLegacyThredds = models.BooleanField(default=True, help_text='Indicates if the layer has legacy THREDDS WMS.')
     yAxis_Special_Formatting = models.TextField(
         help_text="Only include if your yAxis needs special formatting, this should be a json object with the key "
                   "formatter: function () and the function should return the formatted value", default="",

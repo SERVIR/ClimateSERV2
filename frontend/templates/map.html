@@ -220,7 +220,8 @@
                         dataset: "{{ layer.dataset_type }}",
                         app_id: "{{ enslayer.api_id }}",
                         units: units[0],
-                        is_ensemble: true
+                        is_ensemble: true,
+                        is_legacy_wms: {{ layer.isLegacyThredds|yesno:"true,false" }}
                     });
                     client_layers.push({
                         title: "{{ enslayer.title }}",
@@ -234,7 +235,8 @@
                         dataset: "{{ layer.dataset_type }}",
                         app_id: (parseInt("{{ enslayer.api_id }}") + 1).toString(),
                         units: units[1],
-                        is_ensemble: true
+                        is_ensemble: true,
+                        is_legacy_wms: {{ layer.isLegacyThredds|yesno:"true,false" }}
                     })
                 {% endfor %}
             {% else %}
@@ -254,6 +256,7 @@
                     point_format: {% if layer.graph_point_Special_Formatting %}
                         {{ layer.graph_point_Special_Formatting | safe  }} {% else %} null {% endif %},
                     is_ensemble: false,
+                    is_legacy_wms: {{ layer.isLegacyThredds|yesno:"true,false" }}
                 })
             {% endif %}
         {% endfor %}
@@ -934,6 +937,35 @@
         });
     </script>
     <script id="style_template" style="display: none" type="text/template">
+        <div style="padding-bottom:15px;">
+            <br>
+
+            <label for="style_table">
+                Select Color Scheme
+            </label>
+            <select class="style_table form-control" name="style_table" id="style_table" style="width: 100%">
+            </select><br>
+
+            <button id="applyStylebtn" style="
+              float: right;
+          ">
+                Apply
+            </button>
+            <br><br>
+            <label for="opacityctrl" style="font-weight: 100">Opacity</label>
+            <input
+                    id="opacityctrl"
+                    type="range"
+                    class="layer-opacity form-control"
+                    min="0"
+                    max="1"
+                    step=".01"
+                    value="1"
+                    style="width:100%">
+        </div>
+    </script>
+
+    <script id="legacy_style_template" style="display: none" type="text/template">
         <div style="padding-bottom:15px;">
             <br>
             <label for="range-min" style="font-weight: 100">Min</label>
