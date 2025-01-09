@@ -1,6 +1,7 @@
 /** Global Variables */
 let active_basemap = "Gsatellite";
 let map;
+const layerInfo = []; // Array to store layer name and times
 let passedLayer;
 let overlayMaps = {};
 let adminLayer;
@@ -62,7 +63,7 @@ function createLayer(item) {
             version: "1.3.0"
         }),
         {
-            updateTimeDimension: true,
+            updateTimeDimension: item.is_legacy_wms,
             cache: 3,
             cacheForward: 3,
             cacheBackward: 3,
@@ -70,6 +71,8 @@ function createLayer(item) {
         }
     );
     overlayMaps[item.id + "TimeLayer"].id = item.id;
+    overlayMaps[item.id + "TimeLayer"].is_legacy_wms = item.is_legacy_wms;
+
     // Add to list to be activated if query string requested it
     if (item.id.includes(passedLayer)) {
         queried_layers.push(item.id);
@@ -87,7 +90,6 @@ function createLayer(item) {
  * @returns layer json object
  */
 function getLayer(which) {
-    console.log(which);
     return client_layers.find(
         (item) => item.id === which.replace("TimeLayer", "")
     );
@@ -150,7 +152,7 @@ function buildStyles() {
                         if (data.errMsg) {
                             console.info(data.errMsg);
                         } else {
-                            styles = data.palettes.sort(function (a, b) {
+                            const styles = data.palettes.sort(function (a, b) {
                                 return a.toLowerCase().localeCompare(b.toLowerCase());
                             });
                             for (let i = 0; i < styles.length; i++) {
@@ -405,29 +407,43 @@ function set_from_backup() {
 function apply_style_click(which, active_layer, bypass_auto_on) {
     let was_removed = false;
     const style_table = $("#style_table");
+    const original_overlay = overlayMaps[which];
     if (map.hasLayer(overlayMaps[which])) {
         was_removed = true;
         map.removeLayer(overlayMaps[which]);
     }
-    overlayMaps[which] = L.timeDimension.layer.wms(
-        L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+    if (overlayMaps[which].is_legacy_wms) {
+        overlayMaps[which] = L.timeDimension.layer.wms(L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
             layers: active_layer.layers,
             format: "image/png",
             transparent: true,
-            colorscalerange:
-                document.getElementById("range-min").value +
-                "," +
-                document.getElementById("range-max").value,
+            colorscalerange: document.getElementById("range-min").value + "," + document.getElementById("range-max").value,
             abovemaxcolor: document.getElementById("above_max").value,
             belowmincolor: document.getElementById("below_min").value,
             numcolorbands: 100,
-            //styles: style_table.val(),
             styles: style_table.val(),
-        }),
-        {
-            updateTimeDimension: true,
-        }
-    );
+            version: "1.3.0"
+        }), {
+            updateTimeDimension: true, cache: 3, cacheForward: 3, cacheBackward: 3, setDefaultTime: true,
+        });
+    } else {
+        overlayMaps[which] = L.timeDimension.layer.wms(L.tileLayer.wms(active_layer.url + "&crs=EPSG%3A3857", {
+            layers: active_layer.layers,
+            format: "image/png",
+            transparent: true,
+            styles: style_table.val(),
+            version: "1.3.0"
+        }), {
+            updateTimeDimension: false, cache: 3, cacheForward: 3, cacheBackward: 3, setDefaultTime: true,
+        });
+    }
+    overlayMaps[which].is_legacy_wms = original_overlay.is_legacy_wms;
+    overlayMaps[which].availableStyles = original_overlay.availableStyles;
+    overlayMaps[which]._availableTimes = original_overlay._availableTimes;
+    overlayMaps[which].id = original_overlay.id;
+    overlayMaps[which]._currentTime = original_overlay._currentTime;
+    overlayMaps[which]._timeCacheBackward = original_overlay._timeCacheBackward;
+    overlayMaps[which]._timeCacheForward = original_overlay._timeCacheForward;
     if (!bypass_auto_on || was_removed) {
         map.addLayer(overlayMaps[which]);
     }
@@ -435,9 +451,9 @@ function apply_style_click(which, active_layer, bypass_auto_on) {
         document.getElementById(which.replace("TimeLayer", "")).checked = true;
     }
     active_layer.styles = style_table.val();
-    active_layer.colorrange = document.getElementById("range-min").value +
-        "," +
-        document.getElementById("range-max").value;
+    if (overlayMaps[which].is_legacy_wms) {
+        active_layer.colorrange = document.getElementById("range-min").value + "," + document.getElementById("range-max").value;
+    }
     overlayMaps[which].options.opacity = document.getElementById("opacityctrl").value;
     overlayMaps[which].setOpacity(overlayMaps[which].options.opacity);
 }
@@ -480,11 +496,13 @@ function apply_settings(which, active_layer, is_multi, multi_ids) {
             apply_style_click(which, active_layer);
         }
     };
-    // Update min/max
-    document.getElementById("range-min").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
-    document.getElementById("range-max").value =
-        overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+    if(overlayMaps[which].is_legacy_wms) {
+        // Update min/max
+        document.getElementById("range-min").value =
+            overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[0];
+        document.getElementById("range-max").value =
+            overlayMaps[which]._baseLayer.options.colorscalerange.split(",")[1];
+    }
 }
 
 /**
@@ -505,7 +523,11 @@ function openSettings(which) {
     }
 
     let settingsHtml = "";
-    settingsHtml += baseSettingsHtml();
+    if(active_layer.is_legacy_wms) {
+        settingsHtml += legacyBaseSettingsHtml();
+    } else{
+        settingsHtml += baseSettingsHtml();
+    }
     let dialog = $("#dialog");
     dialog.html(settingsHtml);
     dialog.dialog({
@@ -520,17 +542,31 @@ function openSettings(which) {
         }
     });
     $(".ui-dialog-title").attr("title", "Settings");
-    $(styleOptions).each(function () {
-        if (active_layer && active_layer.url.includes("threddsx")) {
-            $("#style_table").append(
-                $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
-            );
-        } else {
-            $("#style_table").append(
-                $("<option>").attr("value", this.val).text(this.text)
-            );
-        }
-    });
+    if(active_layer.is_legacy_wms) {
+        $(styleOptions).each(function () {
+            if (active_layer && active_layer.url.includes("threddsx")) {
+                $("#style_table").append(
+                    $("<option>").attr("value", this.val.replace("boxfill", "default-scalar")).text(this.text.replace("boxfill", "default-scalar"))
+                );
+            } else {
+                $("#style_table").append(
+                    $("<option>").attr("value", this.val).text(this.text)
+                );
+            }
+        });
+    } else{
+        const layer_styles = overlayMaps[which].availableStyles;
+        $(layer_styles).each(function () {
+            let selected = overlayMaps[which]._baseLayer.wmsParams.styles === "climateserv:"+this;
+            let style_option = $("<option>").attr("value", "climateserv:"+this).text(this);
+            if(selected){
+                        style_option.attr("selected","selected");
+             }
+                $("#style_table").append(
+                    style_option
+                );
+        });
+    }
 
     if (multi) {
         active_layer = getLayer(multi_ids[0]);
@@ -547,7 +583,17 @@ function openSettings(which) {
  * @returns html
  */
 function baseSettingsHtml() {
+    //return "<h1>Coming Soon!</h1>";
     return document.getElementById("style_template").text;
+}
+
+/**
+ * baseSettingsHtml
+ * Clones the base html settings and returns the html
+ * @returns html
+ */
+function legacyBaseSettingsHtml() {
+    return document.getElementById("legacy_style_template").text;
 }
 
 /**
@@ -560,14 +606,21 @@ function openLegend(which) {
     const dialog = $("#dialog");
     let id = which.replace("TimeLayer", "") + "ens";
     const active_layer = getLayer(which) || getLayer($("[id^=" + id + "]")[0].id);
+    let style_format = "style";
+
+    if(overlayMaps[which].is_legacy_wms){
+        style_format = "PALETTE";
+    }
+
     const src =
         active_layer.url +
         "&REQUEST=GetLegendGraphic&LAYER=" +
         active_layer.layers +
         "&colorscalerange=" +
         active_layer.colorrange +
-        "&PALETTE=" +
-        active_layer.styles.substr(active_layer.styles.indexOf("/") + 1);
+        "&"+style_format+"=" +
+        active_layer.styles.substr(active_layer.styles.indexOf("/") + 1) +
+    "&format=image%2Fpng";
     const style = "text-align:center;";
     dialog.html(
         '<p style="' + style + '"><img src="' + src + '" alt="legend"></p>'
@@ -687,9 +740,7 @@ function toggleLayer(which) {
     close_dialog();
     if (map.hasLayer(overlayMaps[which])) {
         map.removeLayer(overlayMaps[which]);
-        console.log("removed");
     } else {
-        console.log("added");
         map.addLayer(overlayMaps[which]);
         //ajax to track_wms with layerID
         let formData = new FormData();
@@ -1303,14 +1354,66 @@ function adjustLayerIndex() {
     }
 }
 
+function getGeoServerCapabilities() {
+    fetch('https://csgeo.servirglobal.net/geoserver/climateserv/wms?service=WMS&request=GetCapabilities')
+        .then(response => response.text())
+        .then(text => {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(text, 'application/xml');
+
+            // Find all Layer elements
+            const layers = xmlDoc.querySelectorAll('Layer > Layer'); // Nested Layer elements represent actual layers
+
+            layers.forEach(layer => {
+                const name = "climateserv:" + layer.querySelector('Name')?.textContent; // Get the layer name
+                const timeDimension = layer.querySelector('Dimension[name="time"]')?.textContent; // Get the time dimension
+
+                // Extract available styles
+                const styles = Array.from(layer.querySelectorAll('Style')).map(style => {
+                    return style.querySelector('Name')?.textContent; // Get the style name
+                }).filter(Boolean); // Remove null/undefined values
+
+                if (name && timeDimension) {
+                    const times = timeDimension.split(',').map(time => {
+                        const date = new Date(time);
+                        return date.getTime(); // Convert to Unix timestamp in milliseconds
+                    });
+                    layerInfo.push({ name, times, styles }); // Add to the array
+                }
+            });
+
+            // Create a map for quick lookups of layer info by name
+            const layerInfoMap = new Map(layerInfo.map(layer => [layer.name, { times: layer.times, styles: layer.styles }]));
+
+            for (let key in overlayMaps) {
+                const overlay = overlayMaps[key];
+                if (!overlay.is_legacy_wms && overlay._availableTimes.length === 0) {
+                    const layerName = overlay._baseLayer.options.layers;
+                    if (layerInfoMap.has(layerName)) {
+                        const layerData = layerInfoMap.get(layerName);
+                        overlay._availableTimes = layerData.times;
+                        overlay.availableStyles = layerData.styles || []; // Add available styles
+                    }
+                }
+            }
+
+        })
+        .catch(error => {
+            console.error('Error fetching or parsing GetCapabilities:', error);
+        });
+}
+
+
 /**
  * initMap
  * Page load functions, initializes all parts of application
  */
 function initMap() {
     passedLayer = this.getParameterByName("data") || "none";
+
     mapSetup();
     client_layers.forEach(createLayer);
+    getGeoServerCapabilities();
     sortableLayerSetup();
     try {
         // buildStyles();
@@ -2528,10 +2631,10 @@ function configure_additional_chart(i, colors, conversion) {
         name: multiQueryData[i].label,
         data: final_data.sort((a, b) => a[0] - b[0]),
         // This only works in the cases where data date ranges are inclusive
-        // if one dataset exapnds beyond the other and a date is picked in that range
+        // if one dataset expands beyond the other and a date is picked in that range
         // The correct date will be loaded for the one that expands there, however
-        // the dataset that ends prior will load the last available in it's range.
-        // Currently there is no request to add this feature, however if needed
+        // the dataset that ends prior will load the last available in its range.
+        // Currently, there is no request to add this feature, however if needed
         // we may need to extend the original js lib
         // allowPointSelect: true,
         // marker: {
@@ -2547,7 +2650,6 @@ function configure_additional_chart(i, colors, conversion) {
 }
 
 function doSelect(e) {
-    mydate = e.target.x;
     const full = new Date(e.target.x);
     const enhanced = new Date(full.setTime(full.getTime() + 43200000));
     const date = new Date();
@@ -2558,8 +2660,7 @@ function doSelect(e) {
 
     // map.timeDimension.setCurrentTime(adjustedDate);
     map.timeDimension.setCurrentTime(full);
-    console.log("holle");
-    console.log(adjustedDate);
+
 }
 
 //change this to take conversion parameter monthly or yearly
@@ -2583,10 +2684,10 @@ function convert_to_interval(data, calculation, interval) {
     }
     for (let key in temp_data) {
         if (temp_data.hasOwnProperty(key)) {
-            var max = temp_data[key][0];
-            var min = temp_data[key][0];
-            var sum = temp_data[key][0];
-            for (var i = 1; i < temp_data[key].length; i++) {
+            let max = temp_data[key][0];
+            let min = temp_data[key][0];
+            let sum = temp_data[key][0];
+            for (let i = 1; i < temp_data[key].length; i++) {
                 if (temp_data[key][i] > max) {
                     max = temp_data[key][i];
                 }
@@ -2611,7 +2712,6 @@ function convert_to_interval(data, calculation, interval) {
     return monthly_data;
 }
 
-var mydate;
 
 /**
  * multi_chart_builder
@@ -2791,9 +2891,9 @@ function multi_chart_builder(conversion) {
 
             sortedUniqueDates.forEach((epochDate) => {
                 const date = new Date(epochDate);
-                const dateKey = dateFormat === 'monthly'
-                    ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00`
-                    : `${date.getUTCFullYear()}-01-01 00:00:00`;
+                const dateKey = dateFormat === 'monthly' ?
+                    `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00` :
+                    `${date.getUTCFullYear()}-01-01 00:00:00`;
 
                 if (!aggregatedData[dateKey]) {
                     aggregatedData[dateKey] = {};
@@ -2912,9 +3012,9 @@ function multi_chart_builder(conversion) {
 
         sortedUniqueDates.forEach((epochDate) => {
             const date = new Date(epochDate);
-            const dateKey = dateFormat === 'monthly'
-                ? `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00`
-                : `${date.getUTCFullYear()}-01-01 00:00:00`;
+            const dateKey = dateFormat === 'monthly' ?
+                `${date.getUTCFullYear()}-${date.getUTCMonth() + 1}-01 00:00:00`:
+                `${date.getUTCFullYear()}-01-01 00:00:00`;
 
             if (!aggregatedData[dateKey]) {
                 aggregatedData[dateKey] = {};
