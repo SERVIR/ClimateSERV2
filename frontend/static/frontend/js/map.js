@@ -1770,6 +1770,39 @@ function get_API_url() {
     return url;
 }
 
+function build_monthly_form_data(formData) {
+    if (highlightedIDs.length > 0) {
+        formData.append(
+            "layerid", adminHighlightLayer.options.layers.replace("_highlight", "")
+        );
+        formData.append(
+            "featureids", highlightedIDs.join(",")
+        );
+    } else if (drawnItems.getLayers().length > 0) {
+        formData.append(
+            "geometry", JSON.stringify(drawnItems.toGeoJSON())
+        );
+    } else if (uploadLayer) {
+        formData.append(
+            "geometry", JSON.stringify(uploadLayer.toGeoJSON())
+        );
+    }
+    formData.append(
+            "custom_job_type", "monthly_rainfall_analysis"
+        );
+
+    const csi = climateModelInfo.climate_DataTypeCapabilities[0].current_Capabilities;
+
+    formData.append(
+            "seasonal_start_date", csi.startDateTime
+        );
+
+    formData.append(
+            "seasonal_end_date", csi.endDateTime
+        );
+
+}
+
 /**
  * verify_range
  * Verifies range is within the data start and end range
@@ -2087,7 +2120,7 @@ function sendRequest() {
         }
 
     } else {
-        $.ajax({
+         $.ajax({
             url: get_API_url(),
             type: "GET",
             async: true,
@@ -2102,6 +2135,29 @@ function sendRequest() {
             }
         });
     }
+}
+
+function test_monthly_post(){
+    let formData = new FormData();
+        build_monthly_form_data(formData);
+        $.ajax({
+            url: "/api/submitMonthlyRainfallAnalysisRequest/",
+            type: "POST",
+            headers: {'X-CSRFToken': csrftoken},
+            processData: false,
+            contentType: false,
+            async: true,
+            data: formData,
+            crossDomain: true
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.warn(jqXHR + textStatus + errorThrown);
+        }).done(function (data, _textStatus, _jqXHR) {
+            if (data.errMsg) {
+                console.info(data.errMsg);
+            } else {
+                handle_initial_request_data(JSON.parse(data), true);
+            }
+        });
 }
 
 /**
