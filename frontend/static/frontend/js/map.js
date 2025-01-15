@@ -2120,25 +2120,7 @@ function sendRequest() {
         }
 
     } else {
-         $.ajax({
-            url: get_API_url(),
-            type: "GET",
-            async: true,
-            crossDomain: true
-        }).fail(function (jqXHR, textStatus, errorThrown) {
-            console.warn(jqXHR + textStatus + errorThrown);
-        }).done(function (data, _textStatus, _jqXHR) {
-            if (data.errMsg) {
-                console.info(data.errMsg);
-            } else {
-                handle_initial_request_data(JSON.parse(data), true);
-            }
-        });
-    }
-}
-
-function test_monthly_post(){
-    let formData = new FormData();
+         let formData = new FormData();
         build_monthly_form_data(formData);
         $.ajax({
             url: "/api/submitMonthlyRainfallAnalysisRequest/",
@@ -2158,7 +2140,9 @@ function test_monthly_post(){
                 handle_initial_request_data(JSON.parse(data), true);
             }
         });
+    }
 }
+
 
 /**
  * updateProgress
